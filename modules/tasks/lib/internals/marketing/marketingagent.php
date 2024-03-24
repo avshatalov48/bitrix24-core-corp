@@ -8,15 +8,20 @@
 
 namespace Bitrix\Tasks\Internals\Marketing;
 
-class MarketingAgent
+use Bitrix\Tasks\Update\AgentInterface;
+use Bitrix\Tasks\Update\AgentTrait;
+
+class MarketingAgent implements AgentInterface
 {
+	use AgentTrait;
+
 	private static $processing = false;
 
-	public static function execute()
+	public static function execute(): string
 	{
 		if (self::$processing)
 		{
-			return self::getAgentName();
+			return static::getAgentName();
 		}
 
 		self::$processing = true;
@@ -25,14 +30,6 @@ class MarketingAgent
 
 		self::$processing = false;
 
-		return self::getAgentName();
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getAgentName(): string
-	{
-		return static::class . "::execute();";
+		return static::getAgentName();
 	}
 }

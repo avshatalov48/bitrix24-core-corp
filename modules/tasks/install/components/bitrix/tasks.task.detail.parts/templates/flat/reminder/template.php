@@ -80,7 +80,7 @@ $prefix = htmlspecialcharsbx($arResult['TEMPLATE_DATA']['INPUT_PREFIX'] ?? null)
 
                 <span class="task-popup-inp-container task-options-inp-container-period">
                     <select data-bx-id="form-change-recipient" class="task-popup-inp">
-                        <option value="R"><?=Loc::getMessage('TASKS_TTDP_TEMPLATE_REMINDER_TO_RESPONSIBLE')?></option>
+                        <option value="R"><?=Loc::getMessage('TASKS_TTDP_TEMPLATE_REMINDER_TO_ASSIGNEE')?></option>
                         <option value="O"><?=Loc::getMessage('TASKS_TTDP_TEMPLATE_REMINDER_TO_CREATOR')?></option>
                         <option value="S"><?=Loc::getMessage('TASKS_TTDP_TEMPLATE_REMINDER_TO_SELF')?></option>
                     </select>

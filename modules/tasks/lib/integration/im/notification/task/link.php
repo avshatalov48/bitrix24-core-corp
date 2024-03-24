@@ -3,6 +3,8 @@
 namespace Bitrix\Tasks\Integration\IM\Notification\Task;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Internals\Notification\User;
 use Bitrix\Tasks\Internals\TaskObject;
 
@@ -69,9 +71,18 @@ class Link
 	{
 		$sites = \Bitrix\Tasks\Util\Site::getPair();
 		// TODO: refactor
-		return $this->appendCommentAnchor(
-			\CTaskNotifications::getNotificationPath(['ID' => $this->recepient->getId()], $this->task->getId(), true, $sites)
+		$url = new Uri(
+			$this->appendCommentAnchor(
+				\CTaskNotifications::getNotificationPath(['ID' => $this->recepient->getId()], $this->task->getId(), true, $sites)
+			)
 		);
+
+		$url->addParams([
+			'ta_sec' => Analytics::SECTION['chat'],
+			'ta_el' => Analytics::ELEMENT['title_click'],
+		]);
+
+		return $url->getUri();
 	}
 
 	private function appendCommentAnchor(string $url): string

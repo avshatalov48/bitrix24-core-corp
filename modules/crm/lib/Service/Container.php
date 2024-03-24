@@ -15,6 +15,12 @@ use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Service\Sale\Shipment\ProductService;
 use Bitrix\Crm\Service\Sale\Terminal\PaymentService;
+use Bitrix\Crm\Service\Sign\B2e\ItemService;
+use Bitrix\Crm\Service\Sign\B2e\LanguageService;
+use Bitrix\Crm\Service\Sign\B2e\StageService;
+use Bitrix\Crm\Service\Sign\B2e\StatusService;
+use Bitrix\Crm\Service\Sign\B2e\TriggerService;
+use Bitrix\Crm\Service\Sign\B2e\TypeService;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
@@ -122,6 +128,10 @@ class Container
 					elseif ($entityTypeId === \CCrmOwnerType::SmartDocument)
 					{
 						$factoryClassName = Factory\SmartDocument::class;
+					}
+					elseif ($entityTypeId === \CCrmOwnerType::SmartB2eDocument)
+					{
+						$factoryClassName = Factory\SmartB2eDocument::class;
 					}
 					else
 					{
@@ -563,5 +573,35 @@ class Container
 	public function getTerminalPaymentService(): PaymentService
 	{
 		return ServiceLocator::getInstance()->get('crm.terminal.payment');
+	}
+
+	public function getSignB2eTypeService(): TypeService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.sign.b2e.type');
+	}
+
+	public function getSignB2eStageService(): StageService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.sign.b2e.stage');
+	}
+
+	public function getSignB2eLanguageService(): LanguageService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.sign.b2e.language');
+	}
+
+	public function getSignB2eTriggerService(): TriggerService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.sign.b2e.trigger');
+	}
+
+	public function getSignB2eItemService(): ItemService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.sign.b2e.item');
+	}
+
+	public function getSignB2eStatusService(): StatusService
+	{
+		return ServiceLocator::getInstance()->get('crm.service.sign.b2e.status');
 	}
 }

@@ -124,7 +124,10 @@ abstract class Manager
 					$id = $resultFromQueue['ID'];
 					$statisticNameKey = $resultFromQueue['STATISTIC_KEY'];
 					$params = $resultFromQueue['PARAMS'];
-					self::writeToStatistics($statisticNameKey, $params);
+					if (is_array($params))
+					{
+						self::writeToStatistics($statisticNameKey, $params);
+					}
 					self::removeFromQueue($id);
 				}
 				$offset += $pageSize;

@@ -1,8 +1,7 @@
 /**
  * @module tasks/statemanager/redux/types
  */
-jn.define('tasks/statemanager/redux/types', (require, exports, module) =>
-{
+jn.define('tasks/statemanager/redux/types', (require, exports, module) => {
 	const Views = {
 		LIST: 'LIST',
 		KANBAN: 'KANBAN',

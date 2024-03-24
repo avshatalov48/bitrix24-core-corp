@@ -137,9 +137,18 @@
 	border-color: var(--ui-color-background-transparent);
 }
 
-.biconnector-dashboard__error_logo {
+.biconnector-dashboard__error__logo-wrapper {
 	margin-bottom: 14px;
+	display: flex;
+	justify-content: center;
 }
+
+.biconnector-dashboard__error__logo {
+	background: url("images/error-logo.svg") center center no-repeat;
+	width: 80px;
+	height: 80px;
+}
+
 
 .biconnector-dashboard__error_desc {
 	margin-bottom: 24px;

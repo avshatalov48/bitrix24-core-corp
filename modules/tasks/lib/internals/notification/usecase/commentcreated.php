@@ -2,62 +2,38 @@
 
 namespace Bitrix\Tasks\Internals\Notification\UseCase;
 
-use Bitrix\Tasks\Internals\Notification\BufferInterface;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Tasks\Internals\Notification\EntityCode;
 use Bitrix\Tasks\Internals\Notification\EntityOperation;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\Metadata;
-use Bitrix\Tasks\Internals\Notification\ProviderCollection;
-use Bitrix\Tasks\Internals\Notification\UserRepositoryInterface;
-use Bitrix\Tasks\Internals\TaskObject;
 
-class CommentCreated
+class CommentCreated extends AbstractCase
 {
-	private TaskObject $task;
-	private BufferInterface $buffer;
-	private UserRepositoryInterface $userRepository;
-	private ProviderCollection $providers;
-
-	public function __construct(
-		TaskObject $task,
-		BufferInterface $buffer,
-		UserRepositoryInterface $userRepository,
-		ProviderCollection $providers
-	)
-	{
-		$this->task = $task;
-		$this->buffer = $buffer;
-		$this->userRepository = $userRepository;
-		$this->providers = $providers;
-	}
-
 	public function execute(int $commentId, string $text): bool
 	{
-		$currentLoggedInUserId = \Bitrix\Main\Engine\CurrentUser::get()->getId();
+		$currentLoggedInUserId = CurrentUser::get()->getId();
 		if ($currentLoggedInUserId === null)
 		{
 			return false;
 		}
 
-		$sender = $this->userRepository->getUserById($currentLoggedInUserId);
-		if (!$sender)
-		{
-			return false;
-		}
-
-		$recepients = $this->userRepository->getRecepients($this->task, $sender);
-		if (empty($recepients))
-		{
-			return false;
-		}
+		$this->createDictionary(['authorId' => $currentLoggedInUserId]);
 
 		foreach ($this->providers as $provider)
 		{
-			foreach ($recepients as $recepient)
+			$sender = $this->getCurrentSender();
+			if (is_null($sender))
+			{
+				continue;
+			}
+
+			$recipients = $this->getCurrentRecipients();
+			foreach ($recipients as $recipient)
 			{
 				$provider->addMessage(new Message(
 					$sender,
-					$recepient,
+					$recipient,
 					new Metadata(
 						EntityCode::CODE_COMMENT,
 						EntityOperation::ADD,

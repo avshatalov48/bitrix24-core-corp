@@ -470,7 +470,10 @@ abstract class EntityMerger
 			$historyItems = $targ['HISTORY_ITEMS'];
 			unset($targ['HISTORY_ITEMS']);
 		}
-		$this->updateEntity($targID, $targ, self::ROLE_TARG, array('DISABLE_USER_FIELD_CHECK' => true));
+		$this->updateEntity($targID, $targ, self::ROLE_TARG, [
+			'DISABLE_USER_FIELD_CHECK' => true,
+			'CURRENT_USER' => $this->getUserID() ?: Crm\Service\Container::getInstance()->getContext()->getUserId(),
+		]);
 		if (is_array($historyItems))
 		{
 			$this->saveHistoryItems($targID, $historyItems);
@@ -597,7 +600,10 @@ abstract class EntityMerger
 			$historyItems = $targ['HISTORY_ITEMS'];
 			unset($targ['HISTORY_ITEMS']);
 		}
-		$this->updateEntity($targID, $targ, self::ROLE_TARG, array('DISABLE_USER_FIELD_CHECK' => true));
+		$this->updateEntity($targID, $targ, self::ROLE_TARG, [
+			'DISABLE_USER_FIELD_CHECK' => true,
+			'CURRENT_USER' => $this->getUserID() ?: Crm\Service\Container::getInstance()->getContext()->getUserId(),
+		]);
 
 		if (is_array($historyItems))
 		{

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Main\DB;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk;
 use Bitrix\Disk\Volume;
@@ -32,7 +33,8 @@ class Socialnetwork extends Volume\Module\Module
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
-		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
+		$sqlHelper = $connection->getSqlHelper();
+		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
 		$attachedEntityList = $this->getAttachedEntityList();
@@ -45,8 +47,14 @@ class Socialnetwork extends Volume\Module\Module
 				{
 					$attachedEntitySql .= ', ';
 				}
-				$attachedEntitySql .= "'".$connection->getSqlHelper()->forSql($attachedEntity)."'";
+				$attachedEntitySql .= "'".$sqlHelper->forSql($attachedEntity)."'";
 			}
+		}
+
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
 		}
 
 		// Scan User fields specific to module
@@ -67,6 +75,8 @@ class Socialnetwork extends Volume\Module\Module
 				$forumMetaData = \CSocNetLogTools::getForumCommentMetaData($eventId);
 				$eventTypeXML[] = $forumMetaData[0];
 			}
+			$entityType = $sqlHelper->forSql(Disk\Uf\ForumMessageConnector::className());
+
 			$attachedForumCommentsSql = "
 				UNION
 				(
@@ -91,11 +101,11 @@ class Socialnetwork extends Volume\Module\Module
 								INNER JOIN b_forum_message message 
 									ON message.ID = attached.ENTITY_ID
 							WHERE
-								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(Disk\Uf\ForumMessageConnector::className()). "'
+								attached.ENTITY_TYPE = '{$entityType}'
 								AND substring_index(message.XML_ID,'_', 1) IN('". implode("','", $eventTypeXML). "')
 							GROUP BY 
 								attached.OBJECT_ID
-							ORDER BY NULL
+							{$prefSql}
 						) attach_connect
 							ON attach_connect.OBJECT_ID = files.ID
 				)
@@ -141,7 +151,7 @@ class Socialnetwork extends Volume\Module\Module
 							AND live_feed_log.ENTITY_TYPE NOT IN ('". implode("','", $excludeEventType). "')
 						GROUP BY 
 							attached.OBJECT_ID
-						ORDER BY NULL
+						{$prefSql}
 					) attach_connect
 						ON attach_connect.OBJECT_ID = files.ID
 			";
@@ -173,7 +183,7 @@ class Socialnetwork extends Volume\Module\Module
 							attached.ENTITY_TYPE IN($attachedEntitySql)
 						GROUP BY 
 							attached.OBJECT_ID
-						ORDER BY NULL
+						{$prefSql}
 					) attach_connect
 						ON attach_connect.OBJECT_ID = files.ID
 			";
@@ -183,7 +193,7 @@ class Socialnetwork extends Volume\Module\Module
 			SELECT
 				'{$indicatorType}' as INDICATOR_TYPE,
 				{$ownerId} as OWNER_ID,
-				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
+				". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
 				SUM(src.FILE_SIZE) as FILE_SIZE,
 				SUM(src.FILE_COUNT) as FILE_COUNT,
 				SUM(src.DISK_SIZE) as DISK_SIZE,
@@ -211,7 +221,7 @@ class Socialnetwork extends Volume\Module\Module
 			$this->getSelect()
 		);
 
-		$tableName = VolumeTable::getTableName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

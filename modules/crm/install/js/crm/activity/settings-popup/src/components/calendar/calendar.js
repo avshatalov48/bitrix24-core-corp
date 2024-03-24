@@ -1,14 +1,13 @@
-import { Date as DateFormatter, DateTimeFormat } from 'main.date';
 import { Planner } from 'calendar.planner';
-import { Factory } from 'crm.datetime';
 import { Events } from 'crm.activity.settings-popup';
-import { ajax as Ajax} from 'main.core';
 import { DatetimeConverter } from 'crm.timeline.tools';
-
-import { RecallButton } from './recall-button';
+import { ajax as Ajax } from 'main.core';
+import { DateTimeFormat, Timezone } from 'main.date';
 
 import 'ui.design-tokens';
 import './calendar.css';
+
+import { RecallButton } from './recall-button';
 
 const Recall = {
 	today: {
@@ -56,7 +55,7 @@ export const Calendar = {
 	},
 	data(): Object
 	{
-		const timestamp = this.params.from || (Factory.getUserNow().getTime() / 1000);
+		const timestamp = this.params.from || Timezone.UserTime.getTimestamp();
 		const from = Math.round(timestamp / 60) * 60; // round timestamp to minutes
 
 		let duration = 1;
@@ -89,11 +88,11 @@ export const Calendar = {
 		fromDateFormatted: {
 			get(): string
 			{
-				return DateFormatter.format(BX.Crm.DateTime.Dictionary.Format.SHORT_DATE_FORMAT, this.from);
+				return DateTimeFormat.format(DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), this.from);
 			},
 			set(value: string)
 			{
-				const date = DateFormatter.parse(value);
+				const date = DateTimeFormat.parse(value);
 				const currentDate = this.createDateInstance(this.from);
 
 				date.setHours(currentDate.getHours(), currentDate.getMinutes(), 0, 0);
@@ -119,13 +118,13 @@ export const Calendar = {
 			get(): string
 			{
 				const toTime = this.from + this.duration * DurationPeriods[this.durationPeriodId].seconds;
-				return DateFormatter.format(BX.Crm.DateTime.Dictionary.Format.SHORT_DATE_FORMAT, toTime);
+				return DateTimeFormat.format(DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), toTime);
 			},
 			set(value: string)
 			{
-				const date = DateFormatter.parse(value);
+				const date = DateTimeFormat.parse(value);
 				const toTime = this.from + this.duration * DurationPeriods[this.durationPeriodId].seconds;
-				const currentDate = Factory.createFromTimestampInUserTimezone(toTime);
+				const currentDate = new Date(Timezone.BrowserTime.toUser(toTime) * 1000);
 
 				date.setHours(currentDate.getHours(), currentDate.getMinutes(), 0, 0);
 				this.calcDuration(date);
@@ -135,7 +134,7 @@ export const Calendar = {
 			get(): string
 			{
 				const toTime = this.from + this.duration * DurationPeriods[this.durationPeriodId].seconds;
-				return DateFormatter.format(BX.Crm.DateTime.Dictionary.Format.SHORT_TIME_FORMAT, toTime);
+				return DateTimeFormat.format(DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), toTime);
 			},
 			set(newTime: string)
 			{
@@ -229,7 +228,7 @@ export const Calendar = {
 		getDateInstanceWithTime(timestamp: Number, time: String): Date
 		{
 			const timeArr = time.split(':');
-			const date = Factory.createFromTimestampInUserTimezone(timestamp);
+			const date = new Date(Timezone.BrowserTime.toUser(timestamp) * 1000);
 
 			let hours = Number(timeArr[0]);
 			let minutes = timeArr[1];
@@ -314,16 +313,16 @@ export const Calendar = {
 		},
 		getFormattedDate(id: string): string
 		{
-			return this.getFormattedValue(id, BX.Crm.DateTime.Dictionary.Format.SHORT_DATE_FORMAT);
+			return this.getFormattedValue(id, DateTimeFormat.getFormat('SHORT_DATE_FORMAT'));
 		},
 		getFormattedTime(id: string): string
 		{
-			return this.getFormattedValue(id, BX.Crm.DateTime.Dictionary.Format.SHORT_TIME_FORMAT);
+			return this.getFormattedValue(id, DateTimeFormat.getFormat('SHORT_TIME_FORMAT'));
 		},
 		getFormattedValue(id: string, format: string): string
 		{
 			const timestamp = (id === 'from' ? this.from : this.to);
-			return DateFormatter.format(format, timestamp);
+			return DateTimeFormat.format(format, timestamp);
 		},
 		getSecondsFromStartOfDay(timestamp: Number): Number
 		{

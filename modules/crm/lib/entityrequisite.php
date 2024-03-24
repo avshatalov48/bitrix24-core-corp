@@ -3066,17 +3066,22 @@ class EntityRequisite
 	{
 		$entityTypeId = (int)$entityTypeId;
 		$entityId = (int)$entityId;
+		$serializedSettings = serialize($settings);
 
-		global $DB;
-		$tableName = self::CONFIG_TABLE_NAME;
-		$entityTypeId = $DB->ForSql($entityTypeId);
-		$settingsValue = $DB->ForSql(serialize($settings));
-
-		$sql =
-			"INSERT INTO {$tableName} (ENTITY_ID, ENTITY_TYPE_ID, SETTINGS)".PHP_EOL.
-			"  VALUES({$entityId}, {$entityTypeId}, '{$settingsValue}')".PHP_EOL.
-			"  ON DUPLICATE KEY UPDATE SETTINGS = '{$settingsValue}'".PHP_EOL;
-		$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$connection = Main\Application::getConnection();
+		$sql = $connection->getSqlHelper()->prepareMerge(
+			self::CONFIG_TABLE_NAME,
+			['ENTITY_ID', 'ENTITY_TYPE_ID'],
+			[
+				'ENTITY_ID' => $entityId,
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'SETTINGS' => $serializedSettings,
+			],
+			[
+				'SETTINGS' => $serializedSettings,
+			]
+		);
+		$connection->query($sql[0]);
 	}
 
 	public function getEntityRequisiteBindings(int $entityTypeId, int $entityId, ?int $companyId, ?int $contactId): array
@@ -6723,13 +6728,13 @@ class EntityRequisite
 	 */
 	public function prepareEntityListRequisiteExportData($entityTypeId, $entityIds, $options = array())
 	{
-		$result = array(
-			'HEADERS' => array(),
-			'EXPORT_DATA' => array()
-		);
+		$result = [
+			'HEADERS' => [],
+			'EXPORT_DATA' => []
+		];
 
-		$requisiteHeaders = array();
-		$requisiteList = array();
+		$requisiteHeaders = [];
+		$requisiteList = [];
 
 		$rqPrefix = (is_array($options) && isset($options['PREFIX']) && is_string($options['PREFIX']))
 			? $options['PREFIX']
@@ -6741,12 +6746,12 @@ class EntityRequisite
 		$fillRequisiteHeaders = !(is_array($options) && isset($options['FILL_HEADERS'])
 			&& $options['FILL_HEADERS'] !== 'Y');
 
-		$rqHeadersByCountry = array();
-		$bdHeadersByCountry = array();
+		$rqHeadersByCountry = [];
+		$bdHeadersByCountry = [];
 		$countryList = null;
 		$fieldTitleMap = null;
 
-		$rqFieldInfo = array();
+		$rqFieldInfo = [];
 		$userFieldInfo = $this->getFormUserFieldsInfo();
 
 		if ($fillRequisiteHeaders)
@@ -6762,21 +6767,21 @@ class EntityRequisite
 			$presetIdsMap = array_fill_keys(self::getPresetsByEntities($entityTypeId, $entityIds), true);
 
 			$requisiteFieldsSelectMap = array_fill_keys(
-				array(
+				[
 					'ID',
 					'PRESET_ID',
 					'NAME',
 					'ACTIVE',
 					'ADDRESS_ONLY',
 					'SORT'
-				),
+				],
 				true
 			);
-			$presetCountriesMap = array();
-			$rqFieldsCountryMap = array();
-			$presetList = array();
+			$presetCountriesMap = [];
+			$rqFieldsCountryMap = [];
+			$presetList = [];
 			$allowedCountries = array_fill_keys($this->getAllowedRqFieldCountries(), true);
-			$allowedRqFieldsMap = array();
+			$allowedRqFieldsMap = [];
 			foreach ($this->getRqFieldsCountryMap() as $fieldName => $fieldCountries)
 				$allowedRqFieldsMap[$fieldName] = array_fill_keys($fieldCountries, true);
 			$allowedUserFieldsMap = array_fill_keys(array_keys($userFieldInfo), true);
@@ -6784,14 +6789,14 @@ class EntityRequisite
 			$preset = EntityPreset::getSingleInstance();
 			if (is_array($presetsByEntityType) && !empty($presetsByEntityType))
 			{
-				$res = $preset->getList(array(
-					'order' => array(),
-					'filter' => array(
+				$res = $preset->getList([
+					'order' => [],
+					'filter' => [
 						'=ENTITY_TYPE_ID' => EntityPreset::Requisite,
 						'@ID' => $presetsByEntityType
-					),
-					'select' => array('ID', 'NAME', 'COUNTRY_ID', 'SETTINGS')
-				));
+					],
+					'select' => ['ID', 'NAME', 'COUNTRY_ID', 'SETTINGS']
+				]);
 				while ($row = $res->fetch())
 				{
 					$id = (int)$row['ID'];
@@ -6801,14 +6806,14 @@ class EntityRequisite
 					if ($countryId > 0 && isset($allowedCountries[$countryId]) && is_array($row['SETTINGS']))
 					{
 						$presetCountriesMap[$countryId] = true;
-						$presetFieldsMap = array();
+						$presetFieldsMap = [];
 
 						// sort preset fields
-						$sortData = array(
-							'FIELD_NAME' => array(),
-							'SORT' => array(),
-							'ID' => array()
-						);
+						$sortData = [
+							'FIELD_NAME' => [],
+							'SORT' => [],
+							'ID' => []
+						];
 						foreach ($preset->settingsGetFields($row['SETTINGS']) as $fieldInfo)
 						{
 							$fieldId = isset($fieldInfo['ID']) ? (int)$fieldInfo['ID'] : 0;
@@ -6847,12 +6852,12 @@ class EntityRequisite
 								if (!isset($requisiteFieldsSelectMap[$fieldName]))
 									$requisiteFieldsSelectMap[$fieldName] = true;
 							}
-							$presetList[$id] = array(
+							$presetList[$id] = [
 								'ID' => $id,
 								'NAME' => $name,
 								'COUNTRY_ID' => $countryId,
 								'FIELDS' => $presetFields
-							);
+							];
 						}
 					}
 				}
@@ -6878,21 +6883,21 @@ class EntityRequisite
 					if (!is_string($fieldTitle) || $fieldTitle == '')
 						$fieldTitle = $fieldName;
 					if (!isset($rqHeadersByCountry[0]))
-						$rqHeadersByCountry[0] = array();
-					$rqHeadersByCountry[0][] = array(
+						$rqHeadersByCountry[0] = [];
+					$rqHeadersByCountry[0][] = [
 						'id' => $rqPrefix."$fieldName",
 						'name' => GetMessage('CRM_REQUISITE_FILTER_PREFIX').': '.$fieldTitle,
 						'sort' => false,
 						'default' => false,
 						'editable' => false,
 						'type' => 'custom'
-					);
+					];
 				}
 				$hideCountry = false/*(count($presetCountriesMap) <= 1)*/;
 				$currentCountryId = EntityPreset::getCurrentCountryId();
 				if ($countrySort === null)
 				{
-					$countrySort = array();
+					$countrySort = [];
 					if (isset($presetCountriesMap[$currentCountryId]))
 						$countrySort[] = $currentCountryId;
 					foreach (array_keys($presetCountriesMap) as $countryId)
@@ -6903,71 +6908,84 @@ class EntityRequisite
 				}
 				foreach ($countrySort as $countryId)
 				{
-					foreach (array_keys($rqFieldsCountryMap[$countryId]) as $fieldName)
+					if (isset($rqFieldsCountryMap[$countryId]) && is_array($rqFieldsCountryMap[$countryId]))
 					{
-						if (isset($userFieldInfo[$fieldName]))
+						foreach (array_keys($rqFieldsCountryMap[$countryId]) as $fieldName)
 						{
-							$fieldTitle = isset($userFieldInfo[$fieldName]['title']) ?
-								$userFieldInfo[$fieldName]['title'] : '';
-						}
-						else
-						{
-							$fieldTitle = isset($fieldTitleMap[$fieldName][$countryId]) ?
-								$fieldTitleMap[$fieldName][$countryId] : '';
-						}
-
-						if (!is_string($fieldTitle) || $fieldTitle == '')
-							$fieldTitle = $fieldName;
-
-						if (!isset($rqHeadersByCountry[$countryId]))
-							$rqHeadersByCountry[$countryId] = array();
-						$rqHeadersByCountry[$countryId][] = array(
-							'id' => $rqPrefix."$fieldName|$countryId",
-							'name' => GetMessage('CRM_REQUISITE_FILTER_PREFIX').
-								($hideCountry ? '' : ' ('.$countryList[$countryId].')').': '.$fieldTitle,
-							'sort' => false,
-							'default' => false,
-							'editable' => false,
-							'type' => 'custom'
-						);
-
-						// headers for separated address fields
-						if ($fieldName === self::ADDRESS)
-						{
-							$addressTypeLabel = GetMessage('CRM_REQUISITE_EXPORT_ADDRESS_TYPE_LABEL');
-							if (!is_string($addressTypeLabel) || $addressTypeLabel == '')
-								$addressTypeLabel = $fieldName.'_TYPE';
-							if ($addressLabels === null)
+							if (isset($userFieldInfo[$fieldName]))
 							{
-								$addressLabels = array_merge(
-									array('TYPE' => $addressTypeLabel),
-									RequisiteAddress::getShortLabels(RequisiteAddress::Primary)
-								);
+								$fieldTitle = $userFieldInfo[$fieldName]['title'] ?? '';
 							}
-							if ($addressFields === null)
+							else
 							{
-								$addressFields = array_merge(
-									array('TYPE'),
-									array_keys(EntityRequisite::getAddressFieldMap(RequisiteAddress::Primary))
-								);
+								$fieldTitle = $fieldTitleMap[$fieldName][$countryId] ?? '';
 							}
-							foreach ($addressFields as $addrFieldName)
-							{
-								if ($addrFieldName === 'COUNTRY_CODE')
-									continue;
 
-								if (!isset($rqHeadersByCountry[$countryId]))
-									$rqHeadersByCountry[$countryId] = array();
-								$rqHeadersByCountry[$countryId][] = array(
-									'id' => $rqPrefix."{$fieldName}_{$addrFieldName}|$countryId",
-									'name' => GetMessage('CRM_REQUISITE_FILTER_PREFIX').
-										($hideCountry ? '' : ' ('.$countryList[$countryId].')').': '.
-										$fieldTitle.' - '.ToLower($addressLabels[$addrFieldName]),
-									'sort' => false,
-									'default' => false,
-									'editable' => false,
-									'type' => 'custom'
-								);
+							if (!is_string($fieldTitle) || $fieldTitle == '')
+							{
+								$fieldTitle = $fieldName;
+							}
+
+							if (!isset($rqHeadersByCountry[$countryId]))
+							{
+								$rqHeadersByCountry[$countryId] = [];
+							}
+							$rqHeadersByCountry[$countryId][] = [
+								'id' => $rqPrefix."$fieldName|$countryId",
+								'name' =>
+									GetMessage('CRM_REQUISITE_FILTER_PREFIX')
+									. ($hideCountry ? '' : ' ('.$countryList[$countryId].')').': '.$fieldTitle
+								,
+								'sort' => false,
+								'default' => false,
+								'editable' => false,
+								'type' => 'custom'
+							];
+
+							// headers for separated address fields
+							if ($fieldName === self::ADDRESS)
+							{
+								$addressTypeLabel = GetMessage('CRM_REQUISITE_EXPORT_ADDRESS_TYPE_LABEL');
+								if (!is_string($addressTypeLabel) || $addressTypeLabel == '')
+								{
+									$addressTypeLabel = $fieldName . '_TYPE';
+								}
+								if ($addressLabels === null)
+								{
+									$addressLabels = array_merge(
+										['TYPE' => $addressTypeLabel],
+										RequisiteAddress::getShortLabels(EntityAddressType::Primary)
+									);
+								}
+								if ($addressFields === null)
+								{
+									$addressFields = array_merge(
+										['TYPE'],
+										array_keys(EntityRequisite::getAddressFieldMap(EntityAddressType::Primary))
+									);
+								}
+								foreach ($addressFields as $addrFieldName)
+								{
+									if ($addrFieldName === 'COUNTRY_CODE')
+									{
+										continue;
+									}
+
+									if (!isset($rqHeadersByCountry[$countryId]))
+										$rqHeadersByCountry[$countryId] = [];
+									$rqHeadersByCountry[$countryId][] = [
+										'id' => $rqPrefix . "{$fieldName}_{$addrFieldName}|$countryId",
+										'name' =>
+											GetMessage('CRM_REQUISITE_FILTER_PREFIX')
+											. ($hideCountry ? '' : ' (' . $countryList[$countryId] . ')') . ': '
+											. $fieldTitle . ' - ' . mb_strtolower($addressLabels[$addrFieldName])
+										,
+										'sort' => false,
+										'default' => false,
+										'editable' => false,
+										'type' => 'custom'
+									];
+								}
 							}
 						}
 					}

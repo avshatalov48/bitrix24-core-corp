@@ -68,6 +68,8 @@
 	const IS_IOS = Application.getPlatform() === 'ios';
 	const INDENT_AFTER_ACTION_BUTTON = 28 + (IS_IOS ? 0 : 26);
 
+	const ANDROID_BOTTOM_SAFE_AREA = 34;
+
 	const INDENT_BETWEEN_SECTIONS = 10;
 	const ITEM_HEIGHT = 58;
 	const SECTION_TITLE_HEIGHT = 38;
@@ -126,7 +128,7 @@
 
 		componentDidUpdate(prevProps, prevState)
 		{
-			if (Application.getApiVersion() > 45 && this.layoutWidget && !this.showPartiallyHidden)
+			if (this.layoutWidget && !this.showPartiallyHidden)
 			{
 				const calculatedHeight = this.calcMediumHeight();
 
@@ -276,11 +278,7 @@
 					testId: this.testId,
 				},
 				View(
-					{
-						style: {
-							paddingBottom: Application.getPlatform() === 'ios' ? 100 : 0,
-						},
-					},
+					{},
 					this.renderBanner(),
 					...this.renderSections(),
 				),
@@ -397,8 +395,7 @@
 		 * @public
 		 * @param {Function} callback
 		 */
-		close(callback = () => {
-		})
+		close(callback = () => {})
 		{
 			this.closedByApi = true;
 
@@ -463,7 +460,7 @@
 		{
 			let onlyMediumPosition = true;
 			let mediumPositionHeight = this.calcMediumHeight();
-			let topPosition;
+			let topPosition = 0;
 
 			if (this.showPartiallyHidden)
 			{
@@ -520,7 +517,14 @@
 				+ this.getBannerHeight()
 				+ this.getCustomSectionHeight()
 				+ this.getSectionsHeight()
+				+ this.getBottomSafeArea()
 			);
+		}
+
+		getBottomSafeArea()
+		{
+			// fix android height calculated with native bottom buttons
+			return IS_IOS ? 0 : ANDROID_BOTTOM_SAFE_AREA;
 		}
 
 		/**

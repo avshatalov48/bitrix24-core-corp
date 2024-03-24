@@ -20,6 +20,7 @@ $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
@@ -133,11 +134,11 @@ else
 
 	// filter
 	$activeItemId = (
-		isset($arResult['KANBAN_VIEW_MODE']) && $arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+		isset($arResult['KANBAN_VIEW_MODE']) && $arResult['KANBAN_VIEW_MODE'] === ViewMode::MODE_ACTIVITIES
 			? NavigationBarPanel::ID_ACTIVITY
 			: NavigationBarPanel::ID_KANBAN
 	);
-	
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',
@@ -162,12 +163,14 @@ else
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
+	$viewMode = ($arResult['KANBAN_VIEW_MODE'] ?? ViewMode::MODE_STAGES);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
-			'VIEW_MODE' => ($arResult['KANBAN_VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES),
+			'VIEW_MODE' => $viewMode,
+			'USE_ITEM_PLANNER' => ($viewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
 			'SHOW_ACTIVITY' => 'Y',
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
 			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],

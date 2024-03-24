@@ -29,6 +29,7 @@ class Entry extends TimelineEntry
 	public const TYPE_CATEGORY_NOTIFICATION_DELIVERED = 17;
 	public const TYPE_CATEGORY_NOTIFICATION_ERROR = 18;
 	public const TYPE_CATEGORY_NOTIFICATION_READ = 19;
+	public const TYPE_CATEGORY_SIGN_CONFIGURATION_ERROR = 20;
 
 	public static function create(array $params): ?int
 	{

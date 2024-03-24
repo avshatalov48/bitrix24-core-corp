@@ -3,8 +3,11 @@ import { Button } from 'ui.buttons';
 import { AiFormFillApplication } from './app';
 import SliderButtonsAdapter from './services/slider-buttons-adapter';
 import { Call } from 'crm.ai.call';
+import { Slider } from 'crm.ai.slider';
 
 export let sliderButtonsAdapter: ?SliderButtonsAdapter = null;
+
+export let copilotSliderInstance: ?Slider = null;
 
 interface CreateOptions
 {
@@ -136,6 +139,7 @@ class ConflictFieldsliderCreator
 		{
 			return;
 		}
+		copilotSliderInstance = this.#sliderInstance;
 
 		this.#app = new AiFormFillApplication(
 			this.#containerId,
@@ -186,6 +190,7 @@ class ConflictFieldsliderCreator
 			this.#app = null;
 		}
 		sliderButtonsAdapter = null;
+		copilotSliderInstance = null;
 	}
 
 	#onAiFormFillDownFn(event) {

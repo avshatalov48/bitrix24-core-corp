@@ -1,6 +1,12 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Activity\Provider\ProviderManager;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 
 UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
@@ -30,8 +36,6 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-
-use Bitrix\Crm\Activity\Provider\ProviderManager;
 
 $isInternal = $arResult['IS_INTERNAL'];
 $currentUserID = $arResult['CURRENT_USER_ID'] ;
@@ -589,7 +593,7 @@ if(!$isInternal && ! $useQuickFilter)
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 }
 
-if($enableToolbar)
+if($enableToolbar && $arResult['ENABLE_CREATE_TOOLBAR_BUTTON'])
 {
 	$isSingleButtonMode = SITE_TEMPLATE_ID === 'bitrix24' && !$isInternal;
 	$toolbarButtons = array();
@@ -716,29 +720,29 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_LIVE_SEARCH' => true,
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
-		'NAVIGATION_BAR' => array(
-			'ITEMS' => array(
-				array(
+		'NAVIGATION_BAR' => [
+			'ITEMS' => [
+				/*[
+					'icon' => 'table',
+					'id' => 'kanban',
+					'name' => Loc::getMessage('CRM_COMMON_KANBAN'),
+					'active' => false,
+					'url' => $arParams['PATH_TO_ACTIVITY_KANBAN'] ?? '',
+				],*/
+				[
 					'icon' => 'table',
 					'id' => 'list',
-					'name' => GetMessage('CRM_ACTIVITY_LIST_FILTER_NAV_BUTTON_LIST'),
+					'name' => Loc::getMessage('CRM_ACTIVITY_LIST_FILTER_NAV_BUTTON_LIST'),
 					'active' => true,
 					'url' => $arParams['PATH_TO_ACTIVITY_LIST']
-				),
-				array(
-					'icon' => 'chart',
-					'id' => 'widget',
-					'name' => GetMessage('CRM_ACTIVITY_LIST_FILTER_NAV_BUTTON_WIDGET'),
-					'active' => false,
-					'url' => $arParams['PATH_TO_ACTIVITY_WIDGET']
-				)
-			),
-			'BINDING' => array(
+				],
+			],
+			'BINDING' => [
 				'category' => 'crm.navigation',
 				'name' => 'index',
-				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-			)
-		),
+				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID']),
+			],
+		],
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,

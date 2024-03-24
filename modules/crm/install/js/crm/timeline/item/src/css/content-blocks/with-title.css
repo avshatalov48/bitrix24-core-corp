@@ -33,6 +33,18 @@
 	line-height: 19px;
 }
 
+.crm-timeline__card-container_info.--width-sm .crm-timeline__card-container_info-title {
+	width: 100px;
+}
+
+.crm-timeline__card-container_info.--width-md .crm-timeline__card-container_info-title {
+	width: 200px;
+}
+
+.crm-timeline__card-container_info.--width-lg .crm-timeline__card-container_info-title {
+	width: 300px;
+}
+
 .crm-timeline__card-container_info-value {
 	display: block;
 	overflow: hidden;

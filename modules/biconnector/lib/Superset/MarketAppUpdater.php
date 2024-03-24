@@ -2,12 +2,12 @@
 
 namespace Bitrix\BIConnector\Superset;
 
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Rest\AppTable;
+use Bitrix\Rest\Marketplace\Client;
 
 class MarketAppUpdater
 {
@@ -31,75 +31,110 @@ class MarketAppUpdater
 		return (new DateTime())->getDiff($time)->d > 1;
 	}
 
-	private function checkForDashboardUpdates(): Result
+	/**
+	 * Gets dashboards app list with available updates.
+	 * Returns [ ['CODE' => 'bitrix.bic_deals_ru', 'VERSION' => 3], [...] ].
+	 *
+	 * @return array Array with app codes and versions to update.
+	 */
+	private function getDashboardsToUpdate(): array
 	{
-		$result = new Result();
-		$dashboardsToUpdate = [];
-
-		$manager = MarketDashboardManager::getInstance();
-
-		$systemApps = $manager->getSystemApps();
-		if (empty($systemApps))
-		{
-			$result->addError(new Error('MarketAppUpdater: list of system apps is empty.'));
-
-			return $result;
-		}
-
-		$systemAppCodes = array_column($systemApps, 'CODE');
-		$installedApps = AppTable::getList([
-			'select' => ['ID', 'CODE', 'VERSION'],
+		$allInstalledApps = SupersetDashboardTable::getList([
+			'select' => ['ID', 'APP_ID', 'APP_VERSION' => 'APP.VERSION'],
 			'filter' => [
-				'@CODE' => $systemAppCodes,
-				'=ACTIVE' => 'Y',
-				'=INSTALLED' => 'Y',
+				'=APP.ACTIVE' => 'Y',
+				'=APP.INSTALLED' => 'Y',
 			],
+			'cache' => ['ttl' => 3600],
 		])->fetchAll();
 
-		foreach ($installedApps as $installedApp)
+		$allInstalledCodes = [];
+		foreach ($allInstalledApps as $installedApp)
 		{
-			$currentVersion = (int)$installedApp['VERSION'];
-			$systemApp = array_filter($systemApps, static fn($app) => $app['CODE'] === $installedApp['CODE']);
-			$systemApp = array_pop($systemApp);
-			$availableVersion = 0;
-			if ($systemApp)
-			{
-				$availableVersion = (int)$systemApp['VER'];
-			}
-
-			if ($availableVersion > $currentVersion)
-			{
-				$dashboardsToUpdate[] = [
-					'CODE' => $installedApp['CODE'],
-					'VERSION' => $availableVersion,
-				];
-			}
+			// Used format [app_code => installed_version] for Client::getUpdates
+			$allInstalledCodes[$installedApp['APP_ID']] = $installedApp['APP_VERSION'];
 		}
 
-		if (count($installedApps) < count($systemAppCodes))
+		$updateCodes = [];
+		if ($allInstalledCodes)
 		{
-			foreach ($systemAppCodes as $systemAppCode)
+			$allUpdates = Client::getUpdates($allInstalledCodes);
+			if ($allUpdates)
 			{
-				if (!in_array($systemAppCode, array_column($installedApps, 'CODE'), true))
+				foreach ($allUpdates['ITEMS'] as $update)
 				{
-					$dashboardsToUpdate[] = [
-						'CODE' => $systemAppCode,
-						'VERSION' => null,
+					$updateCodes[] = [
+						'CODE' => $update['CODE'],
+						'VERSION' => $update['VER'],
 					];
 				}
 			}
 		}
 
-		$result->setData(['dashboardsToUpdate' => $dashboardsToUpdate]);
-		Option::set('biconnector', 'last_time_dashboard_check_update', (new DateTime())->getTimestamp());
+		return $updateCodes;
+	}
+
+	/**
+	 * Get list of system dashboards which are not installed yet.
+	 *
+	 * @return array Array with elements like [CODE => app_code, VERSION => null]. Null version means the last available version.
+	 */
+	private function getNotInstalledSystemDashboards(): array
+	{
+		$manager = MarketDashboardManager::getInstance();
+
+		$installedApps = SupersetDashboardTable::getList([
+			'select' => ['ID', 'APP_ID'],
+			'filter' => [
+				'=APP.ACTIVE' => 'Y',
+				'=APP.INSTALLED' => 'Y',
+			],
+			'cache' => ['ttl' => 3600],
+		])->fetchAll();
+		$installedCodes = array_column($installedApps, 'APP_ID');
+
+		$allSystemApps = $manager->getSystemDashboardApps();
+		$codes = array_column($allSystemApps, 'CODE');
+		$codesToInstall = array_diff($codes, $installedCodes);
+		$result = [];
+		foreach ($codesToInstall as $app)
+		{
+			$result[] = [
+				'CODE' => $app,
+				'VERSION' => null,
+			];
+		}
 
 		return $result;
 	}
 
 	/**
+	 * Adds rows to SupersetDashboardTable with system dashboards info.
+	 *
+	 * @param array $codes App codes to add.
+	 * @return void
+	 */
+	private function addSystemDashboardRows(array $codes): void
+	{
+		$manager = MarketDashboardManager::getInstance();
+		$allSystemApps = $manager->getSystemDashboardApps();
+		$apps = array_filter($allSystemApps, static fn($item) => in_array($item['CODE'], $codes, true));
+		foreach ($apps as $app)
+		{
+			SupersetDashboardTable::add([
+				'EXTERNAL_ID' => null,
+				'TITLE' => $app['NAME'],
+				'TYPE' => SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM,
+				'APP_ID' => $app['CODE'],
+				'STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_LOAD,
+			]);
+		}
+	}
+
+	/**
 	 * Checks for dashboard updates if needed (once a day) and installs necessary updates.
 	 * Should be called only from MarketDashboardManager.
-	 * @see \Bitrix\BIConnector\Superset\MarketDashboardManager
+	 * @see MarketDashboardManager
 	 *
 	 * @return Result
 	 */
@@ -112,17 +147,15 @@ class MarketAppUpdater
 			return $result;
 		}
 
-		$checkResult = $this->checkForDashboardUpdates();
-		if (!$checkResult->isSuccess())
-		{
-			$result->addErrors($checkResult->getErrors());
+		$dashboardsToUpdate = $this->getDashboardsToUpdate();
+		$dashboardsToInstall = $this->getNotInstalledSystemDashboards();
 
-			return $result;
-		}
+		Option::set('biconnector', 'last_time_dashboard_check_update', (new DateTime())->getTimestamp());
+		$this->addSystemDashboardRows(array_column($dashboardsToInstall, 'CODE'));
+		$allAppsToInstall = [...$dashboardsToUpdate, ...$dashboardsToInstall];
 
 		$manager = MarketDashboardManager::getInstance();
-		$dashboardsToUpdate = $checkResult->getData()['dashboardsToUpdate'];
-		foreach ($dashboardsToUpdate as $dashboard)
+		foreach ($allAppsToInstall as $dashboard)
 		{
 			$installResult = $manager->installApplication($dashboard['CODE'], $dashboard['VERSION']);
 			if (!$installResult->isSuccess())

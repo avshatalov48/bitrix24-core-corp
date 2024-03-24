@@ -1314,6 +1314,18 @@ a.crm-timeline__card-title:hover {
 	line-height: 19px;
 }
 
+.crm-timeline__card-container_info.--width-sm .crm-timeline__card-container_info-title {
+	width: 100px;
+}
+
+.crm-timeline__card-container_info.--width-md .crm-timeline__card-container_info-title {
+	width: 200px;
+}
+
+.crm-timeline__card-container_info.--width-lg .crm-timeline__card-container_info-title {
+	width: 300px;
+}
+
 .crm-timeline__card-container_info-value {
 	display: block;
 	overflow: hidden;
@@ -1349,6 +1361,7 @@ a.crm-timeline__card-title:hover {
 	margin-bottom: unset;
 	margin-left: 10px;
 }
+
 .crm-timeline__file-list-wrapper {
 	display: flex;
 	white-space: nowrap;
@@ -1752,6 +1765,22 @@ a.crm-timeline__card-title:hover {
 	color: var(--ui-color-palette-green-80, #688800);
 }
 
+.crm-timeline__text-block.--color-primary {
+	color: var(--ui-color-primary, #2fc6f6);
+}
+
+.crm-timeline__text-block.--color-warning {
+	color: var(--ui-color-text-warning, #ffa900);
+}
+
+.crm-timeline__text-block.--color-danger {
+	color: var(--ui-color-text-alert, #ff5752);
+}
+
+.crm-timeline__text-block.--color-success {
+	color: var(--ui-color-primary-alt, #9dcf00);
+}
+
 .crm-timeline__text-block.--color-base-50 {
 	color: var(--ui-color-base-50, #a8adb4);
 }
@@ -1791,6 +1820,54 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__text-block.--size-md {
 	font-size: var(--ui-font-size-md, 14px);
 }
+
+.crm-timeline__text-block.--size-lg {
+	font-size: var(--ui-font-size-lg, 15px);
+}
+
+.crm-timeline__text-block.--size-xl {
+	font-size: var(--ui-font-size-xl, 16px);
+}
+
+.crm-timeline__card_link {
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-link-primary-base);
+	text-decoration: underline !important;
+	-webkit-text-decoration-color: transparent !important;
+	        text-decoration-color: transparent !important;
+	cursor: pointer;
+	transition: var(--crm-timeline__transition-hover);
+	word-break: break-all;
+}
+
+.crm-timeline__card_link.--bold {
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.crm-timeline__card_link:hover {
+	transition-duration: unset;
+}
+
+.crm-timeline__card_link.--size-xs {
+	font-size: var(--ui-font-size-xs);
+}
+
+.crm-timeline__card_link.--size-sm {
+	font-size: var(--ui-font-size-sm);
+}
+
+.crm-timeline__card_link.--size-md {
+	font-size: var(--ui-font-size-md);
+}
+
+.crm-timeline__card_link.--size-lg {
+	font-size: var(--ui-font-size-lg);
+}
+
+.crm-timeline__card_link.--size-xl {
+	font-size: var(--ui-font-size-xl);
+}
+
 .crm-timeline__calendar-icon {
 	--crm-timeline__calendar-icon_size: 50px;
 	--crm-timeline__calendar-icon_border-width: 1px;
@@ -2854,26 +2931,6 @@ a.crm-timeline__card-title:hover {
 
 .crm-timeline__card-container.--without-logo {
 	--crm-timeline__icon-size: 0.00000000001px; /* hack due to the css minifier replaces `0px` to `0` and breaks expression calc(100% - var(--crm-timeline__icon-size) - 18px); */
-}
-
-.crm-timeline__card_link {
-	font-weight: var(--ui-font-weight-normal, 400);
-	color: var(--ui-color-link-primary-base, #2066b0);
-	text-decoration: underline !important;
-	-webkit-text-decoration-color: transparent !important;
-	        text-decoration-color: transparent !important;
-	cursor: pointer;
-	transition: var(--crm-timeline__transition-hover);
-	word-break: break-all;
-}
-
-.crm-timeline__card_link.--bold {
-	font-weight: var(--ui-font-weight-medium, 500);
-}
-
-.crm-timeline__card_link:hover {
-	/*text-decoration-color: var(--ui-color-link-primary-base, #2066b0) !important;*/
-	transition-duration: unset;
 }
 
 .crm-timeline__card-icon + .crm-timeline__card-container {

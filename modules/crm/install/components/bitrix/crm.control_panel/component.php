@@ -78,6 +78,11 @@ $arParams['PATH_TO_ORDER_KANBAN'] = (isset($arParams['PATH_TO_ORDER_KANBAN']) &&
 $arParams['PATH_TO_ACTIVITY_LIST'] = (isset($arParams['PATH_TO_ACTIVITY_LIST']) && $arParams['PATH_TO_ACTIVITY_LIST'] !== '')
 	? $arParams['PATH_TO_ACTIVITY_LIST'] : '#SITE_DIR#crm/activity/';
 
+$arParams['PATH_TO_ACTIVITY_KANBAN'] = empty($arParams['PATH_TO_ACTIVITY_KANBAN'])
+	? '#SITE_DIR#crm/activity/kanban/'
+	: $arParams['PATH_TO_ACTIVITY_KANBAN']
+;
+
 $arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath(
 	'PATH_TO_COMPANY_LIST',
 	$arParams['PATH_TO_COMPANY_LIST'] ?? '',
@@ -1034,7 +1039,7 @@ if ($this->isOldPortal())
 $stdItems['MY_ACTIVITY'] = array(
 	'ID' => 'MY_ACTIVITY',
 	'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('MY_ACTIVITY'), // 'menu_crm_activity',
-	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_ACTIVITY'),
+	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_ACTIVITY_MSGVER_1'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_ACTIVITY_TITLE'),
 	'URL' => CComponentEngine::MakePathFromTemplate(
 		isset($arParams['PATH_TO_ACTIVITY_INDEX']) && $arParams['PATH_TO_ACTIVITY_INDEX'] !== ''

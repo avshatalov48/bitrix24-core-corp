@@ -33,4 +33,9 @@ class Message
 	{
 		return $this->metadata;
 	}
+
+	public function addMetaData(string $key, mixed $value): void
+	{
+		$this->metadata->addParams($key, $value);
+	}
 }

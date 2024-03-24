@@ -9,6 +9,7 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\Push\PushSender;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 class GarbageCollector
@@ -162,20 +163,22 @@ class GarbageCollector
 	private function readTasks(int $userId, array $taskIds)
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
-		$viewedTime = $this->viewedTime;
-		$viewedTime = $sqlHelper->convertToDbDateTime($viewedTime);
+		$viewedTime = $sqlHelper->convertToDbDateTime($this->viewedTime);
 
 		$inserts = [];
 		foreach ($taskIds as $taskId)
 		{
 			$inserts[] = '(' . (int) $taskId . ', ' . $userId . ', ' . $viewedTime . ')';
 		}
-
-		$sql = "
-			INSERT INTO b_tasks_viewed (TASK_ID, USER_ID, VIEWED_DATE)
-			VALUES " . implode(',', $inserts) . "
-			ON DUPLICATE KEY UPDATE VIEWED_DATE = {$viewedTime}
-		";
+		$values = implode(',', $inserts);
+		$values = " VALUES {$values}";
+		$sql = $sqlHelper->prepareMergeSelect(
+			ViewedTable::getTableName(),
+			['TASK_ID', 'USER_ID'],
+			['TASK_ID', 'USER_ID', 'VIEWED_DATE'],
+			$values,
+			['VIEWED_DATE' => $this->viewedTime]
+		);
 
 		Application::getConnection()->query($sql);
 	}
@@ -187,25 +190,28 @@ class GarbageCollector
 	 * @throws \Bitrix\Main\ArgumentTypeException
 	 * @throws \Bitrix\Main\DB\SqlQueryException
 	 */
-	private function readTopics(int $userId, array $topicIds)
+	public function readTopics(int $userId, array $topicIds)
 	{
 		$forumId = Comment::getForumId();
 
 		$sqlHelper = Application::getConnection()->getSqlHelper();
-		$viewedTime = $this->viewedTime;
-		$viewedTime = $sqlHelper->convertToDbDateTime($viewedTime);
+		$viewedTime = $sqlHelper->convertToDbDateTime($this->viewedTime);
 
 		$inserts = [];
 		foreach ($topicIds as $topicId)
 		{
 			$inserts[] = '(' . (int) $topicId . ', ' . $userId . ', ' . $forumId . ', ' . $viewedTime . ')';
 		}
-
-		$sql = "
-			INSERT INTO b_forum_user_topic (TOPIC_ID, USER_ID, FORUM_ID, LAST_VISIT)
-			VALUES " . implode(',', $inserts) . "
-			ON DUPLICATE KEY UPDATE LAST_VISIT = {$viewedTime}
-		";
+		$inserts = array_unique($inserts);
+		$values = implode(',', $inserts);
+		$values = " VALUES {$values}";
+		$sql = $sqlHelper->prepareMergeSelect(
+			'b_forum_user_topic',
+			['TOPIC_ID', 'USER_ID'],
+			['TOPIC_ID', 'USER_ID', 'FORUM_ID', 'LAST_VISIT',],
+			$values,
+			['LAST_VISIT' => $this->viewedTime,]
+		);
 
 		Application::getConnection()->query($sql);
 	}

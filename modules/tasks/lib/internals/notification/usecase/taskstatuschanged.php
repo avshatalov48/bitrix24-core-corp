@@ -2,61 +2,37 @@
 
 namespace Bitrix\Tasks\Internals\Notification\UseCase;
 
-use Bitrix\Tasks\Internals\Notification\BufferInterface;
 use Bitrix\Tasks\Internals\Notification\EntityCode;
 use Bitrix\Tasks\Internals\Notification\EntityOperation;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\Metadata;
-use Bitrix\Tasks\Internals\Notification\ProviderCollection;
-use Bitrix\Tasks\Internals\Notification\UserRepositoryInterface;
-use Bitrix\Tasks\Internals\TaskObject;
+use Bitrix\Tasks\Internals\Task\Status;
 
-class TaskStatusChanged
+class TaskStatusChanged extends AbstractCase
 {
-	private TaskObject $task;
-	private BufferInterface $buffer;
-	private UserRepositoryInterface $userRepository;
-	private ProviderCollection $providers;
-
-	public function __construct(
-		TaskObject $task,
-		BufferInterface $buffer,
-		UserRepositoryInterface $userRepository,
-		ProviderCollection $providers
-	)
-	{
-		$this->task = $task;
-		$this->buffer = $buffer;
-		$this->userRepository = $userRepository;
-		$this->providers = $providers;
-	}
-
 	public function execute(int $taskCurrentStatus, $params = []): bool
 	{
-		if ($taskCurrentStatus < \CTasks::STATE_NEW || $taskCurrentStatus > \CTasks::STATE_DECLINED)
+		if ($taskCurrentStatus < Status::NEW || $taskCurrentStatus > Status::DECLINED)
 		{
 			return false;
 		}
 
-		$sender = $this->userRepository->getSender($this->task, $params);
-		if (!$sender)
-		{
-			return false;
-		}
-
-		$recepients = $this->userRepository->getRecepients($this->task, $sender, $params);
-		if (empty($recepients))
-		{
-			return false;
-		}
+		$this->createDictionary(['options' => $params]);
 
 		foreach ($this->providers as $provider)
 		{
-			foreach ($recepients as $recepient)
+			$sender = $this->getCurrentSender();
+			if (is_null($sender))
+			{
+				continue;
+			}
+
+			$recipients = $this->getCurrentRecipients();
+			foreach ($recipients as $recipient)
 			{
 				$provider->addMessage(new Message(
 					$sender,
-					$recepient,
+					$recipient,
 					new Metadata(
 						EntityCode::CODE_TASK,
 						EntityOperation::STATUS_CHANGED,

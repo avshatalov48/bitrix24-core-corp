@@ -36,12 +36,17 @@ class TemplateMemberTable extends TaskDataManager
 		return 'b_tasks_template_member';
 	}
 
-	public static function getObjectClass()
+	public static function getObjectClass(): string
 	{
 		return TemplateMemberObject::class;
 	}
 
-	public static function getClass()
+	public static function getCollectionClass(): string
+	{
+		return TemplateMemberCollection::class;
+	}
+
+	public static function getClass(): string
 	{
 		return get_called_class();
 	}

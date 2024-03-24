@@ -26,7 +26,7 @@ $arFiles = array();
 //CrmDeal
 $arDeals = array();
 $obRes = CCrmDeal::GetListEx(
-	array('TITLE' => 'ASC'),
+	array('ID' => 'DESC'),
 	array(),
 	false,
 	array('nTopCount' => 50),
@@ -95,7 +95,7 @@ while ($arRes = $obRes->Fetch())
 //CrmContact
 $arContactTypeList = CCrmStatus::GetStatusList('CONTACT_TYPE');
 $obRes = CCrmContact::GetListEx(
-	array('LAST_NAME' => 'ASC', 'NAME' => 'ASC'),
+	array('ID' => 'DESC'),
 	array('@CATEGORY_ID' => 0),
 	false,
 	array('nTopCount' => 50),
@@ -129,7 +129,7 @@ while ($arRes = $obRes->Fetch())
 //CrmLead
 $arLeads = array();
 $obRes = CCrmLead::GetListEx(
-	array('TITLE' => 'ASC'),
+	array('ID' => 'DESC'),
 	array(),
 	false,
 	array('nTopCount' => 50),

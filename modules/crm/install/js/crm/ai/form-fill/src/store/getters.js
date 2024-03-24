@@ -8,9 +8,6 @@ export default {
 	conflictFields(state): string[] {
 		return state.conflictFields.sort((a, b) => a.order - b.order);
 	},
-	getAiAppliedCount(state): number {
-		return state.aiValuesAppliedCount;
-	},
 	mergeUuid(state): string {
 		return state.mergeUuid;
 	},
@@ -80,6 +77,9 @@ export default {
 	},
 	aiValuesAppliedCount: (state): number => {
 		return state.aiValuesAppliedCount;
+	},
+	isFooterHiddenAndSaveDisabled(state): boolean {
+		return state.aiValuesAppliedCount === 0;
 	},
 	isSliderConfirmPopupShown: (state): boolean => {
 		return state.isSliderConfirmPopupShown;

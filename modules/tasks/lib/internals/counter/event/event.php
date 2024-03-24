@@ -172,6 +172,10 @@ class Event
 			'ID',
 			'OLD_RECORD',
 			'GROUP_ID',
+			'CREATED_BY',
+			'RESPONSIBLE_ID',
+			'ACCOMPLICES',
+			'AUDITORS',
 		];
 
 		foreach ($data as $key => $row)

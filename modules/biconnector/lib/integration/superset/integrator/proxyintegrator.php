@@ -16,9 +16,13 @@ use Bitrix\Main\Web\Json;
 
 final class ProxyIntegrator implements SupersetIntegrator
 {
+	private const PROXY_ACTION_PING_SUPERSET = '/instance/ping';
 	private const PROXY_ACTION_START_SUPERSET = '/instance/start';
-	private const PROXY_ACTION_STOP_SUPERSET = '/instance/stop';
+	private const PROXY_ACTION_FREEZE_SUPERSET = '/instance/freeze';
+	private const PROXY_ACTION_UNFREEZE_SUPERSET = '/instance/unfreeze';
 	private const PROXY_ACTION_DELETE_SUPERSET = '/instance/delete';
+	private const PROXY_ACTION_CHANGE_BI_TOKEN_SUPERSET = '/instance/changeToken';
+	private const PROXY_ACTION_REFRESH_DOMAIN_CONNECTION = '/instance/refreshDomain';
 	private const PROXY_ACTION_CLEAR_CACHE = '/instance/cache/delete';
 	private const PROXY_ACTION_LIST_DASHBOARD = '/dashboard/list';
 	private const PROXY_ACTION_DASHBOARD_DETAIL = '/dashboard/get';
@@ -37,8 +41,11 @@ final class ProxyIntegrator implements SupersetIntegrator
 
 	private ProxySender $sender;
 	private IntegratorLogger $logger;
+
 	private bool $skipFields = false;
 
+	private bool $isServiceStatusChecked = false;
+	private bool $isServiceAvailable = true;
 
 	public static function getInstance(): self
 	{
@@ -50,7 +57,7 @@ final class ProxyIntegrator implements SupersetIntegrator
 		return self::$instance;
 	}
 
-	private static function getDefaultLogger():  IntegratorLogger
+	private static function getDefaultLogger(): IntegratorLogger
 	{
 		return new IntegratorEventLogger();
 	}
@@ -197,15 +204,12 @@ final class ProxyIntegrator implements SupersetIntegrator
 	/**
 	 * @inheritDoc
 	 */
-	public function copyDashboard(int $dashboardId, string $name = null): IntegratorResponse
+	public function copyDashboard(int $dashboardId, string $name): IntegratorResponse
 	{
 		$requestParams = [
 			'id' => $dashboardId,
+			'name' => $name,
 		];
-		if ($name !== null)
-		{
-			$requestParams['name'] = $name;
-		}
 
 		$result = $this->performRequest(
 			action: self::PROXY_ACTION_COPY_DASHBOARD,
@@ -313,12 +317,18 @@ final class ProxyIntegrator implements SupersetIntegrator
 	/**
 	 * @inheritDoc
 	 */
-	public function startSuperset(string $biconnectorToken = ""): IntegratorResponse
+	public function startSuperset(string $biconnectorToken = ''): IntegratorResponse
 	{
 		$requestParams = ['biconnectorToken' => $biconnectorToken];
 		if (ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			$requestParams['userName'] = Application::getConnection()->getDatabase();
+		}
+
+		$region = Application::getInstance()->getLicense()->getRegion();
+		if (!empty($region))
+		{
+			$requestParams['region'] = $region;
 		}
 
 		$result = $this->performRequest(
@@ -339,9 +349,39 @@ final class ProxyIntegrator implements SupersetIntegrator
 	/**
 	 * @inheritDoc
 	 */
-	public function stopSuperset(): IntegratorResponse
+	public function freezeSuperset(array $params = []): IntegratorResponse
 	{
-		return $this->performRequest(self::PROXY_ACTION_STOP_SUPERSET)->response;
+		$requestParams = [];
+		if (isset($params['reason']))
+		{
+			$requestParams['reason'] = $params['reason'];
+		}
+
+		return $this->performRequest(
+			action: self::PROXY_ACTION_FREEZE_SUPERSET,
+			requestParams: $requestParams,
+		)
+			->response
+		;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function unfreezeSuperset(array $params = []): IntegratorResponse
+	{
+		$requestParams = [];
+		if (isset($params['reason']))
+		{
+			$requestParams['reason'] = $params['reason'];
+		}
+
+		return $this->performRequest(
+			action: self::PROXY_ACTION_UNFREEZE_SUPERSET,
+			requestParams: $requestParams,
+		)
+			->response
+		;
 	}
 
 	/**
@@ -355,9 +395,32 @@ final class ProxyIntegrator implements SupersetIntegrator
 	/**
 	 * @inheritDoc
 	 */
+	public function changeBiconnectorToken(string $biconnectorToken): IntegratorResponse
+	{
+		return $this->performRequest(
+				action: self::PROXY_ACTION_CHANGE_BI_TOKEN_SUPERSET,
+				requestParams: [
+					'biconnectorToken' => $biconnectorToken,
+				],
+			)
+			->response
+		;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function clearCache(): IntegratorResponse
 	{
 		return $this->performRequest(self::PROXY_ACTION_CLEAR_CACHE)->response;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function refreshDomainConnection(): IntegratorResponse
+	{
+		return $this->performRequest(self::PROXY_ACTION_REFRESH_DOMAIN_CONNECTION)->response;
 	}
 
 	/**
@@ -418,11 +481,17 @@ final class ProxyIntegrator implements SupersetIntegrator
 	/**
 	 * @inheritDoc
 	 */
-	public function importDashboard(string $filePath): IntegratorResponse
+	public function importDashboard(
+		string $filePath,
+		string $appCode,
+	): IntegratorResponse
 	{
 		$result = $this->performRequest(
 			action: self::PROXY_ACTION_IMPORT_DASHBOARD,
-			requestParams: ['filePath' => $filePath],
+			requestParams: [
+				'filePath' => $filePath,
+				'appCode' => $appCode,
+			],
 			requiredFields: ['dashboards'],
 			isMultipart: true,
 		);
@@ -462,7 +531,7 @@ final class ProxyIntegrator implements SupersetIntegrator
 		}
 		$resultData = $result->getData();
 		if (
-			(int)$resultData['status'] === (int)ProxyIntegratorResponse::HTTP_STATUS_SERVICE_FROZEN
+			(int)$resultData['status'] === ProxyIntegratorResponse::HTTP_STATUS_SERVICE_FROZEN
 			&& SupersetInitializer::isSupersetActive()
 		)
 		{
@@ -476,7 +545,7 @@ final class ProxyIntegrator implements SupersetIntegrator
 			if (!isset($resultData['data']))
 			{
 				return $response
-					->addError(new Error("Server sends empty data"))
+					->addError(new Error('Server sends empty data'))
 					->setStatus(IntegratorResponse::STATUS_SERVER_ERROR)
 					;
 			}
@@ -526,20 +595,53 @@ final class ProxyIntegrator implements SupersetIntegrator
 		}
 
 		$response = self::createResponse($result, $requiredFields);
-		if ($response->hasErrors())
+
+		if ($response->getStatus() === IntegratorResponse::STATUS_FROZEN && SupersetInitializer::isSupersetActive())
+		{
+			$this->logger->logMethodInfo($action, $response->getStatus(), 'superset was frozen');
+			SupersetInitializer::setSupersetStatus(SupersetInitializer::SUPERSET_STATUS_FROZEN);
+			$this->setServiceStatus(true);
+
+			return new PerformingResult(
+				response: $response,
+				requestResult: $result,
+			);
+		}
+		else if (!$this->isStatusUnsuccessful($response->getStatus()) && SupersetInitializer::isSupersetFrozen())
+		{
+			$this->logger->logMethodInfo($action, $response->getStatus(), 'superset was unfrozen');
+			SupersetInitializer::setSupersetStatus(SupersetInitializer::SUPERSET_STATUS_READY);
+		}
+
+		if ($this->isStatusUnsuccessful($response->getStatus()))
+		{
+			$errors = [new Error('Got unsuccessful status from proxy-service')];
+			if ($response->hasErrors())
+			{
+				array_push($errors, ...$response->getErrors());
+			}
+
+			$this->logger->logMethodErrors($action, $response->getStatus(), $errors);
+			$this->setServiceStatus(false);
+		}
+		else if ($response->hasErrors())
 		{
 			$this->logger->logMethodErrors($action, $result->getData()['status'] ?? '400', $response->getErrors());
 		}
-		else if ($response->getStatus() === IntegratorResponse::STATUS_FROZEN)
+		else
 		{
-			$response->addError(new Error("superset is frozen"));
-			SupersetInitializer::setSupersetStatus(SupersetInitializer::SUPERSET_STATUS_FROZEN);
+			$this->setServiceStatus(true);
 		}
 
 		return new PerformingResult(
 			response: $response,
 			requestResult: $result,
 		);
+	}
+
+	private function isStatusUnsuccessful(int $status): bool
+	{
+		return ($status >= 500) && ($status !== ProxyIntegratorResponse::HTTP_STATUS_SERVICE_FROZEN);
 	}
 
 	/**
@@ -597,6 +699,33 @@ final class ProxyIntegrator implements SupersetIntegrator
 		}
 	}
 
+	/**
+	 * @inheritDoc
+	 */
+	public function ping(): bool
+	{
+		if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_LOAD)
+		{
+			return true;
+		}
+
+		if (!$this->isServiceStatusChecked)
+		{
+			$this->performRequest(self::PROXY_ACTION_PING_SUPERSET);
+		}
+
+		return $this->isServiceAvailable;
+	}
+
+	protected function setServiceStatus(bool $isAvailable): void
+	{
+		$this->isServiceStatusChecked = true;
+		$this->isServiceAvailable = $isAvailable;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function skipRequireFields(): static
 	{
 		$this->skipFields = true;

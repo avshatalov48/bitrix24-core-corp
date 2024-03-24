@@ -193,7 +193,16 @@ class Connector
 			$toolsMessageservice = $serviceLocator->get('ImConnector.toolsMessageservice');
 			if ($toolsMessageservice->isEnabled())
 			{
-				$connectors[Library::ID_EDNA_WHATSAPP_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYEDNA');
+				if (\Bitrix\MessageService\Providers\Edna\RegionHelper::isInternational())
+				{
+					$ednaPostfix = '_IO';
+				}
+				else
+				{
+					$ednaPostfix = '';
+				}
+
+				$connectors[Library::ID_EDNA_WHATSAPP_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYEDNA' . $ednaPostfix);
 			}
 		}
 

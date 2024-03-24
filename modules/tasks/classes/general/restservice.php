@@ -6,7 +6,7 @@
  * @copyright 2001-2013 Bitrix
  */
 
-use Bitrix\Rest\RestException;
+use Bitrix\Tasks\Integration\Rest\Exception\RestException;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\User;
 
@@ -394,6 +394,7 @@ final class CTaskRestService extends IRestService
 	 * This is an entry point for running any task.* rest method
 	 *
 	 * @throws RestException
+	 * @throws Exception
 	 */
 	public static function __callStatic($transitMethodName, $args)
 	{
@@ -495,7 +496,7 @@ final class CTaskRestService extends IRestService
 		}
 
 		self::_emitError($errors);
-		throw new RestException($errors[0]['text']);
+		throw RestException::getException($errors[0]['text']);
 	}
 
 

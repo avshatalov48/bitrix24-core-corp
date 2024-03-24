@@ -3,7 +3,6 @@
 namespace Bitrix\Disk\Volume\Storage;
 
 use Bitrix\Main\DB;
-use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Volume;
 

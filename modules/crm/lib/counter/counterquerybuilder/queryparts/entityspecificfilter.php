@@ -17,8 +17,13 @@ final class EntitySpecificFilter
 	{
 		$stageSemanticId = isset($options['STAGE_SEMANTIC_ID']) && $options['STAGE_SEMANTIC_ID']
 			? $options['STAGE_SEMANTIC_ID']
-			: PhaseSemantics::PROCESS
-		;
+			: PhaseSemantics::PROCESS;
+
+		if (!empty($stageSemanticId) && !is_array($stageSemanticId))
+		{
+			$stageSemanticId = [$stageSemanticId];
+		}
+
 		if($entityTypeID === \CCrmOwnerType::Deal)
 		{
 			$query->addFilter('=STAGE_SEMANTIC_ID', $stageSemanticId);
@@ -55,15 +60,19 @@ final class EntitySpecificFilter
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Quote)
 		{
-			$query->where('CLOSED', 'N');
-			$query->whereIn('STATUS_ID', $this->queryQuoteProgressStatuses());
+			$stages = $this->queryQuoteProgressStatuses($stageSemanticId);
+			$query->whereIn('STATUS_ID', $stages);
+			if ($stageSemanticId === null)
+			{
+				$query->where('CLOSED', 'N');
+			}
 		}
 		elseif($entityTypeID === \CCrmOwnerType::SmartInvoice)
 		{
 			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
 			if ($factory->isStagesEnabled())
 			{
-				$statesIds = $this->queryDynamicEntityStages(null, $factory);
+				$statesIds = $this->queryDynamicEntityStages(null, $factory, $stageSemanticId);
 				$query->whereIn('STAGE_ID', $statesIds);
 			}
 		}
@@ -74,7 +83,7 @@ final class EntitySpecificFilter
 			$factory = Container::getInstance()->getFactory($entityTypeID);
 			if ($factory->isStagesEnabled())
 			{
-				$statesIds = $this->queryDynamicEntityStages($categoryId, $factory);
+				$statesIds = $this->queryDynamicEntityStages($categoryId, $factory, $stageSemanticId);
 				$query->whereIn('STAGE_ID', $statesIds);
 			}
 
@@ -85,13 +94,19 @@ final class EntitySpecificFilter
 		}
 	}
 
-	private function queryQuoteProgressStatuses(): array
+	private function queryQuoteProgressStatuses(array $stageSemanticIds): array
 	{
 		$subCt = new ConditionTree();
-		$subCt->logic(ConditionTree::LOGIC_OR);
-		$subCt->whereNotIn('SEMANTICS', ['S', 'F']);
-		$subCt->whereNull('SEMANTICS');
-
+		if (empty($stageSemanticIds))
+		{
+			$subCt->logic(ConditionTree::LOGIC_OR);
+			$subCt->whereNotIn('SEMANTICS', ['S', 'F']);
+			$subCt->whereNull('SEMANTICS');
+		}
+		else
+		{
+			$subCt->whereIn('STATUS_ID', $stageSemanticIds);
+		}
 
 		$query = StatusTable::query()
 			->setSelect(['STATUS_ID'])
@@ -102,11 +117,11 @@ final class EntitySpecificFilter
 		return array_column($query->fetchAll(), 'STATUS_ID');
 	}
 
-	private function queryDynamicEntityStages(?int $categoryId, Factory $factory): array
+	private function queryDynamicEntityStages(?int $categoryId, Factory $factory, ?array $stageSemanticIds): array
 	{
 		if ($categoryId !== null)
 		{
-			return $this->queryDynamicEntityStagesByCategory($categoryId, $factory);
+			return $this->queryDynamicEntityStagesByCategory($categoryId, $factory, $stageSemanticIds);
 		}
 
 		$result = [];
@@ -115,23 +130,42 @@ final class EntitySpecificFilter
 		{
 			$result = array_merge(
 				$result,
-				$this->queryDynamicEntityStagesByCategory($category->getId(), $factory)
+				$this->queryDynamicEntityStagesByCategory($category->getId(), $factory, $stageSemanticIds)
 			);
 		}
 		return $result;
 	}
 
-	private function queryDynamicEntityStagesByCategory(int $categoryId, Factory $factory): array
+	private function queryDynamicEntityStagesByCategory(
+		int $categoryId,
+		Factory $factory,
+		?array $stageSemanticIds
+	): array
 	{
 		$result = [];
 		$stages = $factory->getStages($categoryId);
+
+		$filterStagesBySemanticIds = function ($stage) use($stageSemanticIds) {
+			$semantics = $stage->getSemantics() ?? PhaseSemantics::PROCESS;
+			return in_array($semantics, $stageSemanticIds);
+		};
+
+		$filterStagesNotFinal = function ($stage) {
+			return !PhaseSemantics::isFinal($stage->getSemantics());
+		};
+
+		$checkFn = $stageSemanticIds === null
+			? $filterStagesNotFinal
+			: $filterStagesBySemanticIds;
+
 		foreach ($stages as $stage)
 		{
-			if (!PhaseSemantics::isFinal($stage->getSemantics()))
+			if ($checkFn($stage))
 			{
 				$result[] = $stage->getStatusId();
 			}
 		}
+
 		return $result;
 	}
 

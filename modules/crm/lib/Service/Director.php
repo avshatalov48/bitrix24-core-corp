@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Service\Scenario\Sign\B2e\DefaultTriggers;
+use CCrmOwnerType;
+
 class Director
 {
 	public function getScenariosForNewCategory(int $entityTypeId, int $categoryId): Scenario\Collection
@@ -26,6 +29,10 @@ class Director
 		{
 			$defaultStages->setStagesData($defaultStagesData);
 		}
+		if ($entityTypeId === CCrmOwnerType::SmartB2eDocument)
+		{
+			$scenarios[] = new DefaultTriggers($categoryId);
+		}
 		$scenarios[] = $defaultStages;
 		$scenarios[] = new Scenario\PurgeStagesCache($factory);
 
@@ -41,6 +48,10 @@ class Director
 		if ($factory instanceof Factory\SmartDocument)
 		{
 			return \CCrmStatus::GetDefaultSmartDocumentStatuses();
+		}
+		if ($factory instanceof Factory\SmartB2eDocument)
+		{
+			return \CCrmStatus::GetDefaultSmartB2eDocumentStatuses();
 		}
 
 		return null;

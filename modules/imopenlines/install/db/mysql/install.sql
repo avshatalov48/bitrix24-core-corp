@@ -63,6 +63,7 @@ CREATE TABLE b_imopenlines_session
 	EXTRA_URL varchar(255) NULL,
 	IS_FIRST char(1) not null,
 	LAST_SEND_MAIL_ID int(11) not null default 0,
+	USER_LANG varchar(5) null,
 	PRIMARY KEY (ID),
 	KEY IX_IMOL_S_1 (USER_CODE, CLOSED),
 	KEY IX_IMOL_S_2 (USER_ID, CLOSED),

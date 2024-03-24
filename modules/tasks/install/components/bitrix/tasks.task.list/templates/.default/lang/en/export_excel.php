@@ -8,6 +8,7 @@ $MESS["TASKS_EXCEL_ACTIVITY_DATE"] = "Active";
 $MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "In report";
 $MESS["TASKS_EXCEL_ALLOW_CHANGE_DEADLINE"] = "Responsible person can change deadline";
 $MESS["TASKS_EXCEL_ALLOW_TIME_TRACKING"] = "Track time spent";
+$MESS["TASKS_EXCEL_ASSIGNEE_NAME"] = "Assignee";
 $MESS["TASKS_EXCEL_BASE_ID"] = "Parent task ID";
 $MESS["TASKS_EXCEL_BASE_TITLE"] = "Parent task name";
 $MESS["TASKS_EXCEL_CHANGED_DATE"] = "Modified on";

@@ -11,6 +11,7 @@ namespace Bitrix\Tasks\Internals\DataBase;
 
 use \Bitrix\Main;
 use \Bitrix\Main\DB;
+use Bitrix\Main\DB\SqlExpression;
 use \Bitrix\Main\Entity;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Application;
@@ -265,25 +266,34 @@ abstract class Mesh extends Tree
 
 		if(($behaviour['INCREMENT_MP_WHEN_EXISTS'] ?? false) === true)
 		{
-			$plus = '+'.($increment > 0 ? $increment : '1');
+			$merge = $helper->prepareMerge(
+				static::getTableName(),
+				[$idColName, $parentIdColName],
+				$values,
+				[
+					$mpcityColName => new SqlExpression($mpcityColName . '+'.($increment > 0 ? $increment : '1')),
+				],
+			);
+
+			$merge = $merge[0];
 		}
 		else
 		{
-			$plus = '';
+			$insert = $helper->prepareInsert(
+				static::getTableName(),
+				$values,
+			);
+
+			$merge = $helper->getInsertIgnore(
+				static::getTableName(),
+				"({$insert[0]})",
+				"VALUES ({$insert[1]})"
+			);
 		}
 
-		$merge = $helper->prepareMerge(
-			static::getTableName(),
-			array($idColName, $parentIdColName), // primary key
-			$values,
-			array(
-				$mpcityColName => new \Bitrix\Main\DB\SqlExpression($mpcityColName.$plus),
-			)
-		);
-
-		if ($merge[0] != "")
+		if ($merge !== '')
 		{
-			$connection->query($merge[0]);
+			$connection->query($merge);
 			return true;
 		}
 

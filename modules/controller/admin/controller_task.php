@@ -223,7 +223,10 @@ if (
 				$DB->Rollback();
 				$lAdmin->AddGroupError(GetMessage("CTRLR_TASK_ERR_DELETE"), $ID);
 			}
-			$DB->Commit();
+			else
+			{
+				$DB->Commit();
+			}
 			break;
 
 		case "repeat":

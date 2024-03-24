@@ -10,7 +10,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\ActionException;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Helper\Grid;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
@@ -249,7 +248,6 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 
 			$this->arResult['GROUP_IDS'][] = $task['GROUP_ID'];
 			$this->arResult['LIST'][$key] = $this->prepareRow($task);
-			$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::DEFAULT;
 		}
 
 		$res = ProjectDependenceTable::getListByLegacyTaskFilter($this->listParameters['filter']);

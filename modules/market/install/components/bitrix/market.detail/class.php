@@ -29,6 +29,13 @@ class RestMarketDetail extends CBitrixComponent
 	private $appItem;
 	private $version = 0;
 
+	private bool $appInstalled = false;
+
+	private function isAppInstalled(): bool
+	{
+		return $this->appInstalled;
+	}
+
 	public function executeComponent()
 	{
 		if ($this->prepareInfo()) {
@@ -82,12 +89,16 @@ class RestMarketDetail extends CBitrixComponent
 		]);
 		$this->appItem = $dbApp->fetch();
 
-		if($this->version > 0 && $this->appItem['ACTIVE'] === 'N' && $this->appItem['STATUS'] === AppTable::STATUS_PAID) {
+		if ($this->appItem['ACTIVE'] === AppTable::ACTIVE) {
+			$this->appInstalled = true;
+		}
+
+		if ($this->version > 0 && !$this->isAppInstalled() && $this->appItem['STATUS'] === AppTable::STATUS_PAID) {
 			$this->version = (int)$this->appItem['VERSION'];
 		} elseif (
 			$this->arResult['START_INSTALL'] &&
 			$this->appItem['ID'] > 0 &&
-			$this->appItem['ACTIVE'] === AppTable::ACTIVE &&
+			$this->isAppInstalled() &&
 			$this->appItem['INSTALLED'] === AppTable::INSTALLED &&
 			(int)$this->appItem['VERSION'] === (int)$_GET['ver']
 		) {
@@ -104,7 +115,8 @@ class RestMarketDetail extends CBitrixComponent
 		$result = [];
 
 		$queryFields = [
-			'code' => $this->arParams['APP_CODE']
+			'code' => $this->arParams['APP_CODE'],
+			'isInstalled' => $this->isAppInstalled() ? 'Y' : 'N',
 		];
 
 		if($this->version > 0) {
@@ -133,6 +145,8 @@ class RestMarketDetail extends CBitrixComponent
 		$response = Transport::instance()->batch($batch);
 		if (isset($response[Transport::METHOD_MARKET_APP]['ITEMS']) && is_array($response[Transport::METHOD_MARKET_APP]['ITEMS'])) {
 			$result = $response[Transport::METHOD_MARKET_APP]['ITEMS'];
+			$this->arResult['ADDITIONAL_CONTENT'] = $response[Transport::METHOD_MARKET_APP]['ADDITIONAL_CONTENT'] ?? '';
+			$this->arResult['ADDITIONAL_MARKET_ACTION'] = $response[Transport::METHOD_MARKET_APP]['ADDITIONAL_MARKET_ACTION'] ?? '';
 
 			if (is_array($response[Transport::METHOD_GET_REVIEWS])) {
 				$result['REVIEWS'] = $response[Transport::METHOD_GET_REVIEWS];
@@ -166,10 +180,9 @@ class RestMarketDetail extends CBitrixComponent
 		}
 
 		if (
-			isset($this->arResult['APP']['ACTIVE'])
-			&& $this->arResult['APP']['ACTIVE'] === 'Y'
-			&& isset($this->arResult['APP']['TYPE'])
-			&& $this->arResult['APP']['TYPE'] !== AppTable::TYPE_CONFIGURATION
+			$this->isAppInstalled() &&
+			isset($this->arResult['APP']['TYPE']) &&
+			$this->arResult['APP']['TYPE'] !== AppTable::TYPE_CONFIGURATION
 		) {
 			$this->arResult['APP']['UPDATES'] = Client::getAvailableUpdate($this->arResult['APP']['CODE']);
 		}
@@ -215,7 +228,7 @@ class RestMarketDetail extends CBitrixComponent
 		$this->arResult['APP']['SCOPES_TO_SHOW'] = $rights->getQuantityToShow();
 		$this->arResult['APP']['SCOPES_MORE_BUTTON'] = $rights->isShowMoreButton() ? 'Y' : 'N';
 
-		$this->arResult['APP']['BUTTONS'] = Action::list($this->arResult['APP'], $this->arResult['START_INSTALL']);
+		$this->arResult['APP']['BUTTONS'] = Action::getButtons($this->arResult['APP'], $this->arResult['START_INSTALL']);
 
 		if (!empty($this->appItem)) {
 			$installedApps = Menu::getInstalledApps((int)$this->appItem['ID']);
@@ -237,7 +250,11 @@ class RestMarketDetail extends CBitrixComponent
 
 		$this->arResult['LICENSE'] = License::getInfo($this->arResult['APP']);
 
-		if((isset($this->arResult['APP']['TYPE'])) && $this->arResult['APP']['TYPE'] == AppTable::TYPE_CONFIGURATION) {
+		$appType = $this->arResult['APP']['TYPE'] ?? '';
+		if (
+			$appType === AppTable::TYPE_CONFIGURATION
+			|| $appType === AppTable::TYPE_BIC_DASHBOARD
+		) {
 			$this->arResult['IMPORT_PAGE'] = Url::getConfigurationImportAppUrl($this->arResult['APP']['CODE']);
 			$this->arResult['OPEN_IMPORT'] = $this->needOpenImport() ? 'Y' : 'N';
 
@@ -250,15 +267,15 @@ class RestMarketDetail extends CBitrixComponent
 				$this->arResult['IMPORT_PAGE'] = $uri->getUri();
 			}
 		}
-
 	}
 
 	private function needOpenImport(): bool
 	{
+		$appType = $this->arResult['APP']['TYPE'] ?? '';
 		if (
+			$this->isAppInstalled() &&
 			isset ($this->arResult['APP']['INSTALLED']) && $this->arResult['APP']['INSTALLED'] === AppTable::NOT_INSTALLED &&
-			isset ($this->arResult['APP']['TYPE']) && $this->arResult['APP']['TYPE'] === AppTable::TYPE_CONFIGURATION &&
-			isset ($this->arResult['APP']['ACTIVE']) && $this->arResult['APP']['ACTIVE'] === AppTable::ACTIVE
+			($appType === AppTable::TYPE_BIC_DASHBOARD || $appType === AppTable::TYPE_CONFIGURATION)
 		) {
 			return true;
 		}

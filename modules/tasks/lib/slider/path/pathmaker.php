@@ -6,6 +6,7 @@ abstract class PathMaker
 {
 	public const PERSONAL_CONTEXT = 'personal';
 	public const GROUP_CONTEXT = 'group';
+	public const SPACE_CONTEXT = 'space';
 
 	public const DEFAULT_ACTION = 'view';
 	public const EDIT_ACTION = 'edit';
@@ -13,7 +14,7 @@ abstract class PathMaker
 	public const AND = '&';
 	public const START = '?';
 
-	public static array $allowedActions = ['view', 'edit'];
+	public static array $allowedActions = [self::DEFAULT_ACTION, self::EDIT_ACTION];
 
 	public string $queryParams = '';
 

@@ -113,6 +113,7 @@ BX.namespace('Tasks.Component');
 								id: 'user',
 								options: {
 									emailUsers: true,
+									analyticsSource: 'task',
 								}
 							},
 						],
@@ -129,7 +130,7 @@ BX.namespace('Tasks.Component');
 
 			doMenuAction: function(menu, e, item)
 			{
-				var code = item.code;
+				const code = item.code;
 
 				if (code)
 				{
@@ -175,21 +176,21 @@ BX.namespace('Tasks.Component');
 
 				this.togglePanelActivity(false);
 
-				if(code == 'START_TIMER' || code == 'PAUSE_TIMER')
+				if(code === 'START_TIMER' || code === 'PAUSE_TIMER')
 				{
 					// do timer actions
-					this.getDayPlan()[code == 'START_TIMER' ? 'startTimer' : 'stopTimer'](
+					this.getDayPlan()[code === 'START_TIMER' ? 'startTimer' : 'stopTimer'](
 						this.option('taskId'),
 						true,
 						args.force || false
 					);
 				}
-				else if(code == 'DAYPLAN.ADD')
+				else if(code === 'DAYPLAN.ADD')
 				{
 					this.getDayPlan().addToPlan(this.option('taskId'));
 					this.reFetchTaskData(code);
 				}
-				else if(code == 'DELETE')
+				else if(code === 'DELETE')
 				{
 					window.top.BX.UI.Notification.Center.notify({
 						content: BX.message('TASKS_DELETE_SUCCESS')
@@ -198,9 +199,9 @@ BX.namespace('Tasks.Component');
 				}
 				else if(code === 'COMPLETE' || code === 'RENEW')
 				{
-					var taskCompletePromise = new BX.Promise();
-					var taskStatus = null;
-					var isParentScrumTask = false;
+					const taskCompletePromise = new BX.Promise();
+					let taskStatus = null;
+					let isParentScrumTask = false;
 
 					if (this.option('isScrumTask'))
 					{
@@ -277,10 +278,10 @@ BX.namespace('Tasks.Component');
 
 			doDynamicTaskAction: function(code, args)
 			{
-				var taskId = this.option('taskId');
-				var self = this;
+				const taskId = this.option('taskId');
+				const self = this;
 
-				var action = code.toLowerCase();
+				const action = code.toLowerCase();
 
 				args = args || {};
 				args['id'] = taskId;
@@ -294,6 +295,11 @@ BX.namespace('Tasks.Component');
 				}).then(
 					function(response)
 					{
+						if (action === 'complete')
+						{
+							this.sendAnalyticsOnTaskComplete();
+						}
+
 						if (action === 'delete')
 						{
 							BX.Tasks.Util.fireGlobalTaskEvent('DELETE', {ID: taskId});
@@ -637,7 +643,31 @@ BX.namespace('Tasks.Component');
 			updatePlanner: function()
 			{
 				this.getDayPlan().updatePlanner();
-			}
+			},
+
+			sendAnalyticsOnTaskComplete: function ()
+			{
+				const analyticsData = {
+					tool: 'tasks',
+					category: 'task_operations',
+					event: 'task_complete',
+					type: 'task',
+					c_section: 'tasks',
+					c_element: 'complete_button',
+					c_sub_section: 'task_card',
+				};
+
+				if (BX.UI.Analytics)
+				{
+					BX.UI.Analytics.sendData(analyticsData);
+				}
+				else
+				{
+					BX.Runtime.loadExtension('ui.analytics').then(() => {
+						BX.UI.Analytics.sendData(analyticsData);
+					});
+				}
+			},
 		}
 	});
 

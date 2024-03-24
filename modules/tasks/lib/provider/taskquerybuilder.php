@@ -5,10 +5,12 @@ namespace Bitrix\Tasks\Provider;
 use Bitrix\Forum\MessageTable;
 use Bitrix\Forum\TopicTable;
 use Bitrix\Im\Model\LinkTaskTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
@@ -129,9 +131,9 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	 * @param TaskQuery $taskQuery
 	 * @return Query
 	 * @throws InvalidSelectException
-	 * @throws UnexpectedTableException
 	 * @throws ArgumentException
 	 * @throws SystemException
+	 * @throws LoaderException
 	 */
 	public static function build(TaskQueryInterface $taskQuery): Query
 	{
@@ -230,6 +232,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 					->whereIn(self::ALIAS_TASK_ACCESS.'.TYPE', [RoleDictionary::ROLE_RESPONSIBLE, RoleDictionary::ROLE_DIRECTOR, RoleDictionary::ROLE_ACCOMPLICE])
 					->whereNotIn(self::ALIAS_TASK_ACCESS.'.USER_ID', $departmentMembers)
 			);
+
 		}
 
 		// user can view all department tasks
@@ -285,7 +288,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 				'RECURSIVE' 	=> 'N',
 				'ACTIVE' 		=> 'Y',
 				'SKIP' 			=> [],
-				'SELECT' 		=> null
+				'SELECT' 		=> ['ID']
 			]);
 
 			$this->departmentMembers = [];
@@ -552,6 +555,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 			case 'SORTING_ORDER':
 				$this->query->addOrder('NULL_SORTING', $order);
 				$this->query->addOrder(self::ALIAS_TASK_SORT . '.SORT', $order);
+				$this->taskQuery->addSelect('SORTING');
 				$this->taskQuery->addSelect('NULL_SORTING');
 				$this->registerRuntimeField(self::ALIAS_TASK_SORT);
 				break;
@@ -583,7 +587,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 				break;
 
 			case 'SCRUM_ITEMS_SORT':
-				$this->query->addOrder(self::ALIAS_SCRUM_ITEM_B.".SORT", $order);
+				$this->query->addOrder(self::ALIAS_SCRUM_ITEM_B . '.SORT', $order);
 				$this->registerRuntimeField(self::ALIAS_SCRUM_ITEM_B);
 				break;
 
@@ -609,7 +613,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	/**
 	 * @return $this
 	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 * @throws SystemException
 	 */
 	private function buildJoin(): self
@@ -645,7 +649,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	 * @param string $alias
 	 * @return void
 	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 * @throws SystemException
 	 */
 	private function joinByAlias(string $alias): void
@@ -1087,6 +1091,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	 */
 	private function getFieldMap(): array
 	{
+		$helper = Application::getConnection()->getSqlHelper();
 		return [
 			"ID" => "ID",
 			"TITLE" => "TITLE",
@@ -1176,6 +1181,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 				return $this->getFavoriteField();
 			},
 			"SORTING" => self::ALIAS_TASK_SORT.".SORT",
+			'SCRUM_ITEMS_SORT' => self::ALIAS_SCRUM_ITEM_B . '.SORT',
 			"IM_CHAT_ID" => self::ALIAS_CHAT_TASK.".ID",
 			"IM_CHAT_MESSAGE_ID" => self::ALIAS_CHAT_TASK.".MESSAGE_ID",
 			"IM_CHAT_CHAT_ID" => self::ALIAS_CHAT_TASK.".CHAT_ID",
@@ -1259,16 +1265,16 @@ class TaskQueryBuilder implements QueryBuilderInterface
 				[self::ALIAS_TASK_SORT.".SORT"]
 			),
 			"LENGTH_DEADLINE" => new ExpressionField(
-				"LENGTH_DEADLINE",
-				'CASE
+				'LENGTH_DEADLINE',
+				"CASE
 					WHEN
-						length(%s) > 0
+						{$helper->getLengthFunction($helper->getDateToCharFunction('%s'))} > 0
 					THEN
 						1
 					ELSE
 						0
-				END',
-				["DEADLINE"]
+				END",
+				['DEADLINE']
 			),
 			"SCENARIO_NAME" => self::ALIAS_TASK_SCENARIO.".SCENARIO",
 			'IS_REGULAR' => 'IS_REGULAR',
@@ -1278,7 +1284,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	/**
 	 * @return ExpressionField
 	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 * @throws SystemException
 	 */
 	private function getFavoriteField(): ExpressionField
@@ -1295,7 +1301,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	/**
 	 * @return ExpressionField
 	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 * @throws SystemException
 	 */
 	private function getNotViewedField(): ExpressionField
@@ -1323,7 +1329,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	/**
 	 * @return ExpressionField
 	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 * @throws SystemException
 	 */
 	private function getMessageIdField(): ExpressionField
@@ -1340,7 +1346,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	/**
 	 * @return ExpressionField
 	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
+	 * @throws LoaderException
 	 * @throws SystemException
 	 */
 	private function getStatusField(): ExpressionField

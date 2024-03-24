@@ -151,7 +151,7 @@ class Quote extends ProductsDataProvider
 	 */
 	public function getMyCompanyId($defaultMyCompanyId = null)
 	{
-		return parent::getMyCompanyId($this->data['MYCOMPANY_ID']);
+		return parent::getMyCompanyId($this->data['MYCOMPANY_ID'] ?? null);
 	}
 
 	/**

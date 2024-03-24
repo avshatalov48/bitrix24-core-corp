@@ -8,7 +8,7 @@ import "./toolbar.css";
 
 export const Toolbar = {
 	props: [
-		'categories', 'menuInfo',
+		'categories', 'menuInfo', 'marketAction',
 	],
 	data() {
 		return {
@@ -359,6 +359,12 @@ export const Toolbar = {
 			return '';
 		},
 		openSubscriptionSlider: function () {
+			if (this.marketAction.length > 0) {
+				try {
+					eval(this.marketAction);
+				} catch (e) {}
+			}
+
 			top.BX.UI.InfoHelper.show(this.$root.marketSlider);
 		},
 		...mapActions(ratingStore, ['isActiveStar', 'getAppRating',]),

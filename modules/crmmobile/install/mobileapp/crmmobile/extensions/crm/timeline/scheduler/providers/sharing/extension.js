@@ -566,7 +566,7 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 			}
 
 			const detailCardParams = context.detailCard.getComponentParams();
-			const entityTypeId = get(detailCardParams, 'entityTypeId', 0)
+			const entityTypeId = get(detailCardParams, 'entityTypeId', 0);
 			const isCalendarSharingEnabled = get(detailCardParams, 'isCalendarSharingEnabled', true);
 
 			return entityTypeId === TypeId.Deal && isCalendarSharingEnabled;

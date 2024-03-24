@@ -3,6 +3,7 @@ namespace Bitrix\Disk\Internals\Rights\Table;
 
 use Bitrix\Disk\Internals\DataManager;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\PgsqlConnection;
 use Bitrix\Main\Type\DateTime;
 
 /**
@@ -112,20 +113,35 @@ final class RightSetupSessionTable extends DataManager
 	 *
 	 * @return void
 	 */
-	public static function markAsBad()
+	public static function markAsBad(): void
 	{
 		$badStatus = self::STATUS_BAD;
 		$purifiedStatus = self::STATUS_BAD_PURIFIED;
 		$startedStatus = self::STATUS_STARTED;
 
 		$connection = Application::getConnection();
-		$connection->queryExecute("
-			UPDATE b_disk_right_setup_session s
-			INNER JOIN b_disk_right_setup_session s1 ON s1.PARENT_ID=s.ID
-			INNER JOIN b_disk_right_setup_session s2 ON s2.PARENT_ID=s1.ID
-			SET s2.STATUS = {$badStatus}
-			WHERE s2.STATUS = {$startedStatus}
-		");
+		if ($connection instanceof PgsqlConnection)
+		{
+			$sql = "
+				UPDATE b_disk_right_setup_session AS s2
+				SET status = {$badStatus}
+				FROM b_disk_right_setup_session AS s1
+				INNER JOIN b_disk_right_setup_session AS s
+				ON s1.parent_id = s.id
+				WHERE s2.parent_id = s1.id AND s2.status = {$startedStatus}
+			";
+		}
+		else
+		{
+			$sql = "
+				UPDATE b_disk_right_setup_session s
+				INNER JOIN b_disk_right_setup_session s1 ON s1.PARENT_ID = s.ID
+				INNER JOIN b_disk_right_setup_session s2 ON s2.PARENT_ID = s1.ID
+				SET s2.STATUS = {$badStatus}
+				WHERE s2.STATUS = {$startedStatus}
+			";
+		}
+		$connection->queryExecute($sql);
 
 		$badIds = $connection->query(
 			"SELECT ID FROM b_disk_right_setup_session WHERE STATUS = {$badStatus} ORDER BY CREATE_TIME LIMIT 50"

@@ -42,6 +42,11 @@ header('Pragma: public');
 $userCache = [];
 $groupCache = [];
 $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
+$locMap = [
+	'PARENT_ID' => 'BASE_ID',
+	'PARENT_TITLE' => 'BASE_TITLE',
+	'RESPONSIBLE_NAME' => 'ASSIGNEE_NAME',
+];
 
 $columns = $arParams['COLUMNS'];
 
@@ -62,14 +67,8 @@ if ($arResult['EXPORT_ALL'])
 			{
 				continue;
 			}
-			if ($field === 'PARENT_ID')
-			{
-				$field = 'BASE_ID';
-			}
-			if ($field === 'PARENT_TITLE')
-			{
-				$field = 'BASE_TITLE';
-			}
+
+			$field = $locMap[$field] ?? $field;
 			$header = Loc::getMessage("TASKS_EXCEL_{$field}");
 			if ($header === null && array_key_exists($field, $arParams['UF']))
 			{

@@ -1,7 +1,6 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_popup,main_core,main_core_events,tasks_viewed) {
+(function (exports,main_popup,main_core,main_core_events,ui_analytics,tasks_viewed) {
 	'use strict';
 
 	var Filter = /*#__PURE__*/function () {
@@ -190,7 +189,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core_events.EventEmitter.emit('Tasks.Toolbar:onItem', {
 	        counter: this
 	      });
-	      this.$container.classList.contains('--hover') ? this.unActive() : this.active();
+	      if (this.$container.classList.contains('--hover')) {
+	        this.unActive();
+	      } else {
+	        this.active();
+	        this.sendAnalytics();
+	      }
 	    }
 	  }, {
 	    key: "getPopupMenuItemContainer",
@@ -210,6 +214,45 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	      return this.$container;
 	    }
+	  }, {
+	    key: "sendAnalytics",
+	    value: function sendAnalytics() {
+	      ui_analytics.sendData({
+	        tool: 'tasks',
+	        category: 'task_operations',
+	        type: 'task',
+	        event: this.getAnalyticsEvent(),
+	        c_section: this.getAnalyticsSection(),
+	        c_element: this.getAnalyticsElement()
+	      });
+	    }
+	  }, {
+	    key: "getAnalyticsEvent",
+	    value: function getAnalyticsEvent() {
+	      if (Counters.counterTypes.expired.includes(this.type)) {
+	        return 'overdue_counters_on';
+	      }
+	      return 'comments_counters_on';
+	    }
+	  }, {
+	    key: "getAnalyticsSection",
+	    value: function getAnalyticsSection() {
+	      if (Counters.counterTypes.scrum.includes(this.type)) {
+	        return 'scrum';
+	      }
+	      if (Counters.counterTypes.project.includes(this.type)) {
+	        return 'project';
+	      }
+	      return 'tasks';
+	    }
+	  }, {
+	    key: "getAnalyticsElement",
+	    value: function getAnalyticsElement() {
+	      if (Counters.counterTypes.expired.includes(this.type)) {
+	        return 'overdue_counters_filter';
+	      }
+	      return 'comments_counters_filter';
+	    }
 	  }]);
 	  return CountersItem;
 	}();
@@ -226,7 +269,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        other: ['project_expired', 'project_comments', 'projects_foreign_expired', 'projects_foreign_comments', 'groups_foreign_expired', 'groups_foreign_comments', 'sonet_foreign_expired', 'sonet_foreign_comments', 'scrum_foreign_comments'],
 	        additional: ['muted_new_comments'],
 	        expired: ['expired', 'my_expired', 'originator_expired', 'accomplices_expired', 'auditor_expired', 'project_expired', 'projects_total_expired', 'projects_foreign_expired', 'groups_total_expired', 'groups_foreign_expired', 'sonet_total_expired', 'sonet_foreign_expired'],
-	        comment: ['new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'muted_new_comments', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments', 'scrum_total_comments', 'scrum_foreign_comments']
+	        comment: ['new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'muted_new_comments', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments', 'scrum_total_comments', 'scrum_foreign_comments'],
+	        project: ['project_expired', 'projects_total_expired', 'projects_foreign_expired', 'groups_total_expired', 'groups_foreign_expired', 'sonet_total_expired', 'sonet_foreign_expired', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments'],
+	        scrum: ['scrum_total_comments', 'scrum_foreign_comments']
 	      };
 	    }
 	  }]);
@@ -676,5 +721,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Counters = Counters;
 
-}((this.BX.Tasks.Counters = this.BX.Tasks.Counters || {}),BX.Main,BX,BX.Event,BX.Tasks.Viewed));
+}((this.BX.Tasks.Counters = this.BX.Tasks.Counters || {}),BX.Main,BX,BX.Event,BX.UI.Analytics,BX.Tasks.Viewed));
 //# sourceMappingURL=script.js.map

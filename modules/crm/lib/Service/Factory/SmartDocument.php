@@ -15,6 +15,7 @@ use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Document;
+use Bitrix\Sign\Type\Document\EntityType;
 
 class SmartDocument extends Dynamic
 {
@@ -135,13 +136,40 @@ class SmartDocument extends Dynamic
 
 					if (\Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled())
 					{
-						$document = Document::resolveByEntity('SMART', $item->getId());
-						if ($document && !$document->canBeChanged())
+						$documentServiceContainer = \Bitrix\Sign\Service\Container::instance()->getDocumentService();
+						// todo check remove if after install sign 23.600
+						if (
+							defined('\Bitrix\Sign\Type\Document\EntityType::SMART')
+							&& method_exists($documentServiceContainer, 'canBeChanged')
+						)
 						{
-							$result->addError(new \Bitrix\Main\Error(
-								Loc::getMessage('CRM_TYPE_SMART_DOCUMENT_DELETE_DENIED'),
-								'SIGN_ERROR_DENIED'
-							));
+							$document = \Bitrix\Sign\Service\Container::instance()
+								->getDocumentRepository()
+								->getByEntityIdAndType($item->getId(), EntityType::SMART)
+							;
+							if (
+								$document
+								&& !$documentServiceContainer->canBeChanged($document)
+							)
+							{
+								$result->addError(
+									new \Bitrix\Main\Error(
+										Loc::getMessage('CRM_TYPE_SMART_DOCUMENT_DELETE_DENIED'),
+										'SIGN_ERROR_DENIED'
+									)
+								);
+							}
+						}
+						else // todo remove after install sign 23.600
+						{
+							$document = Document::resolveByEntity('SMART', $item->getId());
+							if ($document && !$document->canBeChanged())
+							{
+								$result->addError(new \Bitrix\Main\Error(
+									Loc::getMessage('CRM_TYPE_SMART_DOCUMENT_DELETE_DENIED'),
+									'SIGN_ERROR_DENIED'
+								));
+							}
 						}
 					}
 
@@ -158,14 +186,29 @@ class SmartDocument extends Dynamic
 					if (\Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled())
 					{
 						$itemOld = \Bitrix\Crm\Service\Operation\Action::getItemBeforeSave();
+						if (!$itemOld)
+						{
+							return new Result();
+						}
 
-						if ($itemOld)
+						$documentRepository = \Bitrix\Sign\Service\Container::instance()
+							->getDocumentRepository();
+						if (method_exists($documentRepository, 'getByEntityIdAndType'))
+						{
+							$document = $documentRepository
+								->getByEntityIdAndType($itemOld->getId(), 'SMART')
+							;
+							if (!$document)
+							{
+								return new Result();
+							}
+
+							$documentRepository->delete($document);
+						}
+						else
 						{
 							$document = Document::resolveByEntity('SMART', $itemOld->getId());
-							if ($document)
-							{
-								$document->unlink();
-							}
+							$document?->unlink();
 						}
 					}
 

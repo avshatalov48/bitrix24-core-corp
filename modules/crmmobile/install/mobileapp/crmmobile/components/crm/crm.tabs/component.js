@@ -443,7 +443,8 @@
 					{
 						this.listTabRef.reload(this.getLoadItemsParams());
 					}
-				});
+				})
+					.catch(console.error);
 			}
 			else if (tab.selectable === false)
 			{

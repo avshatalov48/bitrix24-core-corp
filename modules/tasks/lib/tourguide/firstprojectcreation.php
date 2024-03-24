@@ -1,12 +1,17 @@
 <?php
 namespace Bitrix\Tasks\TourGuide;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\TourGuide;
+use Bitrix\Tasks\TourGuide\Exception\TourGuideException;
+use Exception;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,41 +22,59 @@ Loc::loadMessages(__FILE__);
  */
 class FirstProjectCreation extends TourGuide
 {
-	public static $instance;
-
 	protected const OPTION_NAME = 'firstProjectCreation';
 
+	/**
+	 * @throws TourGuideException
+	 */
 	public function proceed(): bool
 	{
-		if ($this->isFinished() || $this->isInLocalSession())
+		try
 		{
-			return false;
-		}
-
-		if ($this->isGroupExist())
-		{
-			return false;
-		}
-
-		if (($currentStep = $this->getCurrentStep()) && !$currentStep->isFinished())
-		{
-			$currentStep->makeTry();
-
-			if ($currentStep->isFinished() && $this->isCurrentStepTheLast())
+			if ($this->isFinished() || $this->isInLocalSession())
 			{
-				$this->finish();
+				return false;
+			}
+
+			if ($this->isGroupExist())
+			{
+				return false;
+			}
+
+			if (($currentStep = $this->getCurrentStep()) && !$currentStep->isFinished())
+			{
+				$currentStep->makeTry();
+
+				if ($currentStep->isFinished() && $this->isCurrentStepTheLast())
+				{
+					$this->finish();
+					return true;
+				}
+
+				$this->saveToLocalSession();
+				$this->saveData();
+
 				return true;
 			}
 
-			$this->saveToLocalSession();
-			$this->saveData();
-
-			return true;
+			return false;
 		}
-
-		return false;
+		catch (Exception $exception)
+		{
+			throw new TourGuideException($exception->getMessage());
+		}
 	}
 
+	public function isFirstExperience(): bool
+	{
+		return true;
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
 	private function isGroupExist(): bool
 	{
 		$query = WorkgroupTable::query();

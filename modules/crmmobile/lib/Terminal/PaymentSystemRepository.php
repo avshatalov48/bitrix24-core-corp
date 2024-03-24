@@ -3,6 +3,7 @@
 namespace Bitrix\CrmMobile\Terminal;
 
 use Bitrix\Sale\Payment;
+use Bitrix\Crm\Terminal\Config\TerminalPaysystemManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -21,6 +22,11 @@ class PaymentSystemRepository
 		return self::preparePaySystemList(
 			self::getAvailablePaySystemList($payment)
 		);
+	}
+
+	private static function getPaysystemManager(): TerminalPaysystemManager
+	{
+		return TerminalPaysystemManager::getInstance();
 	}
 
 	private static function preparePaySystemList(array $paySystemList): array
@@ -90,36 +96,65 @@ class PaymentSystemRepository
 
 	private static function getAvailablePaySystemList(Payment $payment): array
 	{
+		$paySystemList = self::getRestPaySystemList($payment);
 		if (self::isRuZone())
 		{
-			$paySystemList = self::getLocalPaySystemList();
-		}
-		else
-		{
-			$paySystemList = self::getRestPaySystemList($payment);
+			$localPaysystemList = self::getLocalPaySystemList();
+			$localPaysytemIds = array_column($localPaysystemList, 'ID');
+			$paySystemList = array_filter(
+				$paySystemList,
+				static fn ($paysystem) => !in_array($paysystem['ID'], $localPaysytemIds, true)
+			);
+			$config = TerminalPaysystemManager::getInstance()->getConfig();
+			foreach ($localPaysystemList as $localPaysystemKey => $localPaysystem)
+			{
+				if ($localPaysystem['PS_MODE'] === YandexCheckoutHandler::MODE_SBP && !$config->isSbpEnabled())
+				{
+					unset($localPaysystemList[$localPaysystemKey]);
+				}
+				else if ($localPaysystem['PS_MODE'] === YandexCheckoutHandler::MODE_SBERBANK_QR && !$config->isSberQrEnabled())
+				{
+					unset($localPaysystemList[$localPaysystemKey]);
+				}
+			}
+			$paySystemList = [...$localPaysystemList, ...$paySystemList];
 		}
 
-		$paySystemListWithRestrictions = PaySystem\Manager::getListWithRestrictions($payment);
+		$disabledPaysystems = self::getPaysystemManager()->getConfig()->getTerminalDisabledPaysystems();
 
 		return array_filter(
 			$paySystemList,
-			static function ($paySystem) use ($paySystemListWithRestrictions) {
-				return array_key_exists((int)$paySystem['ID'], $paySystemListWithRestrictions);
-			}
+			static fn ($paySystem) => !in_array((int)$paySystem['ID'], $disabledPaysystems, true)
 		);
 	}
 
 	private static function getLocalPaySystemList(): array
 	{
-		$filter = [
-			'=ACTION_FILE' => self::getYandexCheckoutHandlerCode(),
-			'@PS_MODE' => [
-				YandexCheckoutHandler::MODE_SBP,
-				YandexCheckoutHandler::MODE_SBERBANK_QR,
-			],
+		$yandexCheckoutHandler = self::getYandexCheckoutHandlerCode();
+		$psModes = [
+			YandexCheckoutHandler::MODE_SBP,
+			YandexCheckoutHandler::MODE_SBERBANK_QR,
 		];
 
-		$paySystemList = self::getPaySystemList($filter);
+		$paySystemList = [];
+		foreach ($psModes as $psMode)
+		{
+			$paySystem = PaySystem\Manager::getList([
+				'filter' => [
+					'=ACTION_FILE' => $yandexCheckoutHandler,
+					'@PS_MODE' => $psMode,
+					'=ENTITY_REGISTRY_TYPE' => Registry::REGISTRY_TYPE_ORDER,
+				],
+				'select' => ['ID', 'NAME', 'ACTION_FILE', 'PS_MODE', 'SORT'],
+				'order' => ['ID' => 'ASC'],
+				'cache' => ['ttl' => 86400],
+				'limit' => 1,
+			])->fetch();
+			if ($paySystem)
+			{
+				$paySystemList[] = $paySystem;
+			}
+		}
 
 		Type\Collection::sortByColumn($paySystemList, ['ID' => SORT_DESC]);
 
@@ -180,13 +215,13 @@ class PaymentSystemRepository
 
 	private static function getPaySystemList(array $filter): array
 	{
-		$filter['=ACTIVE'] = 'Y';
 		$filter['=ENTITY_REGISTRY_TYPE'] = Registry::REGISTRY_TYPE_ORDER;
 
 		return PaySystem\Manager::getList([
 			'filter' => $filter,
 			'select' => ['ID', 'NAME', 'ACTION_FILE', 'PS_MODE', 'SORT'],
 			'order' => ['ID' => 'DESC'],
+			'cache' => ['ttl' => 86400],
 		])->fetchAll();
 	}
 
@@ -217,27 +252,34 @@ class PaymentSystemRepository
 
 	private static function getRequiredPaySystemList(): array
 	{
+		$result = [];
 		if (self::isRuZone())
 		{
-			return [
-				[
+			$config = TerminalPaysystemManager::getInstance()->getConfig();
+			if ($config->isSbpEnabled())
+			{
+				$result[] = [
 					'handler' => self::getYandexCheckoutHandlerCode(),
 					'type' => YandexCheckoutHandler::MODE_SBP,
 					'connected' => false,
 					'id' => 0,
 					'title' => null,
-				],
-				[
+				];
+			}
+
+			if ($config->isSberQrEnabled())
+			{
+				$result[] = [
 					'handler' => self::getYandexCheckoutHandlerCode(),
 					'type' => YandexCheckoutHandler::MODE_SBERBANK_QR,
 					'connected' => false,
 					'id' => 0,
 					'title' => null,
-				],
-			];
+				];
+			}
 		}
 
-		return [];
+		return $result;
 	}
 
 	private static function getYandexCheckoutHandlerCode(): string

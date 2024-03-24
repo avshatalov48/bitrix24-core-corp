@@ -2,6 +2,8 @@
 
 namespace Bitrix\Tasks\Integration\CRM\Fields;
 
+use Bitrix\Main\Text\HtmlFilter;
+
 class Emulator
 {
 	private EmulationData $data;
@@ -16,7 +18,7 @@ class Emulator
 		$class = $this->data->getClass();
 		$type = $this->data->getType();
 		$name = $this->data->getName();
-		$value = $this->data->getValue();
+		$value = HtmlFilter::encode($this->data->getValue(), ENT_QUOTES);
 
 		if (!empty($value))
 		{

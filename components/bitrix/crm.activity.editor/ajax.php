@@ -839,7 +839,8 @@ function GetCrmEntityCommunications($entityType, $entityID, $communicationType)
 
 	return array('ERROR' => 'Invalid data');
 }
-function GetCrmEntitiesDisk($desiredFileIds, $userId)
+
+function GetCrmEntitiesDisk($desiredFileIds, $userId, bool $saveAsTemplate = false)
 {
 	if (!Loader::requireModule('disk'))
 	{
@@ -855,19 +856,31 @@ function GetCrmEntitiesDisk($desiredFileIds, $userId)
 		if ($type === FileUserType::TYPE_NEW_OBJECT)
 		{
 			$file = File::getById($realValue);
-			if (!$file || !$file->getStorage())
+			if (!$file)
+			{
+				continue;
+			}
+
+			$storage = $file->getStorage();
+			if (!$storage)
 			{
 				continue;
 			}
 
 			$securityContext = $file->getStorage()->getSecurityContext($userId);
-			if (!$file->canRead($securityContext))
+
+			//make copy only when message will save as template
+			if (
+				($file->canRead($securityContext) || $storage->getEntityId() === 'documentgenerator')
+				&& $saveAsTemplate
+			)
 			{
-				$notFilteredFiles[$file->getId()] = $file->getId();
+				$shouldForkFile[$file->getId()] = $file;
+
 				continue;
 			}
 
-			$shouldForkFile[$file->getId()] = $file;
+			$notFilteredFiles[$file->getId()] = $file->getId();
 		}
 		elseif ($type === FileUserType::TYPE_ALREADY_ATTACHED)
 		{
@@ -904,7 +917,7 @@ function GetCrmEntitiesDisk($desiredFileIds, $userId)
 		}
 	}
 
-	$storage = \Bitrix\Mail\Helper\Attachment\Storage::getStorage();
+	$storage = \Bitrix\Crm\Integration\DiskManager::getStorage();
 	$folder = $storage->getChild([
 		'=NAME' => date('Y-m'),
 		'=TYPE' => \Bitrix\Disk\Internals\FolderTable::TYPE,
@@ -2395,6 +2408,7 @@ elseif($action == 'SAVE_EMAIL')
 	$copiedFiles = [];
 	$attachToFileIds = [];
 	$arFields['STORAGE_TYPE_ID'] = $storageTypeID;
+	$saveAsTemplate = !empty($_REQUEST['save_as_template']);
 	if($storageTypeID === StorageType::File)
 	{
 		$arUserFiles = isset($data['files']) && is_array($data['files']) ? $data['files'] : [];
@@ -2475,7 +2489,7 @@ elseif($action == 'SAVE_EMAIL')
 
 			if (isset($data['__diskfiles']) && is_array($data['__diskfiles']))
 			{
-				[$storageFilesFromTemplate, $attachToFileIds, $arFileIDs] = GetCrmEntitiesDisk($data['__diskfiles'], $curUserId);
+				[$storageFilesFromTemplate, $attachToFileIds, $arFileIDs] = GetCrmEntitiesDisk($data['__diskfiles'], $curUserId, $saveAsTemplate ?? false);
 				$copiedFiles = empty($storageFilesFromTemplate)
 					? []
 					: array_map(
@@ -2522,52 +2536,6 @@ elseif($action == 'SAVE_EMAIL')
 
 	$totalSize = 0;
 
-	$arRawFiles = [];
-	if (
-		isset($arFields['STORAGE_ELEMENT_IDS'])
-		&& !empty($arFields['STORAGE_ELEMENT_IDS'])
-		&& is_array($arFields['STORAGE_ELEMENT_IDS'])
-	)
-	{
-		$storageFilesFromTemplateFlip = array_flip($storageFilesFromTemplate);
-		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
-		{
-			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
-
-			$totalSize += $arRawFiles[$item]['size'];
-
-			if (\CCrmContentType::Html == $contentType)
-			{
-				if (array_key_exists($item, $attachToFileIds))
-				{
-					$fileInfo = DiskUploaderController::getFileInfo([$attachToFileIds[$item]]);
-					$description = preg_replace(
-						sprintf('/(https?:\/\/)?bxacid:?%u/i', $attachToFileIds[$item]),
-						htmlspecialcharsbx($fileInfo[0]['serverPreviewUrl']),
-						$description
-					);
-				}
-				elseif (array_key_exists($item, $storageFilesFromTemplateFlip))
-				{
-					$fileInfo = DiskUploaderController::getFileInfo([$storageFilesFromTemplateFlip[$item]]);
-					$description = preg_replace(
-						sprintf('/(https?:\/\/)?bxacid:n?%u/i', $storageFilesFromTemplateFlip[$item]),
-						htmlspecialcharsbx($fileInfo[0]['serverPreviewUrl']),
-						$description
-					);
-				}
-				else
-				{
-					$fileInfo = DiskUploaderController::getFileInfo([$item]);
-					$description = preg_replace(
-						sprintf('/(https?:\/\/)?bxacid:n?%u/i', $item),
-						htmlspecialcharsbx($fileInfo[0]['serverPreviewUrl']),
-						$description
-					);
-				}
-			}
-		}
-	}
 
 	$maxSize = Helper\Message::getMaxAttachedFilesSize();
 	if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
@@ -2588,6 +2556,53 @@ elseif($action == 'SAVE_EMAIL')
 	else if(!CCrmActivity::Update($ID, $arFields, false, false))
 	{
 		__CrmActivityEditorEndResponse(array('ERROR' => CCrmActivity::GetLastErrorMessage()));
+	}
+
+	$arRawFiles = [];
+	if (
+		isset($arFields['STORAGE_ELEMENT_IDS'])
+		&& !empty($arFields['STORAGE_ELEMENT_IDS'])
+		&& is_array($arFields['STORAGE_ELEMENT_IDS'])
+	)
+	{
+		$storageFilesFromTemplateFlip = array_flip($storageFilesFromTemplate);
+		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
+		{
+			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
+
+			$totalSize += $arRawFiles[$item]['size'];
+
+			if (\CCrmContentType::Html == $contentType)
+			{
+				if (array_key_exists($item, $attachToFileIds))
+				{
+					$fileID = $attachToFileIds[$item];
+				}
+				elseif (array_key_exists($item, $storageFilesFromTemplateFlip))
+				{
+					$fileID = $storageFilesFromTemplateFlip[$item];
+				}
+				else
+				{
+					$fileID = $item;
+				}
+				$fileInfo = StorageManager::getFileInfo(
+					$item,
+					$storageTypeID,
+					false,
+					[
+						'OWNER_TYPE_ID' => CCrmOwnerType::Activity,
+						'OWNER_ID' => $ID
+					]
+				);
+
+				$description = preg_replace(
+					sprintf('/(https?:\/\/)?bxacid:n?%u/i', $fileID),
+					htmlspecialcharsbx($fileInfo['VIEW_URL']),
+					$description
+				);
+			}
+		}
 	}
 
 
@@ -2626,6 +2641,20 @@ elseif($action == 'SAVE_EMAIL')
 
 	if (!empty($_REQUEST['save_as_template']))
 	{
+		$templateBody = $messageBody;
+		//preparing the message body for the copied files for the template
+		if ($storageFilesFromTemplate)
+		{
+			foreach ($storageFilesFromTemplate as $item => $key)
+			{
+				$templateBody = preg_replace(
+					sprintf('/(https?:\/\/)?bxacid:n?%u/i', $item),
+					sprintf('bxacid:n%s', $key),
+					$templateBody
+				);
+			}
+		}
+
 		$templateFields = [
 			'TITLE'          => $subject,
 			'IS_ACTIVE'      => 'Y',
@@ -2635,13 +2664,13 @@ elseif($action == 'SAVE_EMAIL')
 			'EMAIL_FROM'     => $from,
 			'SUBJECT'        => $subject,
 			'BODY_TYPE'      => \CCrmContentType::Html,
-			'BODY'           => $messageBody,
+			'BODY'           => $templateBody,
 			'UF_ATTACHMENT' => array_map(
 				function ($item)
 				{
 					return is_scalar($item) ? sprintf('n%u', $item) : $item;
 				},
-				$arFields['STORAGE_ELEMENT_IDS']
+				$arFields['STORAGE_ELEMENT_IDS'],
 			),
 			'SORT'           => 100,
 		];

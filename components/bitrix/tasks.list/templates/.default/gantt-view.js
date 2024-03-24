@@ -88,9 +88,30 @@ function SetServerCloseStatus(taskId, status, params)
 	__InvalidateMenus([taskId, "c" + taskId]);
 }
 
-function CloseTask(taskId)
+function CloseTask(taskId, analyticsSection = 'tasks')
 {
 	SetServerCloseStatus(taskId, "close", { bGannt: true });
+
+	const analyticsData = {
+		tool: 'tasks',
+		category: 'task_operations',
+		event: 'task_complete',
+		type: 'task',
+		c_section: analyticsSection,
+		c_element: 'context_menu',
+		c_sub_section: 'gantt',
+	};
+
+	if (BX.UI.Analytics)
+	{
+		BX.UI.Analytics.sendData(analyticsData);
+	}
+	else
+	{
+		BX.Runtime.loadExtension('ui.analytics').then(() => {
+			BX.UI.Analytics.sendData(analyticsData);
+		});
+	}
 }
 
 function StartTask(taskId)

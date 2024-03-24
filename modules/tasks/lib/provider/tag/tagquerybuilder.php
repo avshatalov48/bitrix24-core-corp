@@ -12,8 +12,6 @@ use Bitrix\Tasks\Provider\TaskQueryInterface;
 
 class TagQueryBuilder implements QueryBuilderInterface
 {
-	public const TAG_ALIAS = 'TT';
-
 	private Query $query;
 	private TagFilterBuilder $filterBuilder;
 	private TagSelectBuilder $selectBuilder;
@@ -23,7 +21,7 @@ class TagQueryBuilder implements QueryBuilderInterface
 
 	public function __construct(private TaskQueryInterface $tagQuery)
 	{
-		$this->query = LabelTable::query()->setCustomBaseTableAlias(static::TAG_ALIAS.'_'.random_int(10000, 99999));
+		$this->query = LabelTable::query();
 		$this->initBuilders();
 	}
 
@@ -46,7 +44,12 @@ class TagQueryBuilder implements QueryBuilderInterface
 
 	private function buildSelect(): static
 	{
-		$this->query->setSelect($this->selectBuilder->buildSelect($this->tagQuery->getSelect()));
+		$select = $this->selectBuilder->buildSelect($this->tagQuery->getSelect());
+		foreach ($select as $field => $alias)
+		{
+			$this->query->addSelect(is_string($field) ? $field : $alias, is_string($field) ? $alias : '');
+		}
+
 		return $this;
 	}
 

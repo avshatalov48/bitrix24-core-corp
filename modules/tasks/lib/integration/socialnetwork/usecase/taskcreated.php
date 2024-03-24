@@ -2,10 +2,17 @@
 
 namespace Bitrix\Tasks\Integration\SocialNetwork\UseCase;
 
+use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Notification\Message;
+use Bitrix\Tasks\Internals\TaskObject;
 
 class TaskCreated extends BaseCase
 {
+	private static array $ufStorage = [];
+	private static array $logStorage = [];
+
 	public function execute(Message $message): void
 	{
 		// TODO: this code was moved from classes/tasksnotifications and needs reraftoring
@@ -19,18 +26,19 @@ class TaskCreated extends BaseCase
 			return;
 		}
 
+		// I think this condition is ambiguous, so I comment that
 		// Check that user exists
-		$rsUser = \CUser::GetList(
-			'ID',
-			'ASC',
-			['ID' => $task->getCreatedBy()],
-			['FIELDS' => ['ID']]
-		);
-
-		if (!($arUser = $rsUser->Fetch()))
-		{
-			return;
-		}
+		// $rsUser = \CUser::GetList(
+		// 	'ID',
+		// 	'ASC',
+		// 	['ID' => $task->getCreatedBy()],
+		// 	['FIELDS' => ['ID']]
+		// );
+		//
+		// if (!($arUser = $rsUser->Fetch()))
+		// {
+		// 	return;
+		// }
 
 		$taskId = $task->getId();
 		$logDate = $DB->CurrentTimeFunction();
@@ -81,22 +89,14 @@ class TaskCreated extends BaseCase
 
 		if (IsModuleInstalled('webdav') || IsModuleInstalled('disk'))
 		{
-			$ufDocID = $GLOBALS['USER_FIELD_MANAGER']->GetUserFieldValue('TASKS_TASK', 'UF_TASK_WEBDAV_FILES', $taskId, LANGUAGE_ID);
+			$ufDocID = $this->getUserFieldValue($task);
 			if ($ufDocID)
 			{
 				$arSoFields['UF_SONET_LOG_DOC'] = $ufDocID;
 			}
 		}
 
-		$rsSocNetLogItems = \CSocNetLog::GetList(
-			['ID' => 'DESC'],
-			$arLogFilter,
-			false,
-			false,
-			['ID', 'ENTITY_TYPE', 'ENTITY_ID']
-		);
-
-		if ($rsSocNetLogItems->Fetch())
+		if ($this->getLogByTask($task))
 		{
 			return;
 		}
@@ -116,6 +116,7 @@ class TaskCreated extends BaseCase
 		$logId = (int)\CSocNetLog::Add($arSoFields, false);
 		if ($logId > 0)
 		{
+			$this->invalidateLog($task);
 			$logFields = [
 				'TMP_ID' => $logId,
 				'TAG' => [],
@@ -129,22 +130,76 @@ class TaskCreated extends BaseCase
 
 			\CSocNetLog::Update($logId, $logFields);
 
-			$taskMembers = $message->getMetaData()->getUserRepository()->getRecepients(
-				$task,
-				$message->getSender()
-			);
-			$rights = $this->recepients2Rights($taskMembers);
 
-			if ($task->getGroupId())
+			if (SpaceService::useNotificationStrategy())
 			{
-				$rights = array_merge(
-					$rights,
-					['SG' . $task->getGroupId()]
+				if ($task->getGroupId())
+				{
+					$this->addGroupRights($message, $task->getGroupId(), $logId);
+				}
+
+				$this->addUserRights($message, $message->getSender(), $logId);
+				$this->addUserRights($message, $message->getRecepient(), $logId);
+			}
+			else
+			{
+				$taskMembers = $message->getMetaData()->getUserRepository()->getRecepients(
+					$task,
+					$message->getSender()
 				);
+				$rights = $this->recepients2Rights($taskMembers);
+
+				if ($task->getGroupId())
+				{
+					$rights = array_merge(
+						$rights,
+						['SG' . $task->getGroupId()]
+					);
+				}
+
+				\CSocNetLogRights::Add($logId, $rights);
 			}
 
-			\CSocNetLogRights::Add($logId, $rights);
 			\CSocNetLog::SendEvent($logId, 'SONET_NEW_EVENT', $logId);
 		}
+	}
+
+	private function getUserFieldValue(TaskObject $task): mixed
+	{
+		if (!isset(static::$ufStorage[$task->getId()]))
+		{
+			try
+			{
+				static::$ufStorage[$task->getId()] = $task->getFileFields();
+			}
+			catch (SystemException $exception)
+			{
+				LogFacade::logThrowable($exception);
+				static::$ufStorage[$task->getId()] = [];
+			}
+		}
+
+		return static::$ufStorage[$task->getId()];
+	}
+
+	private function getLogByTask(TaskObject $task): mixed
+	{
+		if (!isset(static::$logStorage[$task->getId()]))
+		{
+			static::$logStorage[$task->getId()] = \CSocNetLog::GetList(
+				['ID' => 'DESC'],
+				$this->getSonetLogFilter($task->getId(), $task->isCrm()),
+				false,
+				false,
+				['ID', 'ENTITY_TYPE', 'ENTITY_ID']
+			)->Fetch();
+		}
+
+		return static::$logStorage[$task->getId()];
+	}
+
+	private function invalidateLog(TaskObject $task): void
+	{
+		unset(static::$logStorage[$task->getId()]);
 	}
 }

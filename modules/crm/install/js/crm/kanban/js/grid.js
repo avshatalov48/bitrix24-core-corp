@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 (function() {
 
 "use strict";
@@ -335,15 +337,14 @@ BX.CRM.Kanban.Grid.prototype = {
 				}.bind(this)
 			);
 
-			BX.Event.EventEmitter.subscribe('crm-kanban-settings-fields-view', function ()
-			{
+			BX.Event.EventEmitter.subscribe('crm-kanban-settings-fields-view', () => {
 				this.showFieldsSelectPopup('view');
-			}.bind(this));
+			});
 
-			BX.Event.EventEmitter.subscribe('crm-kanban-settings-fields-edit', function ()
-			{
+			BX.Event.EventEmitter.subscribe('crm-kanban-settings-fields-edit', () => {
+				this.loadHiddenQuickEditorForFirstColumn();
 				this.showFieldsSelectPopup('edit');
-			}.bind(this));
+			});
 
 			var toolbarComponent = BX.Reflection.getClass('BX.Crm.ToolbarComponent')
 				? BX.Reflection.getClass('BX.Crm.ToolbarComponent').Instance
@@ -704,18 +705,21 @@ BX.CRM.Kanban.Grid.prototype = {
 	},
 
 	/**
-	 * Get items from one columns.
+	 * Get items from one column.
 	 * @param {BX.CRM.Kanban.Column} column
 	 * @returns {BX.Promise}
 	 */
 	getColumnItems: function(column)
 	{
-		var promise = new BX.Promise();
+		const promise = new BX.Promise();
 
-		this.data.params['total'] = column.getTotal();
-		this.data.params['itemsCount'] = column.getItemsCount();
+		const total = column.getTotal();
+		this.data.params.total = total;
 
-		var pagination = column.getPagination();
+		const itemsCount = column.getItemsCount();
+		this.data.params.itemsCount = itemsCount;
+
+		const pagination = column.getPagination();
 
 		/**
 		 *  if there is a large number of changes in elements in real time, then the value of the total number
@@ -724,47 +728,74 @@ BX.CRM.Kanban.Grid.prototype = {
 		 *  for the first page (see "$this->NavPageNomer = ..." in DBNavStart() function)
 		 *  To eliminate this error, we check in advance if it is possible to get the items on the next page.
 		 */
-		if (column.getTotal() < pagination.getPage() * column.blockSize)
+		const { skipColumnCountCheck } = this.getData();
+		const { blockSize, canLoadMoreItems } = column;
+
+		if (
+			(!skipColumnCountCheck && total < pagination.getPage() * blockSize)
+			|| (skipColumnCountCheck && !canLoadMoreItems)
+		)
 		{
-			column.setTotal(column.getItemsCount());
+			column.setTotal(itemsCount);
 			promise.fulfill([]);
+
 			return promise;
 		}
 
-		column.loadingInProgress = true;
+		column.setLoadingInProgress();
 
-		var page = pagination.getPage() + 1
-		this.ajax({
-				action: "page",
-				page: page,
-				column: column.getId(),
-				onlyItems: (page > 1 ? 'Y' : 'N')
-			},
-			function(data)
+		const page = pagination.getPage() + 1;
+		this.ajax(
 			{
-				if (data && (BX.type.isArray(data) || BX.type.isArray(data.items)) && !data.error)
+				action: 'page',
+				page,
+				column: column.getId(),
+				onlyItems: (page > 1 ? 'Y' : 'N'),
+			},
+			(data) => {
+				if (
+					data
+					&& !data.error
+					&& (Array.isArray(data) || Array.isArray(data.items))
+				)
 				{
-					promise.fulfill(BX.type.isArray(data) ? data : data.items);
+					const items = (Array.isArray(data) ? data : data.items);
+					if (items.length === 0)
+					{
+						column.setLoadingMoreItem(false);
+						if (skipColumnCountCheck)
+						{
+							column.setTotal(itemsCount + items.length);
+							column.showTotalCount();
+						}
+					}
+
+					promise.fulfill(items);
+
+					return;
 				}
-				else if (data)
+
+				if (data)
 				{
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
 					promise.reject(data.error);
+
+					return;
 				}
+
 				if (this.ccItem)
 				{
-					var gridData = this.getData();
+					const gridData = this.getData();
 					if (!gridData.contactCenterShow)
 					{
 						this.hideItem(this.ccItem);
 					}
 				}
-			}.bind(this),
-			function(error)
-			{
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				promise.reject("Error: " + error);
-			}.bind(this)
+			},
+			(error) => {
+				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
+				promise.reject(`Error: ${error}`);
+			},
 		);
 
 		return promise;
@@ -1584,58 +1615,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		// ajax
 		if (!item.isChangedInPullRequest())
 		{
-			this.ajax({
-					action: "status",
-					entity_id: (
-						this.itemMoving.groupIds
-							? this.itemMoving.groupIds
-							: itemId
-					),
-					prev_entity_id: afterItemId,
-					status: targetColumnId
-				},
-				function(data)
-				{
-					if (data && !data.error)
-					{
-						if (
-							this.getData().viewMode === BX.Crm.Kanban.ViewMode.MODE_ACTIVITIES
-							&& !this.itemMoving.groupIds
-							&& BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable()
-						)
-						{
-							setTimeout(() => {
-								item.showPlannerMenu(
-									item.getContainer(),
-									BX.Crm.Activity.TodoEditorMode.UPDATE,
-									true
-								);
-							}, 1500);
-						}
-
-						if (data.items && data.items.length > 0)
-						{
-							this.updateItem(itemId, data.items[0]);
-						}
-						else
-						{
-							item.setDataKey("columnId", targetColumnId);
-							if (data.IS_SHOULD_UPDATE_CARD)
-							{
-								this.loadNew(itemId, false, true, true, true);
-							}
-						}
-					}
-					else if (data)
-					{
-						BX.Kanban.Utils.showErrorDialog(data.error, true);
-					}
-				}.bind(this),
-				function(error)
-				{
-					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				}.bind(this)
-			);
+			this.checkItemStatusAfterMoved(item, afterItemId, targetColumnId);
 		}
 
 		if (item.isChangedInPullRequest())
@@ -1643,6 +1623,69 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.clearItemMoving();
 			item.dropChangedInPullRequest();
 		}
+	},
+
+	/**
+	 * @param {BX.CRM.Kanban.Item} item
+	 * @param {number} afterItemId
+	 * @param {string} targetColumnId
+	 */
+	checkItemStatusAfterMoved: function(item, afterItemId, targetColumnId)
+	{
+		const itemId = item.getId();
+		const params = {
+			action: 'status',
+			entity_id: this.itemMoving.groupIds ?? itemId,
+			prev_entity_id: afterItemId,
+			status: targetColumnId,
+		};
+
+		this.ajax(
+			params,
+			(data) => {
+				if (!data)
+				{
+					return;
+				}
+
+				if (data.error)
+				{
+					BX.Kanban.Utils.showErrorDialog(data.error, true);
+
+					return;
+				}
+
+				if (
+					this.getData().useItemPlanner
+					&& !this.itemMoving.groupIds
+					&& BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable()
+				)
+				{
+					setTimeout(() => this.showItemPlannerMenu(item), 500);
+				}
+
+				const { items, isShouldUpdateCard } = data;
+				if (Array.isArray(items) && items.length > 0)
+				{
+					this.updateItem(itemId, items[0]);
+
+					return;
+				}
+
+				item.setDataKey('columnId', targetColumnId);
+
+				if (isShouldUpdateCard)
+				{
+					void this.loadNew(itemId, false, true, true, true);
+				}
+			},
+			(error) => BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true),
+		);
+	},
+
+	showItemPlannerMenu: function(item)
+	{
+		item.showPlannerMenu(item.getContainer(), BX.Crm.Activity.TodoEditorMode.UPDATE,true);
 	},
 
 	showNotCompletedPopup: function(gridData)
@@ -2135,16 +2178,10 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				newMenuItems.push({
 					text: BX.message("CRM_KANBAN_SETTINGS_FIELDS_EDIT"),
-					onclick: function(e, /*BX.PopupMenuItem*/item)
-					{
-						// @todo as needed, will need to add a promise to the showQuickEditor method
-						var firstColumnId = (this.columnsOrder[0] ? this.columnsOrder[0].id : null);
-						if (firstColumnId && this.columns[firstColumnId].canAddItem)
-						{
-							this.columns[firstColumnId].showQuickEditor(true)
-							this.showFieldsSelectPopup("edit");
-						}
-					}.bind(this)
+					onclick: () => {
+						this.loadHiddenQuickEditorForFirstColumn();
+						this.showFieldsSelectPopup('edit');
+					},
 				});
 			}
 			menu.addMenuItem(
@@ -2154,6 +2191,15 @@ BX.CRM.Kanban.Grid.prototype = {
 				},
 				itemId
 			);
+		}
+	},
+
+	loadHiddenQuickEditorForFirstColumn: function()
+	{
+		const firstColumnId = this.columnsOrder[0]?.id;
+		if (firstColumnId)
+		{
+			this.columns[firstColumnId].showQuickEditor(true);
 		}
 	},
 

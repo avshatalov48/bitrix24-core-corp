@@ -1415,7 +1415,7 @@ BX.ready(function(){
 		'TITLE'          : '<?php echo GetMessageJs('TASKS_FIELD_TITLE'); ?>',
 		'GROUP_ID'       : '<?php echo GetMessageJs('TASKS_FIELD_GROUP'); ?>',
 		'CREATED_BY'     : '<?php echo GetMessageJs('TASKS_FIELD_DIRECTOR'); ?>',
-		'RESPONSIBLE_ID' : '<?php echo GetMessageJs('TASKS_FIELD_RESPOSNSIBLE'); ?>',
+		'RESPONSIBLE_ID' : '<?php echo \Bitrix\Main\Localization\Loc::getMessage('TASKS_FIELD_ASSIGNEE'); ?>',
 		'ACCOMPLICE'     : '<?php echo GetMessageJs('TASKS_FIELD_ACCOMPLICE'); ?>',
 		'AUDITOR'        : '<?php echo GetMessageJs('TASKS_FIELD_AUDITOR'); ?>',
 		'STATUS'         : '<?php echo GetMessageJs('TASKS_FIELD_STATUS'); ?>',

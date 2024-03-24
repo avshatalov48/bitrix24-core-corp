@@ -1,12 +1,24 @@
-<?
-if(!check_bitrix_sessid()) return;
-IncludeModuleLangFile(__FILE__);
-global $errors;
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-echo CAdminMessage::ShowNote(GetMessage("MOD_UNINST_OK"));
+if (!check_bitrix_sessid())
+{
+	return;
+}
+
+use Bitrix\Main\Localization\Loc;
+
+/**
+ * @global CMain $APPLICATION
+ */
+
+\CAdminMessage::ShowNote(Loc::getMessage("MOD_UNINST_OK"));
 ?>
 <br>
-<form action="<?echo $APPLICATION->GetCurPage()?>">
-	<input type="hidden" name="lang" value="<?echo LANG?>">
-	<input type="submit" name="" value="<?echo GetMessage("MOD_BACK")?>">
+<form action="<?= $APPLICATION->GetCurPage()?>">
+	<input type="hidden" name="lang" value="<?= LANG?>">
+	<input type="submit" name="" value="<?= Loc::getMessage("MOD_BACK")?>">
 </form>

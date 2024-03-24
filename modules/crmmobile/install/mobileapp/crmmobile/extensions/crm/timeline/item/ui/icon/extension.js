@@ -159,4 +159,3 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 
 	module.exports = { TimelineItemIcon };
 });
-

@@ -256,9 +256,9 @@ class QueryHelper
 	 * @param array $selectFields Selected fields.
 	 * @param string $tableAlias Destination table alias.
 	 * @param string $selectAlias Source query alias.
-	 * @return string
+	 * @return array
 	 */
-	public static function prepareUpdateOnSelect(array $columns, array $selectFields, $tableAlias = 'dest', $selectAlias = 'src'): string
+	public static function prepareUpdateOnSelect(array $columns, array $selectFields, $tableAlias = 'dest', $selectAlias = 'src'): array
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
@@ -279,11 +279,11 @@ class QueryHelper
 			if (isset($tableFields[$columnName]))
 			{
 				$columnName = $sqlHelper->quote($columnName);
-				$columnList[] = "$tableAlias.$columnName = $selectAlias.$columnName";
+				$columnList[$columnName] = "{$selectAlias}.{$columnName}";
 			}
 		}
 
-		return implode(', ', $columnList);
+		return $columnList;
 	}
 
 

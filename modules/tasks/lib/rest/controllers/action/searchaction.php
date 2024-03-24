@@ -2,42 +2,35 @@
 namespace Bitrix\Tasks\Rest\Controllers\Action;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Search;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Tasks\Exception;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
+use Bitrix\Tasks\Provider\Exception\InvalidGroupByException;
+use Bitrix\Tasks\Provider\Exception\TaskListException;
+use Bitrix\Tasks\Provider\TaskList;
+use Bitrix\Tasks\Provider\TaskQuery;
+use Bitrix\Tasks\Slider\Path\PathMaker;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
-
-use CComponentEngine;
-use CTasks;
-use CTasksTools;
 use TasksException;
 
-/**
- * Class Search
- * @package Bitrix\Tasks\Rest\Controllers\Action
- */
 class SearchAction extends Search\SearchAction
 {
-	private static $taskPathTemplate = '';
-	private $maxSearchSize = 10;
+	private int $maxSearchSize = 10;
 
 	/**
-	 * BX.ajax.runAction("tasks.task.search", {data: {searchQuery: "text"}});
-	 *
-	 * @param string $searchQuery
-	 * @param array|null $options
-	 * @param PageNavigation|null $pageNavigation
-	 * @return array|Search\ResultItem[]
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 * @throws TasksException
+	 * @restMethod tasks.task.search
 	 */
-	public function provideData($searchQuery, array $options = null, PageNavigation $pageNavigation = null): array
+	public function provideData($searchQuery, array $options = null, PageNavigation $pageNavigation = null): ?array
 	{
 		$result = [];
 
@@ -46,7 +39,16 @@ class SearchAction extends Search\SearchAction
 			return $result;
 		}
 
-		$tasksBySearch = $this->getTasksBySearch($searchQuery);
+		try
+		{
+			$tasksBySearch = $this->getTasksBySearch($searchQuery);
+		}
+		catch (TaskListException|InvalidGroupByException $exception)
+		{
+			$this->addError(Error::createFromThrowable($exception));
+			return null;
+		}
+
 		foreach ($tasksBySearch as $task)
 		{
 			$taskId = (int)$task['ID'];
@@ -67,13 +69,10 @@ class SearchAction extends Search\SearchAction
 	}
 
 	/**
-	 * @param $searchQuery
-	 * @param array|null $options
-	 * @return array|Search\ResultLimit
 	 * @throws SystemException
 	 * @throws ObjectPropertyException
 	 */
-	protected function provideLimits($searchQuery, array $options = null)
+	protected function provideLimits($searchQuery, array $options = null): array
 	{
 		if (FilterLimit::isLimitExceeded())
 		{
@@ -94,12 +93,11 @@ class SearchAction extends Search\SearchAction
 	}
 
 	/**
-	 * @param string $searchQuery
-	 * @return array
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
-	 * @throws TasksException
+	 * @throws TaskListException
+	 * @throws InvalidGroupByException
 	 */
 	private function getTasksBySearch(string $searchQuery): array
 	{
@@ -117,61 +115,44 @@ class SearchAction extends Search\SearchAction
 	}
 
 	/**
-	 * @param string $searchQuery
-	 * @return array
-	 * @throws TasksException
+	 * @throws TaskListException
+	 * @throws InvalidGroupByException
 	 */
 	private function getTasksWithSearchInBody(string $searchQuery): array
 	{
-		return $this->runGetList($searchQuery, ['SEARCH_TASK_ONLY' => 'Y']);
+		return $this->runGetList($searchQuery, 'SEARCH_TASK_ONLY');
 	}
 
 	/**
-	 * @param string $searchQuery
-	 * @return array
-	 * @throws TasksException
+	 * @throws TaskListException
+	 * @throws InvalidGroupByException
 	 */
 	private function getTasksWithSearchInComments(string $searchQuery): array
 	{
-		return $this->runGetList($searchQuery, ['SEARCH_COMMENT_ONLY' => 'Y']);
+		return $this->runGetList($searchQuery, 'SEARCH_COMMENT_ONLY');
 	}
 
 	/**
-	 * @param string $searchQuery
-	 * @param array $filterParams
-	 * @return array
-	 * @throws TasksException
+	 * @throws TaskListException
+	 * @throws InvalidGroupByException
 	 */
-	private function runGetList(string $searchQuery, array $filterParams): array
+	private function runGetList(string $searchQuery, string $searchOption): array
 	{
-		$result = [];
+		$query = (new TaskQuery($this->getCurrentUser()->getId()))
+			->setParam($searchOption, 'Y')
+			->setSelect(['ID', 'TITLE'])
+			->addWhere('*FULL_SEARCH_INDEX', SearchIndex::prepareStringToSearch($searchQuery))
+			->setGroupBy('ID')
+			->setOrder(['ID' => 'ASC'])
+			->setLimit($this->maxSearchSize);
 
-		$select = ['ID', 'TITLE'];
-		$order = [
-			'ID' => 'ASC',
-		];
-		$filter = [
-			'::SUBFILTER-FULL_SEARCH_INDEX' => [
-				'*FULL_SEARCH_INDEX' => SearchIndex::prepareStringToSearch($searchQuery),
-			],
-		];
-		$params = [
-			'USER_ID' => $this->getCurrentUser()->getId(),
-			'NAV_PARAMS' => [
-				'nTopCount' => $this->maxSearchSize,
-			],
-			'FILTER_PARAMS' => $filterParams,
-		];
+		$tasks = (new TaskList())->getList($query);
 
-		$taskDbResult = CTasks::GetList($order, $filter, $select, $params);
-		while ($task = $taskDbResult->Fetch())
-		{
+		return array_map(static function (array $task): array {
 			$task['MESSAGE_ID'] = 0;
-			$task['TITLE'] = \Bitrix\Main\Text\Emoji::decode($task['TITLE']);
-			$result[$task['ID']] = $task;
-		}
-
-		return $result;
+			$task['TITLE'] = Emoji::decode($task['TITLE']);
+			return $task;
+		}, $tasks);
 	}
 
 	private function clearDuplicates(array $array, array $duplicates): array
@@ -180,8 +161,6 @@ class SearchAction extends Search\SearchAction
 	}
 
 	/**
-	 * @param array $tasks
-	 * @return array
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 * @throws ArgumentException
@@ -209,77 +188,19 @@ class SearchAction extends Search\SearchAction
 		return $result;
 	}
 
-	/**
-	 * @return string
-	 */
-	private function getTaskPathTemplate(): string
-	{
-		if (self::$taskPathTemplate)
-		{
-			return self::$taskPathTemplate;
-		}
-
-		$defaultPathTemplate = '/company/personal/user/#user_id#/tasks/task/view/#task_id#/';
-
-		try
-		{
-			$pathTemplate = CTasksTools::GetOptionPathTaskUserEntry(SITE_ID, $defaultPathTemplate);
-		}
-		catch (Exception $exception)
-		{
-			$pathTemplate = $defaultPathTemplate;
-		}
-
-		$search = ['#USER_ID#', '#TASK_ID#'];
-		$replace = ['#user_id#', '#task_id#'];
-		$pathTemplate = str_replace($search, $replace, $pathTemplate);
-
-		self::$taskPathTemplate = $pathTemplate;
-
-		return $pathTemplate;
-	}
-
-	/**
-	 * @return string
-	 */
-	private function getTaskCommentPathTemplate(): string
-	{
-		return $this->getTaskPathTemplate().'?MID=#comment_id##com#comment_id#';
-	}
-
-	/**
-	 * @param int $taskId
-	 * @return string
-	 */
 	private function getPathForTask(int $taskId): string
 	{
-		$userId = $this->getCurrentUser()->getId();
-		$pathTemplate = $this->getTaskPathTemplate();
-
-		return CComponentEngine::MakePathFromTemplate($pathTemplate, ['user_id' => $userId, 'task_id' => $taskId]);
+		return (new TaskPathMaker($taskId, PathMaker::DEFAULT_ACTION, $this->getCurrentUser()->getId()))
+			->makeEntityPath();
 	}
 
-	/**
-	 * @param int $taskId
-	 * @param int $commentId
-	 * @return string
-	 */
 	private function getPathForTaskComment(int $taskId, int $commentId): string
 	{
-		$userId = $this->getCurrentUser()->getId();
-		$pathTemplate = $this->getTaskCommentPathTemplate();
-
-		return CComponentEngine::MakePathFromTemplate($pathTemplate, [
-			'user_id' => $userId,
-			'task_id' => $taskId,
-			'comment_id' => $commentId,
-		]);
+		return (new TaskPathMaker($taskId, PathMaker::DEFAULT_ACTION, $this->getCurrentUser()->getId()))
+			->setQueryParams("MID={$commentId}#com{$commentId}")
+			->makeEntityPath();
 	}
 
-	/**
-	 * @param string $searchQuery
-	 * @return bool
-	 */
 	private function isSearchQueryValid(string $searchQuery): bool
 	{
 		return SearchIndex::prepareStringToSearch($searchQuery) !== '';

@@ -27,6 +27,8 @@ export default class Item
 			Dom.prepend(this.#container, this.getMenuBarContainer());
 			this.initializeLayout();
 		}
+
+		this.showTour();
 	}
 
 	getEntityTypeId(): Number
@@ -37,6 +39,11 @@ export default class Item
 	getEntityId(): Number
 	{
 		return this.#context.getEntityId();
+	}
+
+	getEntityCategoryId(): ?Number
+	{
+		return this.#context.getEntityCategoryId();
 	}
 
 	getMenuBarContainer(): HTMLElement
@@ -189,5 +196,8 @@ export default class Item
 	{}
 
 	onHide(): void
+	{}
+
+	showTour(): void
 	{}
 }

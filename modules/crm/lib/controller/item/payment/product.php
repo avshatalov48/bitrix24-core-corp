@@ -59,7 +59,9 @@ class Product extends Base
 			unset($result[$basketId]['ENTITY_ID']);
 		}
 
-		return array_values($result);
+		$productList = array_values($result);
+
+		return $this->convertKeysToCamelCase($productList);
 	}
 
 
@@ -153,6 +155,8 @@ class Product extends Base
 			return null;
 		}
 
+		$this->recalculatePaymentSum($payment);
+
 		$result = $order->save();
 		if (!$result->isSuccess())
 		{
@@ -202,7 +206,7 @@ class Product extends Base
 	 * @param int $quantity
 	 * @return bool
 	 */
-	public function setQuantityAction(int $id, int $quantity): bool
+	public function setQuantityAction(int $id, int $quantity): ?bool
 	{
 		if ($quantity <= 0)
 		{
@@ -212,7 +216,7 @@ class Product extends Base
 				)
 			);
 
-			return false;
+			return null;
 		}
 
 		$payment = $this->getPaymentByPayableId($id);
@@ -224,7 +228,7 @@ class Product extends Base
 		/** @var Crm\Order\PayableBasketItem $payableItem */
 		$payableItem = $payment->getPayableItemCollection()->getItemById($id);
 
-		if ($this->checkQuantityOnUpdate($payableItem, $quantity))
+		if (!$this->canSetQuantity($payableItem, $quantity))
 		{
 			$this->addError(
 				new Error(
@@ -232,7 +236,7 @@ class Product extends Base
 				)
 			);
 
-			return false;
+			return null;
 		}
 
 		$payableItem->setField('QUANTITY', $quantity);
@@ -242,13 +246,15 @@ class Product extends Base
 		$result = $payment->getOrder()->save();
 		if (!$result->isSuccess())
 		{
-			$result->addErrors($result->getErrors());
+			$this->addErrors($result->getErrors());
+
+			return null;
 		}
 
-		return $result->isSuccess();
+		return true;
 	}
 
-	private function checkQuantityOnUpdate(Sale\PayableItem $payableItem, float $quantity) : bool
+	private function canSetQuantity(Sale\PayableItem $payableItem, float $quantity) : bool
 	{
 		/** @var Crm\Order\BasketItem $basketItem */
 		$basketItem = $payableItem->getEntityObject();
@@ -261,7 +267,7 @@ class Product extends Base
 
 		$disturbQuantity = $paymentCollection->getBasketItemQuantity($basketItem);
 
-		return ($disturbQuantity - $payableItem->getQuantity()) + $quantity > $basketItem->getQuantity();
+		return ($disturbQuantity - $payableItem->getQuantity()) + $quantity <= $basketItem->getQuantity();
 	}
 
 	private function getFieldsForBuilder(array $product, Sale\Payment $payment, $quantity)
@@ -274,7 +280,6 @@ class Product extends Base
 			'PAYMENT' => [
 				[
 					'ID' => $payment->getId(),
-					'SUM' => $payment->getSum() + $product['PRICE'],
 					'PRODUCT' => [
 						$basketCode => [
 							'BASKET_CODE' => $product['BASKET_CODE'],

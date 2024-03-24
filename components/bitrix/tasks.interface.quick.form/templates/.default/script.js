@@ -70,17 +70,17 @@ BX.Tasks.QuickForm = function(formContainerId, parameters)
 
 BX.Tasks.QuickForm.prototype.submit = function()
 {
-	var title = this.layout.title.value;
+	const title = this.layout.title.value;
 	if (BX.util.trim(title).length === 0)
 	{
 		return false;
 	}
 
-	var data = {
+	const data = {
 		title: title,
 		deadline: this.layout.deadline.value,
 		description: this.layout.description.value,
-		project : this.layout.projectId.value,
+		project: this.layout.projectId.value,
 		pathToTask: this.parameters.pathToTask,
 		siteId: BX.message("SITE_ID"),
 		nameTemplate: this.parameters.nameTemplate,
@@ -88,8 +88,8 @@ BX.Tasks.QuickForm.prototype.submit = function()
 		ganttMode: this.parameters.ganttMode
 	};
 
-	var responsibleId = this.userSelector.getUserId();
-	var email = this.userSelector.getUserEmail();
+	const responsibleId = this.userSelector.getUserId();
+	const email = this.userSelector.getUserEmail();
 	if (responsibleId > 0)
 	{
 		data.responsibleId = responsibleId;
@@ -108,7 +108,17 @@ BX.Tasks.QuickForm.prototype.submit = function()
 		mode: 'class',
 		data: {
 			data: data
-		}
+		},
+		analytics: {
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'task_create',
+			type: 'task',
+			c_section: 'tasks',
+			c_element: 'quick_button',
+			c_sub_section: this.parameters?.ganttMode ? 'gantt' : 'list',
+			status: 'success',
+		},
 	}).then(
 		function(response)
 		{
@@ -652,7 +662,8 @@ BX.Tasks.QuickForm.UserSelector.prototype.initDialog = function()
 					networkUsers: this.form.parameters.networkEnabled,
 					extranetUsers: true,
 					inviteGuestLink: true,
-					myEmailUsers: true
+					myEmailUsers: true,
+					analyticsSource: 'task',
 				}
 			},
 			{

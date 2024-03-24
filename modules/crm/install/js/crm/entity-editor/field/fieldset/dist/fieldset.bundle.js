@@ -158,6 +158,9 @@ this.BX = this.BX || {};
 	      if (values.hasOwnProperty("DELETED") && values["DELETED"] === 'Y') {
 	        this.layoutDeletedValue(entityEditor, id);
 	      }
+	      BX.Crm.RequisiteDetailsManager.create({
+	        "entityEditorId": entityEditorId
+	      });
 	      return entityEditor;
 	    }
 	  }, {

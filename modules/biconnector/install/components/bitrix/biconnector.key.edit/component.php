@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Services\ApacheSuperset;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\BiConnector\Settings;
@@ -137,6 +138,7 @@ if ($arResult['FORM_DATA']['ID'] > 0)
 		'select' => ['ID', 'USER_ID'],
 		'filter' => [
 			'=KEY_ID' => $arResult['FORM_DATA']['ID'],
+			'!KEY.SERVICE_ID' => ApacheSuperset::getServiceId(),
 		]
 	]);
 	while ($user = $userList->fetch())

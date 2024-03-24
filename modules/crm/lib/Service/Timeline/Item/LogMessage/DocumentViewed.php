@@ -3,10 +3,10 @@
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Link;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 
 Container::getInstance()->getLocalization()->loadMessages();
@@ -36,7 +36,7 @@ final class DocumentViewed extends LogMessage
 
 		$blocks['title'] =
 			(new Link())
-				->setValue($this->getDocument()->getTitle())
+				->setValue($this->getDocument()?->getTitle() ?: Loc::getMessage('CRM_COMMON_EMPTY_VALUE'))
 				->setAction($this->getOpenDocumentAction())
 		;
 

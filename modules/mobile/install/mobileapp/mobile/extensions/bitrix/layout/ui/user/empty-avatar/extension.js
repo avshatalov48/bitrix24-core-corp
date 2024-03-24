@@ -2,6 +2,7 @@
  * @module layout/ui/user/empty-avatar
  */
 jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { lighten } = require('utils/color');
 
 	const COLORS = [
@@ -91,11 +92,20 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 	 * @param {number} [size]
 	 * @param {object} [additionalStyles]
 	 * @param {function} [onClick]
+	 * @param {string} [testId]
 	 * @return {View}
 	 */
-	const EmptyAvatar = ({ id, name, size = 24, additionalStyles = {}, onClick }) => View(
+	const EmptyAvatar = ({
+		id,
+		name,
+		size = 24,
+		additionalStyles = {},
+		onClick,
+		testId,
+	}) => View(
 		{
 			onClick,
+			testId,
 			style: {
 				...getBackgroundColorStyles(id),
 				width: size,
@@ -110,7 +120,7 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 			style: {
 				fontSize: size / 2,
 				alignSelf: 'center',
-				color: '#ffffff',
+				color: AppTheme.colors.base8,
 			},
 			text: getFirstLetters(name).toLocaleUpperCase(env.languageId),
 		}),

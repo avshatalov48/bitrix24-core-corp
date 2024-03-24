@@ -3,7 +3,6 @@
  */
 jn.define('crm/payment-system/creation/actions/oauth', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Feature } = require('feature');
 	const { BackdropHeader, CreateBannerImage } = require('layout/ui/banners');
 	const { OAuthSession } = require('native/oauth');
 	const { AnalyticsLabel } = require('analytics-label');
@@ -67,15 +66,6 @@ jn.define('crm/payment-system/creation/actions/oauth', (require, exports, module
 
 							if (item.type === ActionTypes.oauth)
 							{
-								if (!Feature.isOAuthSupported())
-								{
-									Feature.showDefaultUnsupportedWidget({}, this.menu.getActionParentWidget());
-									reject();
-									menuClickResolve({ closeMenu: false });
-
-									return;
-								}
-
 								(new OAuthSession(item.params.url)).start()
 									.then(({ url }) => {
 										data.done = true;

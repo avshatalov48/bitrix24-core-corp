@@ -160,23 +160,28 @@ class WorktimeRepository
 			$subQuery = WorktimeEventTable::query()
 				->addSelect('MAX_ACTUAL_TIMESTAMP')
 				->registerRuntimeField(new ExpressionField('MAX_ACTUAL_TIMESTAMP', 'MAX(ACTUAL_TIMESTAMP)'))
-				->registerRuntimeField(new ExpressionField('EVENT_TYPE_ALIAS', 'CASE 
-					WHEN EVENT_TYPE = "START_WITH_ANOTHER_TIME" THEN "EDIT_START"
-					WHEN EVENT_TYPE = "STOP_WITH_ANOTHER_TIME" THEN "EDIT_STOP"
-					ELSE EVENT_TYPE END')
+				->registerRuntimeField(
+					new ExpressionField(
+						'EVENT_TYPE_ALIAS',
+						"CASE 
+						WHEN EVENT_TYPE = 'START_WITH_ANOTHER_TIME' THEN 'EDIT_START'
+						WHEN EVENT_TYPE = 'STOP_WITH_ANOTHER_TIME' THEN 'EDIT_STOP'
+						ELSE EVENT_TYPE END"
+					)
 				)
 				->where('WORKTIME_RECORD_ID', $recordId)
 				->addGroup('EVENT_TYPE_ALIAS');
 
-			$events = WorktimeEventTable::query()
+			$query = WorktimeEventTable::query()
 				->addSelect('*')
 				->where('WORKTIME_RECORD_ID', $record->getId())
 				->where(Query::filter()->logic('or')
 					->whereIn('ACTUAL_TIMESTAMP', $subQuery)
 					->where('ACTUAL_TIMESTAMP', null)
 				)
-				->exec()
-				->fetchCollection();
+			;
+
+			$events = $query->exec()->fetchCollection();
 			if ($events->count() > 0)
 			{
 				$record->defineWorktimeEvents($events);

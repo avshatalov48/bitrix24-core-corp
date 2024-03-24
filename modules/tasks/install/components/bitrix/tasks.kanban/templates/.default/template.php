@@ -30,8 +30,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Integration\Network\MemberSelector;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Kanban\Sort\Item\MenuItem;
 use Bitrix\Tasks\Kanban\Sort\Menu;
 use Bitrix\Tasks\UI\Filter;
@@ -52,12 +52,12 @@ $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 
 $data = $arResult['DATA'];
 
-if ($arParams['TIMELINE_MODE'] == 'Y')
+if ($arParams['TIMELINE_MODE'] === 'Y')
 {
 	$type = 'TL';
 	$scope = ScopeDictionary::SCOPE_TASKS_KANBAN_TIMELINE;
 }
-else if ($arParams['PERSONAL'] == 'Y')
+else if ($arParams['PERSONAL'] === 'Y')
 {
 	$type = 'P';
 	$scope = ScopeDictionary::SCOPE_TASKS_KANBAN_PERSONAL;
@@ -68,11 +68,11 @@ else
 	$scope = ScopeDictionary::SCOPE_TASKS_KANBAN;
 }
 
-$demoAccess = $arParams['PERSONAL'] != 'Y'
+$demoAccess = $arParams['PERSONAL'] !== 'Y'
 	&& CJSCore::IsExtRegistered('intranet_notify_dialog')
 	&& Loader::includeModule('im');
 
-$emptyKanban = $arParams['GROUP_ID'] == 0 && $arParams['PERSONAL'] != 'Y';
+$emptyKanban = (int)$arParams['GROUP_ID'] === 0 && $arParams['PERSONAL'] !== 'Y';
 
 $clientDate = date(Date::convertFormatToPhp(FORMAT_DATE), (time() + CTimeZone::GetOffset()));
 $clientTime = date(Date::convertFormatToPhp(FORMAT_DATETIME), (time() + CTimeZone::GetOffset()));
@@ -121,7 +121,7 @@ $styleAccepted = 'menu-popup-item-accept';
 $styleNone = 'menu-popup-item-none';
 $menuId = 'popupMenuOptions';
 
-if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE_HEADER'] == 'Y')
+if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE_HEADER'] === 'Y')
 {
 	$filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($arParams["USER_ID"], $arParams["GROUP_ID"])
 		->setGanttMode(false);
@@ -205,7 +205,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 
 	$popupSortItems = $menu->toArray();
 
-if ($arResult['CONTEXT'] === Context::DEFAULT)
+if ($arResult['CONTEXT'] !== Context::getSpaces())
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
@@ -473,11 +473,11 @@ $popupsShowed = \CUserOptions::getOption(
 	[]
 );
 
-if ($type == 'P' && !in_array('P', $popupsShowed))
+if ($type === 'P' && !in_array('P', $popupsShowed, true))
 {
 	$show = true;
 }
-elseif ($type == 'K' && !in_array('K', $popupsShowed))
+elseif ($type === 'K' && !in_array('K', $popupsShowed, true))
 {
 	$show = true;
 }
@@ -486,17 +486,17 @@ $show = ($isSprintView ? false : $show);
 
 if ($show)
 {
-	if ($type == 'P')
+	if ($type === 'P')
 	{
-		if (in_array(LANGUAGE_ID, ['ru', 'ua', 'by', 'kz']))
+		if (in_array(LANGUAGE_ID, ['ru', 'ua', 'by', 'kz'], true))
 		{
 			$popupUrlId = '5630723';
 		}
-		elseif (in_array(LANGUAGE_ID, ['la', 'es']))
+		elseif (in_array(LANGUAGE_ID, ['la', 'es'], true))
 		{
 			$popupUrlId = '5637971';
 		}
-		elseif (in_array(LANGUAGE_ID, ['de']))
+		elseif (LANGUAGE_ID === 'de')
 		{
 			$popupUrlId = '5638585';
 		}
@@ -505,17 +505,17 @@ if ($show)
 			$popupUrlId = '5637775';
 		}
 	}
-	elseif ($type == 'K')
+	elseif ($type === 'K')
 	{
-		if (in_array(LANGUAGE_ID, ['ru', 'ua', 'by', 'kz']))
+		if (in_array(LANGUAGE_ID, ['ru', 'ua', 'by', 'kz'], true))
 		{
 			$popupUrlId = '5630349';
 		}
-		elseif (in_array(LANGUAGE_ID, ['la', 'es']))
+		elseif (in_array(LANGUAGE_ID, ['la', 'es'], true))
 		{
 			$popupUrlId = '5637971';
 		}
-		elseif (in_array(LANGUAGE_ID, ['de']))
+		elseif (LANGUAGE_ID === 'de')
 		{
 			$popupUrlId = '5638577';
 		}
@@ -525,15 +525,15 @@ if ($show)
 		}
 	}
 
-	if (in_array(LANGUAGE_ID, ['ru', 'ua', 'by', 'kz']))
+	if (in_array(LANGUAGE_ID, ['ru', 'ua', 'by', 'kz'], true))
 	{
 		$popupDomain = 'ru';
 	}
-	elseif (in_array(LANGUAGE_ID, ['la', 'es']))
+	elseif (in_array(LANGUAGE_ID, ['la', 'es'], true))
 	{
 		$popupDomain = 'es';
 	}
-	elseif (in_array(LANGUAGE_ID, ['de']))
+	elseif (LANGUAGE_ID === 'de')
 	{
 		$popupDomain = 'de';
 	}
@@ -553,7 +553,7 @@ if ($show)
 	?>>
 		<div class="tasks-kanban-popup-title"><?= Loc::getMessage('KANBAN_POPUP_' . $type . '_TITLE'); ?></div>
 		<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_' . $type . '_TEXT_1'); ?></div>
-		<img src="<?= $this->getFolder() ?>/popup/kanban_img.png" alt="" class="tasks-kanban-popup-img" alt="">
+		<img src="<?= $this->getFolder() ?>/popup/kanban_img.png" alt="" class="tasks-kanban-popup-img">
 		<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_' . $type . '_TEXT_2'); ?></div>
 		<div class="tasks-kanban-popup-text"><?= Loc::getMessage('KANBAN_POPUP_' . $type . '_TEXT_3'); ?></div>
 		<div class="tasks-kanban-popup-text tasks-kanban-popup-text-italic"><?= Loc::getMessage('KANBAN_POPUP_'
@@ -561,7 +561,7 @@ if ($show)
 				. '_TEXT_4'); ?></div>
 		<a href="https://helpdesk.bitrix24.<?= $popupDomain ?>/open/<?= $popupUrlId ?>/" target="_blank"
 		   data-helpId="<?= $popupUrlId ?>"<?php
-		if (SITE_TEMPLATE_ID == 'bitrix24')
+		if (SITE_TEMPLATE_ID === 'bitrix24')
 		{
 			?> id="kanban-readmore"<?php
 		} ?> class="tasks-kanban-popup-text-redmore">
@@ -571,12 +571,14 @@ if ($show)
 	<?php
 }
 
-//Remove this code after 01.11.2017
-//if (\Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->shouldShowHint()):
 CJSCore::Init("spotlight");
 ?>
 <script>
 	BX.ready(function() {
+		if (<?=(int)$show?> === 1)
+		{
+			showPopup();
+		}
 		BX.Tasks.KanbanComponent.filterId = '<?=$gridID?>';
 	});
 

@@ -1006,6 +1006,49 @@
 					width: 1034
 				}
 			},
+			{
+				condition: [
+					new RegExp('/sign/link/member/(\\d+)/', 'i'),
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 900,
+				},
+				handler(event, link)
+				{
+					let newWindowLink = link.url;
+					if (!link.url.startsWith(document.location.origin))
+					{
+						newWindowLink = document.location.origin + link.url;
+					}
+
+					BX.SidePanel.Instance.open('sign:stub:sign-link', {
+						width: 900,
+						cacheable: false,
+						allowCrossOrigin: true,
+						allowCrossDomain: true,
+						allowChangeHistory: false,
+						newWindowUrl: newWindowLink,
+						copyLinkLabel: true,
+						newWindowLabel: true,
+						loader: '/bitrix/js/intranet/sidepanel/bindings/images/sign_mask.svg',
+						label: {
+							text: BX.message('INTRANET_BINDINGS_SMART_DOCUMENT_MSGVER_1'),
+							bgColor: '#C48300',
+						},
+						async contentCallback(slider) {
+							return BX.Runtime.loadExtension('sign.v2.b2e.sign-link').then(() => {
+								return (new BX.Sign.V2.B2e.SignLink({ memberId: link.matches[1], slider }))
+									.render()
+								;
+							});
+						},
+					});
+
+					event.preventDefault();
+				},
+			},
 		]
 	});
 

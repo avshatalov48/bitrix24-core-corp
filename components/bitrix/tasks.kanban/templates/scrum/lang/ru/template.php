@@ -4,6 +4,7 @@ $MESS["KANBAN_SORT_TITLE"] = "Новые задачи:";
 $MESS["KANBAN_SORT_DESC"] = "Сверху";
 $MESS["KANBAN_SORT_ASC"] = "Снизу";
 $MESS["KANBAN_SORT_ACTUAL"] = "По активности";
+$MESS["KANBAN_SORT_ACTUAL_MSGVER_1"] = "По активности";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Рекомендуется";
 $MESS["KANBAN_WO_GROUP_1"] = "Здесь будет ваш канбан задач по проектам";
 $MESS["KANBAN_WO_GROUP_2"] = "Создайте свой первый проект, чтобы начать работу с задачами";

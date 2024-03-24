@@ -263,6 +263,8 @@ abstract class Base extends ValueCollection
 					continue;
 				}
 
+				$this->document[$userFieldName] ??= $fieldValue;
+
 				if ($fieldTypeID == 'employee')
 				{
 					if (!$isFieldMultiple)

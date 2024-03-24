@@ -3,6 +3,8 @@
 namespace Bitrix\ImBot\Model;
 
 use Bitrix\Main;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\Type\DateTime;
 
 /**
@@ -97,13 +99,12 @@ class NetworkSessionTable extends Main\Entity\DataManager
 				'data_type' => 'integer',
 				'default_value' => 1440,
 			],
-			'CLOSED' => [
-				'data_type' => 'boolean',
-				'expression' => [
-					'CASE WHEN %1$s IS NULL THEN 0 WHEN %1$s < NOW() THEN 1 ELSE 0 END',
-					'DATE_FINISH',
-				]
-			],
+			'CLOSED' => (new ExpressionField(
+				'CLOSED',
+				'CASE WHEN %1$s IS NULL THEN 0 WHEN %1$s < NOW() THEN 1 ELSE 0 END',
+				['DATE_FINISH']
+			))->configureValueType(IntegerField::class),
+
 			'TELEMETRY_SENT' => [
 				'data_type' => 'boolean',
 				'values' => ['N', 'Y'],

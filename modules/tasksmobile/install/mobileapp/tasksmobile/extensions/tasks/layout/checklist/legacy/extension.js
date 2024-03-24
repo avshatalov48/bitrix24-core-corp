@@ -1940,12 +1940,6 @@ jn.define('tasks/layout/checklist/legacy', (require, exports, module) => {
 					onChangeText: (value) => {
 						this.props.onChangeText(value);
 					},
-					onLayout: () => {
-						if (this.inputRef)
-						{
-							this.inputRef.setSelection(this.props.title.length, this.props.title.length);
-						}
-					},
 					onFocus: () => {
 						setTimeout(() => {
 							if (this.inputRef)

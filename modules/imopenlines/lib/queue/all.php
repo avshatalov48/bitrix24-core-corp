@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImOpenLines\Queue;
 
+use Bitrix\ImOpenLines\Relation;
 use \Bitrix\Main\Event,
 	\Bitrix\Main\Type\DateTime;
 
@@ -118,6 +119,7 @@ class All extends Queue
 				);
 				// END Event
 
+				$this->removeWelcomeBot();
 				if((bool)$resultOperatorQueue['RESULT'] === true)
 				{
 					if(!empty($resultOperatorQueue['OPERATOR_LIST']))
@@ -198,5 +200,20 @@ class All extends Queue
 
 		$fakeRelations = new ImOpenLines\Relation((int)$this->session['CHAT_ID']);
 		$fakeRelations->removeAllRelations(true);
+	}
+
+	private function removeWelcomeBot(): void
+	{
+		if (
+			(int)$this->session['OPERATOR_ID'] !== 0
+			&& $this->config['WELCOME_BOT_ENABLE'] === 'Y'
+			&& $this->config['WELCOME_BOT_LEFT'] === Config::BOT_LEFT_QUEUE
+			&& (int)$this->session['OPERATOR_ID'] === (int)$this->config['WELCOME_BOT_ID']
+		)
+		{
+			$fakeRelation = new Relation((int)$this->session['CHAT_ID']);
+			$fakeRelation->removeRelation($this->config['WELCOME_BOT_ID']);
+			(new \CIMChat(0))->DeleteUser((int)$this->session['CHAT_ID'],$this->config['WELCOME_BOT_ID'], false, true);
+		}
 	}
 }

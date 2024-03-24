@@ -6,13 +6,13 @@ const Scrollable = {
 		<div>
 			<transition name="b24-a-fade">
 				<div class="b24-window-scroll-arrow-up-box"
-					v-if="enabled && !text && !anchorTopIntersected" 
+					v-if="enabled && !text && !anchorTopIntersected"
 					:style="{ zIndex: zIndexComputed + 10}"
 					@click="scrollTo(false)"
 				>
 					<button type="button" class="b24-window-scroll-arrow-up"></button>
 				</div>
-			</transition>						
+			</transition>
 			<div class="b24-window-scrollable" :style="{ zIndex: zIndexComputed }">
 				<div v-show="enabled" class="b24-window-scroll-anchor"></div>
 				<slot></slot>
@@ -27,7 +27,7 @@ const Scrollable = {
 					<button type="button" class="b24-window-scroll-arrow-down"></button>
 				</div>
 				<div class="b24-form-scroll-textable"
-					v-if="enabled && text && !anchorBottomIntersected && !hideEars" 
+					v-if="enabled && text && !anchorBottomIntersected && !hideEars"
 					:style="{ zIndex: zIndexComputed + 10}"
 					@click="scrollTo(true)"
 				>
@@ -39,7 +39,7 @@ const Scrollable = {
 					</div>
 				</div>
 			</transition>
-		</div>	
+		</div>
 	`,
 	data: function ()
 	{
@@ -145,6 +145,13 @@ const Scrollable = {
 			bottomAnchor ? this.anchorObserver.observe(bottomAnchor) : null;
 		},
 	},
+	beforeDestroy ()
+    {
+        if (this.show)
+        {
+			Scroll.enable();
+        }
+    },
 	mounted ()
 	{
 		if (this.show)

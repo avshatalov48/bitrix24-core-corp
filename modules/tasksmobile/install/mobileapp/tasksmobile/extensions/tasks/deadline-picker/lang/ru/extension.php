@@ -6,6 +6,7 @@ $MESS["TASKSMOBILE_DEADLINE_PICKER_ITEM_THIS_WEEK"] = "На этой недел�
 $MESS["TASKSMOBILE_DEADLINE_PICKER_ITEM_WEEK_END"] = "В конце недели";
 $MESS["TASKSMOBILE_DEADLINE_PICKER_ITEM_NEXT_WEEK_START"] = "В начале следующей недели";
 $MESS["TASKSMOBILE_DEADLINE_PICKER_ITEM_NEXT_WEEK_END"] = "В конце следующей недели";
+$MESS["TASKSMOBILE_DEADLINE_PICKER_ITEM_NO_DEADLINE"] = "Без срока";
 $MESS["TASKSMOBILE_DEADLINE_PICKER_ITEM_CUSTOM_DATE"] = "Указать свою дату";
 
 $MESS["TASKSMOBILE_DEADLINE_PICKER_TITLE"] = "Крайний срок";

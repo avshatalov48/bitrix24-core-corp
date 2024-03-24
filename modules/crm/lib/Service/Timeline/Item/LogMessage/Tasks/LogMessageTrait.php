@@ -28,20 +28,17 @@ trait LogMessageTrait
 
 	private function getTaskAction(\Bitrix\Tasks\Internals\TaskObject $task): JsEvent
 	{
-		$pathMaker = TaskPathMaker::getPathMaker($task->getId(), $this->getContext()->getUserId());
+		$uri = $this->getUri($task);
 
 		$event = new JsEvent('Task:View');
 		$event
-			->addActionParamString('path', $pathMaker->makeEntityPath())
+			->addActionParamString('path', $uri->getUri())
 			->addActionParamInt('taskId', $task->getId())
 			->addActionParamString('taskTitle', $task->getTitle())
-			->setAnalytics(new Analytics(['scenario' => 'task_view'], 'tasks.analytics.hit'))
 		;
 
 		return $event;
 	}
-
-
 
 	private function getTaskTitleBlock(HistoryItemModel $model, \Bitrix\Tasks\Internals\TaskObject $task): TextPropertiesInterface
 	{
@@ -83,5 +80,23 @@ trait LogMessageTrait
 		}
 
 		return TaskObject::getObject($taskId, $withRelations);
+	}
+
+	/**
+	 * @param \Bitrix\Tasks\Internals\TaskObject $task
+	 * @return Uri
+	 */
+	private function getUri(\Bitrix\Tasks\Internals\TaskObject $task): Uri
+	{
+		$pathMaker = TaskPathMaker::getPathMaker($task->getId(), $this->getContext()->getUserId());
+		$uri = new Uri($pathMaker->makeEntityPath());
+		$ownerName = strtolower(\CCrmOwnerType::ResolveName($this->getContext()->getEntityTypeId()));
+		$uri->addParams([
+			'ta_sec' => 'crm',
+			'ta_sub' => $ownerName,
+			'ta_el' => 'title_click',
+		]);
+
+		return $uri;
 	}
 }

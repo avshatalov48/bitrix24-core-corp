@@ -45,7 +45,7 @@ use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskProvider;
-use Bitrix\Tasks\Replicator\Template\Replicators\RegularTemplateTaskReplicator;
+use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
@@ -178,6 +178,12 @@ class CTasks
 		if ($spawnedByAgent === 'Y' || $spawnedByAgent === true)
 		{
 			$handler->fromAgent();
+		}
+
+		$spawnedByWorkFlow = ($arParams['SPAWNED_BY_WORKFLOW'] ?? false);
+		if ($spawnedByWorkFlow === 'Y' || $spawnedByWorkFlow === true)
+		{
+			$handler->fromWorkFlow();
 		}
 
 		$checkRightsOnFiles = ($arParams['CHECK_RIGHTS_ON_FILES'] ?? false);
@@ -516,6 +522,8 @@ class CTasks
 		$arSqlSearch = [];
 
 		$targetUserId = isset($params['TARGET_USER_ID']) ? $params['TARGET_USER_ID'] : $userID;
+
+		$helper = Application::getConnection()->getSqlHelper();
 
 		foreach ($arFilter as $key => $val)
 		{
@@ -870,11 +878,10 @@ class CTasks
 							WHEN
 								" .
 						$sAliasPrefix .
-						"T.DEADLINE < DATE_ADD(" .
-						$DB->CurrentTimeFunction() .
-						", INTERVAL " .
-						Counter\Deadline::getDeadlineTimeLimit() .
-						" SECOND)
+						"T.DEADLINE < {$helper->addSecondsToDateTime(
+							$DB->CurrentTimeFunction(),
+							 Counter\Deadline::getDeadlineTimeLimit()
+							 )}
 								AND " .
 						$sAliasPrefix .
 						"T.DEADLINE >= " .

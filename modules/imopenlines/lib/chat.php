@@ -569,6 +569,8 @@ class Chat
 					}
 					else
 					{
+						$relations = new Relation((int)$this->chat['ID']);
+						$relations->addRelation((int)$session->getData('OPERATOR_ID'));
 						$chat->SetOwner($this->chat['ID'], 0);
 					}
 
@@ -667,7 +669,10 @@ class Chat
 						//Transfer to the operator
 						else
 						{
-							$result = $this->transferToOperator($params, $session, $mode, $selfExit, $skipCheck);
+							if (User::getInstance($params['TO'])->isActive())
+							{
+								$result = $this->transferToOperator($params, $session, $mode, $selfExit, $skipCheck);
+							}
 						}
 					}
 				}
@@ -875,7 +880,17 @@ class Chat
 				$chat = new \CIMChat(0);
 				if ($fakeRelation)
 				{
-					$fakeRelation->removeAllRelations();
+					$excludeUserIds = [];
+					if (
+						$session->getConfig('WELCOME_BOT_ENABLE') === 'Y'
+						&& $session->getConfig('WELCOME_BOT_LEFT') === Config::BOT_LEFT_CLOSE
+						&& (int)$session->getConfig('WELCOME_BOT_ID') > 0
+					)
+					{
+						$excludeUserIds[] = (int)$session->getConfig('WELCOME_BOT_ID');
+					}
+
+					$fakeRelation->removeAllRelations(false, $excludeUserIds);
 				}
 				else
 				{
@@ -893,11 +908,21 @@ class Chat
 					}
 				}
 
+				$userFrom = User::getInstance($params['FROM']);
 				if ($params['FROM'] > 0 && $selfExit)
 				{
 					if ($fakeRelation)
 					{
 						$fakeRelation->removeRelation((int)$params['FROM']);
+						if (
+							$userFrom->isBot()
+							&& $session->getConfig('WELCOME_BOT_ENABLE') === 'Y'
+							&& $session->getConfig('WELCOME_BOT_LEFT') === Config::BOT_LEFT_QUEUE
+							&& (int)$session->getConfig('WELCOME_BOT_ID') === $userFrom->getId()
+						)
+						{
+							$chat->DeleteUser($this->chat['ID'], $params['FROM'], false, true);
+						}
 					}
 					else
 					{
@@ -931,7 +956,6 @@ class Chat
 					}
 				}
 
-				$userFrom = User::getInstance($params['FROM']);
 				if ($transferUserId > 0)
 				{
 					$userTo = User::getInstance($transferUserId);
@@ -1984,6 +2008,7 @@ class Chat
 							'OPERATOR_ID' => $userId,
 							'CONFIG_ID' => $configId,
 							'PARENT_ID' => $sessionId,
+							'USER_LANG' => $session->getSessionField('USER_LANG')
 						]);
 
 						if ($this->chat['AUTHOR_ID'] == $userId)

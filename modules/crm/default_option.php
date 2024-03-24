@@ -73,6 +73,8 @@ $crm_default_option = [
 	'path_to_invoice_activity' => '/crm/invoice/activity/',
 
 	'path_to_activity_list' => '/crm/activity/',
+	'path_to_activity_kanban' => '/crm/activity/kanban/',
+	'path_to_activity_report' => '/crm/activity/widget/',
 	'path_to_activity_show' => '/crm/activity/?ID=#activity_id#&open_view=#activity_id#',
 	'path_to_activity_edit' => '/crm/activity/?ID=#activity_id#&open_edit=#activity_id#',
 	'path_to_activity_custom_type_list' => '/crm/configs/custom_activity/',
@@ -121,4 +123,9 @@ $crm_default_option = [
 	'enable_catalog_price_save' => 'Y',
 	'enable_full_catalog' => 'Y',
 	'enable_entity_commodity_item_creation' => 'N',
+	'terminal_is_link_payment_enabled' => 'Y',
+	'terminal_is_sbp_enabled' => 'Y',
+	'terminal_is_sber_qr_enabled' => 'Y',
+	'terminal_disabled_paysystems' => '',
+	'terminal_is_ru_zone' => null,
 ];

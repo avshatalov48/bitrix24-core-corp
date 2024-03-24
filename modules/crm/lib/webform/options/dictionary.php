@@ -270,7 +270,11 @@ class Dictionary
 				];
 			}
 
-			if ((int)$type->getEntityTypeId() === \CCrmOwnerType::SmartDocument)
+			$entityTypeId = (int)$type->getEntityTypeId();
+			if (
+				$entityTypeId === \CCrmOwnerType::SmartDocument
+				|| $entityTypeId === \CCrmOwnerType::SmartB2eDocument
+			)
 			{
 				continue;
 			}

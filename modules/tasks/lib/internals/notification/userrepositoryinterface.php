@@ -15,7 +15,8 @@ interface UserRepositoryInterface
 	 */
 	public function getRecepients(TaskObject $task, User $sender, array $optional = []): array;
 	public function getSender(TaskObject $task, array $optional = []): ?User;
-	public function getUserById(int $userId): ?User;
+	public function getUserById(?int $userId): ?User;
+	public function getUsersByIds(array $userIds): array;
 	public function getUserTimeZoneOffset(int $userId): int;
 
 	/**

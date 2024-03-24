@@ -204,7 +204,7 @@
 		}
 
 		const isBetaAvailable = await taskSettingsManager.isBetaAvailablePromise;
-		checkDisabledToolById('tasks')
+		checkDisabledToolById('tasks', false)
 			.then((tasksDisabled) => {
 				console.log(tasksDisabled);
 				const enableInMenu = (isBetaAvailable && !tasksDisabled);

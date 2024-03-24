@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core,main_core_events,ui_designTokens,crm_placement_detailsearch,ui_dialogs_messagebox) {
 	'use strict';
@@ -5,15 +6,11 @@ this.BX = this.BX || {};
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var RequisiteAutocompleteField = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(RequisiteAutocompleteField, _EventEmitter);
-
 	  function RequisiteAutocompleteField() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, RequisiteAutocompleteField);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(RequisiteAutocompleteField).call(this));
-
 	    _this.setEventNamespace('BX.Crm.Requisite.Autocomplete');
-
 	    _this._id = "";
 	    _this._settings = {};
 	    _this._placeholderText = null;
@@ -40,7 +37,6 @@ this.BX = this.BX || {};
 	    _this.clientResolverPlacementParams = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(RequisiteAutocompleteField, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
@@ -63,7 +59,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isObject(params)) {
 	        return null;
 	      }
-
 	      return {
 	        isPlacement: BX.prop.getBoolean(params, "isPlacement", false),
 	        numberOfPlacements: BX.prop.getInteger(params, "numberOfPlacements", 0),
@@ -80,16 +75,13 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isDomNode(container)) {
 	        return;
 	      }
-
 	      this._domNodes.requisiteClearButton = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"])), this.onSearchStringClear.bind(this));
 	      this._domNodes.requisiteSearchButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-search\" onclick=\"", "\"></button>"])), this.onSearchButtonClick.bind(this));
 	      var placeholder = this._placeholderText;
 	      this._domNodes.requisiteSearchString = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" placeholder=\"", "\" class=\"ui-ctl-element ui-ctl-textbox\" />"])), main_core.Text.encode(placeholder));
-
 	      if (!this._isPermitted) {
 	        this._domNodes.requisiteSearchString.setAttribute('onclick', this._featureRestrictionCallback);
 	      }
-
 	      this.refreshLayout();
 	      main_core.Dom.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t</div>"])), this._domNodes.requisiteSearchButton, this._domNodes.requisiteClearButton, this._domNodes.requisiteSearchString), container);
 	      this.initDropdown();
@@ -122,12 +114,9 @@ this.BX = this.BX || {};
 	        BX.addCustomEvent(this._dropdown, 'Dropdown:onGetPopupAlertContainer', this.onGetPopupAlertContainer.bind(this));
 	        BX.addCustomEvent(this._dropdown, 'Dropdown:onAfterInstallDefaultApp', this.onAfterInstallDefaultApp.bind(this));
 	      }
-
 	      this._dropdown.searchOptions = this._context;
 	      this._dropdown.targetElement = this._domNodes.requisiteSearchString;
-
 	      this._dropdown.init();
-
 	      this.setEnabled(this._isEnabled);
 	      this.setShowFeedbackLink(this._showFeedbackLink);
 	    }
@@ -135,18 +124,15 @@ this.BX = this.BX || {};
 	    key: "getDropdownPopup",
 	    value: function getDropdownPopup() {
 	      var tryCreate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
 	      if (tryCreate) {
 	        return this._dropdown.getPopupWindow();
 	      }
-
 	      return this._dropdown.popupWindow;
 	    }
 	  }, {
 	    key: "closeDropdownPopup",
 	    value: function closeDropdownPopup() {
 	      var dropownPopup = this.getDropdownPopup();
-
 	      if (dropownPopup) {
 	        dropownPopup.close();
 	      }
@@ -161,7 +147,6 @@ this.BX = this.BX || {};
 	    key: "setShowFeedbackLink",
 	    value: function setShowFeedbackLink(show) {
 	      this._showFeedbackLink = !!show;
-
 	      if (this._dropdown) {
 	        this._dropdown.setFeedbackFormParams(this._showFeedbackLink ? BX.prop.getObject(this._settings, "feedbackFormParams", {}) : {});
 	      }
@@ -172,37 +157,29 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isDomNode(this._domNodes.requisiteSearchString) || !main_core.Type.isDomNode(this._domNodes.requisiteSearchButton) || !main_core.Type.isDomNode(this._domNodes.requisiteClearButton)) {
 	        return;
 	      }
-
 	      var text = '';
-
 	      if (main_core.Type.isObject(this._currentItem) && this._isPermitted) {
 	        var textParts = [this._currentItem.title];
-
 	        if (main_core.Type.isStringFilled(this._currentItem.subTitle)) {
 	          textParts.push(this._currentItem.subTitle);
 	        }
-
 	        text = textParts.join(', ');
 	        main_core.Dom.style(this._domNodes.requisiteSearchButton, "display", "none");
 	        main_core.Dom.style(this._domNodes.requisiteClearButton, "display", "");
-
 	        if (this._dropdown) {
 	          this._dropdown.setCanAddRequisite(false);
 	        }
 	      } else {
 	        main_core.Dom.style(this._domNodes.requisiteClearButton, "display", "none");
-
 	        if (this._isEnabled || !this._isPermitted) {
 	          main_core.Dom.style(this._domNodes.requisiteSearchButton, "display", "");
 	        } else {
 	          main_core.Dom.style(this._domNodes.requisiteSearchButton, "display", "none");
 	        }
-
 	        if (this._dropdown) {
 	          this._dropdown.setCanAddRequisite(this._isPermitted && BX.prop.getBoolean(this._settings, "canAddRequisite", false));
 	        }
 	      }
-
 	      this._domNodes.requisiteSearchString.value = text;
 	      this.onSearchQueryInput();
 	      this.setLoading(false);
@@ -222,14 +199,11 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(state)) {
 	        return;
 	      }
-
 	      this.setCurrentItem(main_core.Type.isPlainObject(state.currentItem) ? state.currentItem : null);
-
 	      if (main_core.Type.isString(state.searchQuery) && main_core.Type.isDomNode(this._domNodes.requisiteSearchString) && this._isPermitted) {
 	        this._domNodes.requisiteSearchString.value = state.searchQuery;
 	        this.onSearchQueryInput();
 	      }
-
 	      if (main_core.Type.isArray(state.items)) {
 	        this._dropdown.setItems(state.items);
 	      }
@@ -238,7 +212,6 @@ this.BX = this.BX || {};
 	    key: "setContext",
 	    value: function setContext(context) {
 	      this._context = main_core.Type.isPlainObject(context) ? context : {};
-
 	      if (this._dropdown) {
 	        this._dropdown.searchOptions = this._context;
 	      }
@@ -247,7 +220,6 @@ this.BX = this.BX || {};
 	    key: "setPlaceholderText",
 	    value: function setPlaceholderText(text) {
 	      this._placeholderText = main_core.Type.isStringFilled(text) ? text : "";
-
 	      if (main_core.Type.isDomNode(this._domNodes.requisiteSearchString)) {
 	        this._domNodes.requisiteSearchString.placeholder = this._placeholderText;
 	      }
@@ -256,12 +228,9 @@ this.BX = this.BX || {};
 	    key: "setClientResolverPlacementParams",
 	    value: function setClientResolverPlacementParams(params) {
 	      this.clientResolverPlacementParams = this.filterclientResolverPlacementParams(params);
-
 	      if (this._dropdown) {
 	        this._dropdown.setPlacementParams(this.clientResolverPlacementParams);
-
 	        var isPlacement = BX.prop.getBoolean(this.clientResolverPlacementParams, "isPlacement", false);
-
 	        if (isPlacement) {
 	          this._dropdown.setExternalSearchHandler(this.externalSearchHandler);
 	        }
@@ -271,7 +240,6 @@ this.BX = this.BX || {};
 	    key: "setEnabled",
 	    value: function setEnabled(enabled) {
 	      this._isEnabled = !!enabled;
-
 	      if (this._dropdown) {
 	        this._dropdown.setMinSearchStringLength(this._isEnabled ? 3 : 99999);
 	      }
@@ -280,14 +248,11 @@ this.BX = this.BX || {};
 	    key: "setLoading",
 	    value: function setLoading(isLoading) {
 	      isLoading = !!isLoading;
-
 	      if (isLoading === this._isLoading) {
 	        return;
 	      }
-
 	      this._isLoading = isLoading;
 	      var searchBtn = this._domNodes.requisiteSearchButton;
-
 	      if (main_core.Type.isDomNode(searchBtn)) {
 	        if (isLoading) {
 	          searchBtn.classList.remove('ui-ctl-icon-search');
@@ -297,9 +262,7 @@ this.BX = this.BX || {};
 	          searchBtn.classList.add('ui-ctl-icon-search');
 	        }
 	      }
-
 	      var clearBtn = this._domNodes.requisiteClearButton;
-
 	      if (main_core.Type.isDomNode(clearBtn)) {
 	        if (isLoading) {
 	          clearBtn.classList.remove('ui-ctl-icon-clear');
@@ -328,7 +291,6 @@ this.BX = this.BX || {};
 	      var data = event.getData();
 	      var dropdown = data[0];
 	      var selected = data[1];
-
 	      if (dropdown === this._dropdown && selected["appSid"] && !selected["created"]) {
 	        if (!this.creatingItem) {
 	          this.creatingItem = selected;
@@ -338,18 +300,14 @@ this.BX = this.BX || {};
 	          });
 	          selected.node.classList.add('client-editor-active');
 	          selected.node.parentNode.classList.add('client-editor-inactive');
-
 	          selected._loader.show();
-
 	          BX.onCustomEvent(this.detailAutocompletePlacement, "Placements:pick", [{
 	            appSid: selected["appSid"],
 	            data: selected
 	          }]);
 	        }
-
 	        return;
 	      }
-
 	      this.selectEntity(selected);
 	    }
 	  }, {
@@ -361,18 +319,14 @@ this.BX = this.BX || {};
 	            this.creatingItem[prop] = selected[prop];
 	          }
 	        }
-
 	        this.creatingItem["created"] = true;
 	        this.creatingItem = null;
-
 	        this._dropdown.setItems([]);
 	      }
-
 	      if (this.onDocumentClickConfirm) {
 	        this.onDocumentClickConfirm.close();
 	        this.onDocumentClickConfirm = null;
 	      }
-
 	      this.closeDropdownPopup();
 	      this.setCurrentItem(selected);
 	      this.emit('onSelectValue', selected);
@@ -394,32 +348,27 @@ this.BX = this.BX || {};
 	    key: "onEntitySearchStart",
 	    value: function onEntitySearchStart() {
 	      this.setLoading(true);
-
 	      this._dropdown.setItems([]);
 	    }
 	  }, {
 	    key: "onExternalSearch",
 	    value: function onExternalSearch() {
 	      var _this2 = this;
-
 	      return new Promise(function (resolve) {
 	        if (_this2.detailAutocompletePlacement) {
 	          var params = {
 	            appId: 0
 	          };
 	          BX.onCustomEvent(_this2.detailAutocompletePlacement, "Placements:startDefaultSearch", [params]);
-
 	          if (main_core.Type.isInteger(params["appId"]) && params["appId"] > 0) {
 	            if (!_this2.externalSearchResultHandlerList.has(params["appId"])) {
 	              _this2.externalSearchResultHandlerList.set(params["appId"], function (result) {
 	                resolve(result);
 	              });
 	            }
-
 	            return;
 	          }
 	        }
-
 	        resolve([]);
 	      });
 	    }
@@ -428,14 +377,11 @@ this.BX = this.BX || {};
 	    value: function initPlacement(searchControl, container) {
 	      if (!this.detailAutocompletePlacement) {
 	        var isAutocompletePlacementEnabled = main_core.Type.isPlainObject(this.clientResolverPlacementParams) && this.clientResolverPlacementParams.hasOwnProperty("numberOfPlacements") && main_core.Type.isNumber(this.clientResolverPlacementParams["numberOfPlacements"]) && this.clientResolverPlacementParams["numberOfPlacements"] > 0;
-
 	        if (isAutocompletePlacementEnabled) {
 	          this.detailAutocompletePlacement = new crm_placement_detailsearch.DetailSearch("CRM_REQUISITE_AUTOCOMPLETE");
 	        }
-
 	        if (this.detailAutocompletePlacement) {
 	          var dropdownPopup = this.getDropdownPopup(true);
-
 	          if (dropdownPopup) {
 	            this.beforeEntitySearchPopupCloseHandler = this.onBeforeEntitySearchPopupClose.bind(this, dropdownPopup._tryCloseByEvent.bind(dropdownPopup));
 	            dropdownPopup._tryCloseByEvent = this.beforeEntitySearchPopupCloseHandler;
@@ -443,7 +389,6 @@ this.BX = this.BX || {};
 	            BX.addCustomEvent(dropdownPopup, 'onPopupClose', this.entitySearchPopupCloseHandler);
 	            dropdownPopup.show();
 	          }
-
 	          this.placementsParamsHandler = this.onPlacementsParams.bind(this);
 	          BX.addCustomEvent(this.detailAutocompletePlacement, "Placements:params", this.placementsParamsHandler);
 	          this.beforeAddPlacementItemsHandler = this.onBeforeAppendPlacementItems.bind(this);
@@ -458,14 +403,11 @@ this.BX = this.BX || {};
 	            hideLoader: true
 	          });
 	        }
-
 	        if (main_core.Type.isDomNode(this._domNodes.requisiteSearchString)) {
 	          if (!this.searchQueryInputHandler) {
 	            this.searchQueryInputHandler = this.onSearchQueryInput.bind(this);
 	          }
-
 	          this._domNodes.requisiteSearchString.addEventListener("input", this.searchQueryInputHandler);
-
 	          this._domNodes.requisiteSearchString.addEventListener("keyup", this.searchQueryInputHandler);
 	        }
 	      }
@@ -491,7 +433,7 @@ this.BX = this.BX || {};
 	    key: "onEntitySearchComplete",
 	    value: function onEntitySearchComplete() {
 	      this.setLoading(false);
-	    }
+	    } /*dropdown, items*/
 	  }, {
 	    key: "onGetPopupAlertContainer",
 	    value: function onGetPopupAlertContainer(searchControl, container) {
@@ -508,31 +450,25 @@ this.BX = this.BX || {};
 	      if (this.onDocumentClickConfirm) {
 	        return BX.eventReturnFalse(event);
 	      }
-
 	      var eventResult = {
 	        active: false
 	      };
 	      BX.onCustomEvent(this.detailAutocompletePlacement, "Placements:active", [eventResult]);
-
 	      if (eventResult.active) {
 	        BX.unbind(document, 'click', this._dropdown.documentClickHandler);
-
 	        var f = function (messageBox, e) {
 	          BX.bind(document, 'click', this._dropdown.documentClickHandler);
 	          messageBox.close();
 	          this.onDocumentClickConfirm = null;
 	          BX.eventCancelBubble(e);
 	        }.bind(this);
-
 	        this.onDocumentClickConfirm = ui_dialogs_messagebox.MessageBox.create({
 	          message: BX.message('CRM_EDITOR_PLACEMENT_CAUTION') || 'Dow you want to terminate process?',
 	          buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
 	          modal: true,
 	          onOk: function (messageBox, button, e) {
 	            f(messageBox, e);
-
 	            this._dropdown.documentClickHandler(e);
-
 	            originalHandler(e);
 	          }.bind(this),
 	          onCancel: function onCancel(messageBox, button, e) {
@@ -543,7 +479,6 @@ this.BX = this.BX || {};
 	        this.onDocumentClickConfirm.show();
 	        return BX.eventReturnFalse(event);
 	      }
-
 	      originalHandler(event);
 	    }
 	  }, {
@@ -556,23 +491,17 @@ this.BX = this.BX || {};
 	    value: function destroyPlacement() {
 	      if (this.searchQueryInputHandler) {
 	        this._domNodes.requisiteSearchString.removeEventListener("input", this.searchQueryInputHandler);
-
 	        this._domNodes.requisiteSearchString.removeEventListener("keyup", this.searchQueryInputHandler);
-
 	        this.searchQueryInputHandler = null;
 	      }
-
 	      if (this._dropdown && this._dropdown.hasOwnProperty("documentClickHandler")) {
 	        BX.unbind(document, 'click', this._dropdown.documentClickHandler);
 	      }
-
 	      if (this.detailAutocompletePlacement) {
 	        var dropdownPopup = this.getDropdownPopup();
-
 	        if (dropdownPopup) {
 	          BX.removeCustomEvent(dropdownPopup, "onPopupClose", this.entitySearchPopupCloseHandler);
 	        }
-
 	        this.entitySearchPopupCloseHandler = null;
 	        BX.onCustomEvent(this.detailAutocompletePlacement, "Placements:destroy");
 	        BX.removeCustomEvent(this.detailAutocompletePlacement, "Placements:params", this.placementsParamsHandler);
@@ -587,7 +516,6 @@ this.BX = this.BX || {};
 	        this.placementEntitySelectHandler = null;
 	        this.detailAutocompletePlacement = null;
 	        this.creatingItem = null;
-
 	        this._dropdown.setItems([]);
 	      }
 	    }
@@ -598,12 +526,10 @@ this.BX = this.BX || {};
 	        if (this._dropdown) {
 	          this._dropdown.setPlacementParams(this.clientResolverPlacementParams);
 	        }
-
 	        if (this.clientResolverPlacementParams) {
 	          if (params.hasOwnProperty("placementParams")) {
 	            params["placementParams"] = this.clientResolverPlacementParams;
 	          }
-
 	          if (params.hasOwnProperty("currentSearchQuery")) {
 	            params["currentSearchQuery"] = this._domNodes.requisiteSearchString.value;
 	          }
@@ -614,7 +540,6 @@ this.BX = this.BX || {};
 	    key: "onBeforeAppendPlacementItems",
 	    value: function onBeforeAppendPlacementItems() {
 	      var dropdownPopup = this.getDropdownPopup();
-
 	      if (dropdownPopup) {
 	        BX.addClass(dropdownPopup.popupContainer, "client-editor-popup");
 	      }
@@ -650,7 +575,6 @@ this.BX = this.BX || {};
 	        });
 	      }.bind(this));
 	      var appId = parseInt(placementItem["placementInfo"]["id"]);
-
 	      if (appId > 0 && this.externalSearchResultHandlerList.has(appId)) {
 	        this.externalSearchResultHandlerList.get(appId)(items);
 	        this.externalSearchResultHandlerList["delete"](appId);
@@ -667,21 +591,17 @@ this.BX = this.BX || {};
 	        title: data["title"],
 	        fields: data["fields"]
 	      };
-
 	      if (main_core.Type.isPlainObject(entityData["fields"]) && entityData["fields"].hasOwnProperty("RQ_ADDR") && main_core.Type.isPlainObject(entityData["fields"]["RQ_ADDR"])) {
 	        var responseHandler = function (response) {
 	          var status = BX.prop.getString(response, "status", "");
 	          var data = BX.prop.getObject(response, "data", {});
 	          var messages = [];
-
 	          if (status === "error") {
 	            var errors = BX.prop.getArray(response, "errors", []);
-
 	            for (var i = 0; i < errors.length; i++) {
 	              messages.push(BX.prop.getString(errors[i], "message"));
 	            }
 	          }
-
 	          if (messages.length > 0) {
 	            BX.UI.Notification.Center.notify({
 	              content: messages.join("<br>"),
@@ -692,10 +612,8 @@ this.BX = this.BX || {};
 	          } else {
 	            entityData["fields"]["RQ_ADDR"] = data;
 	          }
-
 	          this.selectEntity(entityData);
 	        }.bind(this);
-
 	        BX.ajax.runAction('crm.requisite.address.getLocationAddressJsonByFields', {
 	          data: {
 	            addresses: entityData["fields"]["RQ_ADDR"]
@@ -715,13 +633,10 @@ this.BX = this.BX || {};
 	  }]);
 	  return RequisiteAutocompleteField;
 	}(main_core_events.EventEmitter);
-
 	var Dropdown = /*#__PURE__*/function (_BX$UI$Dropdown) {
 	  babelHelpers.inherits(Dropdown, _BX$UI$Dropdown);
-
 	  function Dropdown(options) {
 	    var _this3;
-
 	    babelHelpers.classCallCheck(this, Dropdown);
 	    _this3 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Dropdown).call(this, options));
 	    _this3.feedbackFormParams = BX.prop.getObject(options, "feedbackFormParams", {});
@@ -736,7 +651,6 @@ this.BX = this.BX || {};
 	    _this3.isDefaultAppInstalled = false;
 	    return _this3;
 	  }
-
 	  babelHelpers.createClass(Dropdown, [{
 	    key: "setPlacementParams",
 	    value: function setPlacementParams(params) {
@@ -762,7 +676,6 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-
 	      return this.itemListContainer;
 	    }
 	  }, {
@@ -790,49 +703,38 @@ this.BX = this.BX || {};
 	    value: function isDefaultAppCanInstall() {
 	      var defaultAppInfo = this.getDefaultAppInfo();
 	      return main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "code", "")) && main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "title", "")) && BX.prop.get(defaultAppInfo, "isAvailable", "N") === "Y"
-	      /*&& BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y"*/
-	      ;
+	      /*&& BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y"*/;
 	    }
 	  }, {
 	    key: "getPopupAlertContainer",
 	    value: function getPopupAlertContainer() {
 	      if (!this.popupAlertContainer) {
 	        var items = [];
-
 	        if (this.isDefaultAppCanInstall()) {
 	          var appTitleText = main_core.Text.encode(this.getDefaultAppInfo()["title"]);
 	          var appInstallText = main_core.Text.encode(main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_INSTALL'));
 	          items.push(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-popup-item crm-rq-popup-item-add-new\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tclass=\"crm-rq-popup-item-add-inst-app-btn\"><span></span><span\n\t\t\t\t\t\t\t\tclass=\"crm-rq-popup-item-add-new-btn-text\"><span>", "</span><span\n\t\t\t\t\t\t\t\tstyle=\"margin-left: 20px; width: 100px;\"><a\n\t\t\t\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t\t\t\t\tonclick=\"", "\">", "</a>\n\t\t\t\t\t\t\t</span></span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>"])), appTitleText, this.installDefaultAppHandler, appInstallText));
 	        }
-
 	        var feedbackAvailable = Object.keys(this.getFeedbackFormParams()).length > 0;
-
 	        if (feedbackAvailable) {
 	          var textParts = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE').split('#ADVICE_NEW_SERVICE_LINK#');
 	          var item = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-popup-item crm-rq-popup-item-helper\"></div>"])));
-
 	          if (textParts[0] && textParts[0].length) {
 	            main_core.Dom.append(document.createTextNode(textParts[0]), item);
 	          }
-
 	          var newServiceLinkText = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK');
 	          main_core.Dom.append(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<a href=\"\" onclick=\"", "\">", "</a>"])), this.showFeedbackForm.bind(this), newServiceLinkText), item);
-
 	          if (textParts[1] && textParts[1].length) {
 	            main_core.Dom.append(document.createTextNode(textParts[1]), item);
 	          }
-
 	          items.push(item);
 	        }
-
 	        if (this.canAddRequisite) {
 	          items.push(main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-popup-item crm-rq-popup-item-add-new\">\n\t\t\t\t\t\t<button class=\"crm-rq-popup-item-add-new-btn\">\n\t\t\t\t\t\t\t<span class=\"ui-btn crm-rq-btn ui-btn-icon-custom ui-btn-primary ui-btn-round\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"></span>\n\t\t\t\t\t\t\t<span class=\"crm-rq-popup-item-add-new-btn-text\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t>", "</span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>"])), this.onEmptyValueEvent.bind(this), this.onEmptyValueEvent.bind(this), BX.prop.getString(this.messages, "creationLegend")));
 	        }
-
 	        this.popupAlertContainer = items.length ? main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-popup-wrapper\">\n\t\t\t\t\t<div class=\"crm-rq-popup-items-list\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), items) : main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	        BX.onCustomEvent(this, "Dropdown:onGetPopupAlertContainer", [this, this.popupAlertContainer]);
 	      }
-
 	      this.togglePopupAlertVisibility();
 	      return this.popupAlertContainer;
 	    }
@@ -842,7 +744,6 @@ this.BX = this.BX || {};
 	      if (this.targetElement !== "undefined" && main_core.Type.isStringFilled(this.targetElement["value"])) {
 	        return this.targetElement["value"].trim();
 	      }
-
 	      return "";
 	    }
 	  }, {
@@ -869,10 +770,11 @@ this.BX = this.BX || {};
 	    key: "getNewAlertContainer",
 	    value: function getNewAlertContainer() {
 	      return null;
-	    }
+	    } /*items*/
 	  }, {
 	    key: "disableTargetElement",
-	    value: function disableTargetElement() {// cancel original handler
+	    value: function disableTargetElement() {
+	      // cancel original handler
 	    }
 	  }, {
 	    key: "getFeedbackFormParams",
@@ -884,11 +786,9 @@ this.BX = this.BX || {};
 	    value: function showFeedbackForm(event) {
 	      event.preventDefault();
 	      this.getPopupWindow().close();
-
 	      if (!this._feedbackForm) {
 	        this._feedbackForm = new BX.UI.Feedback.Form(this.getFeedbackFormParams());
 	      }
-
 	      this._feedbackForm.openPanel();
 	    }
 	  }, {
@@ -899,21 +799,17 @@ this.BX = this.BX || {};
 	          return result;
 	        });
 	      }
-
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(Dropdown.prototype), "searchItemsByStr", this).call(this, target);
 	    }
 	  }, {
 	    key: "onClickInstallDefaultApp",
 	    value: function onClickInstallDefaultApp(event) {
 	      var _this4 = this;
-
 	      event.stopPropagation();
 	      event.preventDefault();
-
 	      if (this.defaultAppInstallLoader) {
 	        return;
 	      }
-
 	      if (main_core.Type.isDomNode(event.target) && main_core.Type.isDomNode(event.target.parentNode)) {
 	        var parent = event.target.parentNode;
 	        main_core.Dom.hide(event.target);
@@ -926,7 +822,6 @@ this.BX = this.BX || {};
 	        });
 	        this.defaultAppInstallLoader.show();
 	      }
-
 	      if (this.isDefaultAppCanInstall()) {
 	        this.isDefaultAppInstalled = false;
 	        BX.loadExt('marketplace').then(function () {
@@ -975,7 +870,6 @@ this.BX = this.BX || {};
 	    key: "awaitHandler",
 	    value: function awaitHandler(context) {
 	      var _this5 = this;
-
 	      this.wait(context.waitTime).then(function () {
 	        _this5.checkDefAppHandler().then(function () {
 	          _this5.finalInstallDefaultAppSuccess();
@@ -995,7 +889,6 @@ this.BX = this.BX || {};
 	      top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
 	      var numberOfTimes = 3;
 	      var waitTime = Math.floor(this.installDefaultAppTimeout / numberOfTimes);
-
 	      if (!!installed) {
 	        this.awaitHandler({
 	          waitTime: waitTime,
@@ -1018,7 +911,6 @@ this.BX = this.BX || {};
 	        this.defaultAppInstallLoader.destroy();
 	        this.defaultAppInstallLoader = null;
 	      }
-
 	      if (this.popupWindow) {
 	        this.popupWindow.close();
 	      }

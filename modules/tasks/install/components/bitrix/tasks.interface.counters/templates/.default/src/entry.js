@@ -77,6 +77,26 @@ export class Counters
 				'scrum_total_comments',
 				'scrum_foreign_comments'
 			],
+			project: [
+				'project_expired',
+				'projects_total_expired',
+				'projects_foreign_expired',
+				'groups_total_expired',
+				'groups_foreign_expired',
+				'sonet_total_expired',
+				'sonet_foreign_expired',
+				'project_comments',
+				'projects_total_comments',
+				'projects_foreign_comments',
+				'groups_total_comments',
+				'groups_foreign_comments',
+				'sonet_total_comments',
+				'sonet_foreign_comments',
+			],
+			scrum: [
+				'scrum_total_comments',
+				'scrum_foreign_comments',
+			],
 		};
 	}
 

@@ -10,6 +10,7 @@ class TagQuery implements TaskQueryInterface
 	private array $select = [];
 	private array $where = [];
 	private array $orderBy = [];
+	private array $additionalSelect = [];
 	private int $limit = 0;
 	private int $offset = 0;
 	private string $id;
@@ -52,6 +53,12 @@ class TagQuery implements TaskQueryInterface
 	public function setSelect(array $select): static
 	{
 		$this->select = $select;
+		return $this;
+	}
+
+	public function addWhere(string $field, string $alias): static
+	{
+		$this->additionalSelect[$field] = $alias;
 		return $this;
 	}
 

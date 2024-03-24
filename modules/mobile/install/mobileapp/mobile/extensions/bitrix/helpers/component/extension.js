@@ -1,5 +1,4 @@
-(() =>
-{
+(() => {
 	class ComponentHelper
 	{
 		/**
@@ -15,9 +14,9 @@
 		 */
 		static openList(options = {})
 		{
-			let widgetParams = {};
+			const widgetParams = {};
 			widgetParams.name = 'list';
-			let canOpenInDefault = options.canOpenInDefault || false;
+			const canOpenInDefault = options.canOpenInDefault || false;
 			widgetParams.settings = options.widgetParams || {};
 			widgetParams.settings.objectName = options.object;
 			PageManager.openComponent(
@@ -25,10 +24,11 @@
 				{
 					scriptPath: `/mobileapp/jn/${options.name}/?version=${options.version}`,
 					componentCode: options.name,
-					canOpenInDefault: canOpenInDefault,
+					canOpenInDefault,
 					params: options.componentParams,
 					rootWidget: widgetParams,
-				});
+				},
+			);
 		}
 
 		/**
@@ -43,7 +43,7 @@
 		 */
 		static openForm(options = {})
 		{
-			let widgetParams = {};
+			const widgetParams = {};
 			widgetParams.name = 'form';
 			widgetParams.settings = options.widgetParams || {};
 			widgetParams.settings.objectName = options.object;
@@ -54,9 +54,9 @@
 					componentCode: options.name,
 					params: options.componentParams,
 					rootWidget: widgetParams,
-				});
+				},
+			);
 		}
-
 
 		/**
 		 * @param options - parameters
@@ -73,7 +73,7 @@
 			{
 				throw new Error('Component name is empty.');
 			}
-			let canOpenInDefault = options.canOpenInDefault || false;
+			const canOpenInDefault = options.canOpenInDefault || false;
 
 			let version = options.version;
 			if (!version)
@@ -81,7 +81,7 @@
 				version = availableComponents[options.name] && availableComponents[options.name].version || '1.0';
 			}
 
-			let widgetParams = {};
+			const widgetParams = {};
 			widgetParams.name = 'layout';
 			widgetParams.settings = options.widgetParams || {};
 			widgetParams.settings.objectName = 'layout';
@@ -91,7 +91,7 @@
 				{
 					scriptPath: `/mobileapp/jn/${options.name}/?version=${version}`,
 					componentCode: options.name,
-					canOpenInDefault: canOpenInDefault,
+					canOpenInDefault,
 					params: options.componentParams,
 					rootWidget: widgetParams,
 				},

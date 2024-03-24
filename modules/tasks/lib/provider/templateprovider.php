@@ -8,6 +8,7 @@
 
 namespace Bitrix\Tasks\Provider;
 
+use Bitrix\Main\Application;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
@@ -196,8 +197,8 @@ class TemplateProvider
 		{
 			$this->strFrom .= "\nLEFT JOIN ". TasksTemplatePermissionTable::getTableName() . " TTP ON TTP.TEMPLATE_ID = TT.ID";
 			$query[] = '
-				TTP.ACCESS_CODE IN ("'. implode('","', $accessCodes) .'")
-				AND TTP.PERMISSION_ID IN ('. PermissionDictionary::TEMPLATE_VIEW .', '. PermissionDictionary::TEMPLATE_FULL .')
+				TTP.ACCESS_CODE IN (\''. implode('\',\'', $accessCodes) .'\')
+				AND TTP.PERMISSION_ID IN (\''. PermissionDictionary::TEMPLATE_VIEW .'\', \''. PermissionDictionary::TEMPLATE_FULL .'\')
 			';
 		}
 
@@ -289,6 +290,7 @@ class TemplateProvider
 
 	private function makeOrder(): self
 	{
+		$helper = Application::getConnection()->getSqlHelper();
 		$arSqlOrder = [];
 		foreach ($this->arOrder as $by => $order)
 		{
@@ -310,7 +312,7 @@ class TemplateProvider
 			elseif ($by == "depends_on")
 				$arSqlOrder[] = " TT.DEPENDS_ON ".$order." ";
 			elseif ($by == "rand")
-				$arSqlOrder[] = ' RAND(' . rand(0, 1000000) . ') ';
+				$arSqlOrder[] = " {$helper->getRandomFunction()} ";
 			elseif ($by === 'creator_last_name')
 				$arSqlOrder[] = " CU.LAST_NAME ".$order." ";
 			elseif ($by === 'responsible_last_name')
@@ -621,11 +623,11 @@ class TemplateProvider
 							TT.ID IN (
 								SELECT TTT.TEMPLATE_ID
 								FROM (
-									SELECT TEMPLATE_ID, COUNT(TEMPLATE_ID) AS CNT
+									SELECT TEMPLATE_ID
 									FROM b_tasks_template_tag
 									WHERE NAME IN {$tags}
 									GROUP BY TEMPLATE_ID
-									HAVING CNT = {$tagsCount}
+									HAVING COUNT(TEMPLATE_ID) = {$tagsCount}
 								) TTT
 							)
 						");

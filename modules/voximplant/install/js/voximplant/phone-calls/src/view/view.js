@@ -78,7 +78,10 @@ const initialSize = {
 
 const lsKeys = {
 	height: 'im-phone-call-view-height',
-	width: 'im-phone-call-view-width'
+	width: 'im-phone-call-view-width',
+	callView: 'bx-vox-call-view',
+	callInited: 'viInitedCall',
+	externalCall: 'viExternalCard',
 };
 
 export const desktopEvents = {
@@ -271,6 +274,8 @@ export class PhoneCallView
 		//timer
 		this.initialTimestamp = params.initialTimestamp || 0;
 		this.timerInterval = null;
+		this.autoCloseTimer = null;
+		this.autoCloseTimeout = 65000;
 
 		this.elements = this.getInitialElements();
 		this.sections = this.getInitialSections();
@@ -440,8 +445,9 @@ export class PhoneCallView
 
 	init()
 	{
-		if (this.isDesktop() && !this.slave)
+		if (DesktopApi.isChatWindow() && !this.slave)
 		{
+			console.log('Init phone call view window:', location.href);
 			this.desktop.openCallWindow('', null, {
 				width: this.getInitialWidth(),
 				height: this.getInitialHeight(),
@@ -458,16 +464,16 @@ export class PhoneCallView
 		this.elements.main = this.createLayout();
 		this.updateView();
 
-		if (this.isDesktop())
+		if (this.isDesktop() && this.slave)
 		{
 			document.body.appendChild(this.elements.main);
 			this.bindSlaveDesktopEvents();
 		}
-		else if (this.isFolded())
+		else if (!this.isDesktop() && this.isFolded())
 		{
 			document.body.appendChild(this.elements.main);
 		}
-		else
+		else if (!this.isDesktop())
 		{
 			this.popup = this.createPopup();
 			BX.addCustomEvent(window, "onLocalStorageSet", this.#onExternalEvent);
@@ -543,6 +549,8 @@ export class PhoneCallView
 		}
 
 		this.popup.show();
+		BX.localStorage.set(lsKeys.callView, this.callId, 86400);
+
 		return this;
 	};
 
@@ -2921,6 +2929,8 @@ export class PhoneCallView
 	_onCommentChanged()
 	{
 		this.comment = this.elements.commentEditor.value;
+		//Update callView close timer when printing a comment
+		this.updateAutoCloseTimer();
 	};
 
 	_onAddCommentButtonClick()
@@ -3233,6 +3243,7 @@ export class PhoneCallView
 
 	#onWindowUnload = () =>
 	{
+		console.log('onWindowUnload call view event', location.href, DesktopApi.isChatWindow());
 		this.close();
 	}
 
@@ -3795,6 +3806,9 @@ export class PhoneCallView
 			DesktopApi.emit(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
 		}
 		this.renderButtons();
+
+		//Update callView close timer on every call disableAutoClose()
+		this.updateAutoCloseTimer();
 	};
 
 	enableAutoClose()
@@ -3805,6 +3819,13 @@ export class PhoneCallView
 			DesktopApi.emit(desktopEvents.onSetAutoClose, [this.allowAutoClose]);
 		}
 		this.renderButtons();
+
+		if (this.autoCloseTimer)
+		{
+			clearTimeout(this.autoCloseTimer);
+			this.autoCloseTimer = null;
+			this.autoCloseAfterTimeout();
+		}
 	};
 
 	autoClose()
@@ -3816,8 +3837,28 @@ export class PhoneCallView
 		else
 		{
 			BX.onCustomEvent(window, 'CallCard::BeforeClose', []);
+			this.autoCloseTimer = setTimeout(() => this.autoCloseAfterTimeout(), this.autoCloseTimeout);
 		}
 	};
+
+	autoCloseAfterTimeout()
+	{
+		if (this.commentShown)
+		{
+				this._onAddCommentButtonClick();
+		}
+
+		this.close();
+	};
+
+	updateAutoCloseTimer()
+	{
+		if (this.autoCloseTimer)
+		{
+			clearTimeout(this.autoCloseTimer);
+			this.autoCloseTimer = setTimeout(() => this.autoCloseAfterTimeout(), this.autoCloseTimeout);
+		}
+	}
 
 	disableDocumentScroll()
 	{
@@ -3901,6 +3942,11 @@ export class PhoneCallView
 		else
 		{
 			window.removeEventListener('beforeunload', this._onBeforeUnloadHandler);
+		}
+
+		if (!BX.localStorage.get(lsKeys.callInited) && !BX.localStorage.get(lsKeys.externalCall))
+		{
+			BX.localStorage.remove(lsKeys.callView);
 		}
 	};
 

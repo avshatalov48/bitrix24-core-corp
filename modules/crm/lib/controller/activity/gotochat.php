@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Controller\Activity;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Integration\Market\Router;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\Item;
@@ -163,7 +164,8 @@ class GoToChat extends Base
 			'currentChannelId' => $currentChannelId,
 			'communications' => $this->getCommunications($entityTypeId, $entityId),
 			'openLineItems' => $this->getOpenLineItems(),
-			'contactCenterUrl' => Container::getInstance()->getRouter()->getContactCenterUrl(),
+			'contactCenterUrl' => Container::getInstance()->getRouter()->getContactCenterUrl(), // @todo for crmmobile
+			'marketplaceUrl' => Router::getBasePath() . 'category/crm_robot_sms/',
 		];
 	}
 

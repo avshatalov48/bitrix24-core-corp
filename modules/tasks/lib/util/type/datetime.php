@@ -34,9 +34,21 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 		return $zeroBase ? ($m - 1) : $m;
 	}
 
+	public function getMonth(bool $zeroBase = false): int
+	{
+		$month = (int)date('n', $this->getTimeStamp());
+
+		return $zeroBase ? ($month - 1) : $month;
+	}
+
 	public function getDayGmt()
 	{
 		return (int) gmdate("j", $this->getTimeStamp());
+	}
+
+	public function getDay(): int
+	{
+		return (int)date('j', $this->getTimeStamp());
 	}
 
 	public function getWeekDayGmt()
@@ -52,6 +64,11 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 	public function getYearGmt()
 	{
 		return (int) gmdate("Y", $this->getTimeStamp());
+	}
+
+	public function getYear(): int
+	{
+		return (int)date('Y', $this->getTimeStamp());
 	}
 
 	public function getHourGmt()

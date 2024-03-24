@@ -10,6 +10,7 @@ use Bitrix\Rest\AppTable;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Market\Link;
 use Bitrix\Rest\Engine\Access;
+use Bitrix\Rest\Marketplace\Client;
 use Bitrix\Rest\Marketplace\Transport;
 
 class Application extends Controller
@@ -37,7 +38,12 @@ class Application extends Controller
 			];
 		}
 
-		return \Bitrix\Rest\Marketplace\Application::install($code, $version, $checkHash, $installHash, $from);
+		$installResult = \Bitrix\Rest\Marketplace\Application::install($code, $version, $checkHash, $installHash, $from);
+		if (isset($installResult['success']) && $installResult['success']) {
+			Client::getNumUpdates();
+		}
+
+		return $installResult;
 	}
 
 	public function uninstallAction(string $code, string $clean = 'N', string $from = null): array

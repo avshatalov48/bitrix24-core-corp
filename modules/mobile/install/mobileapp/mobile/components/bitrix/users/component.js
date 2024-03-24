@@ -39,77 +39,14 @@
 	if (BX.componentParameters.get('canInvite', false))
 	{
 		const action = () => {
-			if (Application.getApiVersion() >= 34)
-			{
-				IntranetInvite.openRegisterSlider({
-					originator: 'users',
-					registerUrl: BX.componentParameters.get('registerUrl', ''),
-					adminConfirm: BX.componentParameters.get('registerAdminConfirm', false),
-					disableAdminConfirm: BX.componentParameters.get('disableRegisterAdminConfirm', false),
-					sharingMessage: BX.componentParameters.get('sharingMessage', ''),
-					rootStructureSectionId: BX.componentParameters.get('rootStructureSectionId', 0),
-				});
-			}
-			else if (Application.getApiVersion() >= 29)
-			{
-				dialogs.showContactList().then(
-					(users) => {
-						const fields = {
-							PHONE: [],
-							PHONE_COUNTRY: [],
-							MESSAGE_TEXT: '',
-							DEPARTMENT_ID: 1,
-							CONTEXT: 'mobile',
-						};
-						users.forEach(
-							(user) => {
-								fields.PHONE.push(user.phone);
-								fields.PHONE_COUNTRY.push(user.countryCode);
-							},
-						);
-
-						if (fields.PHONE.length > 0)
-						{
-							Notify.showIndicatorLoading();
-							BX.rest.callMethod('intranet.invite.register', { fields })
-								.then((res) => {
-									const errors = res.answer.result.errors;
-									if (errors && errors.length > 0)
-									{
-										const errorText = errors.reduce((fullMessage, errorMessage) => {
-											errorMessage = errorMessage.replace('<br/>:', '\n').replace('<br/>', '\n');
-											fullMessage += `\n${errorMessage}`;
-
-											return fullMessage;
-										}, '');
-
-										Notify.showIndicatorError({
-											hideAfter: 30000,
-											onTap: () => Notify.hideCurrentIndicator(),
-											text: errorText,
-										});
-									}
-									else
-									{
-										Notify.showIndicatorSuccess({ hideAfter: 2000 });
-									}
-								})
-								.catch((res) => {
-									Notify.showIndicatorError({ hideAfter: 2000, text: res.answer.error_description });
-								});
-						}
-					},
-				);
-			}
-			else
-			{
-				PageManager.openPage({
-					url: '/mobile/users/invite.php?',
-					cache: false,
-					modal: true,
-					title: BX.message('INVITE_USERS'),
-				});
-			}
+			IntranetInvite.openRegisterSlider({
+				originator: 'users',
+				registerUrl: BX.componentParameters.get('registerUrl', ''),
+				adminConfirm: BX.componentParameters.get('registerAdminConfirm', false),
+				disableAdminConfirm: BX.componentParameters.get('disableRegisterAdminConfirm', false),
+				sharingMessage: BX.componentParameters.get('sharingMessage', ''),
+				rootStructureSectionId: BX.componentParameters.get('rootStructureSectionId', 0),
+			});
 		};
 
 		const addUserButton = {
@@ -124,24 +61,8 @@
 			if (Application.getPlatform() === 'ios')
 			{
 				list.setRightButtons([{ type: 'search', callback: () => list.showSearchBar() }]);
-				// button in navigation bar for iOS
-				if (Application.getApiVersion() >= 33)
-				{
-					list.setFloatingButton(addUserButton);
-				}
-				else
-				{
-					list.setRightButtons([addUserButton]);
-				}
 			}
-			else
-			{
-				// floating button for Android
-				if (Application.getApiVersion() >= 24)
-				{
-					list.setFloatingButton(addUserButton);
-				}
-			}
+			list.setFloatingButton(addUserButton);
 		});
 	}
 

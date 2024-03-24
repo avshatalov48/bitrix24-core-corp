@@ -1,6 +1,6 @@
 import { addCustomEvent, removeCustomEvent, Text } from 'main.core';
 import '../css/feedback-message.css';
-import { mapActions } from 'ui.vue3.vuex';
+import { mapActions, mapGetters } from 'ui.vue3.vuex';
 import { createFeedbackMessageBox } from 'crm.ai.feedback';
 
 export const FeedbackMessage = {
@@ -10,6 +10,9 @@ export const FeedbackMessage = {
 			messageBoxInstance: null,
 			uniquePopupId: `ai-form-fill-feedback-popup_${Text.getRandom(20).toLowerCase()}`,
 		};
+	},
+	computed: {
+		...mapGetters(['isFooterHiddenAndSaveDisabled']),
 	},
 	methods: {
 		...mapActions(['closeFeedbackMessage', 'sendAiCallParsingData']),
@@ -49,6 +52,10 @@ export const FeedbackMessage = {
 		removeCustomEvent(window, 'BX.Main.Popup:onClose', this.onMessageClose);
 	},
 	template: `
-		<div ref="feedbackMessageRoot" class="crm-ai-form-fill__confirm" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div>
+		<div 
+			ref="feedbackMessageRoot" 
+			class="crm-ai-form-fill__confirm" 
+			:class="{'hidden-footer': isFooterHiddenAndSaveDisabled}"
+		></div>
 	`,
 };

@@ -17,6 +17,7 @@ import './css/content-blocks/file-list.css';
 import './css/layout/market.css';
 import './css/layout/footer.css';
 import './css/content-blocks/text.css';
+import './css/content-blocks/link.css';
 import './css/layout/body/calendar-icon.css';
 import './css/content-blocks/date-pill.css';
 import './css/content-blocks/editable-text.css';

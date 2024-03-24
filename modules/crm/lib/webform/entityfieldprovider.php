@@ -177,6 +177,7 @@ class EntityFieldProvider
 
 		$hiddenTypes = [
 			\CCrmOwnerType::SmartDocument,
+			\CCrmOwnerType::SmartB2eDocument,
 		];
 
 		$availableFields = EntityFieldProvider::getFields($hiddenTypes, $requisitePresetId);

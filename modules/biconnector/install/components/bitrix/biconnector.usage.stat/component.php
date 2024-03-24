@@ -74,6 +74,7 @@ $logList = \Bitrix\BIConnector\LogTable::getList([
 		'REAL_TIME',
 		'FIELDS',
 		'FILTERS',
+		'ACCESS_KEY' => 'KEY.ACCESS_KEY',
 	],
 	'filter' => $filter,
 	'order' => $arResult['SORT'],
@@ -83,7 +84,10 @@ $logList = \Bitrix\BIConnector\LogTable::getList([
 while ($data = $logList->fetch())
 {
 	$url = str_replace('#ID#', urlencode($data['KEY_ID']), $arParams['KEY_EDIT_URL']);
-	$data['KEY_ID'] = '<a href="javascript:BX.SidePanel.Instance.open(\'' . CUtil::JSEscape($url) . '\')">' . $data['KEY_ID'] . '</a>';
+	if (isset($data['ACCESS_KEY']))
+	{
+		$data['KEY_ID'] = '<a href="javascript:BX.SidePanel.Instance.open(\'' . CUtil::JSEscape($url) . '\')">' . $data['KEY_ID'] . '</a>';
+	}
 
 	$service = Loc::getMessage('CC_BBUS_SERVICE_' . mb_strtoupper($data['SERVICE_ID']));
 	if ($service)

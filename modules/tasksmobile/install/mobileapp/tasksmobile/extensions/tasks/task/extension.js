@@ -16,6 +16,7 @@
 
 	const pathToIcons = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/action-menu/images';
 	const iconPrefix = `${currentDomain}${pathToIcons}/tasksmobile-layout-action-menu-`;
+	const { TaskStatus } = require('tasks/enum');
 
 	class Console
 	{
@@ -427,7 +428,7 @@
 						(response) => {
 							Console.log(response);
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
+								response.error.description.replaceAll(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
@@ -544,25 +545,46 @@
 
 				[Task.fields.creator]: () => (Type.isUndefined(this.task.creator) ? {} : { CREATED_BY: this.task.creator.id }),
 				[Task.fields.responsible]: () => (Type.isUndefined(this.task.responsible) ? {} : { RESPONSIBLE_ID: this.task.responsible.id }),
-				[Task.fields.accomplices]: () => (Type.isUndefined(this.task.accomplices) ? {} : { ACCOMPLICES: Object.keys(this.task.accomplices) }),
+				[Task.fields.accomplices]: () => (Type.isUndefined(this.task.accomplices) ? {} : {
+					ACCOMPLICES: Object.keys(this.task.accomplices),
+				}),
 				[Task.fields.auditors]: () => (Type.isUndefined(this.task.auditors) ? {} : { AUDITORS: Object.keys(this.task.auditors) }),
 
-				[Task.fields.deadline]: () => (Type.isUndefined(this.task.deadline) ? {} : { DEADLINE: (this.task.deadline ? (new Date(this.task.deadline)).toISOString() : '') }),
-				[Task.fields.startDatePlan]: () => (Type.isUndefined(this.task.startDatePlan) ? {} : { START_DATE_PLAN: (this.task.startDatePlan ? (new Date(this.task.startDatePlan)).toISOString() : '') }),
-				[Task.fields.endDatePlan]: () => (Type.isUndefined(this.task.endDatePlan) ? {} : { END_DATE_PLAN: (this.task.endDatePlan ? (new Date(this.task.endDatePlan)).toISOString() : '') }),
+				[Task.fields.deadline]: () => (Type.isUndefined(this.task.deadline) ? {} : {
+					DEADLINE: (this.task.deadline ? (new Date(this.task.deadline)).toISOString() : ''),
+				}),
+				[Task.fields.startDatePlan]: () => (Type.isUndefined(this.task.startDatePlan) ? {} : {
+					START_DATE_PLAN: (this.task.startDatePlan ? (new Date(this.task.startDatePlan)).toISOString() : ''),
+				}),
+				[Task.fields.endDatePlan]: () => (Type.isUndefined(this.task.endDatePlan) ? {} : {
+					END_DATE_PLAN: (this.task.endDatePlan ? (new Date(this.task.endDatePlan)).toISOString() : ''),
+				}),
 
 				[Task.fields.allowChangeDeadline]: () => (Type.isUndefined(this.task.allowChangeDeadline) ? {} : { ALLOW_CHANGE_DEADLINE: (this.task.allowChangeDeadline ? 'Y' : 'N') }),
 				[Task.fields.isMatchWorkTime]: () => (Type.isUndefined(this.task.isMatchWorkTime) ? {} : { MATCH_WORK_TIME: (this.task.isMatchWorkTime ? 'Y' : 'N') }),
 				[Task.fields.allowTaskControl]: () => (Type.isUndefined(this.task.allowTaskControl) ? {} : { TASK_CONTROL: (this.task.allowTaskControl ? 'Y' : 'N') }),
 				[Task.fields.allowTimeTracking]: () => (Type.isUndefined(this.task.allowTimeTracking) ? {} : { ALLOW_TIME_TRACKING: (this.task.allowTimeTracking ? 'Y' : 'N') }),
 
-				[Task.fields.isResultRequired]: () => (Type.isUndefined(this.task.isResultRequired) ? {} : { SE_PARAMETER: [{ CODE: Task.parameterCodes.isResultRequired, VALUE: (this.task.isResultRequired ? 'Y' : 'N') }] }),
+				[Task.fields.isResultRequired]: () => (Type.isUndefined(this.task.isResultRequired) ? {} : {
+					SE_PARAMETER: [
+						{
+							CODE: Task.parameterCodes.isResultRequired,
+							VALUE: (this.task.isResultRequired ? 'Y' : 'N'),
+						},
+					],
+				}),
 
 				[Task.fields.mark]: () => (Type.isUndefined(this.task.mark) ? {} : { MARK: (this.task.mark === Task.mark.none ? '' : this.task.mark) }),
-				[Task.fields.tags]: () => (Type.isUndefined(this.task.tags) ? {} : { TAGS: Object.values(this.task.tags).map((tag) => tag.title) }),
+				[Task.fields.tags]: () => (Type.isUndefined(this.task.tags) ? {} : {
+					TAGS: Object.values(this.task.tags).map((tag) => tag.title),
+				}),
 				[Task.fields.crm]: () => (Type.isUndefined(this.task.crm) ? {} : { CRM: (Object.keys(this.task.crm).length > 0 ? this.task.crm : []) }),
-				[Task.fields.uploadedFiles]: () => (Type.isUndefined(this.task.uploadedFiles) ? {} : { UPLOADED_FILES: this.task.uploadedFiles.map((file) => file.token) }),
-				[Task.fields.files]: () => (Type.isUndefined(this.task.files) ? {} : { UF_TASK_WEBDAV_FILES: this.task.files.map((file) => file.id) }),
+				[Task.fields.uploadedFiles]: () => (Type.isUndefined(this.task.uploadedFiles) ? {} : {
+					UPLOADED_FILES: this.task.uploadedFiles.map((file) => file.token),
+				}),
+				[Task.fields.files]: () => (Type.isUndefined(this.task.files) ? {} : {
+					UF_TASK_WEBDAV_FILES: this.task.files.map((file) => file.id),
+				}),
 				[Task.fields.parentTask]: () => (Type.isUndefined(this.task.parentId) ? {} : { PARENT_ID: (this.task.parentId || 0) }),
 			};
 			const fieldsToSave = (
@@ -702,7 +724,7 @@
 							Console.log(response);
 
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
+								response.error.description.replaceAll(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
@@ -739,7 +761,7 @@
 							Console.log(response);
 
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
+								response.error.description.replaceAll(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
@@ -757,7 +779,7 @@
 
 		start()
 		{
-			this.task.status = Task.statusList.inprogress;
+			this.task.status = TaskStatus.IN_PROGRESS;
 
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.start', { taskId: this.task.id }))
@@ -780,7 +802,7 @@
 
 		pause()
 		{
-			this.task.status = Task.statusList.pending;
+			this.task.status = TaskStatus.PENDING;
 
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.pause', { taskId: this.task.id }))
@@ -804,10 +826,10 @@
 		complete()
 		{
 			const oldStatus = this.task.status;
-			this.task.status = Task.statusList.completed;
+			this.task.status = TaskStatus.COMPLETED;
 			if (this.task.allowTaskControl && !this.task.isPureCreator())
 			{
-				this.task.status = Task.statusList.waitCtrl;
+				this.task.status = TaskStatus.SUPPOSEDLY_COMPLETED;
 			}
 
 			return new Promise((resolve, reject) => {
@@ -828,7 +850,7 @@
 						(response) => {
 							Console.log(response);
 							Notify.showMessage(
-								response.error.description.replace(/<\/?[^>]+(>|$)/g, ''),
+								response.error.description.replaceAll(/<\/?[^>]+(>|$)/g, ''),
 								'',
 								{
 									time: 5,
@@ -848,7 +870,7 @@
 
 		renew()
 		{
-			this.task.status = Task.statusList.pending;
+			this.task.status = TaskStatus.PENDING;
 
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.renew', {
@@ -876,7 +898,7 @@
 
 		approve()
 		{
-			this.task.status = Task.statusList.completed;
+			this.task.status = TaskStatus.COMPLETED;
 
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.approve', { taskId: this.task.id }))
@@ -899,7 +921,7 @@
 
 		disapprove()
 		{
-			this.task.status = Task.statusList.pending;
+			this.task.status = TaskStatus.PENDING;
 
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.disapprove', { taskId: this.task.id }))
@@ -1473,17 +1495,6 @@
 
 	class Task
 	{
-		static get statusList()
-		{
-			return {
-				pending: 2,
-				inprogress: 3,
-				waitCtrl: 4,
-				completed: 5,
-				deferred: 6,
-			};
-		}
-
 		static get userOptions()
 		{
 			return {
@@ -2168,7 +2179,7 @@
 
 		get isSupposedlyCompleted()
 		{
-			return this.status === Task.statusList.waitCtrl;
+			return this.status === TaskStatus.SUPPOSEDLY_COMPLETED;
 		}
 
 		get isSupposedlyCompletedCounts()
@@ -2178,7 +2189,7 @@
 
 		get isCompleted()
 		{
-			return this.status === Task.statusList.completed;
+			return this.status === TaskStatus.COMPLETED;
 		}
 
 		get isCompletedCounts()
@@ -2188,7 +2199,7 @@
 
 		get isDeferred()
 		{
-			return this.status === Task.statusList.deferred;
+			return this.status === TaskStatus.DEFERRED;
 		}
 
 		get isWoDeadline()

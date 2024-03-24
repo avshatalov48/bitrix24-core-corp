@@ -17,9 +17,10 @@ class Action
 	public const RIGHTS_SETTING = 'RIGHTS';
 	public const PROLONG_SUBSCRIPTION = 'PROLONG_SUBSCRIPTION';
 	public const CONFIGURATION_IMPORT = 'CONFIGURATION_IMPORT';
+	public const REIMPORT = 'REIMPORT';
 	public const OPEN_PREVIEW = 'OPEN_PREVIEW';
 
-	public static function list(array $app, bool $isTestsInstall = false): array
+	public static function getButtons(array $app, bool $isTestsInstall = false): array
 	{
 		$actions = [];
 
@@ -32,11 +33,18 @@ class Action
 						Access::isAvailable($app['CODE']) &&
 						Access::isAvailableCount(Access::ENTITY_TYPE_APP, $app['CODE'])
 					) {
-						if (isset($app['TYPE']) && $app['TYPE'] === AppTable::TYPE_CONFIGURATION) {
+						$appType = $app['TYPE'] ?? '';
+						if ($appType === AppTable::TYPE_CONFIGURATION) {
 							$actions[Action::CONFIGURATION_IMPORT] = 'Y';
+						} else if ($appType === AppTable::TYPE_BIC_DASHBOARD) {
+							if (Client::getAvailableUpdate($app['CODE'])) {
+								$actions[Action::UPDATE] = 'Y';
+							} else {
+								$actions[Action::REIMPORT] = 'Y';
+							}
 						} else if ($isTestsInstall) {
 							$actions[Action::INSTALL] = 'Y';
-						} else  {
+						} else {
 							if (Client::getAvailableUpdate($app['CODE'])) {
 								$actions[Action::UPDATE] = 'Y';
 							}
@@ -66,7 +74,11 @@ class Action
 			}
 
 			if (CRestUtil::isAdmin() && $isInstalledApp) {
-				if (!isset($app['TYPE']) || $app['TYPE'] != AppTable::TYPE_CONFIGURATION) {
+				$appType = $app['TYPE'] ?? '';
+				if (
+					$appType !== AppTable::TYPE_CONFIGURATION
+					&& $appType !== AppTable::TYPE_BIC_DASHBOARD
+				) {
 					$actions[Action::RIGHTS_SETTING] = 'Y';
 				}
 

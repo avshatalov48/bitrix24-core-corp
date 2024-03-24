@@ -128,42 +128,30 @@ jn.define('tasks/layout/deadline-friendly-date', (require, exports, module) => {
 					: Loc.getMessage('MOBILE_UI_FRIENDLY_DATE_TOMORROW');
 			}
 
+			let date = null;
+
 			if (moment.inThisWeek)
 			{
-				const date = moment.format('EEEE');
-
-				if (this.timeFormat)
-				{
-					return Loc.getMessage('TASKSMOBILE_DEADLINE_FRIENDLY_DATE_AT_TIME', {
-						'#DATE#': date,
-						'#TIME#': this.timeFormat,
-					});
-				}
-
-				return date;
+				date = moment.format('EEEE');
 			}
-
-			if (moment.withinMonth)
+			else if (moment.inThisYear)
 			{
-				const date = moment.format(dayMonth);
-
-				if (this.timeFormat)
-				{
-					return Loc.getMessage('TASKSMOBILE_DEADLINE_FRIENDLY_DATE_AT_TIME', {
-						'#DATE#': date,
-						'#TIME#': this.timeFormat,
-					});
-				}
-
-				return date;
+				date = moment.format(dayMonth);
 			}
-
-			if (moment.withinYear)
+			else
 			{
-				return moment.format(dayMonth);
+				date = moment.format(longDate);
 			}
 
-			return moment.format(longDate);
+			if (this.timeFormat)
+			{
+				return Loc.getMessage('TASKSMOBILE_DEADLINE_FRIENDLY_DATE_AT_TIME', {
+					'#DATE#': date,
+					'#TIME#': this.timeFormat,
+				});
+			}
+
+			return date;
 		}
 	}
 

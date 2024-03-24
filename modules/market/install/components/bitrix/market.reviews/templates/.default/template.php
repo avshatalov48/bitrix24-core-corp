@@ -2,6 +2,7 @@
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Market\Content;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) {
 	die();
@@ -28,6 +29,7 @@ Extension::load([
 	'main.popup',
 	'market.my-reviews',
 ]);
+Content::showAdditional($arResult['REVIEWS']);
 ?>
 
 <div id="market-wrapper-vue"></div>

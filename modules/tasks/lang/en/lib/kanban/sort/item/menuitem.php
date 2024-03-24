@@ -1,8 +1,8 @@
 <?php
 $MESS["TASKS_KANBAN_NEW_TASKS_SORT_TITLE"] = "Show new tasks";
-$MESS["TASKS_KANBAN_SORT_ACTUAL"] = "By active state";
+$MESS["TASKS_KANBAN_SORT_ACTUAL"] = "By last active date";
 $MESS["TASKS_KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Recommended";
 $MESS["TASKS_KANBAN_SORT_ASC"] = "At bottom";
 $MESS["TASKS_KANBAN_SORT_DESC"] = "On top";
-$MESS["TASKS_KANBAN_SORT_MY_SORT"] = "Custom";
+$MESS["TASKS_KANBAN_SORT_MY_SORT"] = "My sort order";
 $MESS["TASKS_KANBAN_SORT_TITLE"] = "Sort order";

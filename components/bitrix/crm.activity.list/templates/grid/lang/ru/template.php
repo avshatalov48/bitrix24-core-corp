@@ -35,6 +35,7 @@ $MESS["CRM_SHOW_ROW_COUNT"] = "Показать количество";
 $MESS["CRM_ACTION_ASSIGN_TO"] = "Назначить ответственного";
 $MESS["CRM_WIDGET_COUNTER_MISMATCH_NOTIFY"] = "Аналитические отчеты рассчитывают полную нагрузку от клиента, включая дела, к которым вы не имеете доступ. В связи с этим количество дел на этой странице может отличаться от цифры, указанной в отчетах.";
 $MESS["CRM_ACTIVITY_LIST_FILTER_NAV_BUTTON_LIST"] = "Список";
+$MESS["CRM_ACTIVITY_LIST_FILTER_NAV_BUTTON_KANBAN"] = "Канбан";
 $MESS["CRM_ACTIVITY_LIST_FILTER_NAV_BUTTON_WIDGET"] = "Отчёты";
 $MESS["CRM_ACTIVITY_LIST_CHOOSE_ACTION"] = "Выберите действие";
 $MESS["CRM_ACTIVITY_LIST_APPLY_BUTTON"] = "Применить";

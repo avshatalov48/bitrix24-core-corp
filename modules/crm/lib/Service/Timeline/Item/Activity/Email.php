@@ -413,6 +413,6 @@ class Email extends Activity
 	public function handlePunctuation(string $item): string
 	{
 		$result = trim(str_replace(['.', '!', '?', '&nbsp;', "\t"], ['. ', '! ', '? ', '', ' '], $item));
-		return preg_replace("/\h{2,}/u", " ", $result);
+		return (string)preg_replace("/\h{2,}/u", " ", $result) ?? '';
 	}
 }

@@ -15,6 +15,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sync-service');
 
+	const LAST_SYNC_ID_OPTION = 'SYNC_SERVICE_LAST_ID';
+
 	/**
 	 * @class SyncService
 	 */
@@ -78,10 +80,23 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			this.syncStartDate = Date.now();
 			this.syncInProgress = true;
 
+			const lastSyncId = await core.getRepository().option.get(LAST_SYNC_ID_OPTION);
+
 			const lastSyncDate = await this.dateService.getLastSyncDate();
-			this.loadChangelog({
-				fromDate: lastSyncDate,
-			});
+
+			const changeLogOption = {};
+
+			if (lastSyncId)
+			{
+				changeLogOption.fromId = Number(lastSyncId);
+			}
+			else
+			{
+				changeLogOption.fromDate = lastSyncDate;
+			}
+
+			logger.log('SyncService: synchronization by', changeLogOption);
+			this.loadChangelog(changeLogOption);
 
 			return this.syncPromise;
 		}
@@ -138,6 +153,13 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 
 			const lastSyncId = result.lastId;
 			const hasMore = result.hasMore === true && Type.isNumber(lastSyncId);
+
+			if (Type.isNumber(lastSyncId))
+			{
+				logger.log('SyncService.loadChangelog: save last sync id', lastSyncId);
+				await core.getRepository().option.set(LAST_SYNC_ID_OPTION, lastSyncId);
+			}
+
 			if (hasMore === true)
 			{
 				await this.loadChangelog({

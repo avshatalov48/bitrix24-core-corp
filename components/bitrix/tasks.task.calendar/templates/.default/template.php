@@ -7,8 +7,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\RestrictionUrl;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Integration\Recyclebin\Task;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\UI\ScopeDictionary;
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
@@ -130,7 +130,7 @@ $filterSelect = 'DEADLINE';
 
 $allowWrite = true;
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid())
 {
 	$request = \Bitrix\Main\Context::getCurrent()->getRequest()->toArray();
 	if (isset($request['task_calendar_action']) && $request['task_calendar_action'] === 'LOAD_ENTRIES')
@@ -245,7 +245,13 @@ BX.ready(function(){
 	{
 		if (params && params.entry && params.entry.data && BX.type.isString(params.entry.data.OPEN_URL))
 		{
-			BX.SidePanel.Instance.open(params.entry.data.OPEN_URL,
+			const openUrl = BX.Uri.addParam(params.entry.data.OPEN_URL, {
+				ta_sec: '<?= !empty($currentGroupId) ? 'project' : 'tasks' ?>',
+				ta_sub: 'calendar',
+				ta_el: 'title_click',
+			});
+
+			BX.SidePanel.Instance.open(openUrl,
 			{
 				cacheable: false,
 				loader: "task-new-loader"
@@ -258,10 +264,9 @@ BX.ready(function(){
 	{
 		if (params)
 		{
-			var
-				url = '<?= CUtil::JSEscape($editTaskPath)?>',
-				fromDate = BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')), params.entryTime.from.getTime() / 1000),
-				toDate = BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')), params.entryTime.to.getTime() / 1000);
+			let url = '<?= CUtil::JSEscape($editTaskPath)?>';
+			const fromDate = BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')), params.entryTime.from.getTime() / 1000);
+			const toDate = BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')), params.entryTime.to.getTime() / 1000);
 
 			if (fromDate)
 			{
@@ -274,7 +279,13 @@ BX.ready(function(){
 				url = url.replace('#DEADLINE#', BX.util.urlencode(toDate));
 			}
 
-			BX.SidePanel.Instance.open(url, {loader: "task-new-loader"});
+			const createUrl = BX.Uri.addParam(url, {
+				ta_sec: '<?= !empty($currentGroupId) ? 'project' : 'tasks' ?>',
+				ta_sub: 'calendar',
+				ta_el: 'quick_button',
+			});
+
+			BX.SidePanel.Instance.open(createUrl, {loader: "task-new-loader"});
 		}
 	});
 	<?endif;?>
@@ -406,83 +417,85 @@ if ($isBitrix24Template)
 {
 	$this->SetViewTarget('inside_pagetitle');
 }
-?>
 
-<?php if ($arResult['CONTEXT'] === Context::DEFAULT): ?>
-<?php $APPLICATION->IncludeComponent(
-	'bitrix:tasks.interface.header',
-	'',
-	array(
-		'FILTER_ID' => $arParams["FILTER_ID"] ?? null,
-		'GRID_ID' => $arParams["GRID_ID"] ?? null,
-		'FILTER' => $arResult['FILTER'] ?? null,
-		'PRESETS' => $arResult['PRESETS'] ?? null,
-		'SHOW_QUICK_FORM' => 'N',
-		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'] ?? null,
-		'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'] ?? null,
-		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'] ?? null,
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? null,
-		'USER_ID' => $arParams['USER_ID'] ?? null,
-		'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
-		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
-		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
-		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
-		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
-		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'] ?? null,
-		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'] ?? null,
-		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'] ?? null,
-		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'] ?? null,
-		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'] ?? null,
-		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'] ?? null,
-		'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'] ?? null,
-		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'] ?? null,
-		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'] ?? null,
-		'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'] ?? null,
-		'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'] ?? null,
-		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'] ?? null,
-		'PATH_TO_MESSAGES_CHAT' => $arParams['PATH_TO_MESSAGES_CHAT'] ?? null,
-		'PATH_TO_VIDEO_CALL' => $arParams['PATH_TO_VIDEO_CALL'] ?? null,
-		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'] ?? null,
-		'USE_EXPORT' => 'N',
-		'USE_GROUP_BY_SUBTASKS' => 'N',
-		'USE_GROUP_BY_GROUPS' => 'N',
-		'GROUP_BY_PROJECT' => 'N',
-		'SHOW_USER_SORT' => 'N',
-		'SORT_FIELD'=>$arParams['SORT_FIELD'] ?? null,
-		'SORT_FIELD_DIR'=>$arParams['SORT_FIELD_DIR'] ?? null,
-		'USE_LIVE_SEARCH' => 'Y',
-		'SHOW_SECTION_TEMPLATES'=> (isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? 'N' : 'Y',
-		'DEFAULT_ROLEID'=> $arParams['DEFAULT_ROLEID'] ?? null,
-		'USE_AJAX_ROLE_FILTER'=>'Y',
-		'SCOPE' => ScopeDictionary::SCOPE_TASKS_CALENDAR,
-	),
-	$component,
-	array('HIDE_ICONS' => true)
-); ?>
-<?php endif; ?>
+if ($arResult['CONTEXT'] !== Context::getSpaces())
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:tasks.interface.header',
+		'',
+		array(
+			'FILTER_ID' => $arParams["FILTER_ID"] ?? null,
+			'GRID_ID' => $arParams["GRID_ID"] ?? null,
+			'FILTER' => $arResult['FILTER'] ?? null,
+			'PRESETS' => $arResult['PRESETS'] ?? null,
+			'SHOW_QUICK_FORM' => 'N',
+			'PROJECT_VIEW' => $arParams['PROJECT_VIEW'] ?? null,
+			'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'] ?? null,
+			'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'] ?? null,
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? null,
+			'USER_ID' => $arParams['USER_ID'] ?? null,
+			'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
+			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
+			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
+			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
+			'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'] ?? null,
+			'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'] ?? null,
+			'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'] ?? null,
+			'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'] ?? null,
+			'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'] ?? null,
+			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'] ?? null,
+			'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'] ?? null,
+			'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'] ?? null,
+			'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'] ?? null,
+			'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'] ?? null,
+			'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'] ?? null,
+			'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'] ?? null,
+			'PATH_TO_MESSAGES_CHAT' => $arParams['PATH_TO_MESSAGES_CHAT'] ?? null,
+			'PATH_TO_VIDEO_CALL' => $arParams['PATH_TO_VIDEO_CALL'] ?? null,
+			'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'] ?? null,
+			'USE_EXPORT' => 'N',
+			'USE_GROUP_BY_SUBTASKS' => 'N',
+			'USE_GROUP_BY_GROUPS' => 'N',
+			'GROUP_BY_PROJECT' => 'N',
+			'SHOW_USER_SORT' => 'N',
+			'SORT_FIELD' => $arParams['SORT_FIELD'] ?? null,
+			'SORT_FIELD_DIR' => $arParams['SORT_FIELD_DIR'] ?? null,
+			'USE_LIVE_SEARCH' => 'Y',
+			'SHOW_SECTION_TEMPLATES' => (isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? 'N' : 'Y',
+			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
+			'USE_AJAX_ROLE_FILTER' => 'Y',
+			'SCOPE' => ScopeDictionary::SCOPE_TASKS_CALENDAR,
+		),
+		$component,
+		array('HIDE_ICONS' => true)
+	);
+}
 
-<?php
 if (
 	isset($arResult['ERROR']['FATAL'])
 	&& is_array($arResult['ERROR']['FATAL'])
 	&& !empty($arResult['ERROR']['FATAL'])
-):
-	foreach ($arResult['ERROR']['FATAL'] as $error):
-		echo ShowError($error['MESSAGE']);
-	endforeach;
+)
+{
+	foreach ($arResult['ERROR']['FATAL'] as $error)
+	{
+		ShowError($error['MESSAGE']);
+	}
 	return;
-endif
-?>
+}
 
-<? if (
+if (
 	isset($arResult['ERROR']['WARNING'])
 	&& is_array($arResult['ERROR']['WARNING'])
-): ?>
-	<? foreach ($arResult['ERROR']['WARNING'] as $error): ?>
-		<?= ShowError($error['MESSAGE']) ?>
-	<? endforeach ?>
-<? endif ?>
-<?php
+)
+{
+	foreach ($arResult['ERROR']['WARNING'] as $error)
+	{
+		ShowError($error['MESSAGE']);
+	}
+}
+
 if ($isBitrix24Template)
 {
 	$this->EndViewTarget();

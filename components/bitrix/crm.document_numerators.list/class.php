@@ -135,14 +135,18 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->arResult['FILTER_ID']);
 		$gridFilter = $filterOptions->getFilter($this->arResult['FILTER']);
 
+		$templateNameExpression = \Bitrix\Crm\DbHelper::getSqlByDbType(
+			"GROUP_CONCAT(`template`.`NAME` SEPARATOR ', ')",
+			"STRING_AGG(template.NAME, ', ')"
+		);
 		$numeratorsBaseQuery = \Bitrix\DocumentGenerator\Model\TemplateTable::query()
 			->setCustomBaseTableAlias('template')
 			->registerRuntimeField('NUMERATOR', new \Bitrix\Main\Entity\ReferenceField('NUMERATOR', '\Bitrix\Main\Numerator\Model\Numerator', ['=this.NUMERATOR_ID' => 'ref.ID']))
-			->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_name', 'template_numerator.NAME'))
-			->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_template', 'template_numerator.TEMPLATE'))
-			->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_id', 'template_numerator.ID'))
-			->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_type', 'template_numerator.TYPE'))
-			->addSelect(new \Bitrix\Main\Entity\ExpressionField('TEMPLATE_NAME', "GROUP_CONCAT(`template`.`NAME` SEPARATOR ', ')"), 'TEMPLATE_NAME')
+			->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_NAME', 'template_numerator.NAME'))
+			->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_TEMPLATE', 'template_numerator.TEMPLATE'))
+			->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_ID', 'template_numerator.ID'))
+			->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_TYPE', 'template_numerator.TYPE'))
+			->addSelect(new \Bitrix\Main\Entity\ExpressionField('TEMPLATE_NAME', $templateNameExpression), 'TEMPLATE_NAME')
 			->whereNotNull('NUMERATOR.ID')
 			->whereNotNull('NUMERATOR_ID')
 			->where('NUMERATOR_ID', '!=', 0)
@@ -160,17 +164,21 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 		$numeratorSubQuery = null;
 		if (!isset($gridFilter['CRM_ENTITIES']))
 		{
+			$templateNameExpression = \Bitrix\Crm\DbHelper::getSqlByDbType(
+				"GROUP_CONCAT(`numerator_template`.`NAME` SEPARATOR ', ')",
+				"STRING_AGG(numerator_template.NAME, ', ')"
+			);
 			$numeratorSubQuery = \Bitrix\Main\Numerator\Model\NumeratorTable::query()
 				->setCustomBaseTableAlias('numerator')
-				->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_name', 'numerator.NAME'))
-				->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_template', 'numerator.TEMPLATE'))
-				->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_id', 'numerator.ID'))
-				->addSelect(new \Bitrix\Main\Entity\ExpressionField('n_numerator_type', 'numerator.TYPE'))
-				->addSelect(new \Bitrix\Main\Entity\ExpressionField('TEMPLATE_NAME', "GROUP_CONCAT(`numerator_template`.`NAME` SEPARATOR ', ')"), 'TEMPLATE_NAME')
-				->where('n_numerator_type', 'DOCUMENT')
+				->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_NAME', 'numerator.NAME'))
+				->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_TEMPLATE', 'numerator.TEMPLATE'))
+				->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_ID', 'numerator.ID'))
+				->addSelect(new \Bitrix\Main\Entity\ExpressionField('N_NUMERATOR_TYPE', 'numerator.TYPE'))
+				->addSelect(new \Bitrix\Main\Entity\ExpressionField('TEMPLATE_NAME', $templateNameExpression), 'TEMPLATE_NAME')
+				->where('N_NUMERATOR_TYPE', 'DOCUMENT')
 				->registerRuntimeField('', new \Bitrix\Main\Entity\ReferenceField('TEMPLATE', '\Bitrix\DocumentGenerator\Model\TemplateTable',
 					['=this.ID' => 'ref.NUMERATOR_ID'], ["join_type" => "LEFT"]))
-				->addGroup('n_numerator_id');
+				->addGroup('N_NUMERATOR_ID');
 			if (isset($gridFilter['FIND']) && $gridFilter['FIND'])
 			{
 				$numeratorSubQuery = $numeratorSubQuery
@@ -197,7 +205,7 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 			if (isset($this->arResult['SORT']['NAME']))
 			{
 				$numeratorsBaseQuery = $numeratorsBaseQuery
-					->addUnionOrder('n_numerator_name', $this->arResult['SORT']['NAME'] == 'desc' ? 'DESC' : 'ASC')
+					->addUnionOrder('N_NUMERATOR_NAME', $this->arResult['SORT']['NAME'] == 'desc' ? 'DESC' : 'ASC')
 					->addUnionOrder('TEMPLATE_NAME');
 			}
 		}
@@ -206,16 +214,12 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 			->exec()
 			->fetchAll();
 
-		foreach ($numeratorsBaseQuery as $index => $numeratorData)
+		foreach ($numeratorsBaseQuery as $numeratorData)
 		{
 			foreach ($numeratorData as $key => $value)
 			{
-				$key = mb_strtoupper(str_replace('n_numerator_', '', $key));
-				$numResults[$numeratorData['n_numerator_id']][$key] = $value;
-				if ($key === 'ID')
-				{
-					$numIds[] = $value;
-				}
+				$key = str_replace('N_NUMERATOR_', '', $key);
+				$numResults[$numeratorData['N_NUMERATOR_ID']][$key] = $value;
 			}
 		}
 

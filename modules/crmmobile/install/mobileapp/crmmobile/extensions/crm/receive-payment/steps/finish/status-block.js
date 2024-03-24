@@ -261,4 +261,3 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 
 	module.exports = { StatusBlock };
 });
-

@@ -449,8 +449,11 @@ jn.define('crm/document/details', (require, exports, module) => {
 
 		renderWidgetTitle()
 		{
-			const text = this.document.title || this.props.title || Loc.getMessage(
-				'M_CRM_DOCUMENT_SHARED_PHRASES_LOADING');
+			const text = (
+				this.document.title
+				|| this.props.title
+				|| Loc.getMessage('M_CRM_DOCUMENT_SHARED_PHRASES_LOADING')
+			);
 			const createdAtTimestamp = this.document.createTime || this.props.createdAt;
 			let detailText = null;
 			if (createdAtTimestamp)

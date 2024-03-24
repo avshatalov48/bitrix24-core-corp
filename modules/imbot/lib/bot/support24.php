@@ -2085,8 +2085,6 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 			return false;
 		}
 
-		Loader::includeModule('imopenlines');
-
 		if ($messageFields['COMMAND'] === self::COMMAND_SUPPORT24)
 		{
 			$messageParams = [];
@@ -2190,13 +2188,13 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 					}
 					if (
 						!$sessionId
-						&& isset($message['params'], $message['params'][MessageParameter::IMOL_SID])
-						&& (int)$message['params'][MessageParameter::IMOL_SID] > 0 //SESSION_ID
+						&& isset($message['params'], $message['params']['IMOL_SID'])/** @see MessageParameter::IMOL_SID */
+						&& (int)$message['params']['IMOL_SID'] > 0 /** @see MessageParameter::IMOL_SID - SESSION_ID */
 					)
 					{
-						$sessionId = (int)$message['params'][MessageParameter::IMOL_SID];
+						$sessionId = (int)$message['params']['IMOL_SID'];/** @see MessageParameter::IMOL_SID */
 					}
-					if (isset($message['params'], $message['params'][MessageParameter::IMOL_VOTE_SID]))
+					if (isset($message['params'], $message['params']['IMOL_VOTE_SID']))/** @see MessageParameter::IMOL_VOTE_SID */
 					{
 						break;// it is previous session
 					}

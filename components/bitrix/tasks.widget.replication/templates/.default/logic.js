@@ -148,7 +148,6 @@ BX.namespace('Tasks.Component');
 
 			getStartDate: function()
 			{
-				console.log(this.control('start-date-datepicker'));
 				return this.subInstance('start-date-datepicker', function(){
 					return new BX.Tasks.Util.DatePicker({
 						scope: this.control('start-date-datepicker'),

@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Tasks\CheckList;
 
 use Bitrix\Main\ArgumentException;
@@ -16,11 +17,8 @@ use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\CheckList\Internals\CheckListTree;
-use Bitrix\Tasks\Integration\CRM\Timeline;
-use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
-use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\Ui\Avatar;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
@@ -80,6 +78,7 @@ abstract class CheckListFacade
 		'USER_SECOND_NAME',
 		'USER_TITLE',
 		'USER_LOGIN',
+		'USER_PERSONAL_PHOTO',
 	];
 
 	public static $oldItemsToMerge = [];
@@ -1364,8 +1363,10 @@ abstract class CheckListFacade
 				}
 
 				$member = [
+					'ID' => $userId,
 					'TYPE' => $processedItem['USER_TYPE'],
 					'NAME' => User::formatName($userFields),
+					'IMAGE' => Avatar::getSrc($processedItem['USER_PERSONAL_PHOTO']),
 				];
 
 				if (isset($items[$id]))

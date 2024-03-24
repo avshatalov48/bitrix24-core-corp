@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'apptheme',
+		'utils/random',
 		'utils/validation',
 		'layout/ui/checkbox',
 

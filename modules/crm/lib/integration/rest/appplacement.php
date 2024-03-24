@@ -238,7 +238,7 @@ class AppPlacement
 	/**
 	 * @return string[]
 	 */
-	private static function getAllDetailActivityCodes(): array
+	public static function getAllDetailActivityCodes(): array
 	{
 		$supportedEntityTypesList = [
 			\CCrmOwnerType::Lead,

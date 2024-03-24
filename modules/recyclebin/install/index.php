@@ -52,11 +52,11 @@ class recyclebin extends CModule
 	function InstallDB()
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 
-		if (!$DB->Query("SELECT 'x' FROM b_recyclebin WHERE 1=0", true))
+		if (!$DB->TableExists('b_recyclebin'))
 		{
-			$dbFilePath = '/bitrix/modules/'.$this->MODULE_ID.'/install/db/mysql/install.sql';
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'].$dbFilePath);
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/recyclebin/install/db/' . $connection->getType() . '/install.sql');
 
 			if ($errors !== false)
 			{
@@ -170,10 +170,11 @@ class recyclebin extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION, $USER_FIELD_MANAGER;
+		$connection = \Bitrix\Main\Application::getConnection();
 
 		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
 		{
-			$dbFilePath = '/bitrix/modules/' . $this->MODULE_ID . '/install/db/mysql/uninstall.sql';
+			$dbFilePath = '/bitrix/modules/' . $this->MODULE_ID . '/install/db/'.$connection->getType() . '/uninstall.sql';
 			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . $dbFilePath);
 
 			if (!empty($errors))

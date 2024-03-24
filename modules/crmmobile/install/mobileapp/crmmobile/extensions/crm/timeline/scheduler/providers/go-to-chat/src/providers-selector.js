@@ -34,7 +34,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (req
 				} = this.props;
 
 				const currentSender = this.findChannelById(currentChannelId);
-				const currentPhoneId = currentSender.fromList[0].id;
+				const currentPhoneId = currentSender.fromList[0]?.id;
 
 				this.sendersSelector = new SendersSelector({
 					currentPhoneId,

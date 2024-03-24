@@ -2,8 +2,6 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator;
 
-use Bitrix\Catalog\Product\PropertyCatalogFeature;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
@@ -186,7 +184,7 @@ class ProductLoader
 
 		foreach ($this->rows as $row)
 		{
-			$itemId = (int)$row['PRODUCT_ID'];
+			$itemId = (int)($row['PRODUCT_ID'] ?? 0);
 			if ($itemId > 0)
 			{
 				$allIds[$itemId] = (int)$row['ID'];
@@ -199,7 +197,9 @@ class ProductLoader
 			foreach ($offersData as $offerId => $offerData)
 			{
 				$this->offerIds[$offerId] = $allIds[$offerId];
-				$productId = (int)$offerData['ID'];
+
+				$productId = (int)($offerData['ID'] ?? 0);
+
 				$this->productIds[$productId] = $allIds[$productId] ?? null;
 				$this->offerToProductsMap[$offerId] = $productId;
 			}
@@ -311,7 +311,8 @@ class ProductLoader
 				'@ID' => $iblockElementIds,
 			],
 		]);
-		while($data = $iterator->fetch())
+
+		while ($data = $iterator->fetch())
 		{
 			$this->iblockValues[(int)$data['ID']] = [
 				'NAME' => $data['NAME'],

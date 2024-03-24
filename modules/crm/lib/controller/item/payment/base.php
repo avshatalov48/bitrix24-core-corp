@@ -3,11 +3,13 @@
 namespace Bitrix\Crm\Controller\Item\Payment;
 
 use Bitrix\Crm;
-use Bitrix\Main;
 use Bitrix\Sale;
+use Bitrix\Main;
 
 abstract class Base extends Crm\Controller\Base
 {
+	private bool $previousSynchronizationStatus = true;
+
 	abstract protected function getEntityType() : string;
 
 	protected function recalculatePaymentSum(Crm\Order\Payment $payment) : void
@@ -188,5 +190,33 @@ abstract class Base extends Crm\Controller\Base
 	protected function getRequiredModules() : array
 	{
 		return ['salescenter', 'sale'];
+	}
+
+	protected function processBeforeAction(Main\Engine\Action $action)
+	{
+		$result = parent::processBeforeAction($action);
+
+		$this->disableEntitySynchronization();
+
+		return $result;
+	}
+
+	protected function processAfterAction(Main\Engine\Action $action, $result)
+	{
+		parent::processAfterAction($action, $result);
+
+		$this->enableEntitySynchronization();
+	}
+
+	private function enableEntitySynchronization() : void
+	{
+		Crm\Order\Configuration::setEnabledEntitySynchronization($this->previousSynchronizationStatus);
+	}
+
+	private function disableEntitySynchronization() : void
+	{
+		$this->previousSynchronizationStatus = Crm\Order\Configuration::isEnabledEntitySynchronization();
+
+		Crm\Order\Configuration::setEnabledEntitySynchronization(false);
 	}
 }

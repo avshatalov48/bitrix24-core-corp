@@ -1,5 +1,6 @@
 <?php
 $MESS["KANBAN_SORT_ACTUAL"] = "By activity state";
+$MESS["KANBAN_SORT_ACTUAL_MSGVER_1"] = "By last active date";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Recommended";
 $MESS["KANBAN_SORT_ASC"] = "Bottom";
 $MESS["KANBAN_SORT_DESC"] = "Top";

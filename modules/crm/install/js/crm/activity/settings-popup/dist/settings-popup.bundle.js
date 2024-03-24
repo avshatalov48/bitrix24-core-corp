@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_popup,ui_buttons,ui_notification,main_date,calendar_planner,crm_datetime,crm_activity_settingsPopup,main_core,crm_timeline_tools,ui_vue3) {
+(function (exports,main_popup,ui_buttons,ui_notification,calendar_planner,crm_activity_settingsPopup,crm_timeline_tools,main_core,main_date,ui_vue3) {
 	'use strict';
 
 	const Section = {
@@ -114,7 +115,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  data() {
-	    const timestamp = this.params.from || crm_datetime.Factory.getUserNow().getTime() / 1000;
+	    const timestamp = this.params.from || main_date.Timezone.UserTime.getTimestamp();
 	    const from = Math.round(timestamp / 60) * 60; // round timestamp to minutes
 
 	    let duration = 1;
@@ -140,10 +141,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    Recall: () => Recall,
 	    fromDateFormatted: {
 	      get() {
-	        return main_date.Date.format(BX.Crm.DateTime.Dictionary.Format.SHORT_DATE_FORMAT, this.from);
+	        return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), this.from);
 	      },
 	      set(value) {
-	        const date = main_date.Date.parse(value);
+	        const date = main_date.DateTimeFormat.parse(value);
 	        const currentDate = this.createDateInstance(this.from);
 	        date.setHours(currentDate.getHours(), currentDate.getMinutes(), 0, 0);
 	        this.from = date.getTime() / 1000;
@@ -163,12 +164,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    toDateFormatted: {
 	      get() {
 	        const toTime = this.from + this.duration * DurationPeriods[this.durationPeriodId].seconds;
-	        return main_date.Date.format(BX.Crm.DateTime.Dictionary.Format.SHORT_DATE_FORMAT, toTime);
+	        return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), toTime);
 	      },
 	      set(value) {
-	        const date = main_date.Date.parse(value);
+	        const date = main_date.DateTimeFormat.parse(value);
 	        const toTime = this.from + this.duration * DurationPeriods[this.durationPeriodId].seconds;
-	        const currentDate = crm_datetime.Factory.createFromTimestampInUserTimezone(toTime);
+	        const currentDate = new Date(main_date.Timezone.BrowserTime.toUser(toTime) * 1000);
 	        date.setHours(currentDate.getHours(), currentDate.getMinutes(), 0, 0);
 	        this.calcDuration(date);
 	      }
@@ -176,7 +177,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    toTimeFormatted: {
 	      get() {
 	        const toTime = this.from + this.duration * DurationPeriods[this.durationPeriodId].seconds;
-	        return main_date.Date.format(BX.Crm.DateTime.Dictionary.Format.SHORT_TIME_FORMAT, toTime);
+	        return main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), toTime);
 	      },
 	      set(newTime) {
 	        const date = this.getDateInstanceWithTime(this.to, newTime);
@@ -246,7 +247,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    getDateInstanceWithTime(timestamp, time) {
 	      const timeArr = time.split(':');
-	      const date = crm_datetime.Factory.createFromTimestampInUserTimezone(timestamp);
+	      const date = new Date(main_date.Timezone.BrowserTime.toUser(timestamp) * 1000);
 	      let hours = Number(timeArr[0]);
 	      let minutes = timeArr[1];
 	      const isAmPm = minutes.includes('am') || minutes.includes('pm');
@@ -310,14 +311,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.duration * DurationPeriods[this.durationPeriodId].seconds;
 	    },
 	    getFormattedDate(id) {
-	      return this.getFormattedValue(id, BX.Crm.DateTime.Dictionary.Format.SHORT_DATE_FORMAT);
+	      return this.getFormattedValue(id, main_date.DateTimeFormat.getFormat('SHORT_DATE_FORMAT'));
 	    },
 	    getFormattedTime(id) {
-	      return this.getFormattedValue(id, BX.Crm.DateTime.Dictionary.Format.SHORT_TIME_FORMAT);
+	      return this.getFormattedValue(id, main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'));
 	    },
 	    getFormattedValue(id, format) {
 	      const timestamp = id === 'from' ? this.from : this.to;
-	      return main_date.Date.format(format, timestamp);
+	      return main_date.DateTimeFormat.format(format, timestamp);
 	    },
 	    getSecondsFromStartOfDay(timestamp) {
 	      const startOfDay = this.createDateInstance(timestamp, true);
@@ -954,5 +955,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.SettingsPopup = SettingsPopup;
 	exports.Events = Events;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Main,BX.UI,BX,BX.Main,BX.Calendar,BX.Crm.DateTime,BX.Crm.Activity,BX,BX.Crm.Timeline,BX.Vue3));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Main,BX.UI,BX,BX.Calendar,BX.Crm.Activity,BX.Crm.Timeline,BX,BX.Main,BX.Vue3));
 //# sourceMappingURL=settings-popup.bundle.js.map

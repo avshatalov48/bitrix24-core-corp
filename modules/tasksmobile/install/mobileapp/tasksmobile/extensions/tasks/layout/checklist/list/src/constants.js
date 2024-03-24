@@ -20,5 +20,7 @@ jn.define('tasks/layout/checklist/list/src/constants', (require, exports, module
 		RIGHT: 'right',
 	};
 
-	module.exports = { svgImages, pathToExtension, directions };
+	const CHECKBOX_SIZE = 24;
+
+	module.exports = { svgImages, pathToExtension, directions, CHECKBOX_SIZE };
 });

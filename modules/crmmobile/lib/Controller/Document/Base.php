@@ -3,7 +3,7 @@
 namespace Bitrix\CrmMobile\Controller\Document;
 
 use Bitrix\CrmMobile\Controller\PrimaryAutoWiredEntity;
-use Bitrix\CrmMobile\Controller\PublicErrorsTrait;
+use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\CrmMobile\ProductGrid\ProductGridDocumentQuery;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;

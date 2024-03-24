@@ -31,6 +31,7 @@ type RequestError = {
 export class FieldsetViewer extends EventEmitter
 {
 	cache = new Cache.MemoryCache();
+	endpoint = 'crm.api.fieldset.load';
 
 	constructor(options: FieldsetViewerOptions = {})
 	{
@@ -46,6 +47,13 @@ export class FieldsetViewer extends EventEmitter
 		this.cache.set('data', data);
 	}
 
+	setEndpoint(endpoint: string): FieldsetViewer
+	{
+		this.endpoint = endpoint;
+
+		return this;
+	}
+
 	getData(): {[key: string]: any}
 	{
 		return this.cache.get('data', {});
@@ -59,7 +67,7 @@ export class FieldsetViewer extends EventEmitter
 			const presetId = fieldListEditorOptions?.fieldsPanelOptions?.presetId ?? null;
 
 			BX.ajax
-				.runAction('crm.api.fieldset.load', { json: { entityTypeId, entityId, presetId } })
+				.runAction(this.endpoint, { json: { entityTypeId, entityId, presetId } })
 				.then((result) => {
 					resolve(result.data);
 				})

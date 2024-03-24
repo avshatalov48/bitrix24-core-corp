@@ -2,6 +2,13 @@
 
 namespace Bitrix\Tasks\Integration\SocialNetwork\UseCase;
 
+use Bitrix\Main\Loader;
+use Bitrix\Tasks\Internals\Notification\Message;
+use Bitrix\Tasks\Internals\Notification\User;
+use CCrmActivity;
+use CCrmActivityType;
+use CSite;
+
 class BaseCase
 {
 	protected array $siteIds = [];
@@ -19,12 +26,12 @@ class BaseCase
 				'SOURCE_ID' => $taskId
 			];
 		}
-		elseif (\Bitrix\Main\Loader::includeModule("crm"))
+		elseif (Loader::includeModule("crm"))
 		{
-			$res = \CCrmActivity::getList(
+			$res = CCrmActivity::getList(
 				[],
 				[
-					'TYPE_ID' => \CCrmActivityType::Task,
+					'TYPE_ID' => CCrmActivityType::Task,
 					'ASSOCIATED_ENTITY_ID' => $taskId,
 					'CHECK_PERMISSIONS' => 'N'
 				],
@@ -45,40 +52,11 @@ class BaseCase
 		return $filter;
 	}
 
-	protected function isSpawnedByAgent(array $params = []): bool
-	{
-		if (
-			isset($params['SPAWNED_BY_AGENT'])
-			&&
-			(($params['SPAWNED_BY_AGENT'] === 'Y') || ($params['SPAWNED_BY_AGENT'] === true))
-		)
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * @param \Bitrix\Tasks\Internals\Notification\User[] $recepients
-	 * @return array
-	 */
-	protected function recepients2Rights(array $recepients): array
-	{
-		$rights = [];
-		foreach($recepients as $user)
-		{
-			$rights[] = 'U' . $user->getId();
-		}
-
-		return $rights;
-	}
-
 	protected function getSiteIds(): array
 	{
 		if (empty($this->siteIds))
 		{
-			$dbSite = \CSite::GetList(
+			$dbSite = CSite::GetList(
 				'sort',
 				'desc',
 				['ACTIVE' => 'Y']
@@ -97,9 +75,30 @@ class BaseCase
 	{
 		if ($this->dateFormat === null)
 		{
-			$this->dateFormat = \CSite::GetDateFormat('FULL', SITE_ID);
+			$this->dateFormat = CSite::GetDateFormat('FULL', SITE_ID);
 		}
 
 		return $this->dateFormat;
+	}
+
+	protected function addUserRights(Message $message, User $user, int $logId): void
+	{
+		$message->addMetaData('rights', ['U' . $user->getId() . '_' . $logId]);
+	}
+
+	protected function addGroupRights(Message $message, int $groupId, int $logId): void
+	{
+		$message->addMetaData('rights', ['SG' . $groupId . '_' . $logId]);
+	}
+
+	protected function recepients2Rights(array $recepients): array
+	{
+		$rights = [];
+		foreach($recepients as $user)
+		{
+			$rights[] = 'U' . $user->getId();
+		}
+
+		return $rights;
 	}
 }

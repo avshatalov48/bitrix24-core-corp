@@ -64,7 +64,7 @@ class TaskEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (
 			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
-			&& $this->user->getPermission(PermissionDictionary::TASK_RESPONSE_EDIT)
+			&& $this->user->getPermission(PermissionDictionary::TASK_ASSIGNEE_EDIT)
 			&& !$task->isClosed()
 		)
 		{

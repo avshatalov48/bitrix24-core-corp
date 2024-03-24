@@ -139,6 +139,12 @@ class KeyTable extends DataManager
 				['=this.CREATED_BY' => 'ref.ID'],
 				['join_type' => 'LEFT']
 			),
+			new StringField(
+				'SERVICE_ID',
+				[
+					'title' => Loc::getMessage('KEY_ENTITY_SERVICE_ID_FIELD')
+				]
+			),
 			new Reference(
 				'APPLICATION',
 				'\Bitrix\Rest\AppTable',

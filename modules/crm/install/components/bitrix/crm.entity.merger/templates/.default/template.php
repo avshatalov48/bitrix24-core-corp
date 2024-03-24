@@ -16,7 +16,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'ui.notification',
 	'main.date',
 	'main.loader',
-	'crm.datetime',
 	'ui.progressround',
 	'ls',
 ]);

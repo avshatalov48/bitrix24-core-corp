@@ -230,6 +230,7 @@ jn.define('layout/ui/stage-list/item/step', (require, exports, module) => {
 		{
 			const {
 				stage: {
+					id: stageId,
 					name: stageName,
 				},
 				showAllStagesItem,
@@ -249,6 +250,7 @@ jn.define('layout/ui/stage-list/item/step', (require, exports, module) => {
 				},
 				Text(
 					{
+						testId: `Stage-${stageId}-Name`,
 						text: stageName,
 						numberOfLines: 1,
 						ellipsize: 'end',
@@ -263,6 +265,7 @@ jn.define('layout/ui/stage-list/item/step', (require, exports, module) => {
 				),
 				showCount && Text(
 					{
+						testId: `Stage-${stageId}-Counter`,
 						text: ` (${stageCount || 0})`,
 						style: {
 							fontSize: showAllStagesItem ? 13 : 15,

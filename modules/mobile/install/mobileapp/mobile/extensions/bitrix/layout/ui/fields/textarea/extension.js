@@ -99,7 +99,7 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 
 			this.initialRender = true;
 
-			this.onLayout = this.onLayout.bind(this);
+			this.resizeContent = this.resizeContent.bind(this);
 		}
 
 		render()
@@ -115,12 +115,13 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 				},
 				TextInput({
 					...this.props.textInput,
-					onLayout: this.onLayout,
+					onLayout: this.resizeContent,
+					onContentSizeChange: this.resizeContent,
 				}),
 			);
 		}
 
-		onLayout({ height })
+		resizeContent({ height })
 		{
 			if (this.initialRender)
 			{

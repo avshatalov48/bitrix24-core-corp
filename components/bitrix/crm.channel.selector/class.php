@@ -84,7 +84,7 @@ class CrmChannelSelectorComponent extends Base
 		$communications = $this->loadCommunications();
 		$channels = $this->arParams['channels'] ?? [];
 
-		if (!$this->arParams['channels'])
+		if (empty($channels))
 		{
 			$channels = $this->getPhoneChannels($communications);
 			$channels[] = $this->getEmailChannel($communications);
@@ -401,11 +401,13 @@ class CrmChannelSelectorComponent extends Base
 		if ($this->getErrors())
 		{
 			$this->render();
+
 			return null;
 		}
 
 		$this->arResult = $this->prepareResult();
 		$this->render();
+		
 		return $this->arResult;
 	}
 }

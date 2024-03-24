@@ -36,6 +36,7 @@ export class TodoCreateNotification
 	#toDoEditor: ?TodoEditor = null;
 	#skipProvider: TodoNotificationSkip = null;
 	#skipMenu: ?TodoNotificationSkipMenu = null;
+	#sliderIsMinimizing: boolean = false;
 
 	constructor(params: TodoCreateNotificationParams)
 	{
@@ -89,6 +90,13 @@ export class TodoCreateNotification
 		return null;
 	}
 
+	#isSliderMinimizeAvailable(): boolean
+	{
+		return Object.hasOwn(BX.SidePanel.Slider.prototype, 'minimize')
+			&& Object.hasOwn(BX.SidePanel.Slider.prototype, 'isMinimizing')
+		;
+	}
+
 	#onCloseSlider(event: BaseEvent): void
 	{
 		if (this.#allowCloseSlider || this.#isSkipped)
@@ -117,6 +125,7 @@ export class TodoCreateNotification
 			return; // element has final stage
 		}
 
+		this.#sliderIsMinimizing = this.#isSliderMinimizeAvailable() && sliderEvent.getSlider()?.isMinimizing();
 		sliderEvent.denyAction();
 
 		setTimeout(() => {
@@ -131,7 +140,6 @@ export class TodoCreateNotification
 		{
 			this.#entityStageId = eventParams.entityData[this.#stageIdField];
 		}
-
 	}
 
 	#onEntityDelete(event: BaseEvent): void
@@ -253,6 +261,13 @@ export class TodoCreateNotification
 	#closeSlider(): void
 	{
 		this.#allowCloseSlider = true;
+		if (this.#isSliderMinimizeAvailable() && this.#sliderIsMinimizing)
+		{
+			this.#getSliderInstance()?.minimize();
+
+			return;
+		}
+
 		this.#getSliderInstance()?.close();
 	}
 
@@ -277,9 +292,9 @@ export class TodoCreateNotification
 				buttons: this.#getPopupButtons(),
 				width: 545,
 				events: {
-					onClose: this.#closeSlider.bind(this)
+					onClose: this.#closeSlider.bind(this),
 				},
-				className: 'crm-activity__todo-create-notification-popup'
+				className: 'crm-activity__todo-create-notification-popup',
 			});
 		}
 

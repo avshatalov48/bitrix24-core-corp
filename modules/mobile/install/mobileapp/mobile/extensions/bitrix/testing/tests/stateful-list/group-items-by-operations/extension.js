@@ -19,8 +19,8 @@
 	};
 
 	describe('layout/ui/stateful-list groupItemsByOperations', () => {
-		test('should return empty operations with empty desiredItemIds and itemsFromServer', () => {
-			const desiredItemIds = [];
+		test('should return empty operations with empty itemsToProcess and itemsFromServer', () => {
+			const itemsToProcess = [];
 			const itemsFromServer = [];
 			const stateItems = [
 				{ id: 1, name: 'Item 1' },
@@ -30,12 +30,12 @@
 
 			const statefulList = new StatefulList({});
 			statefulList.state.items = stateItems;
-			const result = statefulList.groupItemsByOperations(desiredItemIds, itemsFromServer);
+			const result = statefulList.groupItemsByOperations(itemsToProcess, itemsFromServer);
 			expect(result).toEqual({ add: [], update: [], delete: [] });
 		});
 
-		test('should add new items if they exists in desiredItemIds, itemsFromServer, but not in stateItems', () => {
-			const desiredItemIds = [1, 2, 3];
+		test('should add new items if they exists in itemsToProcess, itemsFromServer, but not in stateItems', () => {
+			const itemsToProcess = [1, 2, 3];
 			const itemsFromServer = [
 				{ id: 1, name: 'Item 1' },
 				{ id: 2, name: 'Item 2' },
@@ -45,7 +45,7 @@
 
 			const statefulList = new StatefulList({});
 			statefulList.state.items = stateItems;
-			const result = prepareResult(statefulList.groupItemsByOperations(desiredItemIds, itemsFromServer));
+			const result = prepareResult(statefulList.groupItemsByOperations(itemsToProcess, itemsFromServer));
 			expect(result).toEqual({
 				add: [
 					{ id: 1, name: 'Item 1' },
@@ -57,8 +57,8 @@
 			});
 		});
 
-		test('should update if id exists in all variables (desiredItemIds, itemsFromServer, stateItems)', () => {
-			const desiredItemIds = [1, 2];
+		test('should update if id exists in all variables (itemsToProcess, itemsFromServer, stateItems)', () => {
+			const itemsToProcess = [1, 2];
 			const itemsFromServer = [
 				{ id: 1, name: 'Item 1 from server' },
 				{ id: 2, name: 'Item 2 from server' },
@@ -72,7 +72,7 @@
 
 			const statefulList = new StatefulList({});
 			statefulList.state.items = stateItems;
-			const result = prepareResult(statefulList.groupItemsByOperations(desiredItemIds, itemsFromServer));
+			const result = prepareResult(statefulList.groupItemsByOperations(itemsToProcess, itemsFromServer));
 			expect(result).toEqual({
 				add: [],
 				update: [
@@ -83,8 +83,8 @@
 			});
 		});
 
-		test('should delete if id exists in desiredItemIds and stateItems, but not in itemsFromServer', () => {
-			const desiredItemIds = [1];
+		test('should delete if id exists in itemsToProcess and stateItems, but not in itemsFromServer', () => {
+			const itemsToProcess = [1];
 			const itemsFromServer = [];
 			const stateItems = [
 				{ id: 1, name: 'Item 1' },
@@ -92,7 +92,7 @@
 
 			const statefulList = new StatefulList({});
 			statefulList.state.items = stateItems;
-			const result = prepareResult(statefulList.groupItemsByOperations(desiredItemIds, itemsFromServer));
+			const result = prepareResult(statefulList.groupItemsByOperations(itemsToProcess, itemsFromServer));
 			expect(result).toEqual({
 				add: [],
 				update: [],
@@ -101,7 +101,7 @@
 		});
 
 		test('should add, delete, update in one iteration', () => {
-			const desiredItemIds = [1, 2, 3, 4, 5];
+			const itemsToProcess = [1, 2, 3, 4, 5];
 			const itemsFromServer = [
 				{ id: 1, name: 'Item 1 from server' },
 				{ id: 2, name: 'Item 2 from server' },
@@ -118,7 +118,7 @@
 
 			const statefulList = new StatefulList({});
 			statefulList.state.items = stateItems;
-			const result = prepareResult(statefulList.groupItemsByOperations(desiredItemIds, itemsFromServer));
+			const result = prepareResult(statefulList.groupItemsByOperations(itemsToProcess, itemsFromServer));
 			expect(result).toEqual({
 				add: [{ id: 5, name: 'Item 5 from server' }],
 				update: [

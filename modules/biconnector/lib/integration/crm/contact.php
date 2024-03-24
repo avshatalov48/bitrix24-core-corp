@@ -297,8 +297,8 @@ class Contact
 				//TODO:SEARCH_CONTENT MEDIUMTEXT NULL,
 				//TODO:CATEGORY_ID INT UNSIGNED NOT NULL DEFAULT 0,
 				'PHONE' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'PHONE',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'PHONE',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_PHONE.VALUE_TYPE, \'] \', FM_PHONE.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -307,8 +307,8 @@ class Contact
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_field_multi FM_PHONE  ON FM_PHONE.ENTITY_ID = \'CONTACT\' and FM_PHONE.TYPE_ID = \'' . \CCrmFieldMulti::PHONE . '\' AND FM_PHONE.ELEMENT_ID = C.ID',
 				],
 				'WEB' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'WEB',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'WEB',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_WEB.VALUE_TYPE, \'] \', FM_WEB.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -317,8 +317,8 @@ class Contact
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_field_multi FM_WEB  ON FM_WEB.ENTITY_ID = \'CONTACT\' and FM_WEB.TYPE_ID = \'' . \CCrmFieldMulti::WEB . '\' AND FM_WEB.ELEMENT_ID = C.ID',
 				],
 				'EMAIL' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'EMAIL',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'EMAIL',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_EMAIL.VALUE_TYPE, \'] \', FM_EMAIL.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -327,8 +327,8 @@ class Contact
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_field_multi FM_EMAIL  ON FM_EMAIL.ENTITY_ID = \'CONTACT\' and FM_EMAIL.TYPE_ID = \'' . \CCrmFieldMulti::EMAIL . '\' AND FM_EMAIL.ELEMENT_ID = C.ID',
 				],
 				'IM' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'IM',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'IM',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_IM.VALUE_TYPE, \'] \', FM_IM.VALUE)',
 					'FIELD_TYPE' => 'string',

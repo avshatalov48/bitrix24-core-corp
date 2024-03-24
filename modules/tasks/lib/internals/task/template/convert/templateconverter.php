@@ -2,14 +2,19 @@
 namespace Bitrix\Tasks\Internals\Task\Template\Convert;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlHelper;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
+use Bitrix\Tasks\Update\AgentInterface;
+use Bitrix\Tasks\Update\AgentTrait;
 
-class TemplateConverter
+class TemplateConverter implements AgentInterface
 {
+	use AgentTrait;
+
 	private const MAX_ATTEMPS = 5;
 	private const LIMIT = 500;
 
@@ -39,11 +44,11 @@ class TemplateConverter
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function execute()
+	public static function execute(): string
 	{
 		if (self::$processing)
 		{
-			return self::getAgentName();
+			return static::getAgentName();
 		}
 
 		self::$processing = true;
@@ -54,14 +59,6 @@ class TemplateConverter
 		self::$processing = false;
 
 		return $res;
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getAgentName(): string
-	{
-		return self::class . "::execute();";
 	}
 
 	/**
@@ -202,12 +199,11 @@ class TemplateConverter
 
 		$rows = implode(',', $rows);
 
-		$sql = "
-			INSERT IGNORE INTO ". TemplateTagTable::getTableName() ."
-			(`TEMPLATE_ID`, `USER_ID`, `NAME`)
-			VALUES
-			". $rows ."
-		";
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			TemplateTagTable::getTableName(),
+			' (TEMPLATE_ID, USER_ID, NAME)',
+			" VALUES {$rows}"
+		);
 
 		Application::getConnection()->query($sql);
 	}
@@ -252,12 +248,11 @@ class TemplateConverter
 
 		$rows = implode(',', $rows);
 
-		$sql = "
-			INSERT IGNORE INTO ". TemplateDependenceTable::getTableName() ."
-			(`TEMPLATE_ID`, `DEPENDS_ON_ID`)
-			VALUES
-			". $rows ."
-		";
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			TemplateDependenceTable::getTableName(),
+			' (TEMPLATE_ID, DEPENDS_ON_ID)',
+			" VALUES {$rows}"
+		);
 
 		Application::getConnection()->query($sql);
 	}
@@ -287,12 +282,11 @@ class TemplateConverter
 
 		$rows = implode(',', $rows);
 
-		$sql = "
-			INSERT IGNORE INTO ". TemplateMemberTable::getTableName() ."
-			(`TEMPLATE_ID`, `USER_ID`, `TYPE`)
-			VALUES
-			". $rows ."
-		";
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			TemplateMemberTable::getTableName(),
+			' (TEMPLATE_ID, USER_ID, TYPE)',
+			" VALUES {$rows}"
+		);
 
 		Application::getConnection()->query($sql);
 	}
@@ -398,5 +392,10 @@ class TemplateConverter
 	private function resetAttemps()
 	{
 		\COption::RemoveOption('tasks', self::ATTEMPS_OPTION, '');
+	}
+
+	private function getSqlHelper(): SqlHelper
+	{
+		return Application::getConnection()->getSqlHelper();
 	}
 }

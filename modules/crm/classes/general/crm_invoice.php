@@ -3020,7 +3020,7 @@ class CAllCrmInvoice
 		)
 		{
 			COption::SetOptionString('crm', $clearWrongInterfaceFormRecords, 'Y');
-			$itemsIterator = $DB->Query('select CATEGORY, NAME, USER_ID from b_user_option where CATEGORY="main.interface.form" and NAME like "CRM\_%\_SHOW\_V12%"');
+			$itemsIterator = $DB->Query("select CATEGORY, NAME, USER_ID from b_user_option where CATEGORY='main.interface.form' and NAME like 'CRM\_%\_SHOW\_V12%'");
 			while ($item = $itemsIterator->Fetch())
 			{
 				$value = CUserOptions::GetOption($item['CATEGORY'], $item['NAME'], null, $item['USER_ID']);

@@ -9,6 +9,25 @@ use Bitrix\Sale;
 
 class Delivery extends Base
 {
+	public function listAction(int $paymentId, array $filter = [], array $order = []): array
+	{
+		$paymentItemList = parent::listAction($paymentId, $filter, $order);
+
+		$result = [];
+
+		foreach ($paymentItemList as $item)
+		{
+			$result[] = [
+				'ID' => $item['ID'],
+				'PAYMENT_ID' => $item['PAYMENT_ID'],
+				'QUANTITY' => $item['QUANTITY'],
+				'DELIVERY_ID' => $item['ENTITY_ID'],
+			];
+		}
+
+		return $this->convertKeysToCamelCase($result);
+	}
+
 	/**
 	 * @param int $paymentId
 	 * @param int $deliveryId
@@ -61,9 +80,9 @@ class Delivery extends Base
 	/**
 	 * @param int $id - ID from b_sale_order_payment_item
 	 * @param int $deliveryId - ID from b_sale_order_delivery
-	 * @return bool
+	 * @return bool|null
 	 */
-	public function setDeliveryAction(int $id, int $deliveryId): bool
+	public function setDeliveryAction(int $id, int $deliveryId): ?bool
 	{
 		$payment = $this->getPaymentByPayableId($id);
 		if (!$payment)
@@ -71,7 +90,7 @@ class Delivery extends Base
 			return false;
 		}
 
-		if ($this->canEditPayment($payment))
+		if (!$this->canEditPayment($payment))
 		{
 			return false;
 		}
@@ -88,9 +107,11 @@ class Delivery extends Base
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
+
+			return null;
 		}
 
-		return $result->isSuccess();
+		return true;
 	}
 
 	protected function getEntityType(): string

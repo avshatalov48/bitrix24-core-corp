@@ -604,12 +604,12 @@ final class Controller extends FactoryBasedController
 			);
 		}
 
-		$this->taskActivityProvider->updateByTask($params);
 		if (!isset($params['SKIP_BINDINGS_UPDATE']) || $params['SKIP_BINDINGS_UPDATE'] === false)
 		{
 			$this->taskActivityProvider->updateBindings($bindings, $this->getCurrentBindings($params), $params);
 		}
 
+		$this->taskActivityProvider->updateByTask($params);
 
 		if (isset($params['REFRESH_TASK_ACTIVITY']) && $params['REFRESH_TASK_ACTIVITY'] === true)
 		{

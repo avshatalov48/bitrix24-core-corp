@@ -2,7 +2,7 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
-use Bitrix\Main;
+use Bitrix\Main\DB;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Disk;
 use Bitrix\Disk\Volume;
@@ -37,7 +37,8 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
-		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
+		$sqlHelper = $connection->getSqlHelper();
+		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
 		VolumeTable::createTemporally();
@@ -71,7 +72,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 						->purify()
 						->measure([self::DISK_FILE]);
 
-					$indicatorTypeFolder = $connection->getSqlHelper()->forSql(Volume\Folder::className());
+					$indicatorTypeFolder = $sqlHelper->forSql(Volume\Folder::className());
 
 					$folderIdSql = implode(',', $folderIds);
 
@@ -95,17 +96,17 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 						SELECT 
 							'{$indicatorType}',
 							{$ownerId},
-							" . $connection->getSqlHelper()->getCurrentDateTimeFunction() . ",
-							SUM(FILE_SIZE),
-							SUM(FILE_COUNT),
-							SUM(DISK_SIZE),
-							SUM(DISK_COUNT),
-							SUM(VERSION_COUNT),
-							SUM(ATTACHED_COUNT),
-							SUM(LINK_COUNT),
-							SUM(SHARING_COUNT),
-							SUM(UNNECESSARY_VERSION_SIZE),
-							SUM(UNNECESSARY_VERSION_COUNT)
+							" . $sqlHelper->getCurrentDateTimeFunction() . ",
+							COALESCE(SUM(FILE_SIZE), 0),
+							COALESCE(SUM(FILE_COUNT), 0),
+							COALESCE(SUM(DISK_SIZE), 0),
+							COALESCE(SUM(DISK_COUNT), 0),
+							COALESCE(SUM(VERSION_COUNT), 0),
+							COALESCE(SUM(ATTACHED_COUNT), 0),
+							COALESCE(SUM(LINK_COUNT), 0),
+							COALESCE(SUM(SHARING_COUNT), 0),
+							COALESCE(SUM(UNNECESSARY_VERSION_SIZE), 0),
+							COALESCE(SUM(UNNECESSARY_VERSION_COUNT), 0)
 						FROM 
 							b_disk_volume
 						WHERE 
@@ -114,34 +115,44 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 							and STORAGE_ID = '{$storageId}'
 							and FOLDER_ID IN( {$folderIdSql} ) 
 							and PARENT_ID = '{$parentId}'
+						GROUP BY
+							INDICATOR_TYPE, 
+							OWNER_ID
 					";
 
 					$connection->queryExecute($querySql);
 				}
 			}
 
+			$prefSql = '';
+			if ($connection instanceof DB\MysqlCommonConnection)
+			{
+				$prefSql = 'ORDER BY NULL';
+			}
+
 			$querySql = "
 				SELECT 
 					INDICATOR_TYPE,
 					OWNER_ID,
-					" . $connection->getSqlHelper()->getCurrentDateTimeFunction() . ",
-					SUM(FILE_SIZE),
-					SUM(FILE_COUNT),
-					SUM(DISK_SIZE),
-					SUM(DISK_COUNT),
-					SUM(VERSION_COUNT),
-					SUM(ATTACHED_COUNT),
-					SUM(LINK_COUNT),
-					SUM(SHARING_COUNT),
-					SUM(UNNECESSARY_VERSION_SIZE),
-					SUM(UNNECESSARY_VERSION_COUNT)
+					" . $sqlHelper->getCurrentDateTimeFunction() . ",
+					COALESCE(SUM(FILE_SIZE), 0),
+					COALESCE(SUM(FILE_COUNT), 0),
+					COALESCE(SUM(DISK_SIZE), 0),
+					COALESCE(SUM(DISK_COUNT), 0),
+					COALESCE(SUM(VERSION_COUNT), 0),
+					COALESCE(SUM(ATTACHED_COUNT), 0),
+					COALESCE(SUM(LINK_COUNT), 0),
+					COALESCE(SUM(SHARING_COUNT), 0),
+					COALESCE(SUM(UNNECESSARY_VERSION_SIZE), 0),
+					COALESCE(SUM(UNNECESSARY_VERSION_COUNT), 0)
 				FROM 
 					{$temporallyTableName}
 				WHERE 
 					INDICATOR_TYPE = '{$indicatorType}'
 				GROUP BY
+					OWNER_ID,
 					INDICATOR_TYPE
-				ORDER BY NULL
+				{$prefSql}
 			";
 
 			$columnList = Volume\QueryHelper::prepareInsert(
@@ -163,7 +174,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 				$this->getSelect()
 			);
 
-			$tableName = VolumeTable::getTableName();
+			$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

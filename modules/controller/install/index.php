@@ -30,12 +30,13 @@ Class controller extends CModule
 		/** @var CDatabase $DB */
 		/** @var CMain $APPLICATION */
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
+
 		$this->errors = false;
 
-		RegisterModule("controller");
-		if (!$DB->Query("SELECT 'x' FROM b_controller_member WHERE 1=0", true))
+		if (!$DB->TableExists('b_controller_member'))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/mysql/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/db/' . $connection->getType() . '/install.sql');
 			if (!$this->errors)
 			{
 				$DB->Query("
@@ -48,20 +49,20 @@ Class controller extends CModule
 			}
 		}
 
-		if ($this->errors !== false)
+		if ($this->errors)
 		{
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
-		else
-		{
-			CAgent::AddAgent("CControllerMember::UnregisterExpiredAgent();", "controller", "Y", 86400);
-			CAgent::AddAgent("CControllerAgent::CleanUp();", "controller", "N", 86400);
 
-			RegisterModuleDependences("perfmon", "OnGetTableSchema", "controller", "controller", "OnGetTableSchema");
+		RegisterModule("controller");
 
-			$this->InstallTasks();
-		}
+		CAgent::AddAgent("CControllerMember::UnregisterExpiredAgent();", "controller", "Y", 86400);
+		CAgent::AddAgent("CControllerAgent::CleanUp();", "controller", "N", 86400);
+
+		RegisterModuleDependences("perfmon", "OnGetTableSchema", "controller", "controller", "OnGetTableSchema");
+
+		$this->InstallTasks();
 
 		return true;
 	}
@@ -71,12 +72,13 @@ Class controller extends CModule
 		/** @var CDatabase $DB */
 		/** @var CMain $APPLICATION */
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		if (!array_key_exists("savedata", $arParams) || ($arParams["savedata"] != "Y"))
 		{
 			if ($DB->Query("SELECT 'x' FROM b_controller_member", true))
-				$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/mysql/uninstall.sql");
+				$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".$connection->getType()."/uninstall.sql");
 		}
 
 		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "controller", "controller", "OnGetTableSchema");
@@ -134,7 +136,7 @@ Class controller extends CModule
 	function InstallEvents()
 	{
 		global $DB;
-		$sIn = "'CONTROLLER_MEMBER_REGISTER', 'CONTROLLER_MEMBER_CLOSED'";
+		$sIn = "'CONTROLLER_MEMBER_REGISTER', 'CONTROLLER_MEMBER_CLOSED', 'CONTROLLER_MEMBER_OPENED'";
 		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		$ar = $rs->Fetch();
 		if ($ar["C"] <= 0)
@@ -147,7 +149,7 @@ Class controller extends CModule
 	function UnInstallEvents()
 	{
 		global $DB;
-		$sIn = "'CONTROLLER_MEMBER_REGISTER', 'CONTROLLER_MEMBER_CLOSED'";
+		$sIn = "'CONTROLLER_MEMBER_REGISTER', 'CONTROLLER_MEMBER_CLOSED', 'CONTROLLER_MEMBER_OPENED'";
 		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		return true;

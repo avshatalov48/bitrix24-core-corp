@@ -194,6 +194,20 @@ final class Controller extends Timeline\Controller
 		);
 	}
 
+	public function onSignConfigureError(
+		ItemIdentifier $identifier,
+		DocumentData $documentData,
+		MessageData $messageData
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_SIGN_CONFIGURATION_ERROR,
+			$identifier,
+			$documentData,
+			$messageData,
+		);
+	}
+
 	public function onSendFinal(
 		ItemIdentifier $identifier,
 		DocumentData $documentData,
@@ -418,6 +432,7 @@ final class Controller extends Timeline\Controller
 			Entry::TYPE_CATEGORY_NOTIFICATION_DELIVERED => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_NOTIFICATION_ERROR => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_NOTIFICATION_READ => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_SIGN_CONFIGURATION_ERROR => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 		];
 	}
 

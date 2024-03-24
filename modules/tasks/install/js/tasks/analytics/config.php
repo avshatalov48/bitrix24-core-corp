@@ -8,7 +8,8 @@ return [
 	'css' => 'dist/analytics.bundle.css',
 	'js' => 'dist/analytics.bundle.js',
 	'rel' => [
-		'main.core',
+		'main.polyfill.core',
+		'ui.analytics',
 	],
-	'skip_core' => false,
+	'skip_core' => true,
 ];

@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\Volume;
 
 use Bitrix\Main;
+use Bitrix\Main\DB;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Query;
@@ -63,6 +64,12 @@ class FolderTree extends Volume\Folder
 			}
 		}
 
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
+		}
+
 		/**
 		 * with path structure
 		 */
@@ -74,7 +81,9 @@ class FolderTree extends Volume\Folder
 			string $subSelectSql = '',
 			string $subWhereSql = '',
 			string $subGroupSql = ''
-		): void
+		)
+		use ($prefSql)
+		: void
 		{
 			$deletedType = $this->getFilterValue('DELETED_TYPE', '=@');
 			if (!empty($deletedType) && $deletedType !== ObjectTable::DELETED_TYPE_NONE)
@@ -144,7 +153,7 @@ class FolderTree extends Volume\Folder
 					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FILES
 
 				INNER JOIN b_disk_object_path path ON CNT_FILES.PARENT_ID = path.OBJECT_ID
@@ -171,7 +180,9 @@ class FolderTree extends Volume\Folder
 			string $subSelectSql = '',
 			string $subWhereSql = '',
 			string $subGroupSql = ''
-		): void
+		)
+		use ($prefSql)
+		: void
 		{
 			$deletedType = $this->getFilterValue('DELETED_TYPE', '=@');
 			if (!empty($deletedType) && $deletedType !== ObjectTable::DELETED_TYPE_NONE)
@@ -193,7 +204,7 @@ class FolderTree extends Volume\Folder
 				LEFT JOIN
 				(
 					SELECT
-						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
+						SUM(COALESCE(preview_file.FILE_SIZE, 0)) + SUM(COALESCE(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
 						pth.PARENT_ID
 					FROM
@@ -208,7 +219,7 @@ class FolderTree extends Volume\Folder
 					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_PREVIEW
 					ON CNT_PREVIEW.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -225,7 +236,9 @@ class FolderTree extends Volume\Folder
 			string $subSelectSql = '',
 			string $subWhereSql = '',
 			string $subGroupSql = ''
-		): void
+		)
+		use ($prefSql)
+		: void
 		{
 			$deletedType = $this->getFilterValue('DELETED_TYPE', '=@');
 			if (!empty($deletedType) && $deletedType !== ObjectTable::DELETED_TYPE_NONE)
@@ -237,7 +250,7 @@ class FolderTree extends Volume\Folder
 				$subWhereSql .= ' AND files.DELETED_TYPE = '.ObjectTable::DELETED_TYPE_NONE;
 			}
 
-			$select[] = 'IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT';
+			$select[] = 'COALESCE(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT';
 			$columns[] = 'ATTACHED_COUNT';
 			// language=SQL
 			$from[] = "
@@ -258,7 +271,7 @@ class FolderTree extends Volume\Folder
 					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_ATTACH
 					ON CNT_ATTACH.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -275,7 +288,9 @@ class FolderTree extends Volume\Folder
 			string $subSelectSql = '',
 			string $subWhereSql = '',
 			string $subGroupSql = ''
-		): void
+		)
+		use ($prefSql)
+		: void
 		{
 			$deletedType = $this->getFilterValue('DELETED_TYPE', '=@');
 			if (!empty($deletedType) && $deletedType !== ObjectTable::DELETED_TYPE_NONE)
@@ -287,7 +302,7 @@ class FolderTree extends Volume\Folder
 				$subWhereSql .= ' AND files.DELETED_TYPE = '.ObjectTable::DELETED_TYPE_NONE;
 			}
 
-			$select[] = 'IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT';
+			$select[] = 'COALESCE(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT';
 			$columns[] = 'LINK_COUNT';
 			// language=SQL
 			$from[] = "
@@ -309,7 +324,7 @@ class FolderTree extends Volume\Folder
 					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_LINK
 					ON CNT_LINK.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -326,7 +341,9 @@ class FolderTree extends Volume\Folder
 			string $subSelectSql = '',
 			string $subWhereSql = '',
 			string $subGroupSql = ''
-		): void
+		)
+		use ($prefSql)
+		: void
 		{
 			$deletedType = $this->getFilterValue('DELETED_TYPE', '=@');
 			if (!empty($deletedType) && $deletedType !== ObjectTable::DELETED_TYPE_NONE)
@@ -338,7 +355,7 @@ class FolderTree extends Volume\Folder
 				$subWhereSql .= ' AND files.DELETED_TYPE = '.ObjectTable::DELETED_TYPE_NONE;
 			}
 
-			$select[] = 'IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT';
+			$select[] = 'COALESCE(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT';
 			$columns[] = 'SHARING_COUNT';
 			// language=SQL
 			$from[] = "
@@ -361,7 +378,7 @@ class FolderTree extends Volume\Folder
 					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_SHARING
 					ON CNT_FILES.PARENT_ID = CNT_SHARING.PARENT_ID
 			";
@@ -379,7 +396,9 @@ class FolderTree extends Volume\Folder
 			string $subSelectSql = '',
 			string $subWhereSql = '',
 			string $subGroupSql = ''
-		): void
+		)
+		use ($prefSql)
+		: void
 		{
 			$deletedType = $this->getFilterValue('DELETED_TYPE', '=@');
 			if (!empty($deletedType) && $deletedType !== ObjectTable::DELETED_TYPE_NONE)
@@ -391,8 +410,8 @@ class FolderTree extends Volume\Folder
 				$subWhereSql .= ' AND files.DELETED_TYPE = '.ObjectTable::DELETED_TYPE_NONE;
 			}
 
-			$select[] = 'IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE';
-			$select[] = 'IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT';
+			$select[] = 'COALESCE(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE';
+			$select[] = 'COALESCE(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT';
 			$columns[] = 'UNNECESSARY_VERSION_SIZE';
 			$columns[] = 'UNNECESSARY_VERSION_COUNT';
 			// language=SQL
@@ -422,7 +441,7 @@ class FolderTree extends Volume\Folder
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version
 								GROUP BY object_id
-								ORDER BY NULL
+								{$prefSql}
 							) head ON head.OBJECT_ID = files.ID
 
 							LEFT JOIN b_disk_attached_object  attached
@@ -434,7 +453,7 @@ class FolderTree extends Volume\Folder
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND COALESCE(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -447,11 +466,11 @@ class FolderTree extends Volume\Folder
 							files.ID,
 							pth.PARENT_ID
 							{$subGroupSql}
-						ORDER BY NULL
+						{$prefSql}
 					) src
 					GROUP BY
 						src.PARENT_ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FREE
 					ON CNT_FREE.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -473,17 +492,16 @@ class FolderTree extends Volume\Folder
 		$this->unsetFilter('FOLDER_ID');
 		$this->addFilter('PARENT_ID', $folderId);
 
-		$select = [];
-		$columns = [];
-		if (!$isRemeasure)
-		{
-			$select[] = "'{$folderIndicatorType}' as INDICATOR_TYPE";
-			$select[] = "{$ownerId} as OWNER_ID";
-			$select[] = $connection->getSqlHelper()->getCurrentDateTimeFunction()." as CREATE_TIME ";
-			$columns[] = 'INDICATOR_TYPE';
-			$columns[] = 'OWNER_ID';
-			$columns[] = 'CREATE_TIME';
-		}
+		$select = [
+			"'{$folderIndicatorType}' as INDICATOR_TYPE",
+			"{$ownerId} as OWNER_ID",
+			$sqlHelper->getCurrentDateTimeFunction()." as CREATE_TIME ",
+		];
+		$columns = [
+			'INDICATOR_TYPE',
+			'OWNER_ID',
+			'CREATE_TIME'
+		];
 
 		$from = [];
 		$where = [];
@@ -534,8 +552,8 @@ class FolderTree extends Volume\Folder
 
 		VolumeTable::createTemporally();
 		VolumeTable::clearTemporally();
-		$tableName = VolumeTable::getTableName();
-		$temporallyTableName = VolumeTable::getTemporallyName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
+		$temporallyTableName = $sqlHelper->quote(VolumeTable::getTemporallyName());
 
 		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
 		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
@@ -548,18 +566,18 @@ class FolderTree extends Volume\Folder
 				'destinationTbl',
 				'sourceQuery'
 			);
-			$querySql = "
-				UPDATE
-					{$tableName} destinationTbl,
-					(SELECT {$columnList} FROM {$temporallyTableName}) sourceQuery
-				SET {$updateColumnList}
-				WHERE
+			$querySql = $sqlHelper->prepareCorrelatedUpdate(
+				$tableName, 'destinationTbl',
+				$updateColumnList,
+				"(SELECT {$columnList} FROM {$temporallyTableName}) sourceQuery",
+				"
 					destinationTbl.INDICATOR_TYPE = '{$folderIndicatorType}'
 					AND destinationTbl.OWNER_ID = {$ownerId}
 					AND destinationTbl.STORAGE_ID = sourceQuery.STORAGE_ID
 					AND destinationTbl.FOLDER_ID = sourceQuery.FOLDER_ID
-					AND IFNULL(destinationTbl.PARENT_ID, -1) = IFNULL(sourceQuery.PARENT_ID, -1)
-			";
+					AND COALESCE(destinationTbl.PARENT_ID, -1) = COALESCE(sourceQuery.PARENT_ID, -1)
+				"
+			);
 		}
 		else
 		{
@@ -575,8 +593,6 @@ class FolderTree extends Volume\Folder
 		{
 			throw new Main\SystemException('Cannot get table lock for '.static::className(), self::ERROR_LOCK_TIMEOUT);
 		}
-
-		//VolumeTable::clearTemporally();
 
 		$this->recalculatePercent();
 

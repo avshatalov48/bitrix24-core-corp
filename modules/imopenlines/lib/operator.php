@@ -656,7 +656,7 @@ class Operator
 			\CIMMessenger::Add([
 				'DIALOG_ID' => 'chat' . $session['CHAT_ID'],
 				'TO_USER_ID' => $userId,
-				'MESSAGE' => Loc::getMessage('IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG_VERSION_LOWER_THAN_REQUIRED'),
+				'MESSAGE' => Loc::getMessage('IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG_VERSION_LOWER_THAN_REQUIRED_MSGVER_1'),
 				'SYSTEM' => 'Y',
 				'KEYBOARD' => $keyboard,
 				'NO_SESSION_OL' => 'Y',
@@ -670,7 +670,7 @@ class Operator
 			\CIMMessenger::Add([
 				'DIALOG_ID' => 'chat' . $session['CHAT_ID'],
 				'TO_USER_ID' => $userId,
-				'MESSAGE' => Loc::getMessage('IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG'),
+				'MESSAGE' => Loc::getMessage('IMOL_OPERATOR_ERROR_CANT_OPEN_NEW_DIALOG_MSGVER_1'),
 				'SYSTEM' => 'Y',
 				'NO_SESSION_OL' => 'Y',
 				'URL_PREVIEW' => 'N',

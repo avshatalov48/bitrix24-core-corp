@@ -20,7 +20,10 @@ class DateTime extends UrlFilter
 	public const PERIOD_YEAR = 'year';
 	public const PERIOD_RANGE = 'range';
 
+	public const PERIOD_DEFAULT = 'default';
+
 	private ?string $period;
+	private bool $hasDefaultPeriod = false;
 	private ?Date $from;
 	private ?Date $to;
 
@@ -29,6 +32,7 @@ class DateTime extends UrlFilter
 		$this->period = $dashboard->getOrmObject()->getFilterPeriod();
 		if (empty($this->period))
 		{
+			$this->hasDefaultPeriod = true;
 			$this->period = self::getDefaultPeriod();
 		}
 
@@ -72,6 +76,11 @@ class DateTime extends UrlFilter
 			$this->from = clone($this->to);
 			$this->from->add($interval);
 		}
+	}
+
+	public function hasDefaultFilter(): bool
+	{
+		return $this->hasDefaultPeriod;
 	}
 
 	private function isRange(): bool

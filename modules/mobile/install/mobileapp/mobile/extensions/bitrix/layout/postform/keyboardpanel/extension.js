@@ -36,25 +36,11 @@
 			destinationPrefixColor: AppTheme.colors.base4,
 		};
 
-		const BBCodeVersion = 38;
-
-		if (Application.getApiVersion() >= BBCodeVersion)
-		{
-			recipientsString = recipientsString
-				.replaceAll('&nbsp;', ' ')
-				.replace('#PREFIX_BEGIN#', `[COLOR=${config.destinationPrefixColor}]`).replace('#PREFIX_END#', '[/COLOR]')
-				.replace('#ALL_BEGIN#', `[B][COLOR=${config.destinationAllColor}]`)
-				.replace('#ALL_END#', '[/COLOR][/B]');
-		}
-		else
-		{
-			recipientsString = recipientsString
-				.replaceAll('<', '&lt;')
-				.replaceAll('>', '&gt;')
-				.replace('#PREFIX_BEGIN#', `<font color="${config.destinationPrefixColor}">`).replace('#PREFIX_END#', '</font>')
-				.replace('#ALL_BEGIN#', `<b><font color="${config.destinationAllColor}">`)
-				.replace('#ALL_END#', '</font></b>');
-		}
+		recipientsString = recipientsString
+			.replaceAll('&nbsp;', ' ')
+			.replace('#PREFIX_BEGIN#', `[COLOR=${config.destinationPrefixColor}]`).replace('#PREFIX_END#', '[/COLOR]')
+			.replace('#ALL_BEGIN#', `[B][COLOR=${config.destinationAllColor}]`)
+			.replace('#ALL_END#', '[/COLOR][/B]');
 
 		return View(
 			{
@@ -140,35 +126,20 @@
 							},
 						},
 						(
-							Application.getApiVersion() >= BBCodeVersion
-								? BBCodeText({
-									value: `[COLOR=${config.destinationColor}]${recipientsString}[/COLOR]`,
-									style: {
-										fontSize: 14,
-										textAlignVertical: 'center',
-										minHeight: iconHeightNormal,
-										maxWidth: device.screen.width
-											- config.widthArrow - config.marginLeftArrow - config.marginRightArrow // arrow
-											- (2 * config.paddingLeftRight) // keyboard left and right padding
-											- (iconWidth + config.marginRightVisibilityIcon) // visibility left icon
-											- (iconWidth + 2 * config.marginLeftRightAttachmentIcon) // attachments button
-											- config.widthEllipsisButton, //
-									},
-								})
-								: Text({
-									html: `<font color="${config.destinationColor}">${recipientsString}</font>`,
-									style: {
-										fontSize: 14,
-										textAlignVertical: 'center',
-										minHeight: iconHeightNormal,
-										maxWidth: device.screen.width
-											- config.widthArrow - config.marginLeftArrow - config.marginRightArrow // arrow
-											- (2 * config.paddingLeftRight) // keyboard left and right padding
-											- (iconWidth + config.marginRightVisibilityIcon) // visibility left icon
-											- (iconWidth + 2 * config.marginLeftRightAttachmentIcon) // attachments button
-											- config.widthEllipsisButton, //
-									},
-								})
+							BBCodeText({
+								value: `[COLOR=${config.destinationColor}]${recipientsString}[/COLOR]`,
+								style: {
+									fontSize: 14,
+									textAlignVertical: 'center',
+									minHeight: iconHeightNormal,
+									maxWidth: device.screen.width
+										- config.widthArrow - config.marginLeftArrow - config.marginRightArrow // arrow
+										- (2 * config.paddingLeftRight) // keyboard left and right padding
+										- (iconWidth + config.marginRightVisibilityIcon) // visibility left icon
+										- (iconWidth + 2 * config.marginLeftRightAttachmentIcon) // attachments button
+										- config.widthEllipsisButton, //
+								},
+							})
 						)
 						,
 					),

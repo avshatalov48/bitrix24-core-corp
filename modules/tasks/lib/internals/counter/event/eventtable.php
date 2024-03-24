@@ -108,17 +108,12 @@ class EventTable extends TaskDataManager
 	{
 		$res = self::getList([
 			'filter' => [
-				'<PROCESSED' => DateTime::createFromTimestamp(0),
+				'<=PROCESSED' => DateTime::createFromTimestamp(0),
 			],
 			'limit' => 1
 		]);
 
-		if ($res->getSelectedRowsCount() > 0)
-		{
-			return true;
-		}
-
-		return false;
+		return $res->getSelectedRowsCount() > 0;
 	}
 
 	/**
@@ -139,7 +134,7 @@ class EventTable extends TaskDataManager
 		\CTimeZone::disable();
 		$res = self::getList([
 			'filter' => [
-				'<PROCESSED' => DateTime::createFromTimestamp(0),
+				'<=PROCESSED' => DateTime::createFromTimestamp(0),
 				'<CREATED' => DateTime::createFromTimestamp(time() - self::LOST_TTL)
 			],
 			'limit' => $limit

@@ -9,36 +9,32 @@
 namespace Bitrix\Tasks\Internals\Counter\Event;
 
 
+use Bitrix\Tasks\Update\AgentInterface;
+use Bitrix\Tasks\Update\AgentTrait;
 use Bitrix\Tasks\Util\Type\DateTime;
 
-class CleanAgent
+class CleanAgent implements AgentInterface
 {
+	use AgentTrait;
+
 	private const TTL = 21*24*3600;
 
 	private static $processing = false;
 
-	public static function execute()
+	public static function execute(): string
 	{
 		if (self::$processing)
 		{
-			return self::getAgentName();
+			return static::getAgentName();
 		}
 
 		$filter = [
-			'>PROCESSED' => DateTime::createFromTimestampGmt(0),
-			'<PROCESSED' => DateTime::createFromTimestampGmt(time() - self::TTL)
+			'>=PROCESSED' => DateTime::createFromTimestamp(0),
+			'<PROCESSED' => DateTime::createFromTimestamp(time() - self::TTL)
 		];
 		EventTable::deleteList($filter);
 
 
-		return self::getAgentName();
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getAgentName(): string
-	{
-		return static::class . "::execute();";
+		return static::getAgentName();
 	}
 }

@@ -29,7 +29,7 @@ class Crm
 	 */
 	protected function __construct($chatId = 0, $operatorId = 0)
 	{
-		//TODO: Клавиатуры для отмена операции
+		//TODO: Keyboard button for canceling action
 		/*$messageCode = 'IMOL_SESSION_'.$crmData['ENTITY_TYPE'].'_EXTEND';
 
 		$keyboard = new \Bitrix\Im\Bot\Keyboard();
@@ -45,7 +45,7 @@ class Crm
 			"DISPLAY" => "LINE",
 		));*/
 
-		//TODO: трекер для отката изменений
+		//TODO: tracker for revert changes
 		/*if ($keyboard)
 		{
 			$result = TrackerTable::add(Array(

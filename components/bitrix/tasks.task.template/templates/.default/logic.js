@@ -297,7 +297,7 @@ BX.namespace('Tasks.Component');
 					{
 						BX.Tasks.Util.hintManager.showDisposable(
 							ctrl.scope(),
-							BX.message('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_MULTIPLE_RESPONSIBLE_NOTICE'),
+							BX.message('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_MULTIPLE_ASSIGNEE_NOTICE'),
 							'TASK_EDIT_MULTIPLE_RESPONSIBLES'
 						);
 					}

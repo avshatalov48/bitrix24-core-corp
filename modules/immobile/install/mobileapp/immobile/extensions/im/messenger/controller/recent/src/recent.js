@@ -251,7 +251,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		onRefresh()
 		{
-			MessengerEmitter.emit(EventType.messenger.refresh);
+			MessengerEmitter.emit(EventType.messenger.refresh, true);
 		}
 
 		openDialog(dialogId)

@@ -25,6 +25,7 @@ $MESS["CRM_SITE_FORM_FIELD_ERROR_INVALID"] = "Field value is incorrect";
 $MESS["CRM_SITE_FORM_FIELD_ERROR_INVALID_EMAIL"] = "Incorrect email specified";
 $MESS["CRM_SITE_FORM_FIELD_ERROR_REQUIRED"] = "Field is required";
 $MESS["CRM_SITE_FORM_FIELD_FILE_CHOOSE"] = "Select a file";
+$MESS["CRM_SITE_FORM_FIELD_FILE_ERROR_EMPTY_CONTENT"] = "Empty file selected";
 $MESS["CRM_SITE_FORM_FIELD_FILE_ERROR_TYPE"] = "Wrong file type selected. You can try files with extensions: %extensions%";
 $MESS["CRM_SITE_FORM_FIELD_FILE_LOADING"] = "Uploading file";
 $MESS["CRM_SITE_FORM_FIELD_FILE_SIZE_EXCEEDED"] = "File size exceeds limit: %maxFileSize% MB";

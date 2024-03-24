@@ -294,18 +294,18 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 
 	public function getFilterString(): string
 	{
-		if(!$this->isLoaded())
+		if (!$this->isLoaded())
 		{
 			return static::class . '_' . '%';
 		}
 
 		$factory = $this->getFactory();
-		if(!$factory)
+		if (!$factory)
 		{
 			return static::class . '_' . '%';
 		}
 
-		$categoryId = (int)$this->getRawValue('CATEGORY_ID');
+		$categoryId = (int)($this->getRawValue('CATEGORY_ID') ?? 0);
 		if ($categoryId <= 0)
 		{
 			return static::class . '_' . '%';
@@ -317,7 +317,7 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 	public static function getLangName(): string
 	{
 		$type = Container::getInstance()->getTypeByEntityTypeId(static::getEntityTypeId());
-		if($type)
+		if ($type)
 		{
 			return $type->getTitle();
 		}

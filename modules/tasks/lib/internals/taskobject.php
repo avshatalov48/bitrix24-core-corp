@@ -1,10 +1,17 @@
 <?php
 namespace Bitrix\Tasks\Internals;
 
-use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Contract\Arrayable;
+use Bitrix\Tasks\Integration\SocialNetwork\Exception\SocialnetworkException;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\RegularParametersObject;
 use Bitrix\Tasks\Internals\Task\RegularParametersTable;
@@ -19,158 +26,16 @@ use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 
-/**
- * Class TaskObject
- *
- * @package Bitrix\Tasks\Internals
- */
-class TaskObject extends EO_Task
+class TaskObject extends EO_Task implements Arrayable
 {
 	use MemberTrait;
-
-	/**
-	 * @param $data
-	 * @return TaskObject
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
-	public static function wakeUpObject($data): TaskObject
-	{
-		if (!is_array($data))
-		{
-			return parent::wakeUp($data);
-		}
-
-		$fields = TaskTable::getEntity()->getFields();
-
-		$wakeUpData = [];
-		$customData = [];
-		foreach ($data as $field => $value)
-		{
-			if (array_key_exists($field, $fields))
-			{
-
-				if (
-					$fields[$field] instanceof DateTimeField
-					&& is_numeric($value)
-				)
-				{
-					$wakeUpData[$field] = DateTime::createFromTimestampGmt($value);
-				}
-				else
-				{
-					$wakeUpData[$field] = $value;
-				}
-			}
-			else
-			{
-				$customData[$field] = $value;
-			}
-		}
-
-		$object = parent::wakeUp($wakeUpData);
-		foreach ($customData as $field => $value)
-		{
-			$object->customData->set($field, $value);
-		}
-
-		return $object;
-	}
-
-	public static function createFromFields(array $fields): static
-	{
-		return (new static())
-			->setId($fields['ID'] ?? 0)
-			->setCreatedBy($fields['CREATED_BY'] ?? 0)
-			->setResponsibleId($fields['RESPONSIBLE_ID'] ?? 0)
-			->setIsRegular($fields['IS_REGULAR'] ?? false);
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function isDeleted(): bool
-	{
-		return $this->getZombie();
-	}
-
-	/**
-	 * @param int $userId
-	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	public function isMuted(int $userId): bool
-	{
-		return UserOption::isOptionSet($this->getId(), $userId, UserOption\Option::MUTED);
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function isExpired(): bool
-	{
-		$status = (int)$this->getStatus();
-		$completedStates = [Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED, Status::DEFERRED];
-
-		if (!$this->getDeadline() || in_array($status, $completedStates, true))
-		{
-			return false;
-		}
-
-		return (DateTime::createFrom($this->getDeadline()))->checkLT(new DateTime());
-	}
-
-	/**
-	 * @return array
-	 */
-	public function toArray(): array
-	{
-		$data = $this->collectValues();
-		foreach ($data as $fieldName => $field)
-		{
-			if (
-				$field instanceof Main\ORM\Fields\Relations\Reference
-				|| $field instanceof Main\ORM\Fields\Relations\OneToMany
-				|| $field instanceof Main\ORM\Fields\Relations\ManyToMany
-				|| $field instanceof Main\ORM\Fields\ExpressionField
-			)
-			{
-				continue;
-			}
-
-			if ($data[$fieldName] instanceof DateTime)
-			{
-				$data[$fieldName] = $data[$fieldName]->getTimestamp();
-			}
-
-			if (is_object($data[$fieldName]))
-			{
-				unset($data[$fieldName]);
-			}
-		}
-		return $data;
-	}
+	use WakeUpTrait;
 
 	/**
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public function isCrm(): bool
-	{
-		$params = [
-			'select' => ['SCENARIO'],
-			'filter' => [
-				'=TASK_ID' => $this->getId(),
-				'=SCENARIO' => ScenarioTable::SCENARIO_CRM,
-			],
-			'limit' => 1,
-		];
-		return !is_null(ScenarioTable::getList($params)->fetchObject());
-	}
-
 	public function getCrmFields(bool $forceFetch = true): array
 	{
 		//first of all, try to get crm data from loaded data
@@ -198,6 +63,11 @@ class TaskObject extends EO_Task
 		return $regularObject;
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function getRegularDeadlineOffset(): ?int
 	{
 		if (!$this->isRegular())
@@ -214,6 +84,11 @@ class TaskObject extends EO_Task
 		return (int)$regularFields['DEADLINE_OFFSET'];
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	public function getFileFields(): array
 	{
 		//first of all, try to get crm data from loaded data
@@ -233,13 +108,6 @@ class TaskObject extends EO_Task
 		return [];
 	}
 
-	public function isRegular(): bool
-	{
-		return
-			$this->getIsRegular()
-			?? TaskTable::getByPrimary($this->getId(), ['select' => ['ID', 'IS_REGULAR']])->fetchObject()->getIsRegular();
-	}
-
 	/**
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
@@ -257,6 +125,11 @@ class TaskObject extends EO_Task
 		return null;
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function getFirstResult(): ?Result
 	{
 		$results = $this->getResult() ?? ResultTable::getByTaskId($this->getId());
@@ -267,6 +140,126 @@ class TaskObject extends EO_Task
 		}
 
 		return null;
+	}
+
+	public function getRealStatus(): ?int
+	{
+		return $this->fillStatus();
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function getRegularityStartTime(): ?\Bitrix\Main\Type\DateTime
+	{
+		if (!$this->isRegular())
+		{
+			return null;
+		}
+
+		return $this->getRegularFields()?->getStartTime();
+	}
+
+	public function isDeleted(): bool
+	{
+		return $this->getZombie();
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function isMuted(int $userId): bool
+	{
+		return UserOption::isOptionSet($this->getId(), $userId, UserOption\Option::MUTED);
+	}
+
+	public function isExpired(): bool
+	{
+		$status = (int)$this->getStatus();
+		$completedStates = [Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED, Status::DEFERRED];
+
+		if (!$this->getDeadline() || in_array($status, $completedStates, true))
+		{
+			return false;
+		}
+
+		return (DateTime::createFrom($this->getDeadline()))->checkLT(new DateTime());
+	}
+
+	public function isCrm(): bool
+	{
+		return (bool)$this->fillScenario()?->isCrm();
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function isRegular(): bool
+	{
+		return
+			$this->getIsRegular()
+			?? TaskTable::getByPrimary($this->getId(), ['select' => ['ID', 'IS_REGULAR']])->fetchObject()->getIsRegular();
+	}
+
+	public function isCompleted(): bool
+	{
+		return Status::COMPLETED === (int)$this->getStatus();
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function isResultRequired(): bool
+	{
+		return ResultManager::requireResult($this->getId());
+	}
+
+	public function isInGroup(bool $forceFetch = true): bool
+	{
+		$forceFetch && $this->fillGroupId();
+		return $this->getGroupId() !== 0;
+	}
+
+	public function isInGroupStage(): bool
+	{
+		$this->fillStageId();
+		return $this->getStageId() !== 0;
+	}
+
+	public function isNew(): bool
+	{
+		return $this->getId() <= 0;
+	}
+
+	public function isScrum(): bool
+	{
+		if ($this->getGroupId() <= 0)
+		{
+			return false;
+		}
+
+		try
+		{
+			return (bool)Group::getById($this->getGroupId())?->isScrumProject();
+		}
+		catch (SocialnetworkException $exception)
+		{
+			LogFacade::logThrowable($exception);
+			return false;
+		}
+	}
+
+	public function hasDeadlineValue(): bool
+	{
+		return parent::hasDeadline() && !is_null($this->getDeadline());
 	}
 
 	/**
@@ -281,49 +274,51 @@ class TaskObject extends EO_Task
 		return !is_null($checklist);
 	}
 
-	public function getRealStatus(): ?int
+	public function toArray(): array
 	{
-		$params = [
-			'select' => ['STATUS'],
-		];
-		$task = TaskTable::getByPrimary($this->getId(), $params)->fetchObject();
-		return $task ? $task->getStatus(): null;
+		$data = $this->collectValues();
+		foreach ($data as $fieldName => $field)
+		{
+			if (
+				$field instanceof Reference
+				|| $field instanceof OneToMany
+				|| $field instanceof ManyToMany
+				|| $field instanceof ExpressionField
+			)
+			{
+				continue;
+			}
+
+			if ($field instanceof DateTime)
+			{
+				$data[$fieldName] = $field->getTimestamp();
+			}
+
+			if (is_object($data[$fieldName]))
+			{
+				unset($data[$fieldName]);
+			}
+		}
+		return $data;
 	}
 
-	public function isCompleted(): bool
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getChildren(): TaskCollection
 	{
-		return Status::COMPLETED === (int)$this->getStatus();
-	}
+		$query = $this::$dataClass::query();
+		$query
+			->setSelect(['ID', 'PARENT_ID', 'TITLE'])
+			->where('PARENT_ID', $this->getId());
 
-	public function isResultRequired(): bool
-	{
-		return ResultManager::requireResult($this->getId());
+		return $query->exec()->fetchCollection();
 	}
 
 	public function getMemberService(): AbstractMemberService
 	{
 		return new TaskMemberService($this->getId());
-	}
-
-	public function getRegularityStartTime(): ?Main\Type\DateTime
-	{
-		if (!$this->isRegular())
-		{
-			return null;
-		}
-
-		return $this->getRegularFields()?->getStartTime();
-	}
-
-	public function isInGroup(): bool
-	{
-		$this->fillGroupId();
-		return $this->getGroupId() !== 0;
-	}
-
-	public function isInGroupStage(): bool
-	{
-		$this->fillStageId();
-		return $this->getStageId() !== 0;
 	}
 }

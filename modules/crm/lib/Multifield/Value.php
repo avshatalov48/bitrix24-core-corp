@@ -93,29 +93,18 @@ final class Value implements Arrayable, \JsonSerializable
 
 	public function isEqualTo(self $anotherValue): bool
 	{
-		if (
-			$this->typeId !== $anotherValue->typeId
-			|| $this->valueType !== $anotherValue->valueType
-			|| $this->value !== $anotherValue->value
-		)
-		{
-			return false;
-		}
+		/**
+		 * Only props of the Value are compared. ValueExtra is not taken into account, since it contains
+		 * only insignificant supporting data (namely COUNTRY_CODE).
+		 * If this changes in the future and ValueExtra starts contain significant data, please add its comparison here.
+		 * But make sure to handle edge cases (there is a pile of them)
+		 */
 
-		if (!$this->valueExtra && !$anotherValue->valueExtra)
-		{
-			return true;
-		}
-
-		if (
-			$this->valueExtra && !$anotherValue->valueExtra
-			|| !$this->valueExtra && $anotherValue->valueExtra
-		)
-		{
-			return false;
-		}
-
-		return $this->valueExtra->isEqualTo($anotherValue->valueExtra);
+		return (
+			$this->typeId === $anotherValue->typeId
+			&& $this->valueType === $anotherValue->valueType
+			&& $this->value === $anotherValue->value
+		);
 	}
 
 	/**
@@ -129,8 +118,9 @@ final class Value implements Arrayable, \JsonSerializable
 	public function getHash(): string
 	{
 		$valueToHash = clone $this;
-		// id doesn't matter in equality
+		// id and valueExtra doesn't matter in equality
 		$valueToHash->id = null;
+		$valueToHash->valueExtra = null;
 
 		return md5(serialize($valueToHash));
 	}

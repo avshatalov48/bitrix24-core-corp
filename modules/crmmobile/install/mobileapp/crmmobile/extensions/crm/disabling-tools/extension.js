@@ -6,22 +6,17 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 
-	const CONTROLLER_ENDPOINT = 'crmmobile.DisablingTools';
-	const STATIC_ENTITIES_LOADER = 'getSlidersCodesForDisabledStaticEntityIds';
-	const ENTITY_SLIDER_CODE_LOADER = 'getEntitySliderCodeIfDisabled';
-	const CRM_CODE_LOADER = 'getCrmSliderCodeIfDisabled';
+	const STATIC_ENTITIES_LOAD_ACTION = 'crmmobile.DisablingTools.getSlidersCodesForDisabledStaticEntities';
+	const ENTITY_SLIDER_CODE_LOAD_ACTION = 'crmmobile.DisablingTools.getEntitySliderCodeIfDisabled';
 
 	/**
 	 * @class DisablingTools
 	 */
 	class DisablingTools
 	{
-		constructor(options = {})
+		constructor()
 		{
-			this.ttl = options.ttl ?? 86_400_000;
-
-			this.loadCrmSetting();
-			this.loadStaticEntitiesTools();
+			this.ttl = 3600;
 		}
 
 		/**
@@ -31,37 +26,34 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 		 */
 		async getSliderCode(entityTypeId)
 		{
-			await NotifyManager.showLoadingIndicator();
-
-			if (!this.hasCacheType('crm'))
-			{
-				await this.loadCrmSetting();
-			}
-
 			if (!this.hasCacheType(entityTypeId))
 			{
+				await NotifyManager.showLoadingIndicator();
+
 				if (Type.isDynamicTypeById(entityTypeId))
 				{
-					await this.loadDynamicEntityTool(entityTypeId);
+					await this.load(ENTITY_SLIDER_CODE_LOAD_ACTION, { entityTypeId });
 				}
 				else
 				{
-					await this.loadStaticEntitiesTools();
+					await this.load(STATIC_ENTITIES_LOAD_ACTION);
 				}
-			}
-
-			if (!this.isCrmAvailable() && !this.isExternal(entityTypeId))
-			{
-				NotifyManager.hideLoadingIndicatorWithoutFallback();
-
-				return this.extractSliderCode('crm');
 			}
 
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
 
+			if (!this.isCrmAvailable() && !this.isExternal(entityTypeId))
+			{
+				return this.extractSliderCode('crm');
+			}
+
 			return this.extractSliderCode(entityTypeId);
 		}
 
+		/**
+		 * @private
+		 * @returns {boolean}
+		 */
 		isCrmAvailable()
 		{
 			return this.extractSliderCode('crm') === null;
@@ -100,12 +92,17 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 
 			if (Type.isDynamicTypeById(type))
 			{
-				return cacheData[type]?.code;
+				return cacheData[type] ? cacheData[type].code : null;
 			}
 
 			return cacheData[type];
 		}
 
+		/**
+		 * @private
+		 * @param type
+		 * @returns {boolean}
+		 */
 		isExternal(type)
 		{
 			if (!Type.isDynamicTypeById(type))
@@ -113,7 +110,7 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 				return false;
 			}
 
-			return this.getDynamicEntityCacheData(type)[type]?.isExternal;
+			return this.getCache(ENTITY_SLIDER_CODE_LOAD_ACTION, { entityTypeId: type })[type]?.isExternal;
 		}
 
 		/**
@@ -123,73 +120,12 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 		 */
 		getCacheDataByType(type)
 		{
-			if (type === 'crm')
-			{
-				return this.getCrmCacheData();
-			}
-
 			if (Type.isDynamicTypeById(type))
 			{
-				return this.getDynamicEntityCacheData(type);
+				return this.getCache(ENTITY_SLIDER_CODE_LOAD_ACTION, { entityTypeId: type });
 			}
 
-			return this.getStaticEntitiesCacheData();
-		}
-
-		/**
-		 * @private
-		 * @returns {Promise<void>}
-		 */
-		async loadCrmSetting()
-		{
-			await this.load(`${CONTROLLER_ENDPOINT}.${CRM_CODE_LOADER}`);
-		}
-
-		/**
-		 * @private
-		 * @returns {Object|null}
-		 */
-		getCrmCacheData()
-		{
-			return this.getCache(`${CONTROLLER_ENDPOINT}.${CRM_CODE_LOADER}`);
-		}
-
-		/**
-		 * @private
-		 * @returns {Promise<void>}
-		 */
-		async loadStaticEntitiesTools()
-		{
-			await this.load(`${CONTROLLER_ENDPOINT}.${STATIC_ENTITIES_LOADER}`);
-		}
-
-		/**
-		 * @private
-		 * @returns {Object|null}
-		 */
-		getStaticEntitiesCacheData()
-		{
-			return this.getCache(`${CONTROLLER_ENDPOINT}.${STATIC_ENTITIES_LOADER}`);
-		}
-
-		/**
-		 * @private
-		 * @param entityTypeId
-		 * @returns {Promise<void>}
-		 */
-		async loadDynamicEntityTool(entityTypeId)
-		{
-			await this.load(`${CONTROLLER_ENDPOINT}.${ENTITY_SLIDER_CODE_LOADER}`, { entityTypeId });
-		}
-
-		/**
-		 * @private
-		 * @param entityTypeId
-		 * @returns {Object|null}
-		 */
-		getDynamicEntityCacheData(entityTypeId)
-		{
-			return this.getCache(`${CONTROLLER_ENDPOINT}.${ENTITY_SLIDER_CODE_LOADER}`, { entityTypeId });
+			return this.getCache(STATIC_ENTITIES_LOAD_ACTION);
 		}
 
 		/**

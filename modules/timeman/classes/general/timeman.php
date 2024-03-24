@@ -790,8 +790,8 @@ class CTimeMan
 							$bCheckExistance
 							&& (
 								!($arUser = CUser::getList('ID', 'ASC',
-									['ID'=> $arCurDpt['UF_HEAD']], ['FIELDS' => ['ACTIVE']])->fetch())
-								|| $arUser['ACTIVE'] == 'N'
+									['ID'=> $arCurDpt['UF_HEAD']], ['FIELDS' => ['ID', 'ACTIVE']])->fetch())
+								|| $arUser['ACTIVE'] === 'N'
 							)
 						)
 					)

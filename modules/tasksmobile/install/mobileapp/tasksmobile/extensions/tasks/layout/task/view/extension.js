@@ -1701,6 +1701,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					checkListTree: this.checkListTree,
 					taskId: this.task.id,
 					taskGuid: this.task.guid,
+					taskTitle: this.task.title,
 					userId: this.userId,
 					diskConfig: {
 						folderId: this.diskFolderId,

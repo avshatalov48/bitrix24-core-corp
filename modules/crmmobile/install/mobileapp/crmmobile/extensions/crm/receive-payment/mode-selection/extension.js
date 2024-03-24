@@ -166,7 +166,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 				onClickCallback: this.onActionClick.bind(this, 'payment_delivery'),
 				onDisableClick: this.onDisableClick.bind(
 					this,
-					Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PAYMENT_DELIVERY_MODE')
+					Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PAYMENT_DELIVERY_MODE'),
 				),
 			});
 
@@ -193,7 +193,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 				scenario: action,
 			});
 
-			if (!this.isTerminalToolEnabled)
+			if (action === 'terminal_payment' && !this.isTerminalToolEnabled)
 			{
 				InfoHelper.openByCode('limit_crm_terminal_off');
 
@@ -336,10 +336,12 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 
 		emitRecentItemsAction()
 		{
-			const eventArgs = [{
-				actionId: 'receive-payment',
-				tabId: 'timeline',
-			}];
+			const eventArgs = [
+				{
+					actionId: 'receive-payment',
+					tabId: 'timeline',
+				},
+			];
 
 			this.customEventEmitter.emit('DetailCard.FloatingMenu.Item::onSaveInRecent', eventArgs);
 		}

@@ -15,6 +15,8 @@ class PrepareCounters
 
 	private Builder $builder;
 
+	private const BINDINGS_LIMIT = 10000;
+
 	public function __construct(int $entityTypeId, array $entityIds, array $deadlines = [])
 	{
 		$this->queryActivity = QueryEntityActivityCounter::getInstance();
@@ -34,17 +36,21 @@ class PrepareCounters
 			return CounterInfo::createEmpty();
 		}
 
+		$activityBindings = $this->getActivityBindings();
+		if ($activityBindings === null)
+		{
+			return CounterInfo::createEmpty()->setLimitIsExceeded();
+		}
+
 		$this->prepareActivities();
 
 		$this->prepareDeadlines();
 		$this->prepareIncomings();
 
-		$this->prepareActivitiesCounters();
+		$this->prepareActivitiesCounters($activityBindings);
 		$this->preparePseudoActivitiesCounters();
 
-
 		return $this->builder->toCounterInfo();
-
 	}
 
 	private function prepareActivities(): void
@@ -133,9 +139,9 @@ class PrepareCounters
 		}
 	}
 
-	private function prepareActivitiesCounters(): void
+	private function prepareActivitiesCounters(array $activityBindings): void
 	{
-		$multiBindings = $this->getMultiBindings();
+		$multiBindings = $this->getMultiBindings($activityBindings);
 
 		$activities = [];
 		// removing duplicate "activities" and left only valuable fields before prepare counters
@@ -220,9 +226,20 @@ class PrepareCounters
 		}
 	}
 
-	private function getMultiBindings(): array
+	private function getActivityBindings(): ?array
 	{
-		$activityBindings = $this->queryActivity->queryBindings($this->entityTypeId, $this->entityIds);
+		$activityBindings = $this->queryActivity->queryBindings($this->entityTypeId, $this->entityIds, self::BINDINGS_LIMIT);
+
+		if (count($activityBindings) >= self::BINDINGS_LIMIT)
+		{
+			return null;
+		}
+
+		return $activityBindings;
+	}
+
+	private function getMultiBindings(array $activityBindings): array
+	{
 		$bindings = [];
 		foreach ($activityBindings as $activityBinding)
 		{
@@ -235,6 +252,7 @@ class PrepareCounters
 
 			$bindings[$activityId][$ownerId] = $ownerId;
 		}
+
 		return $bindings;
 	}
 

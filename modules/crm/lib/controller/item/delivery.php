@@ -9,6 +9,8 @@ use Bitrix\Sale;
 
 final class Delivery extends Crm\Controller\Base
 {
+	private bool $previousSynchronizationStatus = true;
+
 	/**
 	 * @param int $entityId
 	 * @param int $entityTypeId
@@ -37,13 +39,15 @@ final class Delivery extends Crm\Controller\Base
 		$preparedFilter = $this->prepareFilterFields($filter);
 		$preparedOrder = $this->prepareOrderFields($order);
 
-		return $repository->getDeliveryDocumentsForEntityByFilter(
+		$result = $repository->getDeliveryDocumentsForEntityByFilter(
 			$entityId,
 			$entityTypeId,
 			$preparedFilter,
 			$preparedSelect,
 			$preparedOrder
 		);
+
+		return $this->convertKeysToCamelCase($result);
 	}
 
 	/**
@@ -64,13 +68,15 @@ final class Delivery extends Crm\Controller\Base
 
 		$fields = $this->getFieldsOnSelect();
 
-		return array_filter(
+		$filteredFields = array_filter(
 			$shipmentItem,
 			static function ($key) use ($fields){
 				return in_array($key, $fields, true);
 			},
 			ARRAY_FILTER_USE_KEY
 		);
+
+		return $this->convertKeysToCamelCase($filteredFields);
 	}
 
 	private function hasPermissionForShipment(Sale\Shipment $shipment) : bool
@@ -118,5 +124,33 @@ final class Delivery extends Crm\Controller\Base
 	protected function getRequiredModules() : array
 	{
 		return ['sale'];
+	}
+
+	protected function processBeforeAction(Main\Engine\Action $action)
+	{
+		$result = parent::processBeforeAction($action);
+
+		$this->disableEntitySynchronization();
+
+		return $result;
+	}
+
+	protected function processAfterAction(Main\Engine\Action $action, $result)
+	{
+		parent::processAfterAction($action, $result);
+
+		$this->enableEntitySynchronization();
+	}
+
+	private function enableEntitySynchronization() : void
+	{
+		Crm\Order\Configuration::setEnabledEntitySynchronization($this->previousSynchronizationStatus);
+	}
+
+	private function disableEntitySynchronization() : void
+	{
+		$this->previousSynchronizationStatus = Crm\Order\Configuration::isEnabledEntitySynchronization();
+
+		Crm\Order\Configuration::setEnabledEntitySynchronization(false);
 	}
 }

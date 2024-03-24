@@ -8,6 +8,7 @@ export default class Task extends Item
 			{
 				'ownerType': BX.CrmEntityType.resolveName(this.getEntityTypeId()),
 				'ownerID': this.getEntityId(),
+				'fromTimeline': true,
 			}
 		);
 	}

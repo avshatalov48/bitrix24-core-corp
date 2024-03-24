@@ -24,6 +24,7 @@ this.BX = this.BX || {};
 	          showMarketIcon: 'Y',
 	          skeleton: '',
 	          marketSlider: '',
+	          marketAction: '',
 	          mainUri: '',
 	          siteTemplateUri: '',
 	          currentUri: '',
@@ -80,6 +81,7 @@ this.BX = this.BX || {};
 	        this.totalApps = this.result.TOTAL_APPS;
 	        this.showMarketIcon = this.result.SHOW_MARKET_ICON;
 	        this.marketSlider = this.result.MARKET_SLIDER;
+	        this.marketAction = this.result.ADDITIONAL_MARKET_ACTION;
 	        if (this.params.CREATE_URI_SITE_TEMPLATE && this.params.CREATE_URI_SITE_TEMPLATE.length > 0) {
 	          this.siteTemplateUri = this.params.CREATE_URI_SITE_TEMPLATE;
 	        }
@@ -223,6 +225,7 @@ this.BX = this.BX || {};
 					<Toolbar
 						:categories="categories"
 						:menuInfo="result.MENU_INFO"
+						:marketAction="marketAction"
 						v-if="!hideToolbar"
 					/>
 					<Main

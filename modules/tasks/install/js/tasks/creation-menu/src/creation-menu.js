@@ -1,3 +1,4 @@
+import { Uri } from 'main.core';
 import { Menu, MenuItem, MenuManager } from 'main.popup';
 import { Delimiter } from './items/delimiter';
 import { Task } from './items/task';
@@ -53,9 +54,17 @@ export class CreationMenu
 
 	getCreationItems(): MenuItem[]
 	{
+		const createLink = Uri.addParam(
+			this.createTaskLink,
+			{
+				ta_sec: 'space',
+				ta_el: 'create_button',
+			},
+		);
+
 		return [
-			Task.create(this.createTaskLink),
-			TaskByTemplate.create(this.createTaskLink),
+			Task.create(createLink),
+			TaskByTemplate.create(createLink),
 			Delimiter.create(),
 			TemplateList.create(this.templatesListLink),
 		];

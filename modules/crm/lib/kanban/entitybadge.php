@@ -6,6 +6,7 @@ use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\Crm;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use CCrmOwnerType;

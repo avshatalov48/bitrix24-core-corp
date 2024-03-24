@@ -406,15 +406,9 @@ IntranetInvite.event.onShareLink = function(params) {
 };
 
 IntranetInvite.event.onHelpInvite = function(params) {
-	if (Application.getApiVersion() >= 35)
-	{
-		Application.openHelpArticle('mh_invite_user', 'invite_user');
-	}
+	Application.openHelpArticle('mh_invite_user', 'invite_user');
 };
 
 IntranetInvite.event.onHelpLink = function(params) {
-	if (Application.getApiVersion() >= 35)
-	{
-		Application.openHelpArticle('mh_invite_user', 'copy_link');
-	}
+	Application.openHelpArticle('mh_invite_user', 'copy_link');
 };

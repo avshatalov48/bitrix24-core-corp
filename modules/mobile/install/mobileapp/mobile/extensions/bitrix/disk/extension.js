@@ -157,8 +157,7 @@ include('InAppNotifier');
 							}
 							else if (item.params.type === 'folder')
 							{
-								const opener = Application.getApiVersion() >= 41 ? this.list : PageManager;
-								opener.openWidget(
+								this.list.openWidget(
 									'list',
 									{
 										useSearch: true,

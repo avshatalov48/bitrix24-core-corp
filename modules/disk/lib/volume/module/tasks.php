@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Main\DB;
 use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
@@ -30,7 +31,9 @@ class Tasks extends Volume\Module\Module
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
-		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
+		$sqlHelper = $connection->getSqlHelper();
+
+		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
 		// Scan User fields specific to module
@@ -50,8 +53,14 @@ class Tasks extends Volume\Module\Module
 				{
 					$attachedEntitySql .= ', ';
 				}
-				$attachedEntitySql .= "'".$connection->getSqlHelper()->forSql($attachedEntity)."'";
+				$attachedEntitySql .= "'".$sqlHelper->forSql($attachedEntity)."'";
 			}
+		}
+
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
 		}
 
 		// Forum comments attachments
@@ -60,6 +69,7 @@ class Tasks extends Volume\Module\Module
 		{
 			$forumMetaData = \CSocNetLogTools::getForumCommentMetaData('tasks');
 			$eventTypeXML = $forumMetaData[0];
+			$entityType = $sqlHelper->forSql(Disk\Uf\ForumMessageConnector::className());
 
 			$attachedForumCommentsSql = "
 				UNION
@@ -85,11 +95,11 @@ class Tasks extends Volume\Module\Module
 								INNER JOIN b_forum_message message 
 									ON message.ID = attached.ENTITY_ID
 							WHERE
-								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(Disk\Uf\ForumMessageConnector::className()). "'
+								attached.ENTITY_TYPE = '{$entityType}'
 								AND substring_index(message.XML_ID,'_', 1) = '{$eventTypeXML}'
 							GROUP BY 
 								attached.OBJECT_ID
-							ORDER BY NULL
+							{$prefSql}
 						) attach_connect
 							ON attach_connect.OBJECT_ID = files.ID
 				)
@@ -100,12 +110,12 @@ class Tasks extends Volume\Module\Module
 			SELECT 
 				'{$indicatorType}' as INDICATOR_TYPE,
 				{$ownerId} as OWNER_ID,
-				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
-				SUM(src.FILE_SIZE) as FILE_SIZE,
-				SUM(src.FILE_COUNT) as FILE_COUNT,
-				SUM(src.DISK_SIZE) as DISK_SIZE,
-				SUM(src.DISK_COUNT) as DISK_COUNT,
-				SUM(src.VERSION_COUNT) as VERSION_COUNT
+				". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
+				COALESCE(SUM(src.FILE_SIZE), 0) as FILE_SIZE,
+				COALESCE(SUM(src.FILE_COUNT), 0) as FILE_COUNT,
+				COALESCE(SUM(src.DISK_SIZE), 0) as DISK_SIZE,
+				COALESCE(SUM(src.DISK_COUNT), 0) as DISK_COUNT,
+				COALESCE(SUM(src.VERSION_COUNT), 0) as VERSION_COUNT
 			FROM 
 			(
 				(
@@ -157,7 +167,7 @@ class Tasks extends Volume\Module\Module
 								attached.ENTITY_TYPE IN($attachedEntitySql)
 							GROUP BY 
 								attached.OBJECT_ID
-							ORDER BY NULL
+							{$prefSql}
 						) attach_connect
 							ON attach_connect.OBJECT_ID = files.ID
 				)
@@ -180,7 +190,7 @@ class Tasks extends Volume\Module\Module
 			$this->getSelect()
 		);
 
-		$tableName = VolumeTable::getTableName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

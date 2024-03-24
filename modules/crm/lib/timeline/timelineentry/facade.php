@@ -14,6 +14,7 @@ use Bitrix\Crm\Timeline\MarkEntry;
 use Bitrix\Crm\Timeline\ModificationEntry;
 use Bitrix\Crm\Timeline\RestorationEntry;
 use Bitrix\Crm\Timeline\SignDocument;
+use Bitrix\Crm\Timeline\SignB2eDocument;
 use Bitrix\Crm\Timeline\Tasks;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\UnlinkEntry;
@@ -36,6 +37,10 @@ class Facade
 	public const CALENDAR_SHARING = CalendarSharing\Entry::class;
 	public const TASK = Tasks\Entry::class;
 	public const AI_CALL_PROCESSING = AI\Call\Entry::class;
+
+	public const SIGN_B2E_DOCUMENT = SignB2eDocument\Entry::class;
+
+	public const SIGN_B2E_DOCUMENT_LOG = SignB2eDocument\LogEntry::class;
 
 	/** @var TimelineEntry */
 	protected $timelineEntryClass = TimelineEntry::class;

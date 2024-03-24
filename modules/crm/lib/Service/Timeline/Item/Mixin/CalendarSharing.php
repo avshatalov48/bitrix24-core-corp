@@ -216,7 +216,7 @@ trait CalendarSharing
 						'from' => 540,
 						'to' => 1080,
 						'weekdays' => [1, 2, 3, 4, 5],
-						'weekdaysTitle' => $this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_WORKDAYS'),
+						'weekdaysTitle' => $this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_WORKDAYS_MSGVER_1'),
 					],
 				],
 				'slotSize' => 60,

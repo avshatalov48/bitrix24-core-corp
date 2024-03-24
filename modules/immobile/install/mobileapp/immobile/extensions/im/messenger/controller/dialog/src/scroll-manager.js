@@ -5,7 +5,9 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { EventType, AppStatus } = require('im/messenger/const');
 	const { core } = require('im/messenger/core');
-	const { AfterScrollMessagePosition} = require('im/messenger/view/dialog');
+	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
+
+	const BOTTOM_MESSAGE_INDEX = 0;
 
 	/**
 	 * @class ScrollManager
@@ -22,11 +24,14 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 			this.dialogId = dialogId;
 			this.visibilityManager = VisibilityManager.getInstance();
 			this.store = core.getStore();
+			this.needScrollToFirstUnread = false;
 
 			this.isScrollToBottomEnable = true;
 			this.scrollToBottomHandler = this.onScrollToBottom.bind(this);
 			this.scrollToFirstUnreadHandler = this.onScrollToFirstUnread.bind(this);
 			this.disableScrollToBottomHandler = this.disableScrollToBottom.bind(this);
+			this.appPausedHandler = this.onAppPaused.bind(this);
+			this.scrollBeginHandler = this.onScrollBegin.bind(this);
 		}
 
 		setChatId(chatId)
@@ -39,6 +44,9 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 			BX.addCustomEvent(EventType.dialog.external.scrollToBottom, this.scrollToBottomHandler);
 			BX.addCustomEvent(EventType.dialog.external.scrollToFirstUnread, this.scrollToFirstUnreadHandler);
 			BX.addCustomEvent(EventType.dialog.external.disableScrollToBottom, this.disableScrollToBottomHandler);
+			BX.addCustomEvent(EventType.app.paused, this.appPausedHandler);
+
+			this.view.on(EventType.dialog.scrollBegin, this.scrollBeginHandler);
 		}
 
 		unsubscribeEvents()
@@ -46,6 +54,9 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 			BX.removeCustomEvent(EventType.dialog.external.scrollToBottom, this.scrollToBottomHandler);
 			BX.removeCustomEvent(EventType.dialog.external.scrollToFirstUnread, this.scrollToFirstUnreadHandler);
 			BX.removeCustomEvent(EventType.dialog.external.disableScrollToBottom, this.disableScrollToBottomHandler);
+			BX.removeCustomEvent(EventType.app.paused, this.appPausedHandler);
+
+			this.view.off(EventType.dialog.scrollBegin, this.scrollBeginHandler);
 		}
 
 		/**
@@ -56,7 +67,6 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 		{
 			const {
 				dialogId,
-				messageId = null,
 				withAnimation = true,
 				force = false,
 				prevMessageId = null,
@@ -107,6 +117,11 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 
 		async onScrollToFirstUnread()
 		{
+			if (!this.needScrollToFirstUnread)
+			{
+				return;
+			}
+
 			const isDialogOnScreen = await this.isDialogOnScreen(this.dialogId);
 			if (!isDialogOnScreen)
 			{
@@ -116,15 +131,18 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
 			const firstUnreadId = this.store.getters['messagesModel/getFirstUnreadId'](dialogModel.chatId);
 
-			const messageIdToScroll = firstUnreadId ?? dialogModel.lastReadId;
+			if (!firstUnreadId)
+			{
+				return;
+			}
 
 			this.view.disableShowScrollButton();
 			this.view.scrollToMessageById(
-				messageIdToScroll,
+				firstUnreadId,
 				true,
 				() => {
 					setTimeout(() => {
-						if (messageIdToScroll !== dialogModel.lastMessageId)
+						if (firstUnreadId !== dialogModel.lastMessageId)
 						{
 							this.view.showScrollToNewMessagesButton();
 						}
@@ -176,6 +194,21 @@ jn.define('im/messenger/controller/dialog/scroll-manager', (require, exports, mo
 			});
 
 			return Boolean(lastReadMessage);
+		}
+
+		onAppPaused()
+		{
+			const { indexList } = this.view.getCompletelyVisibleMessages();
+
+			this.needScrollToFirstUnread = indexList.includes(BOTTOM_MESSAGE_INDEX);
+		}
+
+		onScrollBegin()
+		{
+			if (this.needScrollToFirstUnread)
+			{
+				this.needScrollToFirstUnread = false;
+			}
 		}
 	}
 

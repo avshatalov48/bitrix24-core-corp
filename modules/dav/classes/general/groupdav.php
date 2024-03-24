@@ -78,8 +78,10 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 
 		$requestDocument = $this->request->GetXmlDocument();
 
-		if ($this->request->getAgent() == 'lightning' && empty($arRequestPath['path']))
+		if ($this->request->getAgent() === 'lightning' && empty($arRequestPath['path']))
+		{
 			return false;
+		}
 
 		$application = $arRequestPath["application"];
 		if (!$application)		// If it's the user root folder (it contains applications)
@@ -103,14 +105,16 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 			foreach ($this->arApplications as $app)
 			{
 				if (($handler = $this->GetApplicationHandler($app)) && method_exists($handler, 'GetCollectionProperties'))
+				{
 					$handler->GetCollectionProperties($resource, $arRequestPath["site"], $arRequestPath["account"], null, $arRequestPath["path"], 0);
+				}
 			}
 
 			$arResources[] = $resource;
 
 			if ($this->request->GetDepth())
 			{
-				if (mb_strlen($accountPrefixPath) == 1)
+				if (mb_strlen($accountPrefixPath) === 1)
 				{
 					$resource = new CDavResource('/principals/');
 					$resource->AddProperty('displayname', GetMessage("DAV_PRINCIPALS"));
@@ -122,9 +126,13 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 				foreach ($this->arApplications as $app)
 				{
 					if (($handler = $this->GetApplicationHandler($app)) && method_exists($handler, 'GetHomeCollectionUrl'))
+					{
 						$resourcePath = $handler->GetHomeCollectionUrl($arRequestPath["site"], $arRequestPath["account"], $arRequestPath["path"]);
+					}
 					else
-						$resourcePath = $accountPrefixPath.$app;
+					{
+						$resourcePath = $accountPrefixPath . $app;
+					}
 
 					$resource = new CDavResource($resourcePath);
 
@@ -158,7 +166,7 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 
 		if ($handler = $this->GetApplicationHandler($application))
 		{
-			if ($application != "principals" && $method != 'REPORT' && $arRequestPath["id"] == null)
+			if ($application !== "principals" && $method !== 'REPORT' && $arRequestPath["id"] == null)
 			{
 				$resource = new CDavResource($this->request->GetPath());
 
@@ -177,14 +185,16 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 						$arRequestPath["account"],
 						$application,
 						$arRequestPath["path"],
-						($application == 'addressbook' && $this->request->GetAgent() == 'kde') ? BX_GW_SKIP_EXTRA_TYPES : 0
+						($application === 'addressbook' && $this->request->GetAgent() === 'kde' && defined('BX_GW_SKIP_EXTRA_TYPES')) ? BX_GW_SKIP_EXTRA_TYPES : 0
 					);
 				}
 
 				$arResources[] = $resource;
 
-				if ($this->request->GetDepth() == 0)
+				if ((int)$this->request->GetDepth() === 0)
+				{
 					return true;
+				}
 			}
 
 			return $handler->Propfind($arResources, $arRequestPath["site"], $arRequestPath["account"], $arRequestPath["path"], $arRequestPath["id"]);
@@ -229,7 +239,9 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 
 			$retVal = $this->PROPFIND($arResources);
 			if ($retVal !== true)
+			{
 				return $retVal;
+			}
 
 			$response->TurnOnHtmlOutput();
 
@@ -268,13 +280,16 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 
 				$props = $this->ConvertPropertiesToArray($arResourceProps);
 
-				$class = ($class == 'row1' ? 'row2' : 'row1');
+				$class = ($class === 'row1' ? 'row2' : 'row1');
 
-				if (mb_substr($resource->GetPath(), -1) == '/')
+				if (mb_substr($resource->GetPath(), -1) === '/')
+				{
 					$name = basename(mb_substr($resource->GetPath(), 0, -1)).'/';
+				}
 				else
+				{
 					$name = basename($resource->GetPath());
-
+				}
 				$response->AddLine("\t<tr class='$class'>\n\t\t<td>%s</td>\n\t\t<td><a href=\"%s\">%s</td>", $n, htmlspecialcharsbx('/bitrix/groupdav.php'.$resource->GetPath()), htmlspecialcharsbx($name));
 				$response->AddLine("\t\t<td>%s</td>", $props['DAV:getcontentlength']);
 				$response->AddLine("\t\t<td>%s</td>", (!empty($props['DAV:getlastmodified']) ? date('Y-m-d H:i:s', $props['DAV:getlastmodified']) : ''));
@@ -284,15 +299,19 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 			}
 
 			if (!$n)
+			{
 				$response->AddLine("<p>Collection empty.</p>");
+			}
 			else
+			{
 				$response->AddLine("</table>");
+			}
 
 			$response->AddLine("<h3>Properties</h3>");
 			$response->AddLine("<table>\n\t<tr class='th'><th>Namespace</th><th>Name</th><th>Value</th></tr>");
 			foreach ($collectionProps as $name => $value)
 			{
-				$class = ($class == 'row1' ? 'row2' : 'row1');
+				$class = ($class === 'row1' ? 'row2' : 'row1');
 				$ns = explode(':', $name);
 				$name = array_pop($ns);
 				$ns = implode(':', $ns);
@@ -306,7 +325,9 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 		}
 
 		if ($handler = $this->GetApplicationHandler($arRequestPath["application"]))
+		{
 			return $handler->Get($arResult, $arRequestPath["id"], $arRequestPath["site"], $arRequestPath["account"], $arRequestPath["path"]);
+		}
 
 		return '501 Not Implemented';
 	}
@@ -319,7 +340,9 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 			$response = $this->response;
 
 			if (isset($value[0]['ns']))
+			{
 				$value = CDavResource::EncodeHierarchicalProp($value, null, $xmlnsDefs = null, $xmlnsHash = null, $response, $request);
+			}
 
 			$value = htmlspecialcharsbx(CDav::ToString($value));
 		}
@@ -377,14 +400,18 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 	{
 		$arRequestPath = self::ParsePath($this->request->GetPath());
 		if (!$arRequestPath["id"] || !$arRequestPath["account"] || !in_array($arRequestPath["application"], array('addressbook', 'calendar', 'infolog')))
+		{
 			return '404 Not Found';
+		}
 
 		if ($handler = $this->GetApplicationHandler($arRequestPath["application"]))
 		{
 			$status = $handler->Put($arRequestPath["id"], $arRequestPath["site"], $arRequestPath["account"], $arRequestPath["path"]);
 
 			if (is_bool($status))
+			{
 				$status = $status ? '204 No Content' : '400 Bad Request';
+			}
 
 			return $status;
 		}
@@ -396,14 +423,18 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 	{
 		$arRequestPath = self::ParsePath($this->request->GetPath());
 		if (!$arRequestPath["id"] || !$arRequestPath["account"] || !in_array($arRequestPath["application"], array('addressbook', 'calendar', 'infolog', 'principals')))
+		{
 			return '404 Not Found';
+		}
 
 		if ($handler = $this->GetApplicationHandler($arRequestPath["application"]))
 		{
 			$status = $handler->Delete($arRequestPath["id"], $arRequestPath["site"], $arRequestPath["account"], $arRequestPath["path"]);
 
 			if (is_bool($status))
+			{
 				$status = $status ? '204 No Content' : '400 Something went wrong';
+			}
 
 			return $status;
 		}
@@ -539,7 +570,9 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 		{
 			$dbSite = CSite::GetList('', '', array("LID" => $part, "ACTIVE" => "Y"));
 			if (!($arSite = $dbSite->Fetch()))
+			{
 				$arSite = null;
+			}
 		}
 		catch (Exception $e)
 		{
@@ -561,7 +594,9 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 		{
 			$arAccount = CDavAccount::GetAccountByName($part);
 			if (!$arAccount)
+			{
 				$arAccount = CDavAccount::GetAccountByName(urldecode($part));
+			}
 		}
 		catch (Exception $e)
 		{
@@ -586,9 +621,13 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 		{
 			$part = array_shift($arParts);
 			if (count($arParts) > 0 || (strcasecmp(".ics", mb_substr($part, -4)) && strcasecmp(".vcf", mb_substr($part, -4))))
+			{
 				$arPath[] = $part;
+			}
 			else
+			{
 				$id = mb_substr($part, 0, -4);
+			}
 		}
 
 		return array(

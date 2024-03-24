@@ -108,11 +108,13 @@ final class Preset extends Stepper
 		$counter = $maxSort + 1;
 		$rolePresets = Filter::getRolePresets();
 
-		return array_map(static function (array &$item) use (&$counter): array {
+		foreach ($rolePresets as &$item)
+		{
 			$item['sort'] = $counter;
 			$counter++;
-			return $item;
-		}, $rolePresets);
+		}
+
+		return $rolePresets;
 	}
 
 	private function setLastId(int $id = 0): self

@@ -185,6 +185,7 @@ class CounterService
 				'TYPE' => $event->getType(),
 				'DATA' => Main\Web\Json::encode($event->getData()),
 				'TASK_DATA' => $taskData ? Main\Web\Json::encode($taskData->toArray()) : null,
+				'PROCESSED' => Main\Type\DateTime::createFromTimestamp(0),
 			]);
 		}
 		catch (\Exception $e)

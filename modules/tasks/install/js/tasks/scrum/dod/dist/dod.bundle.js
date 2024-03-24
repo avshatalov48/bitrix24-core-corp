@@ -425,7 +425,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          entities: [{
 	            id: 'user',
 	            options: {
-	              inviteEmployeeLink: false
+	              inviteEmployeeLink: false,
+	              analyticsSource: 'task'
 	            }
 	          }, {
 	            id: 'project-roles',

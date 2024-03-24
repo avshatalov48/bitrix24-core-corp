@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,main_core_events,main_popup,main_loader,ui_buttons,crm_field_listEditor) {
@@ -19,6 +20,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  constructor(options = {}) {
 	    super();
 	    this.cache = new main_core.Cache.MemoryCache();
+	    this.endpoint = 'crm.api.fieldset.load';
 	    this.setEventNamespace('BX.Crm.Requisite.FieldsetViewer');
 	    this.subscribeFromOptions((options == null ? void 0 : options.events) || {});
 	    this.setOptions(options);
@@ -26,6 +28,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  setData(data) {
 	    this.cache.set('data', data);
+	  }
+	  setEndpoint(endpoint) {
+	    this.endpoint = endpoint;
+	    return this;
 	  }
 	  getData() {
 	    return this.cache.get('data', {});
@@ -39,7 +45,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        fieldListEditorOptions
 	      } = this.getOptions();
 	      const presetId = (_fieldListEditorOptio = fieldListEditorOptions == null ? void 0 : (_fieldListEditorOptio2 = fieldListEditorOptions.fieldsPanelOptions) == null ? void 0 : _fieldListEditorOptio2.presetId) != null ? _fieldListEditorOptio : null;
-	      BX.ajax.runAction('crm.api.fieldset.load', {
+	      BX.ajax.runAction(this.endpoint, {
 	        json: {
 	          entityTypeId,
 	          entityId,

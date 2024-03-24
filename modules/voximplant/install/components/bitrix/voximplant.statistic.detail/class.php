@@ -127,7 +127,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			),
 			'PORTAL_NUMBER' => array(
 				"id" => "PORTAL_NUMBER",
-				"name" => Loc::getMessage("TELEPHONY_HEADER_PORTAL_PHONE"),
+				"name" => Loc::getMessage("TELEPHONY_HEADER_PORTAL_PHONE_MSGVER_1"),
 				"type" => "list",
 				"items" => array_map(
 					function($line){return $line["SHORT_NAME"];},

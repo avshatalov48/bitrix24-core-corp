@@ -7,15 +7,22 @@ use Bitrix\Main\Engine\CurrentUser;
 
 class User extends Base
 {
+	protected int $id;
 	protected string $title;
 	protected string $detailUrl;
 	protected ?string $imageUrl;
 
-	public function __construct(string $title, string $detailUrl, ?string $imageUrl = null)
+	public function __construct(int $id, string $title, string $detailUrl, ?string $imageUrl = null)
 	{
+		$this->id = $id;
 		$this->title = $title;
 		$this->detailUrl = $detailUrl;
 		$this->imageUrl = $imageUrl;
+	}
+
+	public function getId(): int
+	{
+		return $this->id;
 	}
 
 	public function getTitle(): string
@@ -54,6 +61,7 @@ class User extends Base
 		}
 
 		return new self(
+			(int)$user['ID'],
 			$user['FORMATTED_NAME'] ?? '',
 			$user['SHOW_URL'] ?? '',
 			$user['PHOTO_URL'] ?? '',
@@ -63,6 +71,7 @@ class User extends Base
 	public static function createFromArray(array $user): self
 	{
 		return new self(
+			(int)$user['ID'],
 			$user['FORMATTED_NAME'] ?? '',
 			$user['SHOW_URL'] ?? '',
 			$user['PHOTO_URL'] ?? '',

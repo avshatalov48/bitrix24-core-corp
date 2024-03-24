@@ -28,6 +28,7 @@ Extension::load([
 	'ui.short-view',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'ui.analytics',
 ]);
 
 Extension::load('date');

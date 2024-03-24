@@ -57,14 +57,6 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 			return;
 		}
 
-		if (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
-		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_CONTROLLER');
-			$this->includeComponentTemplate($template);
-
-			return;
-		}
-
 		if (
 			!Loader::includeModule('bitrix24')
 			|| !\Bitrix\Bitrix24\Feature::isFeatureEnabled('bi_constructor')

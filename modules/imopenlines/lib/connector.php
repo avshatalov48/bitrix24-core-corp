@@ -208,15 +208,27 @@ class Connector
 						$userViewChat = false;
 						$addVoteResult = false;
 
+						if (isset($params['message']['extraData']['SOURCE_SESSION_ID']))
+						{
+							$sourceSession = ImOpenLines\Model\SessionTable::getRow([
+								'select' => ['USER_LANG'],
+								'filter' => [
+									'=ID' => (int)$params['message']['extraData']['SOURCE_SESSION_ID']
+								],
+							]);
+
+							$sourceLang = $sourceSession['USER_LANG'];
+						}
+
 						$session = new Session();
 						$resultLoadSession = $session->load([
 							'USER_CODE' => self::getUserCode($params['connector']),
 							'CRM_SKIP_PHONE_VALIDATE' => ($params['extra']['skip_phone_validate'] ?? ''),
-							//TODO: ??
 							'CONNECTOR' => $params,
 							'DEFERRED_JOIN' => 'Y',
 							'VOTE_SESSION' => $voteSession? 'Y': 'N',
 							'OPERATOR_ID' => $params['message']['params']['IMOL_FORCE_OPERATOR'] ?? 0,
+							'USER_LANG' => $sourceLang ?? '',
 						]);
 						if (
 							$resultLoadSession ||
@@ -695,7 +707,11 @@ class Connector
 							&& $session->isCloseVote()
 						)
 						{
-							ImOpenLines\Im::addCloseVoteMessage($session->getData('CHAT_ID'), $session->getConfig('VOTE_TIME_LIMIT'));
+							ImOpenLines\Im::addCloseVoteMessage(
+								$session->getData('CHAT_ID'),
+								$session->getConfig('VOTE_TIME_LIMIT'),
+								$session->getData('USER_LANG')
+							);
 						}
 					}
 
@@ -1476,6 +1492,16 @@ class Connector
 						'CHAT_ENTITY_ID' => $messageFields['CHAT_ENTITY_ID'],
 						'AUTHOR_ID' => $messageFields['AUTHOR_ID']
 					];
+
+					if (
+						$session->getSessionField('STATUS') < Session::STATUS_ANSWER
+						&& $session->getConfig('WELCOME_BOT_ENABLE') === 'Y'
+						&& (int)$session->getConfig('WELCOME_BOT_ID') === (int)$messageFields['AUTHOR_ID']
+					)
+					{
+						$updateSession['SKIP_CHANGE_STATUS'] = true;
+					}
+
 					$session->update($updateSession);
 					$eventData['STATUS_AFTER'] = $session->getData('STATUS');
 					Queue\Event::checkFreeSlotBySendMessage($eventData);
@@ -1662,7 +1688,7 @@ class Connector
 			)
 			{
 				$messageFields['MESSAGE'] =
-					'[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.
+					'[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b] '.
 					($messageFields['MESSAGE'] !== '' ? '[br]'. $messageFields['MESSAGE'] : '');
 			}
 

@@ -2,14 +2,12 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ObjectException;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter\DateType;
@@ -25,7 +23,6 @@ use Bitrix\Voximplant\Integration\Report\CallType;
 use Bitrix\Voximplant\Security\Helper;
 use Bitrix\Voximplant\Security\Permissions;
 use Bitrix\Voximplant\StatisticTable;
-use CTimeZone;
 
 /**
  * Class Base
@@ -67,7 +64,7 @@ abstract class Base extends BaseReport
 		$filter = $this->getFilter();
 		$filterId = $filter->getFilterParameters()['FILTER_ID'];
 
-		if (!$filterParameters[$filterId])
+		if (empty($filterParameters[$filterId]))
 		{
 			$options = new Options($filterId, $filter::getPresetsList());
 			$fieldList = $filter::getFieldsList();
@@ -77,7 +74,7 @@ abstract class Base extends BaseReport
 		$currentFilterParameters = $filterParameters[$filterId];
 
 		//converting U1 to 1 for dest_selector
-		$userId = $currentFilterParameters['PORTAL_USER_ID'];
+		$userId = $currentFilterParameters['PORTAL_USER_ID'] ?? null;
 		if ($userId !== null && $userId !== '')
 		{
 			$prefix = mb_substr($userId, 0, 1);
@@ -96,14 +93,14 @@ abstract class Base extends BaseReport
 	 * @param Date $from
 	 * @param Date $to
 	 *
-	 * @return array
+	 * @return array{from: DateTime, to: DateTime, diff: int}
 	 * @throws ArgumentException
 	 */
 	protected function getPreviousPeriod(Date $from, Date $to): array
 	{
 		$difference = $to->getTimestamp() - $from->getTimestamp();
 
-		if($difference < 0)
+		if ($difference < 0)
 		{
 			throw new ArgumentException("Date from should be earlier than date to");
 		}
@@ -152,7 +149,7 @@ abstract class Base extends BaseReport
 	protected function addToQueryFilterCase(Query $query, array $filterParameters): void
 	{
 		$allowedUserIds = $this->getAllowedUserIds();
-		if (!$filterParameters['PORTAL_USER_ID'] && $allowedUserIds)
+		if (empty($filterParameters['PORTAL_USER_ID']) && !empty($allowedUserIds))
 		{
 			$query->whereIn('PORTAL_USER_ID', $allowedUserIds);
 		}
@@ -239,7 +236,7 @@ abstract class Base extends BaseReport
 					$dateWithShift = $this->getDateExpressionWithTimeShiftForQuery();
 					$query->registerRuntimeField(new ExpressionField(
 						'HOUR',
-						"hour($dateWithShift)",
+						"extract(hour from $dateWithShift)",
 						['CALL_START_DATE']
 					));
 					$query->where('HOUR', '=', $filterValue);
@@ -247,9 +244,10 @@ abstract class Base extends BaseReport
 
 				case 'DAY_OF_WEEK':
 					$dateWithShift = $this->getDateExpressionWithTimeShiftForQuery();
-					$query->registerRuntimeField(new \Bitrix\Main\Entity\ExpressionField(
+					$helper = Application::getConnection()->getSqlHelper();
+					$query->registerRuntimeField(new ExpressionField(
 						'DAY_OF_WEEK',
-						"dayofweek($dateWithShift) - 1",
+						$helper->formatDate('%W', $dateWithShift), // % is needed for escaping
 						['CALL_START_DATE']
 					));
 					$query->where('DAY_OF_WEEK', '=', $filterValue);
@@ -258,28 +256,26 @@ abstract class Base extends BaseReport
 		}
 	}
 
-	protected function getDateExpressionWithTimeShiftForQuery(): string
+	protected function getDateExpressionWithTimeShiftForQuery($placeholder = '%s'): string
 	{
-		$offset = CTimeZone::GetOffset();
-		$sign = ($offset > 0 ? '-' : '+');
+		$offset = \CTimeZone::GetOffset();
+		$sign = ($offset > 0 ? -1 : 1);
 		$difference = abs($offset);
 
-		return "subdate(%s, interval $sign".$difference." second)";
+		return Application::getConnection()->getSqlHelper()->addSecondsToDateTime($sign * $difference, $placeholder);
 	}
 
 	/**
 	 * Adds a DATE field and grouping based on the user's time zone and time period to query.
 	 *
 	 * @param Query $query
-	 *
 	 * @param bool $useTimePeriod
-	 *
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	public function addDateWithGrouping(Query $query, bool $useTimePeriod = false): void
 	{
 		$dateWithShift = $this->getDateExpressionWithTimeShiftForQuery();
+
+		$helper = Application::getConnection()->getSqlHelper();
 
 		if ($useTimePeriod)
 		{
@@ -289,16 +285,17 @@ abstract class Base extends BaseReport
 				case DateType::YEAR:
 				case DateType::QUARTER:
 				case DateType::CURRENT_QUARTER:
-					$expression = "date_format($dateWithShift, \"%%Y-%%m\")";
+					//$expression = "date_format($dateWithShift, \"%%Y-%%m\")";
+					$expression = $helper->formatDate('%YYYY-%MM', $dateWithShift);// % is needed for escaping
 					break;
 				default:
-					$expression = "date($dateWithShift)";
+					$expression = $helper->getDatetimeToDateFunction($dateWithShift);
 					break;
 			}
 		}
 		else
 		{
-			$expression = "date($dateWithShift)";
+			$expression = $helper->getDatetimeToDateFunction($dateWithShift);
 		}
 
 		$query->registerRuntimeField(new ExpressionField(
@@ -314,20 +311,19 @@ abstract class Base extends BaseReport
 	/**
 	 * Return valid interval for insert into query.
 	 *
-	 * @param $timePeriodDatasel
+	 * @param string $timePeriodDatasel
 	 * @param int $seconds
 	 *
-	 * @return string
+	 * @return int
 	 */
-	protected function getDateInterval($timePeriodDatasel, int $seconds = 0): string
+	protected function getDateInterval($timePeriodDatasel, int $seconds = 0): int
 	{
-		$interval = '';
-
 		switch ($timePeriodDatasel)
 		{
 			case DateType::LAST_WEEK:
 			case DateType::CURRENT_WEEK:
-				$interval = '1 week';
+				//$interval = '1 week';
+				$interval = 7 * 24 * 3600;//'1 week';
 				break;
 
 			case DateType::LAST_MONTH:
@@ -335,11 +331,13 @@ abstract class Base extends BaseReport
 			case DateType::MONTH:
 			case DateType::CURRENT_QUARTER:
 			case DateType::QUARTER:
-				$interval = round($seconds / 2592000) . ' month';
+				//$interval = round($seconds / 2592000) . ' month';
+				$interval = $seconds;
 				break;
 
 			case DateType::YEAR:
-				$interval = round($seconds / 31536000) . ' year';
+				//$interval = round($seconds / 31536000) . ' year';
+				$interval = $seconds;
 				break;
 
 			case DateType::LAST_7_DAYS:
@@ -348,12 +346,14 @@ abstract class Base extends BaseReport
 			case DateType::LAST_90_DAYS:
 			case DateType::PREV_DAYS:
 			case DateType::RANGE:
-				$interval = round($seconds / 86400) . ' day';
+				//$interval = round($seconds / 86400) . ' day';
+				$interval = $seconds;
 				break;
 
 			//tmp solution, remove when the problem with "undefined" in the report filter will be solved.
 			default:
-				$interval = -1 . ' month';
+				//$interval = -1 . ' month';
+				$interval = 30 * 24 * 3600;
 				break;
 		}
 
@@ -593,9 +593,6 @@ abstract class Base extends BaseReport
 	 * @param $requestParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws ObjectException
-	 * @throws SystemException
 	 */
 	public function prepareEntityListFilter($requestParameters): Query
 	{
@@ -659,13 +656,11 @@ abstract class Base extends BaseReport
 	 * @param $date
 	 *
 	 * @return mixed
-	 * @throws ObjectException
 	 */
 	public function getDateForUrl($date)
 	{
-		$groupByDay = $date instanceof Date;
-
-		if ($groupByDay)
+		$result = [];
+		if ($date instanceof Date)
 		{
 			$result['date'] = $date;
 			$result['start'] = $date->toString() . ' 00:00:00';
@@ -690,9 +685,6 @@ abstract class Base extends BaseReport
 	 *   <li> avatarHeight int
 	 *
 	 * @return array|null
-	 * @throws ArgumentException
-	 * @throws SystemException
-	 * @throws ObjectPropertyException
 	 */
 	public function getUserInfo($userId, array $params = []): ?array
 	{
@@ -779,10 +771,7 @@ abstract class Base extends BaseReport
 	 * Gets users fields by Ids
 	 *
 	 * @param array $userIds
-	 *
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
+	 * @return void
 	 */
 	public function preloadUserInfo(array $userIds): void
 	{
@@ -810,23 +799,26 @@ abstract class Base extends BaseReport
 	 *
 	 * @param Query $query
 	 * @param $timePeriodDatasel
-	 *
-	 * @param string $dateDifference
-	 *
-	 * @throws ArgumentException
-	 * @throws SystemException
+	 * @param int $dateDifference
 	 */
-	protected function addIntervalByDatasel(Query $query, $timePeriodDatasel, string $dateDifference): void
+	protected function addIntervalByDatasel(Query $query, $timePeriodDatasel, int $dateDifference): void
 	{
+		$helper = Application::getConnection()->getSqlHelper();
+		$date = $helper->getDatetimeToDateFunction('%s');
+
 		switch ($timePeriodDatasel)
 		{
 			case DateType::YEAR:
 			case DateType::QUARTER:
 			case DateType::CURRENT_QUARTER:
-				$expression = "date_format(subdate(date(%s), interval -$dateDifference), '%%Y-%%m')";
+				//$expression = "date_format(subdate({$date}, interval -$dateDifference), '%%Y-%%m')";
+				//$expression = $helper->formatDate('%YYYY-%MM', "DATE_SUB({$date}, interval -$dateDifference)");
+				$expression = $helper->formatDate('%YYYY-%MM', $helper->addSecondsToDateTime(-1 * $dateDifference, $date));// % is needed for escaping
 				break;
+
 			default:
-				$expression = "subdate(date(%s), interval -$dateDifference)";
+				//$expression = "DATE_SUB({$date}, interval -$dateDifference)";
+				$expression = $helper->addSecondsToDateTime(-1 * $dateDifference, $date);
 				break;
 		}
 
@@ -844,32 +836,29 @@ abstract class Base extends BaseReport
 	 * @param $callType
 	 * @param string $columnName
 	 * @param bool $isMainQuery
-	 *
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function addCallTypeField(Query $query, $callType, string $columnName, bool $isMainQuery = false): void
 	{
 		switch ($callType)
 		{
 			case CallType::INCOMING:
-				$expression = 'count(if(((%s = 2 or %s = 3) and %s = 200), 1, null))';
+				$expression = 'COUNT(CASE WHEN (%s = 2 or %s = 3) and %s = 200 THEN 1 ELSE null END)';
 				$buildFrom = ['INCOMING', 'INCOMING', 'CALL_FAILED_CODE'];
 				break;
 			case CallType::OUTGOING:
-				$expression = 'count(if(%s = 1, 1, null))';
+				$expression = 'COUNT(CASE WHEN %s = 1 THEN 1 ELSE null END)';
 				$buildFrom = ['INCOMING'];
 				break;
 			case CallType::MISSED:
-				$expression = 'count(if(%s = 2 and %s <> 200, 1, null))';
+				$expression = 'COUNT(CASE WHEN %s = 2 and %s <> 200 THEN 1 ELSE null END)';
 				$buildFrom = ['INCOMING', 'CALL_FAILED_CODE'];
 				break;
 			case CallType::CALLBACK:
-				$expression = 'count(if(%s = 4, 1, null))';
+				$expression = 'COUNT(CASE WHEN %s = 4 THEN 1 ELSE null END)';
 				$buildFrom = ['INCOMING'];
 				break;
 			default:
-				$expression = 'count(%s)';
+				$expression = 'COUNT(%s)';
 				$buildFrom = ['INCOMING'];
 				break;
 		}
@@ -892,17 +881,14 @@ abstract class Base extends BaseReport
 	 *
 	 * @param Query $query
 	 * @param string $columnName
-	 *
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function addCallTypeCompareField(Query $query, string $columnName): void
 	{
 		$query->addSelect($columnName . '_COMPARE');
 		$query->registerRuntimeField(new ExpressionField(
 			$columnName . '_COMPARE',
-			'if(%s = 0, null, round((%s - %s) / %s * 100, 1))',
-			[$columnName, $columnName, 'previous.' . $columnName, 'previous.' . $columnName]
+			'CASE WHEN %1$s = 0 THEN null ELSE round((%1$s - %2$s) / %2$s * 100, 1) END',
+			[$columnName, 'previous.' . $columnName]
 		));
 	}
 
@@ -911,7 +897,7 @@ abstract class Base extends BaseReport
 		$allowedIds = $this->getAllowedUserIds();
 
 		$isAllowedAll = ($allowedIds === null);
-		$hasAllowedIds = (is_array($allowedIds) && $allowedIds[0]);
+		$hasAllowedIds = (is_array($allowedIds) && !empty($allowedIds[0]));
 
 		return ($isAllowedAll || $hasAllowedIds);
 	}

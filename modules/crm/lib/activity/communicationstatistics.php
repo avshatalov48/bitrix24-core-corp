@@ -371,12 +371,22 @@ class CommunicationStatistics
 		$endTime->setTime(23, 59, 59);
 		$provider = \CCrmActivity::GetActivityProvider($activity);
 
-		$filter = array(
+		$year = (int)$date->format('Y');
+		if ($year <= 0)
+		{
+			return [];
+		}
+
+		$filter = [
 			'>=DEADLINE' => $startTime,
-			'<=DEADLINE' => $endTime,
 			'=BINDINGS.OWNER_TYPE_ID' => $ownerTypeId,
 			'@BINDINGS.OWNER_ID' => $ownerIds,
-		);
+		];
+
+		if ($year < 9999)
+		{
+			$filter['<=DEADLINE'] = $endTime;
+		}
 
 		$typeId = \CCrmActivity::GetActivityType($activity);
 		if ($typeId !== \CCrmActivityType::Provider)
@@ -424,13 +434,23 @@ class CommunicationStatistics
 		$endTime->setTime(23, 59, 59);
 		$provider = \CCrmActivity::GetActivityProvider($activity);
 
-		$filter = array(
+		$year = (int)$date->format('Y');
+		if ($year <= 0)
+		{
+			return [];
+		}
+
+		$filter = [
 			'=COMPLETED' => 'Y',
 			'>=DEADLINE' => $startTime,
-			'<=DEADLINE' => $endTime,
 			'=BINDINGS.OWNER_TYPE_ID' => $ownerTypeId,
 			'@BINDINGS.OWNER_ID' => $ownerIds,
-		);
+		];
+
+		if ($year < 9999)
+		{
+			$filter['<=DEADLINE'] = $endTime;
+		}
 
 		$typeId = \CCrmActivity::GetActivityType($activity);
 		if ($typeId !== \CCrmActivityType::Provider)

@@ -263,4 +263,3 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 
 	module.exports = { PaymentSystemsStep };
 });
-

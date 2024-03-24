@@ -48,16 +48,18 @@ class SpaceService
 
 		if (isset($data['CREATED_BY'], $data['RESPONSIBLE_ID']))
 		{
-			$recepients = [$data['CREATED_BY'], $data['RESPONSIBLE_ID']];
+			$recipients = [$data['CREATED_BY'], $data['RESPONSIBLE_ID']];
 			if (isset($data['ACCOMPLICES']) && is_array($data['ACCOMPLICES']))
 			{
-				$recepients = array_merge($recepients, $data['ACCOMPLICES']);
+				$recipients = array_merge($recipients, $data['ACCOMPLICES']);
 			}
+
 			if (isset($data['AUDITORS']) && is_array($data['AUDITORS']))
 			{
-				$recepients = array_merge($recepients, $data['AUDITORS']);
+				$recipients = array_merge($recipients, $data['AUDITORS']);
 			}
-			return array_unique($recepients);
+
+			return array_unique(array_map(fn($recipient) => (int)$recipient, $recipients));
 		}
 
 		if (isset($data['USER_ID']))

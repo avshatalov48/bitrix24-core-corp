@@ -2,12 +2,9 @@
  * @module tasks/layout/checklist/list/src/text-field
  */
 jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
-	const { animate } = require('animation');
-	const { ProfileView } = require('user/profile');
-	const { throttle } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class ItemTextField
@@ -18,40 +15,52 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 		{
 			super(props);
 
-			this.ref = null;
-			this.textFieldRef = null;
-			this.handleOnFocus = throttle(this.handleOnFocus, 500, this);
+			this.focused = false;
+			this.textInputRef = null;
+			this.cursorPosition = 0;
+			this.handleOnSubmit = this.handleOnSubmit.bind(this);
+			this.handleOnChange = this.handleOnChange.bind(this);
+			this.handleOnLayout = this.handleOnLayout.bind(this);
+
+			this.initialState(props);
 		}
 
-		heightAnimate(height)
+		componentWillReceiveProps(props)
 		{
-			if (!this.getTitle())
-			{
-				return;
-			}
+			this.initialState(props);
+		}
 
-			animate(this.ref, {
-				height: Math.max(height, 28),
+		initialState(props)
+		{
+			const { completed } = props;
+
+			this.state = {
+				completed,
+				reload: null,
+			};
+		}
+
+		completeItem()
+		{
+			const { completed } = this.state;
+
+			return new Promise((resolve) => {
+				this.setState({ completed: !completed }, resolve);
 			});
 		}
 
 		render()
 		{
-			const { isFocused } = this.props;
-
 			return View(
 				{
-					ref: (ref) => {
-						this.ref = ref;
-					},
 					style: {
 						flex: 1,
-						height: 'auto',
-						marginLeft: 6,
+						marginTop: 4,
 						justifyContent: 'center',
 					},
+					onLayout: this.handleOnLayout,
 				},
-				isFocused ? this.renderTextField() : this.renderBBCodeText(),
+				this.renderTextField(),
 			);
 		}
 
@@ -65,73 +74,108 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			}
 		}
 
-		blur()
+		handleOnSubmit()
 		{
-			if (this.textFieldRef)
+			const { onSubmit } = this.props;
+
+			if (onSubmit)
 			{
-				this.textFieldRef.blur();
+				onSubmit();
 			}
 		}
 
-		clear()
+		handleOnLayout()
 		{
-			if (this.textFieldRef)
+			const { isFocused } = this.props;
+
+			/**
+			 * Set focus if the element is rendered in hidden space
+			 */
+			if (isFocused)
 			{
-				this.textFieldRef.clear();
+				setTimeout(() => {
+					this.textInputRef.focus();
+				}, 200);
 			}
 		}
 
 		focus()
 		{
-			if (!this.textFieldRef || this.textFieldRef.isFocused())
+			if (this.textInputRef)
 			{
-				return;
+				this.textInputRef.focus();
 			}
-
-			this.textFieldRef.focus();
 		}
 
-		handleOnFocus()
+		blur()
 		{
-			const { focus, onFocus } = this.props;
-
-			if (focus)
+			if (this.textInputRef)
 			{
-				return;
+				this.textInputRef.blur();
 			}
+		}
 
-			if (onFocus)
+		/**
+		 * @private
+		 */
+		isFocused()
+		{
+			if (this.textInputRef)
 			{
-				onFocus();
+				this.textInputRef.isFocused();
 			}
+		}
+
+		/**
+		 * @private
+		 */
+		clear()
+		{
+			if (this.textInputRef)
+			{
+				this.textInputRef.clear();
+			}
+		}
+
+		reload()
+		{
+			this.setState({ reload: Random.getString() });
 		}
 
 		renderTextField()
 		{
-			const { isFocused, onSubmit, styles = {} } = this.props;
+			const { styles = {}, onFocus, onBlur, isFocused, placeholder } = this.props;
+			const value = this.getTitle();
 
 			return TextInput({
-				ref: (textFieldRef) => {
-					this.textFieldRef = textFieldRef;
+				ref: (ref) => {
+					this.textInputRef = ref;
 				},
-				placeholder: Loc.getMessage('TASKSMOBILE_LAYOUT_ITEM_INPUT_PLACEHOLDER'),
-				placeholderTextColor: AppTheme.colors.base4,
 				focus: isFocused,
+				placeholder,
+				placeholderTextColor: AppTheme.colors.base4,
 				style: {
 					fontSize: 16,
-					fontWeight: '400',
 					color: AppTheme.colors.base1,
 					textAlignVertical: 'center',
 					...styles,
 				},
-				onLayout: () => {
-					this.focus();
+				onBlur: () => {
+					this.focused = false;
+					onBlur();
 				},
-				// showBBCode: true,
+				onFocus: () => {
+					this.cursorPosition = value.length;
+					this.focused = true;
+					onFocus();
+				},
 				multiline: true,
-				forcedValue: this.getTitle(),
-				onSubmitEditing: onSubmit,
-				onChangeText: this.handleOnChange.bind(this),
+				forcedValue: value,
+				onSubmitEditing: this.handleOnSubmit,
+				onChangeText: this.handleOnChange,
+				onSelectionChange: ({ selection }) => {
+					this.cursorPosition = selection.start;
+				},
 			});
 		}
 
@@ -145,9 +189,6 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 						alignItems: 'center',
 						flexDirection: 'row',
 					},
-					onClick: () => {
-						this.handleOnFocus();
-					},
 				},
 				BBCodeText({
 					style: {
@@ -160,58 +201,41 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 					focus: false,
 					linksUnderline: false,
 					value: this.getTitleWithUrls(),
-					onLinkClick: this.onLinkClick.bind(this),
 				}),
 			);
 		}
 
-		getTitleWithUrls()
+		getTitleWithUrls(title, members)
 		{
-			const { members, completed } = this.props;
-			const title = this.getTitle();
 			let newTitle = title;
-
 			Object.keys(members).forEach((id) => {
 				const { name } = members[id];
-				newTitle = newTitle.replace(name, `[COLOR=#2067b0][URL=${id}]${name}[/URL][/COLOR]`);
+				newTitle = newTitle.replace(
+					name,
+					`[COLOR=${AppTheme.colors.accentMainLinks}][URL=${id}]${name}[/URL][/COLOR]`,
+				);
 			});
-
-			if (completed)
-			{
-				return `[S]${title}[/S]`;
-			}
-
-			return newTitle;
 		}
 
 		getTitle()
 		{
-			const { title } = this.props;
+			const { completed } = this.state;
+			const { getTitle } = this.props;
+			const title = getTitle();
 
-			return title();
+			if (completed && title.length > 0)
+			{
+				return `[COLOR=${AppTheme.colors.base5}]${title}[/COLOR]`;
+			}
+
+			return title;
 		}
 
-		onLinkClick({ url })
+		getCursorPosition()
 		{
-			const { parentWidget } = this.props;
-
-			const userId = url;
-			const widgetParams = { groupStyle: true };
-			const isBackdrop = true;
-
-			widgetParams.backdrop = {
-				bounceEnable: false,
-				swipeAllowed: true,
-				showOnTop: true,
-				hideNavigationBar: false,
-				horizontalSwipeAllowed: false,
-			};
-			parentWidget.openWidget('list', widgetParams)
-				.then((list) => ProfileView.open({ userId, isBackdrop }, list))
-				.catch(console.error);
+			return this.cursorPosition;
 		}
 	}
 
 	module.exports = { ItemTextField };
 });
-

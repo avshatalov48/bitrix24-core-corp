@@ -153,10 +153,17 @@ class TaskCheckListConverter extends Stepper
 		$ids = [];
 
 		$connection = Application::getConnection();
+		// IF(T.STATUS = 5 OR T.STATUS = 6, 1, 0) as SORT
 		$tasksRes = $connection->query("
-			SELECT I.TASK_ID, IF(T.STATUS = 5 OR T.STATUS = 6, 1, 0) as SORT
+			SELECT
+                I.TASK_ID,
+                CASE
+                    WHEN (T.STATUS = 5 OR T.STATUS = 6)
+                        THEN 1
+                    ELSE 0
+                END AS SORT
 			FROM b_tasks_checklist_items I
-				INNER JOIN b_tasks T on T.ID = I.TASK_ID
+				     INNER JOIN b_tasks T on T.ID = I.TASK_ID
 			WHERE I.TITLE = '==='
 			GROUP BY I.TASK_ID
 			ORDER BY SORT, I.TASK_ID DESC

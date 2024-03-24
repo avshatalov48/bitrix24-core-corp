@@ -14,7 +14,9 @@ class TagList
 	private TaskQueryInterface $tagQuery;
 	private ?TagCollection $collection = null;
 	private Result $result;
-	private array $tags;
+
+	private ?array $tags = null;
+	private array $storedTags;
 
 	public function getList(TaskQueryInterface $tagQuery): CDBResult
 	{
@@ -35,16 +37,17 @@ class TagList
 		$query = TagQueryBuilder::build($this->tagQuery);
 		$this->result = $query->exec();
 		$this->collection = $this->result->fetchCollection();
+		$this->tags = $query->exec()->fetchAll();
 
 		return $this;
 	}
 
 	private function prepareData(): static
 	{
-		$this->tags = [];
-		foreach ($this->collection as $item)
+		$this->storedTags = [];
+		foreach ($this->tags as $data)
 		{
-			$this->tags[] = $this->getTagData($item);
+			$this->storedTags[] = $this->getTagData(TagObject::wakeUpObject($data));
 		}
 
 		return $this;
@@ -53,7 +56,7 @@ class TagList
 	private function getCDBResult(): CDBResult
 	{
 		$result = new CDBResult($this->result);
-		$result->InitFromArray($this->tags);
+		$result->InitFromArray($this->storedTags);
 
 		return $result;
 	}
@@ -61,20 +64,21 @@ class TagList
 	private function getTagData(TagObject $object): array
 	{
 		$tag = [];
-		foreach ($object->collectValues() as $field => $value)
+		$values = array_merge($object->collectValues(), $object->customData->getValues());
+		foreach ($values as $field => $value)
 		{
-			if (in_array($field, $this->tagQuery->getSelect(), true))
-			{
-				$tag[$field] = $value;
-			}
-
-			if (
-				in_array(LabelTable::getRelationAlias() . '.TASK_ID', $this->tagQuery->getSelect(), true)
-				|| in_array('TASK_ID', $this->tagQuery->getSelect(), true)
-			)
-			{
-				$tag['TASK_ID'] = $object->getTaskTag()->getTaskId();
-			}
+			$tag[$field] = $value;
+			// if (in_array($field, $this->tagQuery->getSelect(), true))
+			// {
+			//
+			// }
+			//
+			// if (
+			// 	in_array('TASK_ID', $this->tagQuery->getSelect(), true)
+			// )
+			// {
+			// 	$tag['TASK_ID'] = (int)$value;
+			// }
 		}
 
 		return $tag;

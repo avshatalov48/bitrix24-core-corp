@@ -245,19 +245,38 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 			 * @function messagesModel/getFirstUnreadId
 			 * @return {number || null}
 			 */
-			getFirstUnreadId: (state) => (chatId) => {
+			getFirstUnreadId: (state, getters, rootState, rootGetters) => (chatId) => {
 				if (!state.chatCollection[chatId])
 				{
 					return null;
 				}
-				const messageIds = [...state.chatCollection[chatId]].sort();
 
-				for (const messageId of messageIds)
+				/** @type {Array<MessagesModelState>} */
+				const messageList = rootGetters['messagesModel/getByChatId'](chatId);
+				const dialogModel = rootGetters['dialoguesModel/getByChatId'](chatId);
+
+				if (!dialogModel)
 				{
-					const message = state.collection[messageId];
-					if (message.unread)
+					logger.error('messagesModel.getFirstUnreadId: dialog not found by chat id', chatId);
+
+					return null;
+				}
+
+				for (const message of messageList)
+				{
+					if (message.id.toString().startsWith(TEMPORARY_MESSAGE_PREFIX))
 					{
-						return messageId;
+						continue;
+					}
+
+					if (dialogModel.lastReadId > message.id)
+					{
+						continue;
+					}
+
+					if (!message.viewed)
+					{
+						return message.id;
 					}
 				}
 

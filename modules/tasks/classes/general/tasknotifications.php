@@ -65,7 +65,12 @@ class CTaskNotifications
 	{
 		if (self::useNewNotifications())
 		{
-			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($arFields['ID'], true);
+			$taskId = (int)($arFields['ID'] ?? null);
+			if ($taskId <= 0)
+			{
+				return;
+			}
+			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskId, true);
 			if (!$task)
 			{
 				return;
@@ -148,7 +153,7 @@ class CTaskNotifications
 			$arRecipientsIDs = array_unique($arRecipientsIDs);
 
 			$strResponsible = CTaskNotifications::__Users2String(($arFields["RESPONSIBLE_ID"] ?? null), $arUsers, ($arFields["NAME_TEMPLATE"] ?? null));
-			$invariantDescription = GetMessage("TASKS_MESSAGE_RESPONSIBLE_ID").': '.$strResponsible."\r\n";
+			$invariantDescription = Loc::getMessage('TASKS_MESSAGE_ASSIGNEE_ID') . ': ' . $strResponsible . "\r\n";
 			if ($strAccomplices = CTaskNotifications::__Users2String(($arFields["ACCOMPLICES"] ?? null), $arUsers, ($arFields["NAME_TEMPLATE"] ?? null)))
 			{
 				$invariantDescription .= GetMessage("TASKS_MESSAGE_ACCOMPLICES").": ".$strAccomplices."\r\n";

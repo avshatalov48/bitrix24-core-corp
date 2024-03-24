@@ -7,9 +7,13 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
 	const { TasksDashboardBaseView } = require('tasks/layout/dashboard/base-view');
 	const { ListItemType, ListItemsFactory } = require('tasks/layout/simple-list/items');
-	const { TaskListItemSkeleton } = require('tasks/layout/simple-list/skeleton');
+	const {
+		TaskListItemSkeleton,
+		TaskKanbanItemSkeleton,
+	} = require('tasks/layout/simple-list/skeleton');
 
 	SkeletonFactory.register(ListItemType.TASK, TaskListItemSkeleton);
+	SkeletonFactory.register(ListItemType.KANBAN, TaskKanbanItemSkeleton);
 
 	const counterCallback = ({ value }) => value > 0;
 	const checklistCallback = ({ uncompleted }) => uncompleted > 0;

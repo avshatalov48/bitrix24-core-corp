@@ -88,9 +88,11 @@ jn.define('crm/entity-detail/component/floating-button-provider', (require, expo
 				title: Loc.getMessage('M_CRM_DETAIL_MENU_ITEM_DOCUMENT'),
 				isSupported: true,
 				isAvailable: (detailCard) => {
-					return !detailCard.isNewEntity()
+					return (
+						!detailCard.isNewEntity()
 						&& !detailCard.isReadonly()
 						&& get(detailCard.getComponentParams(), 'isDocumentGenerationEnabled', false)
+					);
 				},
 				position: 600,
 				actionHandler: (detailCard) => {

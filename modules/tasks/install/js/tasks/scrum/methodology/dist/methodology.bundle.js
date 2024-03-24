@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_manual,ui_popupcomponentsmaker,main_core,ui_dialogs_messagebox,main_core_events) {
@@ -42,6 +41,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getBurnDownInfo",
 	    value: function getBurnDownInfo(data) {
 	      return this.sendRequest('sprint', 'getBurnDownInfo', data);
+	    }
+	  }, {
+	    key: "getMarketPath",
+	    value: function getMarketPath() {
+	      return this.sendRequest('info', 'getMarketPath');
 	    }
 	  }, {
 	    key: "showErrorAlert",
@@ -275,11 +279,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var migrationClasses = 'tasks-scrum__widget-methodology--migration tasks-scrum__widget-methodology--bg';
 	      var iconClass = 'ui-icon-service-tutorial tasks-scrum__widget-methodology--migration-btn';
 	      var node = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", " ", "\" data-role=\"open-migration\">\n\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label --migration\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), baseClasses, migrationClasses, iconClass, main_core.Loc.getMessage('TSF_MIGRATION_TITLE'), main_core.Loc.getMessage('TSF_MIGRATION_LABEL'));
-	      main_core.Event.bind(node, 'click', function () {
-	        var uri = new main_core.Uri('/marketplace/');
-	        uri.setQueryParam('tag', ['migrator', 'tasks']);
-	        _this6.sidePanel.openSidePanelByUrl(uri.toString());
-	        _this6.menu.close();
+	      this.requestSender.getMarketPath().then(function (response) {
+	        var marketUri = response.data;
+	        main_core.Event.bind(node, 'click', function () {
+	          var uri = new main_core.Uri(marketUri);
+	          uri.setQueryParam('tag', ['migrator', 'tasks']);
+	          _this6.sidePanel.openSidePanelByUrl(uri.toString());
+	          _this6.menu.close();
+	        });
 	      });
 	      return node;
 	    }

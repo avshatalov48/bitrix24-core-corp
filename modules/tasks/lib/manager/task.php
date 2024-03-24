@@ -126,6 +126,10 @@ final class Task extends \Bitrix\Tasks\Manager
 		$fieldMap[ 'IM_CHAT_ID' ] = array(0, 1, 0, 0, 0);
 		$fieldMap[ 'IM_MESSAGE_ID' ] = array(0, 1, 0, 0, 0);
 
+		$fieldMap['TASKS_ANALYTICS_SECTION'] = array(0, 1, 0, 0, 0);
+		$fieldMap['TASKS_ANALYTICS_SUB_SECTION'] = array(0, 1, 0, 0, 0);
+		$fieldMap['TASKS_ANALYTICS_ELEMENT'] = array(0, 1, 0, 0, 0);
+
 		return $fieldMap;
 	}
 

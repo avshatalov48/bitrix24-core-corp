@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\InvoiceTable;
-use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\Localization\Loc;
 
 class Invoice extends ProductsDataProvider
@@ -45,7 +44,7 @@ class Invoice extends ProductsDataProvider
 	 */
 	public function getAssignedId()
 	{
-		return $this->data['RESPONSIBLE_ID'];
+		return $this->data['RESPONSIBLE_ID'] ?? null;
 	}
 
 	/**
@@ -118,7 +117,7 @@ class Invoice extends ProductsDataProvider
 
 	public function getCurrencyId()
 	{
-		return $this->data['CURRENCY'];
+		return $this->data['CURRENCY'] ?? null;
 	}
 
 	/**

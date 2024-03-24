@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Main\DB;
 use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Disk;
@@ -34,13 +35,20 @@ class Crm
 	 */
 	public function getMeasureStages()
 	{
-		return [
+		$stages = [
 			'UserFields',
 			'ActElemFile',
 			'ActElemDisk',
-			'CrmEvent',
 			'CrmFolder',
 		];
+
+		$connection = \Bitrix\Main\Application::getConnection();
+		if ($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection)
+		{
+			$stages[] = 'CrmEvent';
+		}
+
+		return $stages;
 	}
 
 	/**
@@ -56,17 +64,27 @@ class Crm
 			return $this;
 		}
 
+		/** @global \CDatabase $DB */
+		global $DB;
 		$connection = \Bitrix\Main\Application::getConnection();
-		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
+		$sqlHelper = $connection->getSqlHelper();
+
+		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
-		$tableName = VolumeTable::getTableName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 		$stageId = $this->getStage();
 		if (empty($stageId))
 		{
 			$stageId = 'UserFields';
 			$this->setStage($stageId);
+		}
+
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
 		}
 
 		switch($stageId)
@@ -93,13 +111,13 @@ class Crm
 						SELECT 
 							'{$indicatorType}' as INDICATOR_TYPE,
 							{$ownerId} as OWNER_ID,
-							". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
+							". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
 							'UserFields',
-							SUM(src.FILE_SIZE) as FILE_SIZE,
-							SUM(src.FILE_COUNT) as FILE_COUNT,
-							SUM(src.DISK_SIZE) as DISK_SIZE,
-							SUM(src.DISK_COUNT) as DISK_COUNT,
-							SUM(src.VERSION_COUNT) as VERSION_COUNT
+							COALESCE(SUM(src.FILE_SIZE), 0) as FILE_SIZE,
+							COALESCE(SUM(src.FILE_COUNT), 0) as FILE_COUNT,
+							COALESCE(SUM(src.DISK_SIZE), 0) as DISK_SIZE,
+							COALESCE(SUM(src.DISK_COUNT), 0) as DISK_COUNT,
+							COALESCE(SUM(src.VERSION_COUNT), 0) as VERSION_COUNT
 						FROM 
 						(
 							{$entityUserFieldSource}
@@ -120,7 +138,7 @@ class Crm
 
 			case 'ActElemFile':
 			{
-				$crmActivityElememtTable = \CCrmActivity::ELEMENT_TABLE_NAME;
+				$crmActivityElememtTable = $sqlHelper->quote(\CCrmActivity::ELEMENT_TABLE_NAME);
 
 				$querySql = "
 					INSERT INTO {$tableName}
@@ -138,10 +156,10 @@ class Crm
 					SELECT
 						'{$indicatorType}' as INDICATOR_TYPE,
 						{$ownerId} as OWNER_ID,
-						". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
+						". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
 						'ActElemFile' as TITLE, 
-						SUM(f.FILE_SIZE) as FILE_SIZE,
-						COUNT(f.id) as FILE_COUNT, 
+						COALESCE(SUM(f.FILE_SIZE), 0) as FILE_SIZE,
+						COALESCE(COUNT(f.id), 0) as FILE_COUNT, 
 						0 as DISK_SIZE,
 						0 as DISK_COUNT,
 						0 as VERSION_COUNT
@@ -152,7 +170,7 @@ class Crm
 							FROM {$crmActivityElememtTable}
 							WHERE STORAGE_TYPE_ID = '".\Bitrix\Crm\Integration\StorageType::File."'
 							GROUP BY ELEMENT_ID  
-							ORDER BY NULL
+							{$prefSql}
 						) elem
 							ON elem.ELEMENT_ID = f.ID
 				";
@@ -238,13 +256,13 @@ class Crm
 					SELECT
 						'{$indicatorType}' as INDICATOR_TYPE,
 						{$ownerId} as OWNER_ID,
-						". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
+						". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
 						'ActElemDisk' as TITLE, 
-						SUM(f.FILE_SIZE) as FILE_SIZE,
-						COUNT(f.id) as FILE_COUNT, 
-						SUM(f.FILE_SIZE) as DISK_SIZE,
-						COUNT(f.id) as DISK_COUNT,
-						COUNT(f.id) as VERSION_COUNT
+						COALESCE(SUM(f.FILE_SIZE), 0) as FILE_SIZE,
+						COALESCE(COUNT(f.id), 0) as FILE_COUNT, 
+						COALESCE(SUM(f.FILE_SIZE), 0) as DISK_SIZE,
+						COALESCE(COUNT(f.id), 0) as DISK_COUNT,
+						COALESCE(COUNT(f.id), 0) as VERSION_COUNT
 					FROM 
 						b_disk_object files 
 						INNER JOIN b_file f 
@@ -255,7 +273,7 @@ class Crm
 							FROM {$crmActivityElememtTable} 
 							WHERE STORAGE_TYPE_ID = '".\Bitrix\Crm\Integration\StorageType::Disk."'
 							GROUP BY ELEMENT_ID
-							ORDER BY NULL
+							{$prefSql}
 						) elem
 							ON files.ID = elem.ELEMENT_ID
 					WHERE
@@ -277,6 +295,11 @@ class Crm
 
 			case 'CrmEvent':
 			{
+				if (!($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection))
+				{
+					break;
+				}
+
 				$crmEventTable = \Bitrix\Crm\EventTable::getTableName();
 
 				// analise b_crm_event with non empty field FILES
@@ -296,17 +319,17 @@ class Crm
 					SELECT 
 						'{$indicatorType}' as INDICATOR_TYPE,
 						{$ownerId} as OWNER_ID,
-						". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
+						". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
 						'CrmEvent' as TITLE,
-						SUM(f.FILE_SIZE) as FILE_SIZE,
-						count(f.ID) as FILE_COUNT,
+						COALESCE(SUM(f.FILE_SIZE), 0) as FILE_SIZE,
+						COALESCE(COUNT(f.ID), 0) as FILE_COUNT,
 						0 as DISK_SIZE,
 						0 as DISK_COUNT,
 						0 as VERSION_COUNT
 					FROM 
 					(
 						select  
-							CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(src.fids, ' ', NS.n), ' ', -1) AS UNSIGNED) as ID
+							". $DB->ToNumber("SUBSTRING_INDEX(SUBSTRING_INDEX(src.fids, ' ', NS.n), ' ', -1)"). " as ID
 						from (
 							select 1 as n union
 							select 2 union
@@ -400,7 +423,7 @@ class Crm
 							->purify()
 							->measure([self::DISK_FILE]);
 
-						$indicatorTypeFolder = $connection->getSqlHelper()->forSql(Volume\Folder::className());
+						$indicatorTypeFolder = $sqlHelper->forSql(Volume\Folder::className());
 
 						$folderIdSql = implode(',', $folderIds);
 
@@ -425,18 +448,18 @@ class Crm
 							SELECT 
 								'{$indicatorType}',
 								{$ownerId},
-								".$connection->getSqlHelper()->getCurrentDateTimeFunction()." as CREATE_TIME,
+								".$sqlHelper->getCurrentDateTimeFunction()." as CREATE_TIME,
 								'CrmFolder' as TITLE,
-								SUM(FILE_SIZE),
-								SUM(FILE_COUNT),
-								SUM(DISK_SIZE),
-								SUM(DISK_COUNT),
-								SUM(VERSION_COUNT),
-								SUM(ATTACHED_COUNT),
-								SUM(LINK_COUNT),
-								SUM(SHARING_COUNT),
-								SUM(UNNECESSARY_VERSION_SIZE),
-								SUM(UNNECESSARY_VERSION_COUNT)
+								COALESCE(SUM(FILE_SIZE), 0),
+								COALESCE(SUM(FILE_COUNT), 0),
+								COALESCE(SUM(DISK_SIZE), 0),
+								COALESCE(SUM(DISK_COUNT), 0),
+								COALESCE(SUM(VERSION_COUNT), 0),
+								COALESCE(SUM(ATTACHED_COUNT), 0),
+								COALESCE(SUM(LINK_COUNT), 0),
+								COALESCE(SUM(SHARING_COUNT), 0),
+								COALESCE(SUM(UNNECESSARY_VERSION_SIZE), 0),
+								COALESCE(SUM(UNNECESSARY_VERSION_COUNT), 0)
 							FROM 
 								b_disk_volume
 							WHERE 
@@ -474,7 +497,7 @@ class Crm
 						INDICATOR_TYPE = '{$indicatorType}'
 					GROUP BY
 						INDICATOR_TYPE
-					ORDER BY NULL
+					{$prefSql}
 				";
 				$columnList = Volume\QueryHelper::prepareInsert(
 					[

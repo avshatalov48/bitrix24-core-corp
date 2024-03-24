@@ -36,7 +36,7 @@ class CBPCreateCrmContactDocumentActivity extends CBPCreateDocumentActivity
 		$documentService = $this->workflow->GetService('DocumentService');
 
 		$fields = $this->Fields;
-		if (method_exists($this, 'prepareFieldsValues'))
+		if (is_array($fields) && method_exists($this, 'prepareFieldsValues'))
 		{
 			$fields = $this->prepareFieldsValues($documentType, $fields);
 		}

@@ -580,13 +580,6 @@ BX.merge(BX.Mobile.Tasks.page.prototype, {
 			var title = BX.message('PAGE_TITLE');
 			if(BX.type.isNotEmptyString(title) && this.option('setTitle'))
 			{
-				// setting up default menu
-
-				if (Application.getApiVersion() < 31)
-				{
-					this.resetMenu(this.getDefaultMenu());
-				}
-
 				window.BXMobileApp.UI.Page.TopBar.title.setText(title);
 				window.BXMobileApp.UI.Page.TopBar.title.show();
 			}

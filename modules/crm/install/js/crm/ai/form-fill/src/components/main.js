@@ -35,7 +35,7 @@ export const Main = {
 			'mergeUuid',
 			'isSliderConfirmPopupShown',
 			'isFeedbackMessageShown',
-			'getFirstUnseenFieldPosition',
+			'isFooterHiddenAndSaveDisabled',
 		]),
 	},
 	methods: {
@@ -43,7 +43,7 @@ export const Main = {
 			'initialize',
 			'saveFormFieldsToMerge',
 			'updateControlPositionInfo',
-			'updateSaveButtonStatus',
+			'updateSliderFooter',
 			'closeFormWithoutConfirm',
 			'sendAiCallParsingData',
 		]),
@@ -104,7 +104,7 @@ export const Main = {
 		},
 	},
 	async mounted() {
-		this.updateSaveButtonStatus();
+		this.updateSliderFooter();
 		this.startLoading();
 		this.handleScroll = Runtime.throttle(() => {
 			this.positionChanged();
@@ -128,7 +128,7 @@ export const Main = {
 	watch: {
 		aiValuesAppliedCount: {
 			handler(newVal, oldVal) {
-				this.updateSaveButtonStatus();
+				this.updateSliderFooter();
 			},
 			immediate: true,
 		},
@@ -138,12 +138,13 @@ export const Main = {
 		Event.unbind(window, 'resize', this.resizeHandler);
 	},
 	template: `
-		<div class="bx-crm-ai-merge-fields">
+		<div class="bx-crm-ai-merge-fields" :class="{'hidden-footer': isFooterHiddenAndSaveDisabled}">
 			<div 
 				class="bx-crm-ai-merge-fields-layout" 
 				@scroll="handleScroll"
 				ref="layout"
 				:style="{'visibility': !isLoading ? 'visible' : 'hidden'}"
+				:class="{'hidden-footer': isFooterHiddenAndSaveDisabled}"
 			>
 				<EntityEditorWrapper class="bx-crm-ai-merge-fields-layout__ee_column"/>
 				<Merger class="bx-crm-ai-merge-fields-layout__aifields_column"/>

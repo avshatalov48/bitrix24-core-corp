@@ -571,7 +571,7 @@ class LeadMerger extends EntityMerger
 	}
 	protected function resolveMergeCollisions($seedID, $targID, array &$results)
 	{
-		$dbResult = \CCrmLead::GetListEx(array(), array('=ID' => $seedID), false, false, array('ORIGINATOR_ID', 'ORIGIN_ID'));
+		$dbResult = \CCrmLead::GetListEx([], ['=ID' => $seedID, 'CHECK_PERMISSIONS' => 'N'], false, false, ['ORIGINATOR_ID', 'ORIGIN_ID']);
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		if(!is_array($fields))
 		{

@@ -89,6 +89,8 @@ class Collection extends BaseTemplate
 		$this->result['TITLE'] = $title;
 		$this->result['TOTAL_APPS'] = NumberApps::get($response[Transport::METHOD_TOTAL_APPS]);
 		$this->result['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
+		$this->result['ADDITIONAL_CONTENT'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_CONTENT'] ?? '';
+		$this->result['ADDITIONAL_MARKET_ACTION'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_MARKET_ACTION'] ?? '';
 
 		global $APPLICATION;
 		$APPLICATION->SetTitle($title);

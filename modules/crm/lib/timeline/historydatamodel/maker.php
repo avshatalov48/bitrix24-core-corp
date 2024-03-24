@@ -93,6 +93,14 @@ class Maker
 		{
 			return new Presenter\SignDocumentLog($entityImplementation);
 		}
+		if ($timelineEntryType === TimelineType::SIGN_B2E_DOCUMENT)
+		{
+			return new Presenter\SignB2eDocument($entityImplementation);
+		}
+		if ($timelineEntryType === TimelineType::SIGN_B2E_DOCUMENT_LOG)
+		{
+			return new Presenter\SignB2eDocumentLog($entityImplementation);
+		}
 
 		return new Presenter($entityImplementation);
 	}

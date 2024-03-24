@@ -33,4 +33,7 @@ final class DtoItemData extends Data
 
 	public ?bool $isTerminalPayment;
 	public array $terminalPaymentSystems = [];
+
+	public array $paymentSystems = [];
+	public bool $isLinkPaymentEnabled = true;
 }

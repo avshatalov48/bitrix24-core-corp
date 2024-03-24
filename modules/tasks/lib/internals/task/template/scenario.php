@@ -106,13 +106,14 @@ class ScenarioTable extends DataManager
 		{
 			throw new ArgumentException('Invalid scenario');
 		}
-		$scenario = Application::getConnection()->getSqlHelper()->forSql($scenario);
-		$sql = "
-			INSERT IGNORE INTO ". self::getTableName() ."
-			(`TEMPLATE_ID`, `SCENARIO`)
-			VALUES
-			($templateId, '$scenario')
-		";
+		$helper =  Application::getConnection()->getSqlHelper();
+		$scenario = $helper->forSql($scenario);
+		$sql = $helper->getInsertIgnore(
+			self::getTableName(),
+			' (TEMPLATE_ID, SCENARIO) ',
+			" VALUES ({$templateId}, '$scenario')"
+		);
+
 		Application::getConnection()->query($sql);
 	}
 

@@ -1,5 +1,5 @@
 (() => {
-	const { ProfileView } = jn.require("user/profile");
+	const { ProfileView } = jn.require('user/profile');
 	class Action
 	{
 		static get types()
@@ -78,8 +78,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -94,8 +94,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -110,8 +110,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -126,8 +126,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -142,8 +142,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -158,8 +158,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -174,8 +174,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -190,8 +190,8 @@
 				}))
 					.call()
 					.then(
-						response => resolve(response),
-						response => reject(response)
+						(response) => resolve(response),
+						(response) => reject(response),
 					)
 				;
 			});
@@ -229,7 +229,7 @@
 
 		setDefaultData()
 		{
-			this.id = `tmp-id-${(new Date()).getTime()}`;
+			this.id = `tmp-id-${Date.now()}`;
 			this.name = '';
 			this.image = '';
 
@@ -271,10 +271,12 @@
 			{
 				this.id = Number(row.id);
 			}
+
 			if (has.call(row, 'formattedUserName'))
 			{
 				this.name = row.formattedUserName;
 			}
+
 			if (has.call(row, 'image'))
 			{
 				this.image = row.image;
@@ -284,6 +286,7 @@
 			{
 				this.groupId = Number(row.groupId);
 			}
+
 			if (has.call(row, 'userGroupId'))
 			{
 				this.userGroupId = Number(row.userGroupId);
@@ -293,6 +296,7 @@
 			{
 				this.role = row.role;
 			}
+
 			if (has.call(row, 'initiatedByType'))
 			{
 				this.requestInitiatedType = row.initiatedByType;
@@ -318,25 +322,18 @@
 		{
 			const widget = (parentWidget || PageManager);
 
-			if (Application.getApiVersion() >= 27)
-			{
-				widget.openWidget('list', {
-					groupStyle: true,
-					backdrop: {
-						bounceEnable: false,
-						swipeAllowed: true,
-						showOnTop: true,
-						hideNavigationBar: false,
-						horizontalSwipeAllowed: false,
-					},
-					onReady: list => ProfileView.open({userId: this.id, isBackdrop: true}, list),
-					onError: error => console.log(error),
-				});
-			}
-			else
-			{
-				widget.openPage({url: `/mobile/users/?user_id=${this.id}`});
-			}
+			widget.openWidget('list', {
+				groupStyle: true,
+				backdrop: {
+					bounceEnable: false,
+					swipeAllowed: true,
+					showOnTop: true,
+					hideNavigationBar: false,
+					horizontalSwipeAllowed: false,
+				},
+				onReady: (list) => ProfileView.open({ userId: this.id, isBackdrop: true }, list),
+				onError: (error) => console.log(error),
+			});
 		}
 
 		isOwner()

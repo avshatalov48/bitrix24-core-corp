@@ -113,6 +113,7 @@ this.BX = this.BX || {};
 	    this.$Bitrix.eventEmitter.subscribe('market:loadContentFinish', this.loadContentFinish);
 	  },
 	  methods: {
+	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['resetInstallStep']),
 	    isSelectedTag: function (tag) {
 	      return tag === this.selectedTag;
 	    },
@@ -143,6 +144,7 @@ this.BX = this.BX || {};
 	      if (this.installStep === 2 || this.installStep === 3) {
 	        clearTimeout(this.timer);
 	        this.$root.updatePage(this.$root.getInstalledUri, 'list');
+	        this.resetInstallStep();
 	      }
 	    },
 	    initBottomLoader: function () {

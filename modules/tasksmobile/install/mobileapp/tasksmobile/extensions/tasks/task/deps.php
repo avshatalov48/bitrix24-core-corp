@@ -10,5 +10,6 @@ return [
 		'toast',
 
 		'tasks:entry',
+		'tasks:enum',
 	],
 ];

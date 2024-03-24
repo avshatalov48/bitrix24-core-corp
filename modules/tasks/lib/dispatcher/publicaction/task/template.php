@@ -13,17 +13,22 @@
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Task;
 
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Error;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
+use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Control\Exception\TemplateAddException;
 use Bitrix\Tasks\Control\Exception\TemplateUpdateException;
+use Bitrix\Tasks\Control\Task;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\SocialServices\User;
@@ -31,6 +36,7 @@ use Bitrix\Tasks\Internals\Task\Template\ReplicateParamsCorrector;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Util;
 use Bitrix\Main\Localization\Loc;
+use Exception;
 
 final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 {
@@ -346,24 +352,27 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 	/**
 	 * Enable replication of the template
-	 *
+	 * @deprecated
+	 * @see \Bitrix\Tasks\Control\Template::update()
 	 * @param $id
 	 * @return array
 	 */
 	public function startReplication($id)
 	{
-		return $this->toggleReplication($id, true);
+		return [];
 	}
 
 	/**
 	 * Disable replication of the template
 	 *
+	 * @deprecated
+	 * @see \Bitrix\Tasks\Control\Template::update()
 	 * @param $id
 	 * @return array
 	 */
 	public function stopReplication($id)
 	{
-		return $this->toggleReplication($id, false);
+		return [];
 	}
 
 	private function saveTemplatePermissions($template, array $permissions)
@@ -410,51 +419,6 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		}
 
 		return $res;
-	}
-
-	private function toggleReplication($id, $way)
-	{
-		$result = array();
-
-		if(!($id = $this->checkId($id)))
-		{
-			return $result;
-		}
-		$result['ID'] = $id;
-
-		// access check inside
-		$template = new Item\Task\Template($id);
-		$template['REPLICATE'] = $way ? 'Y' : 'N';
-
-		if($way)
-		{
-			$template['TPARAM_REPLICATION_COUNT'] = 0;
-		}
-
-		$taskId = intval($template['TASK_ID']);
-
-		$saveResult = $template->save();
-		$this->errors->load($saveResult->getErrors());
-
-		if($saveResult->isSuccess())
-		{
-			// update related task
-			if($taskId)
-			{
-				$task = new Item\Task($taskId);
-				if($task->canUpdate())
-				{
-					$task['REPLICATE'] = $way ? 'Y' : 'N';
-					$saveResult = $task->save(); // todo: DO NOT remove template in case of REPLICATE falls to N
-					$this->errors->load($saveResult->getErrors()->transform(array(
-																				'CODE' => 'TASK.#CODE#',
-																				'TYPE' => Util\Error::TYPE_WARNING
-																			)));
-				}
-			}
-		}
-
-		return $result;
 	}
 
 	private function prepareReplicateParams(array &$data)

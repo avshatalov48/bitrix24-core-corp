@@ -53,6 +53,7 @@ abstract class Entity
 	protected $canEditCommonSettings = false;
 	protected $filter;
 	protected $categoryId = 0;
+	protected ?string $customSectionCode = null;
 	protected $itemLastId;
 	protected $entityEditorConfiguration;
 	protected $userFields;
@@ -161,6 +162,21 @@ abstract class Entity
 		return $this->categoryId;
 	}
 
+	public function isCustomSectionSupported(): bool
+	{
+		return false;
+	}
+
+	public function setCustomSectionCode(?string $customSectionCode): void
+	{
+		$this->customSectionCode = $customSectionCode;
+	}
+
+	public function getCustomSectionCode(): ?string
+	{
+		return $this->customSectionCode;
+	}
+
 	/**
 	 * Get string identifier of the entity.
 	 *
@@ -221,7 +237,7 @@ abstract class Entity
 	public function getGridId(): string
 	{
 		$gridId = $this->getGridIdInstance($this->getTypeId());
-		if($this->factory->isCategoriesSupported())
+		if($this->factory && $this->factory->isCategoriesSupported())
 		{
 			return $gridId->getValueForCategory($this->getCategoryId());
 		}
@@ -1040,7 +1056,8 @@ abstract class Entity
 			}
 			else
 			{
-				$res = $provider::GetList([],
+				$res = $provider::GetList(
+					[],
 					$filter,
 					[$stageFieldName, 'SUM' => $fieldSum],
 					false,
@@ -1163,6 +1180,7 @@ abstract class Entity
 		{
 			throw new Exception('Wrong entity type name');
 		}
+
 		return $listEntity->getItems($parameters);
 	}
 
@@ -1655,7 +1673,7 @@ abstract class Entity
 	}
 
 	/**
-	 * @return \CCrmLead|\CCrmDeal|\CCrmInvoice|\CCrmQuote
+	 * @return \CCrmLead|\CCrmDeal|\CCrmInvoice|\CCrmQuote|\CCrmActivity
 	 */
 	protected function getItemsProvider(): string
 	{
@@ -1866,6 +1884,10 @@ abstract class Entity
 			{
 				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.order');
 			}
+			elseif($entityTypeName === \CCrmOwnerType::ActivityName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.activity');
+			}
 			elseif($entityTypeName === \CCrmOwnerType::SmartInvoiceName)
 			{
 				$alias = $viewMode === ViewMode::MODE_DEADLINES
@@ -1887,6 +1909,11 @@ abstract class Entity
 			{
 				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.smartDocument');
 				$instance->setFactory(Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument));
+			}
+			elseif($entityTypeName === \CCrmOwnerType::SmartB2eDocumentName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.smartB2eDocument');
+				$instance->setFactory(Container::getInstance()->getFactory(\CCrmOwnerType::SmartB2eDocument));
 			}
 			else
 			{
@@ -2014,7 +2041,6 @@ abstract class Entity
 		$baseFields = $this->getBaseFields();
 		$userFields = $this->getUserFields();
 		$extraFields = $this->getExtraDisplayedFields();
-		$context = ($context ?? Field::KANBAN_CONTEXT);
 		$dateFormat = $this->dateFormatter->getDateFormat('full');
 
 		foreach ($visibleFields as $fieldId => $title)
@@ -2054,6 +2080,7 @@ abstract class Entity
 			}
 		}
 
+		$context = ($context ?? Field::KANBAN_CONTEXT);
 		foreach ($this->displayedFields as $field)
 		{
 			$field->setContext($context);
@@ -2097,7 +2124,12 @@ abstract class Entity
 		}
 
 		$factory = Container::getInstance()->getFactory($this->getTypeId());
-		if ($factory && $factory->isObserversEnabled())
+		if (!$factory)
+		{
+			return $result;
+		}
+
+		if ($factory->isObserversEnabled())
 		{
 			$observerFieldCode = \CCrmOwnerType::isUseDynamicTypeBasedApproach($this->getTypeId())
 				? Item::FIELD_NAME_OBSERVERS
@@ -2107,11 +2139,13 @@ abstract class Entity
 					->setIsMultiple(true)
 			;
 		}
-		if ($factory && $factory->isCrmTrackingEnabled())
+
+		if ($factory->isCrmTrackingEnabled())
 		{
 			$result['TRACKING_SOURCE_ID'] = Field::createByType('string', 'TRACKING_SOURCE_ID');
 		}
-		if ($factory && $factory->isClientEnabled())
+
+		if ($factory->isClientEnabled())
 		{
 			$result['CLIENT'] = (Field::createByType('string', 'CLIENT'))
 				->setTitle(Loc::getMessage('CRM_COMMON_CLIENT'))
@@ -2490,6 +2524,11 @@ abstract class Entity
 		$this->companyDataProvider = $dataProvider;
 
 		return $this;
+	}
+
+	public function prepareFilter(array &$filter, ?string $viewMode = null): void
+	{
+		// may be implemented in child class
 	}
 
 	/**

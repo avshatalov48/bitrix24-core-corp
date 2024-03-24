@@ -154,6 +154,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 		renderEntity(user = {}, showPadding = false)
 		{
 			const onClick = () => this.openEntity(user.id);
+			const testId = `${this.testId}_USER_${user.id}`;
 
 			return View(
 				{
@@ -162,9 +163,9 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						alignItems: 'center',
 						paddingBottom: showPadding ? 5 : undefined,
 					},
-					testId: `${this.testId}_USER_${user.id}`,
+					testId,
 				},
-				this.renderEntityIcon({ user, onClick }),
+				this.renderEntityIcon({ user, onClick, testId }),
 				(!this.isIconsMode() && View(
 					{
 						style: {
@@ -179,6 +180,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						numberOfLines: 1,
 						ellipsize: 'end',
 						text: user.title,
+						testId: `${testId}_TITLE`,
 					}),
 					(
 						this.shouldShowSubtitle()
@@ -189,24 +191,29 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 							numberOfLines: 1,
 							ellipsize: 'end',
 							text: user.customData.position,
+							testId: `${testId}_SUBTITLE`,
 						})
 					),
 				)),
 			);
 		}
 
-		renderEntityIcon({ user, onClick })
+		renderEntityIcon({ user, onClick, testId })
 		{
-			if (user.imageUrl || user.avatar)
-			{
-				return Image({
-					style: this.styles.userImage,
-					uri: this.getImageUrl(user.imageUrl || user.avatar),
-					onClick,
-				});
-			}
+			const hasAvatar = (
+				user.imageUrl
+				&& !user.imageUrl.includes(DEFAULT_SELECTOR_AVATAR)
+				&& !user.imageUrl.includes(DEFAULT_AVATAR)
+				&& !user.imageUrl.includes(EMPTY_AVATAR)
+			)
+				|| (
+					user.avatar
+					&& !user.avatar.includes(DEFAULT_SELECTOR_AVATAR)
+					&& !user.avatar.includes(DEFAULT_AVATAR)
+					&& !user.avatar.includes(EMPTY_AVATAR)
+				);
 
-			if (this.getConfig().useLettersForEmptyAvatar)
+			if (!hasAvatar && this.getConfig().useLettersForEmptyAvatar)
 			{
 				const { width, marginRight } = this.styles.userImage;
 
@@ -218,12 +225,14 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 					additionalStyles: {
 						marginRight,
 					},
+					testId: `${testId}_LETTERS_ICON`,
 				});
 			}
 
 			return Image({
 				style: this.styles.userImage,
-				uri: this.getImageUrl(DEFAULT_AVATAR),
+				uri: this.getImageUrl(user.imageUrl || user.avatar || DEFAULT_AVATAR),
+				testId: `${testId}_ICON`,
 				onClick,
 			});
 		}
@@ -376,6 +385,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 	module.exports = {
 		UserType: 'user',
 		UserFieldMode: Mode,
+		UserFieldClass: UserField,
 		UserField: (props) => new UserField(props),
 	};
 });

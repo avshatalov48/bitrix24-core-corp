@@ -87,6 +87,7 @@ $MESS["TASKS_MONTHLY_DAY_NUM_RD"] = "on #DAY#rd of";
 $MESS["TASKS_MONTHLY_DAY_NUM_TH"] = "on #DAY#th of";
 $MESS["TASKS_MULTITASK"] = "This task has multiple responsible persons";
 $MESS["TASKS_PAUSE_TASK"] = "Pause";
+$MESS["TASKS_REDO_TASK"] = "Return for revision";
 $MESS["TASKS_REDO_TASK_MSGVER_1"] = "Return for revision";
 $MESS["TASKS_REMOVE_DEADLINE"] = "Remove deadline";
 $MESS["TASKS_RENEW_TASK"] = "Resume";

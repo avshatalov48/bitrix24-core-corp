@@ -6,6 +6,7 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Main\Application;
 
 /**
  * For internal use only, not public API
@@ -824,7 +825,8 @@ class CTasksTools
 
 	public static function getRandFunction()
 	{
-		return ' RAND(' . rand(0, 1000000) . ') ';
+		$helper = Application::getConnection()->getSqlHelper();
+		return " {$helper->getRandomFunction()} ";
 	}
 
 

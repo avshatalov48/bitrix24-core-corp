@@ -2,7 +2,6 @@
  * @module layout/ui/entity-editor
  */
 jn.define('layout/ui/entity-editor', (require, exports, module) => {
-
 	const { EventEmitter } = require('event-emitter');
 	const { useCallback } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
@@ -33,7 +32,6 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 			/** @type {EntityEditorBaseController[]} */
 			this.controllers = [];
 
-			this.isScrollToViewEnabled = Application.getApiVersion() >= 44;
 			this.alreadyScrolledToInvalidField = false;
 
 			this.scrollViewRef = null;
@@ -49,7 +47,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 
 		switchToViewMode()
 		{
-			return Promise.all(this.getControls().map(control => control.switchToViewMode()));
+			return Promise.all(this.getControls().map((control) => control.switchToViewMode()));
 		}
 
 		componentWillReceiveProps(props)
@@ -109,7 +107,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 			}
 			else
 			{
-				this.mode = initialMode !== EntityEditorMode.intermediate ? initialMode : EntityEditorMode.view;
+				this.mode = initialMode === EntityEditorMode.intermediate ? EntityEditorMode.view : initialMode;
 			}
 
 			this.processControlModeChange(this);
@@ -209,7 +207,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 
 		scrollToInvalidField(fieldView, animated = true)
 		{
-			if (this.isScrollToViewEnabled && !this.alreadyScrolledToInvalidField)
+			if (!this.alreadyScrolledToInvalidField)
 			{
 				this.alreadyScrolledToInvalidField = true;
 
@@ -228,7 +226,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 
 		scrollToFocusedField(fieldView, animated = true)
 		{
-			if (this.isScrollToViewEnabled && this.scrollViewRef)
+			if (this.scrollViewRef)
 			{
 				const { y } = this.scrollViewRef.getPosition(fieldView);
 
@@ -325,7 +323,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 			return (
 				controllers
 					.map((controller, index) => this.createController(
-						ref => {
+						(ref) => {
 							this.controllers[index] = ref;
 						},
 						BX.prop.getString(controller, 'name', ''),
@@ -359,12 +357,12 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 
 		blurInlineFields(fieldToSkip = null)
 		{
-			return Promise.all(this.getControls().map(control => control.blurInlineFields(fieldToSkip)));
+			return Promise.all(this.getControls().map((control) => control.blurInlineFields(fieldToSkip)));
 		}
 
 		getControlById(controlId)
 		{
-			return this.getControls().find(control => control.getId() === controlId);
+			return this.getControls().find((control) => control.getId() === controlId);
 		}
 
 		/**
@@ -394,14 +392,15 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 				{
 					return control;
 				}
-				else if (
+
+				if (
 					control instanceof EntityEditorColumn
 					|| control instanceof EntityEditorSection
 				)
 				{
 					const found = this.getControlByIdRecursive(controlId, control.getControls());
 
-					return found ? found : result;
+					return found || result;
 				}
 
 				return result;
@@ -443,17 +442,17 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 
 		renderControl(ref, type, id, uid, settings)
 		{
-			settings['serviceUrl'] = this.serviceUrl;
-			settings['model'] = this.model;
-			settings['editor'] = this;
+			settings.serviceUrl = this.serviceUrl;
+			settings.model = this.model;
+			settings.editor = this;
 
 			return EntityEditorControlFactory.create({ ref, type, id, uid, settings, layout: this.layout });
 		}
 
 		createController(ref, id, type, uid, settings)
 		{
-			settings['model'] = this.model;
-			settings['editor'] = this;
+			settings.model = this.model;
+			settings.editor = this;
 
 			return EntityEditorControllerFactory.create({ ref, type, id, uid, settings });
 		}
@@ -506,7 +505,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 
 		hasActiveControl()
 		{
-			return this.getControls().find(control => control.isActive());
+			return this.getControls().find((control) => control.isActive());
 		}
 
 		isToolPanelAlwaysVisible()

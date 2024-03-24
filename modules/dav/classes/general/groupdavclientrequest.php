@@ -220,7 +220,7 @@ class CDavGroupdavClientRequest
 			foreach ($value as $value1)
 				$buffer .= sprintf("%s: %s\r\n", $key, $value1);
 		}
-		$buffer .= sprintf("Content-length: %s\r\n", (function_exists('mb_strlen')? mb_strlen($this->body, 'latin1') : mb_strlen($this->body)));
+		$buffer .= sprintf("Content-length: %s\r\n", strlen($this->body));
 		$buffer .= "\r\n";
 		$buffer .= $this->body;
 		return $buffer;

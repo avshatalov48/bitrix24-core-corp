@@ -1,8 +1,7 @@
 /**
  * @module tasks/statemanager/redux/slices/kanban-settings/src/tools
  */
-jn.define('tasks/statemanager/redux/slices/kanban-settings/src/tools', (require, exports, module) =>
-{
+jn.define('tasks/statemanager/redux/slices/kanban-settings/src/tools', (require, exports, module) => {
 	const { Views } = require('tasks/statemanager/redux/types');
 
 	const getStageIds = (stages) => {

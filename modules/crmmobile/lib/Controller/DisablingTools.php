@@ -25,24 +25,25 @@ class DisablingTools extends Controller
 	{
 		return [
 			'getSlidersCodesForDisabledStaticEntityIds' => [
-				'+prefilters' => [
-					new CloseSession(),
-				],
+				'+prefilters' => $this->getPrefilters(),
 			],
 			'getEntitySliderCodeIfDisabled' => [
-				'+prefilters' => [
-					new CloseSession(),
-				],
+				'+prefilters' => $this->getPrefilters(),
 			],
 			'getCrmSliderCodeIfDisabled' => [
-				'+prefilters' => [
-					new CloseSession(),
-				],
+				'+prefilters' => $this->getPrefilters(),
 			],
 		];
 	}
 
-	public function getSlidersCodesForDisabledStaticEntityIdsAction(): array
+	private function getPrefilters() : array
+	{
+	    return [
+			new CloseSession(),
+		];
+	}
+
+	public function getSlidersCodesForDisabledStaticEntitiesAction(): array
 	{
 		$staticEntities = [
 			\CCrmOwnerType::Lead,
@@ -56,12 +57,11 @@ class DisablingTools extends Controller
 
 		foreach ($staticEntities as $staticEntity)
 		{
-			$result[$staticEntity] = (
-				$this->toolsManager->checkEntityTypeAvailability($staticEntity)
-				? null
-				: $this->toolsManager->getSliderCodeByEntityTypeId($staticEntity)
-			);
+			$result[$staticEntity] = $this->getSliderCodeIfDisabled($staticEntity);
 		}
+
+		$result['crm'] = $this->toolsManager->checkCrmAvailability()
+			? null : $this->toolsManager::CRM_SLIDER_CODE;
 
 		return $result;
 	}
@@ -70,24 +70,16 @@ class DisablingTools extends Controller
 	{
 	    return [
 			$entityTypeId => [
-				'code' => (
-					$this->toolsManager->checkEntityTypeAvailability($entityTypeId)
-					? null
-					: $this->toolsManager->getSliderCodeByEntityTypeId($entityTypeId)
-				),
+				'code' => $this->getSliderCodeIfDisabled($entityTypeId),
 				'isExternal' => $this->toolsManager->isEntityTypeIdExternal($entityTypeId),
 			],
 		];
 	}
 
-	public function getCrmSliderCodeIfDisabledAction(): array
+	private function getSliderCodeIfDisabled(int $entityTypeId): ?string
 	{
-		$result = [
-			'crm' => $this->toolsManager->checkCrmAvailability()
-				? null
-				: $this->toolsManager::CRM_SLIDER_CODE,
-		];
-
-		return $result;
+	    return $this->toolsManager->checkEntityTypeAvailability($entityTypeId)
+			? null
+			: $this->toolsManager->getSliderCodeByEntityTypeId($entityTypeId);
 	}
 }

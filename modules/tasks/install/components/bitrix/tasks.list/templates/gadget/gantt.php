@@ -25,7 +25,7 @@ if (Array_Key_Exists("TASKS", $arResult) && Is_Array($arResult["TASKS"]))
 		?></a></b><br />
 
 		<?if ($arResult["TASK_TYPE"] == "group"):?>
-			<small><br /><?=GetMessage("INTASK_TASKASSIGNEDTO")?>: <?php echo tasksFormatNameShort($arTask["RESPONSIBLE_NAME"], $arTask["RESPONSIBLE_LAST_NAME"], $arTask["RESPONSIBLE_LOGIN"], $arTask["RESPONSIBLE_SECOND_NAME"], $arParams["NAME_TEMPLATE"])?></small>
+			<small><br /><?=\Bitrix\Main\Localization\Loc::getMessage('INTASK_TASKASSIGNEDTO_V2')?>: <?php echo tasksFormatNameShort($arTask["RESPONSIBLE_NAME"], $arTask["RESPONSIBLE_LAST_NAME"], $arTask["RESPONSIBLE_LOGIN"], $arTask["RESPONSIBLE_SECOND_NAME"], $arParams["NAME_TEMPLATE"])?></small>
 		<?endif;?>
 
 		<br clear="left"/>

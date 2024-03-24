@@ -214,7 +214,6 @@ class EntityPreset
 					)
 				);
 
-				$results = [];
 				while ($fields = $dbResult->fetch())
 				{
 					$results[$fields['ID']] = $fields['NAME'];

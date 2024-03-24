@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS b_rpa_type;
+DROP TABLE IF EXISTS b_rpa_stage;
+DROP TABLE IF EXISTS b_rpa_field;
+DROP TABLE IF EXISTS b_rpa_permission;
+DROP TABLE IF EXISTS b_rpa_stage_to_stage;
+DROP TABLE IF EXISTS b_rpa_item_history;
+DROP TABLE IF EXISTS b_rpa_item_history_fields;
+DROP TABLE IF EXISTS b_rpa_item_sort;
+DROP TABLE IF EXISTS b_rpa_timeline;

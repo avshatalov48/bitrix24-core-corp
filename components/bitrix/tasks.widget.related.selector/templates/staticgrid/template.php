@@ -14,7 +14,7 @@ $arParams =& $this->__component->arParams;
 			<tr>
 				<th></th>
 				<?foreach($arResult['COLUMNS'] as $column):?>
-					<th <?=($column['SOURCE'] == 'TITLE'? 'style="width: 35%"' : '')?>>
+					<th <?=($column['SOURCE'] === 'TITLE'? 'style="width: 35%"' : '')?>>
 						<div class="task-head-cell">
 							<span class="task-head-cell-title"><?=htmlspecialcharsbx($column['TITLE'])?></span>
 						</div>
@@ -29,12 +29,20 @@ $arParams =& $this->__component->arParams;
 					<td></td>
 					<?foreach($arResult['COLUMNS'] as $column):?>
 						<td>
-							<?if($column['SOURCE'] == 'TITLE'):?>
+							<?if($column['SOURCE'] === 'TITLE'):?>
+								<?php
+									$viewUrl = new \Bitrix\Main\Web\Uri($item["URL"]);
+									$viewUrl->addParams([
+										'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
+										'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['task_card'],
+										'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['title_click'],
+									]);
+								?>
 								<div class="task-title-info">
-									<a class="task-title-link<?=(($item['STATUS'] ?? null) == 5? ' task-title-complete' : '')?>"
-									   href="<?=htmlspecialcharsbx($item["URL"])?>"><?=htmlspecialcharsbx($item["TITLE"])?></a>
+									<a class="task-title-link<?=((int)($item['STATUS'] ?? null) === 5? ' task-title-complete' : '')?>"
+									   href="<?=htmlspecialcharsbx($viewUrl->getUri())?>"><?=htmlspecialcharsbx($item["TITLE"])?></a>
 								</div>
-							<?elseif($column['SOURCE'] == 'RESPONSIBLE_ID'):?>
+							<?elseif($column['SOURCE'] === 'RESPONSIBLE_ID'):?>
 								<a href="<?=htmlspecialcharsbx($item["RESPONSIBLE_URL"])?>" class="task-responsible-link" target="_top"><?=htmlspecialcharsbx($item["RESPONSIBLE_FORMATTED_NAME"])?></a>
 							<?else:?>
 								<?=htmlspecialcharsbx($item[$column['SOURCE']])?>

@@ -76,7 +76,7 @@
 							this.showLoading();
 							this.request.callNext();
 						}
-						else if (Application.getApiVersion() >= 41)
+						else
 						{
 							const data = {
 								siteId: this.siteId,
@@ -89,13 +89,6 @@
 							};
 
 							BX.postComponentEvent('projectbackground::project::action', [data], 'background');
-						}
-						else
-						{
-							PageManager.openPage({
-								cache: false,
-								url: this.newsPathTemplate.replace('#group_id#', item.id),
-							});
 						}
 					}
 					else if (event === 'onRefresh')

@@ -56,23 +56,32 @@ class CBIConnectorSqlBuilder extends CSQLWhere
 	{
 		$result = [];
 
-		foreach ($this->c_joins as $key => $counter)
+		foreach ($this->c_joins as $fieldName => $counter)
 		{
 			if ($counter > 0)
 			{
-				$TABLE_ALIAS = $this->fields[$key]['TABLE_ALIAS'];
+				$TABLE_ALIAS = $this->fields[$fieldName]['TABLE_ALIAS'];
 				if (isset($this->l_joins[$TABLE_ALIAS]) && $this->l_joins[$TABLE_ALIAS])
 				{
-					if (isset($this->fields[$key]['LEFT_JOIN']))
-					{
-						$result[$TABLE_ALIAS] = $this->fields[$key]['LEFT_JOIN'];
-					}
+					$resultJoin = $this->fields[$fieldName]['LEFT_JOIN'] ?? false;
 				}
 				else
 				{
-					if (isset($this->fields[$key]['JOIN']))
+					$resultJoin = $this->fields[$fieldName]['JOIN'] ?? false;
+				}
+
+				if ($resultJoin)
+				{
+					if (is_array($resultJoin))
 					{
-						$result[$TABLE_ALIAS] = $this->fields[$key]['JOIN'];
+						foreach ($resultJoin as $join)
+						{
+							$result[$join] = $join;
+						}
+					}
+					else
+					{
+						$result[$resultJoin] = $resultJoin;
 					}
 				}
 			}

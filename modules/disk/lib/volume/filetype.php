@@ -63,6 +63,11 @@ class FileType extends Volume\Base
 
 		$subGroupSql = Volume\QueryHelper::prepareGroupBy($this->getGroupBy());
 
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
+		}
 
 		$queryTypeFileSql = '';
 		$typeFileList = TypeFile::getListOfValues();
@@ -101,7 +106,7 @@ class FileType extends Volume\Base
 		 * @param string $subGroupSql
 		 * @return void
 		 */
-		$buildDiskSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql)
+		$buildDiskSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql, $prefSql)
 		{
 			$selectSql .= "
 				, CNT_FILES.FILE_SIZE as DISK_SIZE
@@ -137,7 +142,7 @@ class FileType extends Volume\Base
 			$fromSql .= "
 				(
 					SELECT
-						SUM(IFNULL(ver.SIZE, files.SIZE)) AS FILE_SIZE,
+						COALESCE(SUM(COALESCE(ver.SIZE, files.SIZE)), 0) AS FILE_SIZE,
 						COUNT(DISTINCT files.ID) AS FILE_COUNT,
 						COUNT(DISTINCT ver.ID) AS VERSION_COUNT,
 						{$queryTypeFileSql} as TYPE_FILE,
@@ -156,7 +161,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FILES
 			";
 		};
@@ -171,7 +176,7 @@ class FileType extends Volume\Base
 		 * @param string $subGroupSql
 		 * @return void
 		 */
-		$buildPreviewSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql)
+		$buildPreviewSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql, $prefSql)
 		{
 			$selectSql .= "
 				, CNT_PREVIEW.PREVIEW_SIZE AS PREVIEW_SIZE
@@ -187,7 +192,7 @@ class FileType extends Volume\Base
 				LEFT JOIN 
 				(
 					SELECT
-						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
+						SUM(COALESCE(preview_file.FILE_SIZE, 0)) + SUM(COALESCE(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
 						{$queryTypeFileSql} as TYPE_FILE,
 						files.STORAGE_ID AS STORAGE_ID
@@ -205,7 +210,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_PREVIEW
 					ON CNT_PREVIEW.TYPE_FILE = CNT_FILES.TYPE_FILE 
 					AND CNT_PREVIEW.STORAGE_ID = CNT_FILES.STORAGE_ID 
@@ -223,10 +228,10 @@ class FileType extends Volume\Base
 		 * @param string $subGroupSql
 		 * @return void
 		 */
-		$buildAttachedSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql)
+		$buildAttachedSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql, $prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
+				, COALESCE(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
 			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
@@ -253,7 +258,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_ATTACH
 					ON CNT_ATTACH.TYPE_FILE = CNT_FILES.TYPE_FILE 
 					AND CNT_ATTACH.STORAGE_ID = CNT_FILES.STORAGE_ID 
@@ -270,10 +275,10 @@ class FileType extends Volume\Base
 		 * @param string $subGroupSql
 		 * @return void
 		 */
-		$buildExternalSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql)
+		$buildExternalSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql, $prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
+				, COALESCE(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
 			$columns = array_merge($columns, [
 				'LINK_COUNT',
@@ -301,7 +306,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_LINK
 					ON CNT_LINK.TYPE_FILE = CNT_FILES.TYPE_FILE
 					AND CNT_LINK.STORAGE_ID = CNT_FILES.STORAGE_ID
@@ -318,10 +323,10 @@ class FileType extends Volume\Base
 		 * @param string $subGroupSql
 		 * @return void
 		 */
-		$buildSharingSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql)
+		$buildSharingSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql, $prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
+				, COALESCE(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
 			$columns = array_merge($columns, [
 				'SHARING_COUNT',
@@ -348,7 +353,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_SHARING
 					ON CNT_SHARING.TYPE_FILE = CNT_FILES.TYPE_FILE
 					AND CNT_SHARING.STORAGE_ID = CNT_FILES.STORAGE_ID
@@ -365,11 +370,11 @@ class FileType extends Volume\Base
 		 * @param string $subGroupSql
 		 * @return void
 		 */
-		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql)
+		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($queryTypeFileSql, $prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
 			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
@@ -402,7 +407,7 @@ class FileType extends Volume\Base
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
-								ORDER BY NULL
+								{$prefSql}
 							) head ON head.OBJECT_ID = files.ID
 							LEFT JOIN b_disk_attached_object  attached
 								ON attached.OBJECT_ID  = ver.OBJECT_ID
@@ -412,7 +417,7 @@ class FileType extends Volume\Base
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND COALESCE(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
@@ -425,12 +430,12 @@ class FileType extends Volume\Base
 							{$queryTypeFileSql},
 							files.STORAGE_ID
 							{$subGroupSql}
-						ORDER BY NULL
+						{$prefSql}
 					) src
 					GROUP BY
 						src.TYPE_FILE,
 						src.STORAGE_ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FREE
 					ON CNT_FREE.TYPE_FILE = CNT_FILES.TYPE_FILE
 					AND CNT_FREE.STORAGE_ID = CNT_FILES.STORAGE_ID
@@ -489,8 +494,8 @@ class FileType extends Volume\Base
 
 		VolumeTable::createTemporally();
 		VolumeTable::clearTemporally();
-		$tableName = VolumeTable::getTableName();
-		$temporallyTableName = VolumeTable::getTemporallyName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
+		$temporallyTableName = $sqlHelper->quote(VolumeTable::getTemporallyName());
 
 		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
 		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
@@ -501,27 +506,28 @@ class FileType extends Volume\Base
 		{
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
 			$sql = "
-				UPDATE 
-					{$tableName} destinationTbl, 
-					({$temporallyDataSource}) sourceQuery 
-				SET {$columnList} 
-				WHERE 
-					destinationTbl.INDICATOR_TYPE = '{$indicatorType}'
-					AND destinationTbl.OWNER_ID = {$ownerId}
+				destinationTbl.INDICATOR_TYPE = '{$indicatorType}'
+				AND destinationTbl.OWNER_ID = {$ownerId}
 			";
-
 			if ($this->getFilterValue('STORAGE_ID'))
 			{
 				$sql .= ' AND destinationTbl.STORAGE_ID = sourceQuery.STORAGE_ID ';
 			}
 			if ($this->getFilterValue('FOLDER_ID'))
 			{
-				$sql .= ' AND IFNULL(destinationTbl.FOLDER_ID, -1) = IFNULL(sourceQuery.FOLDER_ID, -1) ';
+				$sql .= ' AND COALESCE(destinationTbl.FOLDER_ID, -1) = COALESCE(sourceQuery.FOLDER_ID, -1) ';
 			}
 			if ($this->getFilterValue('PARENT_ID'))
 			{
-				$sql .= ' AND IFNULL(destinationTbl.PARENT_ID, -1) = IFNULL(sourceQuery.PARENT_ID, -1) ';
+				$sql .= ' AND COALESCE(destinationTbl.PARENT_ID, -1) = COALESCE(sourceQuery.PARENT_ID, -1) ';
 			}
+
+			$sql = $sqlHelper->prepareCorrelatedUpdate(
+				$tableName, 'destinationTbl',
+				$columnList,
+				"({$temporallyDataSource}) sourceQuery",
+				$sql
+			);
 
 			$connection->queryExecute($sql);
 		}
@@ -554,6 +560,7 @@ class FileType extends Volume\Base
 				new Entity\ExpressionField('PREVIEW_COUNT', 'SUM(PREVIEW_COUNT)'),
 				new Entity\ExpressionField('VERSION_COUNT', 'SUM(VERSION_COUNT)'),
 				new Entity\ExpressionField('PERCENT', 'ROUND(SUM(PERCENT), 1)'),
+				new Entity\ExpressionField('IS_TYPE_FILE', 'CASE WHEN TYPE_FILE NOT NULL THEN 1 ELSE 0 END'),
 			],
 			'select' => [
 				'DISK_SIZE',
@@ -570,7 +577,8 @@ class FileType extends Volume\Base
 				[
 					'=INDICATOR_TYPE' => static::className(),
 					'=OWNER_ID' => $this->getOwner(),
-					'!TYPE_FILE' => null,
+					//'!=TYPE_FILE' => null,
+					'=IS_TYPE_FILE' => 1,
 					'=STORAGE_ID' => null,
 					'=FOLDER_ID' => null,
 				],

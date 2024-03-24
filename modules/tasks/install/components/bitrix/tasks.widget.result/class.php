@@ -30,6 +30,7 @@ use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\ResultAccessController;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Action\Filter\BooleanFilter;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Internals\Marketing\OneOff\ResultTutorial;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
@@ -149,6 +150,11 @@ class TasksWidgetResult extends CBitrixComponent implements Errorable, Controlle
 		}
 
 		$result = (new ResultManager($this->userId))->createFromComment($commentId, false);
+		if ($result)
+		{
+			Analytics::getInstance($this->userId)->onStatusSummaryAdd(Analytics::ELEMENT['comment_context_menu']);
+		}
+
 		return null;
 	}
 

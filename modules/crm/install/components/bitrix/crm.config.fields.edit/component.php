@@ -146,7 +146,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 			'SORT' => $_POST['SORT'],
 			'MULTIPLE' => ($_POST['MULTIPLE'] ?? null) === 'Y' ? 'Y' : 'N',
-			'MANDATORY' => $_POST['MANDATORY'] === 'Y' ? 'Y' : 'N',
+			'MANDATORY' => ($_POST['MANDATORY'] ?? 'N') === 'Y' ? 'Y' : 'N',
 			'SHOW_FILTER' => $_POST['SHOW_FILTER'] === 'Y' ? 'E' : 'N', // E - 'By mask' is default
 			'SHOW_IN_LIST' => $_POST['SHOW_IN_LIST'] === 'Y' ? 'Y' : 'N'
 		);
@@ -316,10 +316,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						}
 					}
 
-					foreach($arField['LIST'] as $i => $arEnum)
-						if($arEnum['DEF'] !== 'Y')
+					foreach ($arField['LIST'] as $i => $arEnum)
+					{
+						if (empty($arEnum['DEF']) || $arEnum['DEF'] !== 'Y')
+						{
 							$arField['LIST'][$i]['DEF'] = 'N';
-
+						}
+					}
 				}
 
 
@@ -502,7 +505,7 @@ if($bVarsFromForm)
 	$arResult['FIELD']['MANDATORY'] = $_POST['MANDATORY'];
 	$arResult['FIELD']['MULTIPLE'] = $_POST['MULTIPLE'];
 	$arResult['FIELD']['USER_TYPE_ID'] = $_POST['USER_TYPE_ID'];
-	$arResult['FIELD']['DEFAULT_VALUE'] = $_POST['DEFAULT_VALUE'];
+	$arResult['FIELD']['DEFAULT_VALUE'] = $_POST['DEFAULT_VALUE'] ?? null;
 	$arResult['FIELD']['SHOW_IN_LIST'] = $_POST['SHOW_IN_LIST'] == 'Y' ? 'Y' : 'N';
 	if($_POST['USER_TYPE_ID'] === 'file')
 	{
@@ -510,11 +513,11 @@ if($bVarsFromForm)
 		$arResult['FIELD']['SHOW_FILTER'] = 'N';
 	}
 
-	if($arResult['FIELD']['USER_TYPE_ID'] == 'enumeration')
+	if ($arResult['FIELD']['USER_TYPE_ID'] === 'enumeration')
 	{
-		$arResult['FIELD']['E_DISPLAY'] = $_POST['E_DISPLAY'];
-		$arResult['FIELD']['E_LIST_HEIGHT'] = $_POST['E_LIST_HEIGHT'];
-		$arResult['FIELD']['E_CAPTION_NO_VALUE'] = $_POST['E_CAPTION_NO_VALUE'];
+		$arResult['FIELD']['E_DISPLAY'] = $_POST['E_DISPLAY'] ?? null;
+		$arResult['FIELD']['E_LIST_HEIGHT'] = $_POST['E_LIST_HEIGHT'] ?? null;
+		$arResult['FIELD']['E_CAPTION_NO_VALUE'] = $_POST['E_CAPTION_NO_VALUE'] ?? null;
 	}
 
 	if ($_POST['USER_TYPE_ID'] == 'string')
@@ -635,7 +638,7 @@ elseif($arResult['FIELD_ID'])
 		break;
 
 		case 'iblock_section':
-			$arResult['FIELD']['IB_IBLOCK_TYPE_ID'] = $arResult['FIELD']['SETTINGS']['IBLOCK_TYPE_ID'];
+			$arResult['FIELD']['IB_IBLOCK_TYPE_ID'] = $arResult['FIELD']['SETTINGS']['IBLOCK_TYPE_ID'] ?? null;
 			$arResult['FIELD']['IB_IBLOCK_ID'] = $arResult['FIELD']['SETTINGS']['IBLOCK_ID'];
 			$arResult['FIELD']['IB_DEFAULT_VALUE'] = $arResult['FIELD']['SETTINGS']['DEFAULT_VALUE'];
 			$arResult['FIELD']['IB_DISPLAY'] = $arResult['FIELD']['SETTINGS']['DISPLAY'];
@@ -644,7 +647,7 @@ elseif($arResult['FIELD_ID'])
 		break;
 
 		case 'iblock_element':
-			$arResult['FIELD']['IB_IBLOCK_TYPE_ID'] = $arResult['FIELD']['SETTINGS']['IBLOCK_TYPE_ID'];
+			$arResult['FIELD']['IB_IBLOCK_TYPE_ID'] = $arResult['FIELD']['SETTINGS']['IBLOCK_TYPE_ID'] ?? null;
 			$arResult['FIELD']['IB_IBLOCK_ID'] = $arResult['FIELD']['SETTINGS']['IBLOCK_ID'];
 			$arResult['FIELD']['IB_DEFAULT_VALUE'] = $arResult['FIELD']['SETTINGS']['DEFAULT_VALUE'];
 			$arResult['FIELD']['IB_DISPLAY'] = $arResult['FIELD']['SETTINGS']['DISPLAY'];

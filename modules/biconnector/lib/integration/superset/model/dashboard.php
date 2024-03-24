@@ -2,7 +2,9 @@
 
 namespace Bitrix\BIConnector\Integration\Superset\Model;
 
+use Bitrix\BIConnector\Controller\Superset;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Dto;
+use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 
 final class Dashboard

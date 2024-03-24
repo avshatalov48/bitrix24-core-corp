@@ -8,13 +8,14 @@ use CRestUtil;
 
 class Toolbar
 {
-	public static function getInfo(): array
+	public static function getInfo($marketAction): array
 	{
 		$result = [
 			'CATEGORIES' => Categories::forceGet(),
 			'FAV_NUMBERS' => AppFavoritesTable::getUserFavoritesCount(),
 			'MENU_INFO' => Menu::getList(),
 			'MARKET_SLIDER' => Status::getSlider(),
+			'MARKET_ACTION' => $marketAction,
 		];
 
 		if (CRestUtil::isAdmin()) {

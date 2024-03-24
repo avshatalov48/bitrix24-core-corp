@@ -1,13 +1,14 @@
 function concatFilesBefore(options)
 {
 	const fs = require('fs');
+	const path = require('path');
 	return {
 		name: 'concatFilesBefore',
 		generateBundle(file, bundle, isWrite)
 		{
 			if (!isWrite || !bundle['app.bundle.js']) return;
 			bundle['app.bundle.js'].code = "(function(){\n\n"
-				+ options.input.reduce((s, fileName) => s + fs.readFileSync(fileName) + "\n\n\n", '')
+				+ options.input.reduce((s, fileName) => s + fs.readFileSync(path.resolve(__dirname, fileName)) + "\n\n\n", '')
 				+ bundle['app.bundle.js'].code
 				+ "\n\n})();"
 			;

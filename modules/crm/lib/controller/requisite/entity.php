@@ -13,18 +13,47 @@ class Entity extends Controller
 
 		$requisiteEntity = new EntityRequisite();
 		$countryId = (int)$requisiteEntity->getCountryIdByPresetId((int)$presetId);
-		$type = ($countryId ? ClientResolver::getPropertyTypeByCountry($countryId) : []);
-		$typeId = empty($type) ? null : (string)$type['VALUE'];
+
+		$typeId = '';
+		$isTypeIdSet = false;
+		if (
+			isset($options['typeId'])
+			&& is_string($options['typeId'])
+			&& $options['typeId'] !== ''
+		)
+		{
+			$allowedTypesMap = ClientResolver::getAllowedTypesMap();
+			if (
+				isset($allowedTypesMap[$countryId])
+				&& is_array($allowedTypesMap[$countryId])
+				&& in_array($options['typeId'], $allowedTypesMap[$countryId], true)
+			)
+			{
+				$typeId = $options['typeId'];
+				$isTypeIdSet = true;
+			}
+		}
+
+		if (!$isTypeIdSet)
+		{
+			$type = ($countryId ? ClientResolver::getPropertyTypeByCountry($countryId) : []);
+			$typeId = empty($type) ? null : (string)$type['VALUE'];
+		}
 
 		$preparedSearchQuery = "";
 		if ($typeId == ClientResolver::PROP_ITIN && preg_match('/[0-9]{10,12}/', $searchQuery, $matches))
 		{
 			$preparedSearchQuery = $matches[0];
 		}
-		if ($typeId == ClientResolver::PROP_SRO && preg_match('/[0-9]{8}/', $searchQuery, $matches))
+		elseif ($typeId == ClientResolver::PROP_BIC && preg_match('/[0-9]{9}/', $searchQuery, $matches))
 		{
 			$preparedSearchQuery = $matches[0];
 		}
+		elseif ($typeId == ClientResolver::PROP_SRO && preg_match('/[0-9]{8}/', $searchQuery, $matches))
+		{
+			$preparedSearchQuery = $matches[0];
+		}
+
 		if ($preparedSearchQuery == '')
 		{
 			return [

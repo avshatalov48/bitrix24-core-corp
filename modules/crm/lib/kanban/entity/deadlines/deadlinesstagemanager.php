@@ -5,11 +5,9 @@ namespace Bitrix\Crm\Kanban\Entity\Deadlines;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Item\Quote as QuoteItem;
 use Bitrix\Crm\Kanban\Entity\Deadlines\Stagefilters\StageFilter;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Crm\Kanban\Entity\Deadlines\Stagefilters;
 
 class DeadlinesStageManager
 {
@@ -20,6 +18,7 @@ class DeadlinesStageManager
 	public const STAGE_THIS_WEEK = 'THIS_WEEK';
 	public const STAGE_NEXT_WEEK = 'NEXT_WEEK';
 	public const STAGE_LATER = 'LATER';
+	public const STAGE_COMPLETED = 'COMPLETED';
 
 	private DatePeriods $datePeriods;
 

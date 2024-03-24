@@ -882,7 +882,7 @@ abstract class CDavExchangeClient
 							break;
 
 						$body1 .= $d;
-						$lb = $chunkSize - ((function_exists('mb_strlen')? mb_strlen($body1, 'latin1') : mb_strlen($body1)));
+						$lb = $chunkSize - strlen($body1);
 					}
 
 					$body .= $body1;
@@ -905,7 +905,7 @@ abstract class CDavExchangeClient
 					break;
 
 				$body .= $d;
-				$lb = $contentLength - ((function_exists('mb_strlen')? mb_strlen($body, 'latin1') : mb_strlen($body)));
+				$lb = $contentLength - strlen($body);
 			}
 		}
 		else

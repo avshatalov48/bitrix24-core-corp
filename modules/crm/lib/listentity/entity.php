@@ -44,6 +44,10 @@ abstract class Entity
 			{
 				$instance = ServiceLocator::getInstance()->get('crm.listEntity.entity.order');
 			}
+			elseif($entityTypeName === \CCrmOwnerType::ActivityName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.listEntity.entity.activity');
+			}
 			elseif($entityTypeName === \CCrmOwnerType::SmartInvoiceName)
 			{
 				$factory = Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
@@ -89,7 +93,7 @@ abstract class Entity
 	 */
 	public function getItems(array $parameters): \CDBResult
 	{
-		/** @var \CCrmLead|\CCrmDeal|\CCrmInvoice|\CCrmQuote|\CCrmContact|\CCrmCompany $provider */
+		/** @var \CCrmLead|\CCrmDeal|\CCrmInvoice|\CCrmQuote|\CCrmContact|\CCrmCompany|\CCrmActivity $provider */
 		$provider = $this->getItemsProvider();
 		$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
 

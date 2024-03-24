@@ -99,6 +99,11 @@ this.BX = this.BX || {};
 	      return null;
 	    }
 	  }, {
+	    key: "openTypeHelpPage",
+	    value: function openTypeHelpPage() {
+	      Router.openHelper(null, 13315798);
+	    }
+	  }, {
 	    key: "showFeatureSlider",
 	    value: function showFeatureSlider(event, item) {
 	      Router.Instance.closeSettingsMenu(event, item);

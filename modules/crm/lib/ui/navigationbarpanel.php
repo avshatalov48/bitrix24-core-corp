@@ -5,6 +5,7 @@ namespace Bitrix\Crm\UI;
 use Bitrix\Crm\Automation\Helper;
 use Bitrix\Crm\Component\EntityList\ActivityFieldRestrictionManager;
 use Bitrix\Crm\Integration\Calendar;
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Localization\Loc;
@@ -19,13 +20,15 @@ class NavigationBarPanel
 	public const ID_CALENDAR = 'calendar';
 	public const ID_ACTIVITY = 'activity';
 	public const ID_DEADLINES = 'deadlines';
+	public const ID_REPORTS = 'reports';
 
 	private const LANG_MAP = [
 		self::ID_KANBAN => 'CRM_COMMON_KANBAN',
 		self::ID_LIST => 'CRM_COMMON_LIST',
 		self::ID_ACTIVITY => 'CRM_COMMON_ACTIVITY',
 		self::ID_CALENDAR => 'CRM_COMMON_CALENDAR',
-		self::ID_DEADLINES => 'CRM_COMMON_DEADLINES'
+		self::ID_DEADLINES => 'CRM_COMMON_DEADLINES',
+		self::ID_REPORTS => 'CRM_COMMON_REPORTS',
 	];
 	private const ID_BINDING_CATEGORY = 'crm.navigation';
 	private const ID_BINDING_NAME = 'index';
@@ -49,6 +52,8 @@ class NavigationBarPanel
 	 */
 	private ?int $categoryId;
 
+	private ?string $customSectionCode = null;
+
 	/**
 	 * Navigation bar items.
 	 *
@@ -69,6 +74,7 @@ class NavigationBarPanel
 		CCrmOwnerType::Contact,
 		CCrmOwnerType::Company,
 		CCrmOwnerType::Invoice,
+		CCrmOwnerType::Activity,
 		CCrmOwnerType::Quote,
 		CCrmOwnerType::Order,
 	];
@@ -80,6 +86,13 @@ class NavigationBarPanel
 		$this->entityTypeId = $entityTypeId;
 		$this->categoryId = $categoryId === -1 ? null : $categoryId;
 		$this->router = Container::getInstance()->getRouter();
+	}
+
+	public function setCustomSectionCode(?string $customSectionCode): self
+	{
+		$this->customSectionCode = $customSectionCode;
+
+		return $this;
 	}
 
 	public function setItems(array $ids, string $activeId = ''): self
@@ -145,7 +158,8 @@ class NavigationBarPanel
 			self::ID_LIST,
 			self::ID_ACTIVITY,
 			self::ID_CALENDAR,
-			self::ID_DEADLINES
+			self::ID_DEADLINES,
+			self::ID_REPORTS,
 		];
 
 		if ($withAutomation)
@@ -153,10 +167,7 @@ class NavigationBarPanel
 			$names[] = self::ID_AUTOMATION;
 		}
 
-		if (
-			\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') !== 'Y'
-			|| !\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-		)
+		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') !== 'Y')
 		{
 			unset($names[array_search(self::ID_ACTIVITY, $names)]);
 		}
@@ -198,20 +209,37 @@ class NavigationBarPanel
 
 	private function getUrl(string $id): ?Uri
 	{
-		switch($id)
+		if (IntranetManager::isCustomSectionExists($this->customSectionCode))
 		{
-			case self::ID_KANBAN:
-				return $this->router->getKanbanUrl($this->entityTypeId, $this->categoryId);
-			case self::ID_ACTIVITY:
-				return $this->router->getActivityUrl($this->entityTypeId, $this->categoryId);
-			case self::ID_LIST:
-				return $this->router->getItemListUrl($this->entityTypeId, $this->categoryId);
-			case self::ID_CALENDAR:
-				return $this->router->getCalendarUrl($this->entityTypeId, $this->categoryId);
-			case self::ID_DEADLINES:
-				return $this->router->getDeadlinesUrl($this->entityTypeId, $this->categoryId);
+			return $this->getUrlInCustomSection($id);
 		}
 
-		return null;
+		return match ($id){
+			self::ID_KANBAN => $this->router->getKanbanUrl($this->entityTypeId, $this->categoryId),
+			self::ID_ACTIVITY => $this->router->getActivityUrl($this->entityTypeId, $this->categoryId),
+			self::ID_LIST => $this->router->getItemListUrl($this->entityTypeId, $this->categoryId),
+			self::ID_CALENDAR => $this->router->getCalendarUrl($this->entityTypeId, $this->categoryId),
+			self::ID_DEADLINES => $this->router->getDeadlinesUrl($this->entityTypeId, $this->categoryId),
+			self::ID_REPORTS => $this->router->getReportsUrl($this->entityTypeId, $this->categoryId),
+			default => null,
+		};
+	}
+
+	private function getUrlInCustomSection(string $id): ?Uri
+	{
+		return match($id)
+		{
+			self::ID_KANBAN => $this->router->getKanbanUrlIntoCustomSection(
+				$this->customSectionCode,
+				$this->entityTypeId,
+				$this->categoryId
+			),
+			self::ID_LIST => $this->router->getItemListUrlIntoCustomSection(
+				$this->customSectionCode,
+				$this->entityTypeId,
+				$this->categoryId
+			),
+			default => null,
+		};
 	}
 }

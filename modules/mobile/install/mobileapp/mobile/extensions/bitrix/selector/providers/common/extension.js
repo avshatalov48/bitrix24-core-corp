@@ -11,6 +11,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 	const { BasePickerCache } = require('selector/utils/picker-cache');
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { Color } = require('selector/providers/common/src/entity-color');
+	const { Loc } = require('loc');
 
 	const specialChars = '!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}';
 	const specialCharsRegExp = new RegExp(`[${specialChars}]`, 'g');
@@ -474,7 +475,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 		{
 			return {
 				id: 'loading',
-				title: BX.message('PROVIDER_COMMON_LOADING_ITEM2'),
+				title: Loc.getMessage('PROVIDER_COMMON_LOADING_ITEM2'),
 				type: 'loading',
 				unselectable: true,
 				sectionCode: 'common',
@@ -706,7 +707,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				case 'project':
 				{
 					item.subtitle = entity.title;
-					item.title = BX.message('PROVIDER_COMMON_PROJECT');
+					item.title = Loc.getMessage('PROVIDER_COMMON_PROJECT');
 					item.shortTitle = entity.title;
 					item.name = entity.title;
 					item.styles.title.font = {
@@ -733,7 +734,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					item.subtitle = entity.title;
 					item.shortTitle = entity.title;
 					item.name = entity.title;
-					item.title = BX.message('PROVIDER_COMMON_DEPARTMENT');
+					item.title = Loc.getMessage('PROVIDER_COMMON_DEPARTMENT');
 					item.styles.title.font = {
 						size: 12,
 						color: AppTheme.colors.base4,

@@ -10,6 +10,7 @@ return [
 		'utils/array',
 		'utils/object',
 		'utils/function',
+		'loc',
 	],
 	'bundle' => [
 		'./src/entity-color',

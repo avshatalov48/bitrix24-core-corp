@@ -25,11 +25,6 @@ Class ldap extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = LDAP_VERSION;
-			$this->MODULE_VERSION_DATE = LDAP_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = Loc::getMessage("LDAP_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = Loc::getMessage("LDAP_MODULE_DESC");
@@ -48,14 +43,16 @@ Class ldap extends CModule
 	function InstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = array();
+
 		if ($this->CheckLDAP())
 		{
 			$errors = false;
 			
-			if(!$DB->Query("SELECT 'x' FROM b_ldap_server WHERE 1=0", true))
+			if (!$DB->TableExists('b_ldap_server'))
 			{
-				$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/db/mysql/install.sql");
+				$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/ldap/install/db/' . $connection->getType() . '/install.sql');
 			}
 			
 			if (is_array($errors))
@@ -84,10 +81,11 @@ Class ldap extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 		if($arParams['savedata']!="Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/db/mysql/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/db/".$connection->getType()."/uninstall.sql");
 			if (!is_array($errors))
 				COption::RemoveOption('ldap');
 		}

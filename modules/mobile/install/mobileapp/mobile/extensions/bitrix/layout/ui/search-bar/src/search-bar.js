@@ -99,10 +99,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 
 			layout.search.on(ENTER_PRESSED_EVENT, () => this.onDone());
 
-			if (Application.getApiVersion() > 44)
-			{
-				layout.search.setReturnKey('done');
-			}
+			layout.search.setReturnKey('done');
 		}
 
 		// endregion
@@ -505,24 +502,21 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 						this.wrapperRef = ref;
 					},
 				},
-				visible && View(
-					{},
-					ScrollView(
+				visible && ScrollView(
+					{
+						horizontal: true,
+						style: styles.presetsScrollView,
+					},
+					View(
 						{
-							horizontal: true,
-							style: styles.presetsScrollView,
+							testId: 'search-presets-list',
+							style: styles.presetsWrapper,
 						},
-						View(
-							{
-								testId: 'search-presets-list',
-								style: styles.presetsWrapper,
-							},
-							this.renderLoader(),
-							...this.renderDefaultPreset(presets),
-							...this.renderCounters(),
-							...this.renderPresets(presets),
-							this.renderMoreButton(),
-						),
+						this.renderLoader(),
+						...this.renderDefaultPreset(presets),
+						...this.renderCounters(),
+						...this.renderPresets(presets),
+						this.renderMoreButton(),
 					),
 				),
 			);
@@ -642,6 +636,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 				height: isVisible ? 44 : 0,
 				width: '100%',
 				backgroundColor: AppTheme.colors.bgNavigation,
+				opacity: 1,
 			};
 		},
 		presetsScrollView: {

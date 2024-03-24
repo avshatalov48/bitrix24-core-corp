@@ -69,12 +69,11 @@
 
 	const RpcMethod = {
 		Publish: "publish",
-		Subscribe: "subscribe",
 		GetUsersLastSeen: "getUsersLastSeen",
-	}
-
-	const InternalChannel = {
-		StatusChange: "internal:user_status",
+		Ping: "ping",
+		ListChannels: "listChannels",
+		SubscribeStatusChange: "subscribeStatusChange",
+		UnsubscribeStatusChange: "unsubscribeStatusChange",
 	}
 
 	/**
@@ -521,9 +520,13 @@
 
 			this.onPingTimeoutHandler = this.onPingTimeout.bind(this);
 
+			this.userStatusSubscriptions = {}; // userId => subscriptionsCount
+
 			this.internalRpcHandlers = {
 				'getDebugInfo': () => this.getDebugInfo(),
 				'getUsersLastSeen': ({userList}) => this.getUsersLastSeen(userList),
+				'subscribeUserStatus': ({userId}) => this.onRpcSubscribeUserStatus(userId),
+				'unsubscribeUserStatus': ({userId}) => this.onRpcUnsubscribeUserStatus(userId),
 			}
 
 			if (config)
@@ -1291,16 +1294,6 @@
 			}
 		}
 
-		subscribeUserStatusChange()
-		{
-			return this.executeSubscribeCommand([InternalChannel.StatusChange]);
-		}
-
-		executeSubscribeCommand(channelList)
-		{
-			return this.jsonRpcAdapter.executeOutgoingRpcCommand(RpcMethod.Subscribe, {channelList});
-		}
-
 		/**
 		 * Returns "last seen" time in seconds for the users. Result format: Object{userId: int}
 		 * If the user is currently connected - will return 0.
@@ -1346,6 +1339,34 @@
 				})
 			})
 		};
+
+		onRpcSubscribeUserStatus(userId)
+		{
+			userId = Number(userId);
+			if (this.userStatusSubscriptions[userId] > 0)
+			{
+				this.userStatusSubscriptions[userId]++;
+				return Promise.resolve(null);
+			}
+			this.userStatusSubscriptions[userId] = 1;
+
+			return this.jsonRpcAdapter.executeOutgoingRpcCommand(RpcMethod.SubscribeStatusChange, {userId})
+		}
+
+		onRpcUnsubscribeUserStatus(userId)
+		{
+			if (this.userStatusSubscriptions[userId] > 0)
+			{
+				this.userStatusSubscriptions[userId]--;
+
+				if (this.userStatusSubscriptions[userId] === 0)
+				{
+					return this.jsonRpcAdapter.executeOutgoingRpcCommand(RpcMethod.UnsubscribeStatusChange, {userId})
+				}
+			}
+
+			return Promise.resolve(null);
+		}
 
 		encodeMessageBatch(messageBatch, publicIds)
 		{

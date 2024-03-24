@@ -6,9 +6,9 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\UserField\DataModifiers;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\UserField\DataModifiers;
 use Bitrix\Main\Text\HtmlFilter;
 
 /**
@@ -141,9 +141,9 @@ foreach($types as $type)
 }
 
 $arParams['createNewEntity'] = (
-	$arParams['createNewEntity']
-	&&
-	LayoutSettings::getCurrent()->isSliderEnabled()
+	isset($arParams['createNewEntity'])
+	&& $arParams['createNewEntity']
+	&& LayoutSettings::getCurrent()->isSliderEnabled()
 );
 
 if(!empty($arParams['createNewEntity']))

@@ -5,6 +5,8 @@ namespace Bitrix\Crm\Service\Display;
 use Bitrix\Crm\Kanban\Exception;
 use Bitrix\Crm\Service\Display\Field\AddressField;
 use Bitrix\Crm\Service\Display\Field\BooleanField;
+use Bitrix\Crm\Service\Display\Field\CrmActivityProvider;
+use Bitrix\Crm\Service\Display\Field\CrmActivityProviderType;
 use Bitrix\Crm\Service\Display\Field\CrmCurrencyField;
 use Bitrix\Crm\Service\Display\Field\CrmField;
 use Bitrix\Crm\Service\Display\Field\CrmStatusField;
@@ -14,6 +16,7 @@ use Bitrix\Crm\Service\Display\Field\DeliveryStatusField;
 use Bitrix\Crm\Service\Display\Field\EmployeeField;
 use Bitrix\Crm\Service\Display\Field\EnumerationField;
 use Bitrix\Crm\Service\Display\Field\FileField;
+use Bitrix\Crm\Service\Display\Field\HlBlockField;
 use Bitrix\Crm\Service\Display\Field\IblockElementField;
 use Bitrix\Crm\Service\Display\Field\IblockSectionField;
 use Bitrix\Crm\Service\Display\Field\MoneyField;
@@ -22,7 +25,6 @@ use Bitrix\Crm\Service\Display\Field\OtherField;
 use Bitrix\Crm\Service\Display\Field\PaymentStatusField;
 use Bitrix\Crm\Service\Display\Field\ResourceBookingField;
 use Bitrix\Crm\Service\Display\Field\StringField;
-use Bitrix\Crm\Service\Display\Field\HlBlockField;
 use Bitrix\Crm\Service\Display\Field\TextField;
 use Bitrix\Crm\Service\Display\Field\UrlField;
 use Bitrix\Crm\Service\Display\Field\UserField;
@@ -272,6 +274,17 @@ abstract class Field
 		if ($type === CrmCurrencyField::TYPE)
 		{
 			return new CrmCurrencyField($id);
+		}
+
+		//@todo one of these fields is redundant
+		if ($type === CrmActivityProvider::TYPE)
+		{
+			return new CrmActivityProvider($id);
+		}
+
+		if ($type === CrmActivityProviderType::TYPE)
+		{
+			return new CrmActivityProviderType($id);
 		}
 
 		$crmField = static::resolveCrmField($type, $id);

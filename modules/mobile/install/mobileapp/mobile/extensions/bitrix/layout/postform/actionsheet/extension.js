@@ -235,21 +235,9 @@
 		onClick,
 		config,
 	}) => {
-		const BBCodeVersion = 38;
-
-		if (Application.getApiVersion() >= BBCodeVersion)
-		{
-			value = value
-				.replaceAll('&nbsp;', ' ')
-				.replace('#ALL_BEGIN#', '[B]').replace('#ALL_END#', '[/B]');
-		}
-		else
-		{
-			value = value
-				.replaceAll('<', '&lt;')
-				.replaceAll('>', '&gt;')
-				.replace('#ALL_BEGIN#', '<b>').replace('#ALL_END#', '</b>');
-		}
+		value = value
+			.replaceAll('&nbsp;', ' ')
+			.replace('#ALL_BEGIN#', '[B]').replace('#ALL_END#', '[/B]');
 
 		return (
 			View(
@@ -295,28 +283,16 @@
 						},
 					}),
 					(
-						Application.getApiVersion() >= BBCodeVersion
-							? BBCodeText({
-								value,
-								style: {
-									marginTop: 5,
-									marginBottom: 5,
-									maxWidth: '65%',
-									color: config.fontColor,
-									fontSize: config.fontSize,
-								},
-							})
-							: Text({
-								html: value,
-								style: {
-									marginTop: 5,
-									marginBottom: 5,
-									maxWidth: '65%',
-									color: config.fontColor,
-									fontSize: config.fontSize,
-								},
-							})
-
+						BBCodeText({
+							value,
+							style: {
+								marginTop: 5,
+								marginBottom: 5,
+								maxWidth: '65%',
+								color: config.fontColor,
+								fontSize: config.fontSize,
+							},
+						})
 					),
 					View(
 						{

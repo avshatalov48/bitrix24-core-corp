@@ -33,7 +33,7 @@ trait VisibilityConfig
 		if (!isset($this->entityFieldVisibilityConfigs[$entityTypeId]))
 		{
 			$this->entityFieldVisibilityConfigs[$entityTypeId]
-				= VisibilityManager::getUserFieldsAccessCodes($entityTypeId);
+				= VisibilityManager::getUserFieldsAccessCodesAndData($entityTypeId);
 		}
 		return $this->entityFieldVisibilityConfigs[$entityTypeId];
 	}

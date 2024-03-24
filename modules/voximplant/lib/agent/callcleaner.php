@@ -2,7 +2,7 @@
 
 namespace Bitrix\Voximplant\Agent;
 
-use Bitrix\Main\Type;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Voximplant\Model\CallTable;
 
 class CallCleaner
@@ -10,31 +10,31 @@ class CallCleaner
 	/**
 	 * Finishes calls started more than day ago. Seems safe to do without additional checks.
 	 */
-	public static function finishStaleCalls()
+	public static function finishStaleCalls(): string
 	{
 		CallTable::updateBatch(
 			[
-				'STATUS' => \Bitrix\Voximplant\Model\CallTable::STATUS_FINISHED
+				'STATUS' => CallTable::STATUS_FINISHED
 			],
 			[
-				'!=STATUS' => \Bitrix\Voximplant\Model\CallTable::STATUS_FINISHED,
+				'!=STATUS' => CallTable::STATUS_FINISHED,
 				'!=ACCESS_URL' => '',
-				'<DATE_CREATE' => (new \Bitrix\Main\Type\DateTime())->add('-1D'),
-				'>DATE_CREATE' => (new \Bitrix\Main\Type\DateTime())->add('-30D')
+				'<DATE_CREATE' => (new DateTime())->add('-1D'),
+				'>DATE_CREATE' => (new DateTime())->add('-30D')
 			],
 			1000
 		);
 
-		return '\Bitrix\Voximplant\Agent\CallCleaner::finishStaleCalls();';
+		return __METHOD__ . '();';
 	}
 
 	/**
 	 * Deletes calls started more than 30 days ago.
 	 */
-	public static function deleteOldCalls()
+	public static function deleteOldCalls(): string
 	{
-		CallTable::deleteBatch(['<DATE_CREATE' => (new \Bitrix\Main\Type\DateTime())->add('-30D')], 1000);
+		CallTable::deleteBatch(['<DATE_CREATE' => (new DateTime())->add('-30D')], 1000);
 
-		return '\Bitrix\Voximplant\Agent\CallCleaner::deleteOldCalls();';
+		return __METHOD__. '();';
 	}
 }

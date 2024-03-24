@@ -371,6 +371,15 @@ class Session
 			$this->chat->join($fields['USER_ID']);
 		}
 
+		if (!empty($params['USER_LANG']))
+		{
+			$fields['USER_LANG'] = $params['USER_LANG'];
+		}
+		else
+		{
+			$fields['USER_LANG'] = $this->getConfigLanguage();
+		}
+
 		if ($fields['MODE'] == self::MODE_OUTPUT)
 		{
 			$fields['STATUS'] = self::STATUS_ANSWER;
@@ -929,17 +938,20 @@ class Session
 					}
 
 					if (
-						!empty($fields['OPERATOR_ID']) &&
-						empty($this->session['OPERATOR_ID'])
+						!empty($fields['OPERATOR_ID'])
+						&& empty($this->session['OPERATOR_ID'])
 					)
 					{
-						$resultChatAnswer = $this->chat->answer($fields['OPERATOR_ID'], true);
-						$this->answer($fields['OPERATOR_ID']);
-
-						/*if (!$resultChatAnswer->isSuccess())
+						$config = $configManager->get($this->session['CONFIG_ID']);
+						if (
+							$this->session['STATUS'] >= self::STATUS_ANSWER
+							|| $config['WELCOME_BOT_ENABLE'] != 'Y'
+							|| $config['WELCOME_BOT_ID'] != $fields['OPERATOR_ID']
+						)
 						{
-							$result->addErrors($resultChatAnswer->getErrors());
-						}*/
+							$resultChatAnswer = $this->chat->answer($fields['OPERATOR_ID'], true);
+							$this->answer($fields['OPERATOR_ID']);
+						}
 					}
 
 					$result->setResult(true);
@@ -1489,11 +1501,6 @@ class Session
 
 				$fakeRelation = new Relation((int)$this->session['CHAT_ID']);
 				$fakeRelation->removeAllRelations(true);
-
-				if (!$auto && $this->session['STATUS'] > Session::STATUS_SKIP && $currentUserId = \Bitrix\Im\User::getInstance()->getId())
-				{
-					\CIMDisk::ChangeFolderMembers($this->session['CHAT_ID'], $currentUserId, false);
-				}
 			}
 
 			if (!empty($this->user['USER_CODE']))
@@ -2285,7 +2292,8 @@ class Session
 					{
 						Im::addCloseVoteMessage(
 							$session->getData('CHAT_ID'),
-							$session->getConfig('VOTE_TIME_LIMIT')
+							$session->getConfig('VOTE_TIME_LIMIT'),
+							$session->getData('USER_LANG')
 						);
 					}
 				}
@@ -2846,5 +2854,34 @@ class Session
 	public function getJoinUserList(): array
 	{
 		return $this->joinUserList;
+	}
+
+	public function getConfigLanguage(): ?string
+	{
+		if(!$language = $this->config['LANGUAGE_ID'])
+		{
+			$language = Loc::getCurrentLang();
+		}
+
+		return $language;
+	}
+
+	public function setLanguage(string $langCode): self
+	{
+		if (
+			Loader::includeModule('intranet')
+			&& in_array($langCode, array_keys(\Bitrix\Intranet\Util::getLanguageList()), true)
+		)
+		{
+			$this->update(['USER_LANG' => $langCode]);
+			$this->session['USER_LANG'] = $langCode;
+		}
+
+		return $this;
+	}
+
+	public function getLanguage(): ?string
+	{
+		return $this->session['USER_LANG'];
 	}
 }

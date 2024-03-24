@@ -14,8 +14,11 @@ use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Main\Search\Content;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Socialnetwork\Helper\Workgroup;
+use Bitrix\Tasks\Integration\SocialNetwork\Exception\NotFoundException;
+use Bitrix\Tasks\Integration\SocialNetwork\Exception\SocialnetworkException;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\User;
+use Exception;
 
 class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 {
@@ -467,24 +470,44 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		global $DB;
 
 		$sql = '
-			SELECT count(*) as cnt
+			SELECT count(*) as CNT
 			FROM b_sonet_user2group ug
 			INNER JOIN b_sonet_user2group ug2
 				ON ug.GROUP_ID = ug2.GROUP_ID 
 				AND ug2.USER_ID = '. $userIdB .'
-				AND ug2.ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
+				AND ug2.ROLE IN (\''. implode("','", \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'\')
 			WHERE 
 				ug.USER_ID = '. $userIdA .'
-				AND ug.ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
+				AND ug.ROLE IN (\''. implode("','", \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'\')
 		';
 
 		$res = $DB->query($sql);
 		$row = $res->fetch();
-		if ($row && (int) $row['cnt'] > 0)
+		if ($row && (int) $row['CNT'] > 0)
 		{
 			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * @throws SocialnetworkException
+	 */
+	public static function getById(int $spaceId): ?\Bitrix\Socialnetwork\Item\Workgroup
+	{
+		if (!static::includeModule())
+		{
+			return null;
+		}
+
+		try
+		{
+			return \Bitrix\Socialnetwork\Item\Workgroup::getById($spaceId);
+		}
+		catch (Exception $exception)
+		{
+			throw new SocialnetworkException($exception->getMessage());
+		}
 	}
 }

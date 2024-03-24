@@ -1,7 +1,5 @@
 <?php
 
-use Bitrix\Ldap\Internal\Security\Encryption;
-
 IncludeModuleLangFile(__FILE__);
 
 class CLdapUtil
@@ -60,66 +58,6 @@ class CLdapUtil
 		}
 
 		return $arSyncFields;
-	}
-
-	/**
-	 * @deprecated
-	 * @param string $d
-	 * @return false|int
-	 */
-	public static function ConvertADDate($d)
-	{
-		if(preg_match('#(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.(\d)Z#', $d, $dt))
-			return gmmktime($dt[4], $dt[5], $dt[6], $dt[2], $dt[3], $dt[1]);
-		return false;
-	}
-
-	/**
-	 * @deprecated
-	 * @param string $a
-	 * @param string $b
-	 * @param int $l
-	 * @return string
-	 */
-	public static function ByteXOR($a, $b, $l)
-	{
-		return Encryption::byteXor($a, $b, $l);
-	}
-
-	/**
-	 * @deprecated
-	 * @param string $val
-	 * @return false|string
-	 */
-	public static function BinMD5($val)
-	{
-		return Encryption::binMd5($val);
-	}
-
-	/**
-	 * @deprecated Use Bitrix\Ldap\Internal\Security\Encryption::decrypt() instead.
-	 * @param string $str
-	 * @param string|false $key
-	 * @return string
-	 */
-	public static function Decrypt($str, $key = false)
-	{
-		$key = $key === false ? null : (string)$key;
-
-		return Encryption::decrypt((string)$str, $key);
-	}
-
-	/**
-	 * @deprecated Use Bitrix\Ldap\Internal\Security\Encryption::encrypt() instead.
-	 * @param string $str
-	 * @param string|false $key
-	 * @return string
-	 */
-	public static function Crypt($str, $key = false)
-	{
-		$key = $key === false ? null : (string)$key;
-
-		return Encryption::encrypt((string)$str, $key);
 	}
 
 	public static function MkOperationFilter($key)
@@ -233,9 +171,9 @@ class CLdapUtil
 							$res[] = ($cOperationType=="N"?"NOT":"")."(".$fname." IS NULL OR ".$DB->Length($fname)."<=0)";
 						else
 							if($strOperation=="=")
-								$res[] = ($cOperationType=="N"?" ".$fname." IS NULL OR NOT ":"")."(".($DB->type=="ORACLE"?CLdapUtil::_Upper($fname)." LIKE ".CLdapUtil::_Upper("'".$DB->ForSqlLike($val)."'")." ESCAPE '\\'" : $fname." ".($strOperation=="="?"LIKE":$strOperation)." '".$DB->ForSqlLike($val)."'").")";
+								$res[] = ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT " : "") . "(" . $fname . " LIKE '" . $DB->ForSqlLike($val) . "')";
 							else
-								$res[] = ($cOperationType=="N"?" ".$fname." IS NULL OR NOT ":"")."(".($DB->type=="ORACLE"?CLdapUtil::_Upper($fname)." ".$strOperation." ".CLdapUtil::_Upper("'".$DB->ForSql($val)."'")." " : $fname." ".$strOperation." '".$DB->ForSql($val)."'").")";
+								$res[] = ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT " : "") . "(" . $fname . " " . $strOperation . " '" . $DB->ForSql($val) . "')";
 					}
 					break;
 				case "date":
@@ -247,7 +185,9 @@ class CLdapUtil
 				case "number":
 					if($cOperationType=="?")
 					{
-						$res[] = GetFilterQuery($fname, $val);
+						$sqlHelper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
+
+						$res[] = "(" . $sqlHelper->castToChar($fname) . " LIKE '%" . $DB->ForSqlLike(trim($val)) . "%' AND " . $fname . " IS NOT NULL)";
 					}
 					else
 					{
@@ -292,7 +232,7 @@ class CLdapUtil
 	public static function _Upper($str)
 	{
 		global $DB;
-		return ($DB->type=="ORACLE"?"UPPER(".$str.")":$str);
+		return ($DB->type === 'PGSQL' ? 'UPPER(' . $str . ')' : $str);
 	}
 
 	// gets department list from system (iblock) for displaying in select box

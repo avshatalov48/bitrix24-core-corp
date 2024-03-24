@@ -20,7 +20,7 @@ $taskParams = $task['PARAMETERS'];
 ?>
 <? $this->setViewTarget("inside_pagetitle_below", 100); ?>
 <div class="rpa-task-title">
-	<span class="rpa-task-title-img"<?if ($user['photo']):?> style="background-image: url(<?=htmlspecialcharsbx($user['photo'])?>); background-size: 100%"<?endif?>></span>
+	<span class="rpa-task-title-img"<?if (!empty($user['photo'])):?> style="background-image: url(<?=htmlspecialcharsbx($user['photo'])?>); background-size: 100%"<?endif?>></span>
 	<div class="rpa-task-title-info">
 		<a class="rpa-task-title-user" href="<?=$user['link']?>"><?=htmlspecialcharsbx($user['fullName'])?></a>
 		<div class="rpa-task-title-stage"><?=htmlspecialcharsbx($user['workPosition'])?></div>

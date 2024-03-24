@@ -15,6 +15,7 @@ return [
 		'layout/ui/user/avatar',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
+		'tasks/enum',
 		'tasks:layout/deadline-pill',
 	],
 	'bundle' => [

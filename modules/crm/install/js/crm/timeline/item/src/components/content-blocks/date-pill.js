@@ -1,8 +1,7 @@
-import { Runtime } from "main.core";
-import { Action } from "../../action";
-import { DatetimeConverter } from "crm.timeline.tools";
-import { DateTimeFormat } from "main.date";
-import { TimestampConverter } from "crm.datetime";
+import { DatetimeConverter } from 'crm.timeline.tools';
+import { Runtime } from 'main.core';
+import { DateTimeFormat } from 'main.date';
+import { Action } from '../../action';
 
 export const DatePillColor = Object.freeze({
 	DEFAULT: 'default',
@@ -28,7 +27,9 @@ export default {
 	data(): Object
 	{
 		return {
+			// in server timezone
 			currentTimestamp: this.value,
+			// in server timezone
 			initialTimestamp: this.value,
 			actionTimeoutId: null,
 		};
@@ -71,7 +72,14 @@ export default {
 
 		isPillReadonly(): boolean {
 			return this.isReadOnly || !this.action;
-		}
+		},
+
+		// todo remove after fixing main
+		browserToUserOffset(): number {
+			const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
+
+			return userToUTCOffset + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
+		},
 	},
 	watch: {
 		value(newDate): void // update date from push
@@ -89,11 +97,12 @@ export default {
 			}
 			this.cancelScheduledActionExecution();
 
-			// eslint-disable-next-line bitrix-rules/no-bx
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 			BX.calendar({
 				node: event.target,
 				callback_after: (newDate: Date) => {
-					this.currentTimestamp = TimestampConverter.userToBrowser(newDate.getTime() / 1000);
+					// we assume that user selected time in his timezone
+					this.currentTimestamp = Math.floor(newDate.getTime() / 1000) - this.browserToUserOffset;
 
 					this.executeAction();
 				},

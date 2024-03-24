@@ -28,8 +28,10 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 				'bSkipExtraData' => true
 			)
 		);
-		if($this->arResult['TASK'] === false)
+		if ($this->arResult['TASK'] === false)
+		{
 			return false;
+		}
 
 		$this->arResult['TASK']['CREATED_BY_FORMATTED'] = tasksFormatName(
 			$this->arResult["TASK"]["CREATED_BY_NAME"],
@@ -48,7 +50,7 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 			false
 		);
 
-		if(Main\Loader::includeModule('socialnetwork'))
+		if (Main\Loader::includeModule('socialnetwork'))
 		{
 			$this->arResult["TASK"]["CREATED_DATE_FORMATTED"] = CSocNetLogComponent::getDateTimeFormatted(
 					MakeTimeStamp($this->arResult["TASK"]["CREATED_DATE"]),
@@ -100,7 +102,9 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 				$this->arResult['TASK']["CREATED_BY_PHOTO"] = $arFileTmp["src"];
 			}
 			else
+			{
 				$this->arResult['TASK']["CREATED_BY_PHOTO"] = false;
+			}
 		}
 		if ($this->arResult['TASK']["RESPONSIBLE_PHOTO"] > 0)
 		{
@@ -121,7 +125,9 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 				$this->arResult['TASK']["RESPONSIBLE_PHOTO"] = $arFileTmp["src"];
 			}
 			else
+			{
 				$this->arResult['TASK']["RESPONSIBLE_PHOTO"] = false;
+			}
 		}
 
 		if (defined("BX_COMP_MANAGED_CACHE"))

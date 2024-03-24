@@ -13,6 +13,7 @@ class Context
 	public const MOBILE = 'mobile';
 	public const DESKTOP = 'desktop';
 	public const PULL = 'pull';
+	public const REST = 'rest';
 
 	private ItemIdentifier $identifier;
 	private UserPermissions $userPermissions;

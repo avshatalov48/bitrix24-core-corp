@@ -5,6 +5,22 @@ namespace Bitrix\Crm\FieldContext\Model;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
+/**
+ * Class CompanyTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Company_Query query()
+ * @method static EO_Company_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Company_Result getById($id)
+ * @method static EO_Company_Result getList(array $parameters = [])
+ * @method static EO_Company_Entity getEntity()
+ * @method static \Bitrix\Crm\FieldContext\Model\EO_Company createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\FieldContext\Model\EO_Company_Collection createCollection()
+ * @method static \Bitrix\Crm\FieldContext\Model\EO_Company wakeUpObject($row)
+ * @method static \Bitrix\Crm\FieldContext\Model\EO_Company_Collection wakeUpCollection($rows)
+ */
 class CompanyTable extends Base
 {
 

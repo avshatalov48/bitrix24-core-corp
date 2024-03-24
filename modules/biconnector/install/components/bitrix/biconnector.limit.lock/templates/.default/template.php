@@ -1,17 +1,6 @@
 <?php
 /**
- * Bitrix vars
- * @var array $arParams
  * @var array $arResult
- * @var CMain $APPLICATION
- * @var CUser $USER
- * @var CDatabase $DB
- * @var CBitrixComponentTemplate $this
- * @var string $templateName
- * @var string $templateFile
- * @var string $templateFolder
- * @var string $componentPath
- * @var CBitrixComponent $component
  */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -21,9 +10,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 ?>
 <script>
-	if (BX.getClass("BX.BIConnector.LicenseInfoPopup"))
-	{
-		BX.BIConnector.LicenseInfoPopup.init(<?=CUtil::PhpToJSObject($arResult['JS_PARAMS'])?>);
-		BX.BIConnector.LicenseInfoPopup.show();
-	}
+	BX.ready(() => {
+		new BX.BIConnector.LimitLockPopup({
+			title: '<?= CUtil::JSEscape($arResult['TITLE']) ?>',
+			content: '<?= CUtil::JSEscape($arResult['CONTENT']) ?>',
+			licenseButtonText: '<?= CUtil::JSEscape($arResult['LICENSE_BUTTON_TEXT']) ?>',
+			laterButtonText: '<?= CUtil::JSEscape($arResult['LATER_BUTTON_TEXT']) ?>',
+			licenseUrl: '<?= CUtil::JSEscape($arResult['LICENSE_URL']) ?>',
+			popupClassName: 'biconnector-limit-lock',
+			fullLock: '<?= CUtil::JSEscape($arResult['FULL_LOCK']) ?>',
+		});
+	})
 </script>

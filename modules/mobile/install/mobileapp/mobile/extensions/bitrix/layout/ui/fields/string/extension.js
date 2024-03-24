@@ -9,6 +9,8 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { stringify } = require('utils/string');
+	const { Type } = require('type');
+	const { CollapsibleText } = require('layout/ui/collapsible-text');
 
 	const isIosPlatform = Application.getPlatform() === 'ios';
 
@@ -28,10 +30,8 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			super(props);
 
 			this.fieldValue = null;
-			this.state.showAll = this.getValue().length <= 180;
 
 			this.inputRef = null;
-			this.showHideButton = this.getValue().length > 180;
 
 			this.debouncedChangeText = debounce((text) => this.changeText(text), 50, this);
 		}
@@ -55,14 +55,6 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 		shouldComponentUpdate(nextProps, nextState)
 		{
-			// hide text onScroll ListView
-			if (this.isReadOnly() && this.showHideButton && this.state.showAll && this.props.value === nextProps.value)
-			{
-				this.state.showAll = false;
-
-				return true;
-			}
-
 			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
 
 			let prevPropsToCompare = this.props;
@@ -199,46 +191,6 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				return this.renderEmptyContent();
 			}
 
-			const params = this.getReadOnlyRenderParams();
-
-			const getContent = (readOnlyElementType) => {
-				const value = this.getValue();
-
-				if (readOnlyElementType === ReadOnlyElementType.TEXT_INPUT)
-				{
-					return TextInput({
-						...params,
-						value,
-						enable: false,
-					});
-				}
-
-				if (readOnlyElementType === ReadOnlyElementType.BB_CODE_TEXT)
-				{
-					return BBCodeText({
-						...params,
-						value,
-						onLinkClick: this.getOnLinkClick(),
-					});
-				}
-
-				return View(
-					{
-						style: {
-							flex: 1,
-							flexDirection: 'row',
-						},
-						onClick: this.getContentClickHandler(),
-					},
-					Text(
-						{
-							...params,
-							text: value,
-						},
-					),
-				);
-			};
-
 			return View(
 				{
 					style: {
@@ -246,18 +198,13 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 						flex: 1,
 					},
 				},
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							flexGrow: 2,
-						},
-						onLongClick: this.getContentLongClickHandler(),
-					},
-					getContent(this.getConfig().readOnlyElementType),
-				),
-				this.renderShowAllButton(1),
-				this.renderHideButton(),
+				new CollapsibleText({
+					value: this.getValue(),
+					style: this.getStyles(),
+					bbCodeMode: this.getConfig().readOnlyElementType === ReadOnlyElementType.BB_CODE_TEXT,
+					onLinkClick: this.getOnLinkClick(),
+					onLongClick: this.getContentLongClickHandler(),
+				}),
 			);
 		}
 
@@ -266,22 +213,8 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			return {
 				style: {
 					...this.styles.value,
-					maxHeight: this.state.showAll ? null : this.getMaximusHeight(),
 				},
 			};
-		}
-
-		getMaximusHeight()
-		{
-			return isIosPlatform ? 50 : 40;
-		}
-
-		getEllipsizeParams()
-		{
-			return this.getConfig().ellipsize ? {
-				numberOfLines: 1,
-				ellipsize: 'end',
-			} : null;
 		}
 
 		renderEditableContent()
@@ -300,6 +233,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				},
 				style: this.styles.editableValue,
 				value: this.getValue(),
+				forcedValue: this.getForcedValue(),
 				focus: focus || undefined,
 				keyboardType,
 				enableKeyboardHide,
@@ -313,6 +247,11 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				onLinkClick: this.getOnLinkClick(),
 				isPassword: this.isPassword(),
 			};
+		}
+
+		getForcedValue()
+		{
+			return (Type.isNil(this.props.forcedValue) ? undefined : this.prepareValue(this.props.forcedValue));
 		}
 
 		getPlaceholder()
@@ -371,14 +310,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 		{
 			if (this.inputRef && this.getConfig().selectionOnFocus)
 			{
-				if (Application.getApiVersion() >= 46)
-				{
-					this.inputRef.selectAll();
-				}
-				else
-				{
-					this.inputRef.setSelection(0, this.getValue().length);
-				}
+				this.inputRef.selectAll();
 			}
 
 			return Promise.resolve();
@@ -387,11 +319,6 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 		hasCapitalizeTitleInEmpty()
 		{
 			return !this.state.focus;
-		}
-
-		showAllCount()
-		{
-			return false;
 		}
 
 		canCopyValue()

@@ -177,12 +177,16 @@ $trackedFields = CTaskLog::getTrackedFields();
 		<td class="task-log-where-column">
 
 			<?
-			$fieldName = Loc::getMessage("TASKS_LOG_".$record["FIELD"]);
-			if($record['FIELD'] == \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode())
+			$fieldName = Loc::getMessage("TASKS_LOG_" . $record["FIELD"]);
+			if ($record['FIELD'] == \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode())
 			{
 				$fieldName = Loc::getMessage('TASKS_LOG_FILES');
 			}
-			elseif($fieldName == '' && ($trackedFields[$record["FIELD"]]['TITLE'] ?? '') != '')
+			if ($record['FIELD'] === 'RESPONSIBLE_ID')
+			{
+				$fieldName = Loc::getMessage('TASKS_LOG_ASSIGNEE');
+			}
+			elseif ($fieldName == '' && ($trackedFields[$record["FIELD"]]['TITLE'] ?? '') != '')
 			{
 				$fieldName = $trackedFields[$record["FIELD"]]['TITLE'];
 			}

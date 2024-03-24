@@ -187,6 +187,16 @@ class Factory
 		static $enabled;
 		if ($enabled === null)
 		{
+			if (
+				class_exists(\Bitrix\Bizproc\Integration\Intranet\ToolsManager::class)
+				&& !\Bitrix\Bizproc\Integration\Intranet\ToolsManager::getInstance()->isRobotsAvailable()
+			)
+			{
+				$enabled = false;
+
+				return $enabled;
+			}
+
 			$enabled = Loader::includeModule('bitrix24')
 				? Feature::isFeatureEnabled(FeatureDictionary::TASKS_AUTOMATION)
 				: true;

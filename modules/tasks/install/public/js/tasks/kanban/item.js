@@ -476,7 +476,8 @@ BX.Tasks.Kanban.Item.prototype = {
 						networkUsers: this.networkEnabled,
 						extranetUsers: true,
 						inviteGuestLink: true,
-						myEmailUsers: true
+						myEmailUsers: true,
+						analyticsSource: 'task',
 					}
 				},
 				{
@@ -1212,7 +1213,7 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	createLayout: function()
 	{
-		var data = this.getData();
+		const data = this.getData();
 
 		//region common container
 		this.container = BX.create("div", {
@@ -1240,6 +1241,9 @@ BX.Tasks.Kanban.Item.prototype = {
 			props: {
 				className: data.counter.value > 0 ? "tasks-kanban-item-title" : "tasks-kanban-item-title tasks-kanban-item-title--with-counter"
 			}
+		});
+		BX.Event.bind(this.link, 'click', () => {
+			this.getGrid().analytics('task_view', 'title_click');
 		});
 		this.container.appendChild(this.link);
 		this.container.appendChild(BX.Tag.render`<div class="tasks-kanban-item-line"></div>`);

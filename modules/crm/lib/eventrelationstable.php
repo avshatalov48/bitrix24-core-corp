@@ -3,6 +3,8 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\Service\EventHistory;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -27,6 +29,8 @@ use Bitrix\Main\Result;
  */
 class EventRelationsTable extends DataManager
 {
+	private const MAX_ROWS_IN_BATCH_UPDATE = 500;
+
 	public static function getTableName(): string
 	{
 		return 'b_crm_event_relations';
@@ -162,27 +166,35 @@ class EventRelationsTable extends DataManager
 
 	public static function setAssignedByItem(ItemIdentifier $itemIdentifier, int $assignedById): Result
 	{
-		$collection = static::getList([
-			'select' => ['ID', 'ASSIGNED_BY_ID'],
-			'filter' => [
-				'=ENTITY_TYPE' => \CCrmOwnerType::ResolveName($itemIdentifier->getEntityTypeId()),
-				'=ENTITY_ID' => $itemIdentifier->getEntityId(),
-			],
-		])->fetchCollection();
+		$ids = static::query()
+			->setSelect(['ID'])
+			->where('ENTITY_TYPE', \CCrmOwnerType::ResolveName($itemIdentifier->getEntityTypeId()))
+			->where('ENTITY_ID', $itemIdentifier->getEntityId())
+			->fetchCollection()
+			->getIdList()
+		;
 
-		$result = new Result();
-
-		foreach ($collection as $record)
+		if (empty($ids))
 		{
-			$record->setAssignedById($assignedById);
-
-			$saveResult = $record->save();
-			if (!$saveResult->isSuccess())
-			{
-				$result->addErrors($saveResult->getErrors());
-			}
+			return new Result();
 		}
 
-		return $result;
+		$connection = Application::getConnection();
+		foreach (array_chunk($ids, self::MAX_ROWS_IN_BATCH_UPDATE) as $idsChunk)
+		{
+			$query = new SqlExpression(
+				/** @lang text */
+				'UPDATE ?# SET ?# = ?i WHERE ID IN (' . implode(',', $idsChunk) . ')',
+				static::getTableName(),
+				'ASSIGNED_BY_ID',
+				$assignedById,
+			);
+
+			$connection->queryExecute((string)$query);
+		}
+
+		static::cleanCache();
+
+		return new Result();
 	}
 }

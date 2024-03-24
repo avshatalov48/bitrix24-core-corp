@@ -13,8 +13,18 @@ class DbHelper
 	)
 	{
 		$connection = Application::getConnection();
-		$query = $connection instanceof PgsqlConnection ? $pgsqlQuery : $mysqlQuery;
+		$query = self::getSqlByDbType($mysqlQuery, $pgsqlQuery);
 
 		return $connection->query($query);
+	}
+
+	public static function getSqlByDbType(
+		string $mysqlQuery,
+		string $pgsqlQuery
+	): string
+	{
+		$connection = Application::getConnection();
+
+		return $connection instanceof PgsqlConnection ? $pgsqlQuery : $mysqlQuery;
 	}
 }

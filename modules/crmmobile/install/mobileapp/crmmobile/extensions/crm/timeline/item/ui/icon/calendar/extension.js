@@ -80,4 +80,3 @@ jn.define('crm/timeline/item/ui/icon/calendar', (require, exports, module) => {
 
 	module.exports = { TimelineItemCalendar };
 });
-

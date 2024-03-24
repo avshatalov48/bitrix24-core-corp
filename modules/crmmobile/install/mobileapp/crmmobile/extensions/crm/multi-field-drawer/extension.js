@@ -134,7 +134,7 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 
 			bottomSheet.setParentWidget(parentWidget);
 
-			const mediumPercent = Math.min(50 + this.getMultiFieldsToShow().length * 10, 80);
+			const mediumPercent = Math.min(65 + this.getMultiFieldsToShow().length * 10, 90);
 			bottomSheet.setMediumPositionPercent(mediumPercent);
 
 			return bottomSheet.open().then((widget) => {
@@ -237,7 +237,7 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgPrimary,
+						backgroundColor: AppTheme.colors.bgSecondary,
 					},
 				},
 				this.hasWarningBlock() && this.renderWarningBlock(),
@@ -293,7 +293,7 @@ jn.define('crm/multi-field-drawer', (require, exports, module) => {
 								paddingLeft: 17,
 								paddingRight: 40,
 								paddingVertical: 23,
-								backgroundColor: AppTheme.colors.bgPrimary,
+								backgroundColor: AppTheme.colors.bgContentPrimary,
 								borderRadius: 12,
 							},
 						},

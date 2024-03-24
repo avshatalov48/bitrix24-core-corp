@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Web\Uri;
 
 /**
@@ -13,24 +12,23 @@ use Bitrix\Main\Web\Uri;
  */
 trait Document
 {
-	private ?\Bitrix\DocumentGenerator\Document $document = null;
+	private \Bitrix\DocumentGenerator\Document | null | false $document = false;
 
 	public static function isActive(): bool
 	{
 		return DocumentGeneratorManager::getInstance()->isEnabled();
 	}
 
-	private function getDocument(): \Bitrix\DocumentGenerator\Document
+	private function getDocument(): ?\Bitrix\DocumentGenerator\Document
 	{
-		if (!$this->document)
+		if ($this->document === false)
 		{
 			Loader::requireModule('documentgenerator');
 
 			$this->document = \Bitrix\DocumentGenerator\Document::loadById($this->getDocumentId());
-			if (!$this->document)
-			{
-				throw new ObjectNotFoundException('Could not find document with ID=' . $this->getDocumentId());
-			}
+
+			// dead code for Document Activity
+			// DocumentGeneratorManager::getInstance()->actualizeDocumentImmediately($this->document);
 		}
 
 		return $this->document;
@@ -47,8 +45,8 @@ trait Document
 		$action =
 			(new Layout\Action\JsEvent('Document:Open'))
 				->addActionParamInt('documentId', $this->getDocumentId())
-				->addActionParamString('title', $document->getTitle())
-				->addActionParamString('createdAt', $document->getCreateTime()->format(\DateTimeInterface::ATOM))
+				->addActionParamString('title', $document?->getTitle())
+				->addActionParamString('createdAt', $document?->getCreateTime()->format(\DateTimeInterface::ATOM))
 		;
 
 		$pdfUrl = $this->getPdfUrl();
@@ -60,22 +58,27 @@ trait Document
 		return $action;
 	}
 
-	private function getDownloadUrl(): Uri
+	private function getDownloadUrl(): ?Uri
 	{
-		return $this->getDocument()->getDownloadUrl();
+		return $this->getDocument()?->getDownloadUrl();
 	}
 
 	private function getPdfUrl(): ?Uri
 	{
-		$documentData = $this->getDocument()->getFile(false)->getData();
+		$documentData = $this->getDocument()?->getFile(false)->getData();
 
 		return $documentData['pdfUrl'] ?? null;
 	}
 
 	private function getPrintUrl(): ?Uri
 	{
-		$documentData = $this->getDocument()->getFile(false)->getData();
+		$documentData = $this->getDocument()?->getFile(false)->getData();
 
 		return $documentData['printUrl'] ?? null;
+	}
+
+	private function getPublicUrl(): ?Uri
+	{
+		return $this->getDocument()?->getPublicUrl();
 	}
 }

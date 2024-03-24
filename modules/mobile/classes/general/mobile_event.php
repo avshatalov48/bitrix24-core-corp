@@ -54,6 +54,11 @@ class CMobileEvent
 		return true;
 	}
 
+	public static function getJNDevWorkspace()
+	{
+		return "/bitrix/mobileapp/dev/mobileapp";
+	}
+
 	public static function getJNWorkspace()
 	{
 		return "/bitrix/mobileapp/mobile/";

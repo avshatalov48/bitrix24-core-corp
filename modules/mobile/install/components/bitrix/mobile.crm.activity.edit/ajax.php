@@ -446,6 +446,11 @@ if($action === 'SAVE_ENTITY')
 		{
 			$fields['STORAGE_ELEMENT_IDS'] = StorageManager::filterFiles($storageElements, $storageTypeID, $curUser->GetID());
 		}
+
+		if ($storageTypeID === \Bitrix\Crm\Integration\StorageType::File)
+		{
+			$fields['STORAGE_ELEMENT_IDS'] = [];
+		}
 		$responsibleID = isset($data['RESPONSIBLE_ID']) ? intval($data['RESPONSIBLE_ID']) : 0;
 
 		//$DB->StartTransaction();

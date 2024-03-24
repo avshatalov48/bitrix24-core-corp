@@ -160,6 +160,10 @@ class UserFieldDataProvider extends EntityUFDataProvider
 
 		static $visibilityResult = [];
 		$entityId = $this->getUserFieldEntityID();
+		if (empty($entityId))
+		{
+			return [];
+		}
 
 		if (!isset($visibilityResult[$entityId]))
 		{

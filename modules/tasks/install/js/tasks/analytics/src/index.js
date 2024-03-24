@@ -1,7 +1,7 @@
 import { Analytics } from './analytics';
-import { AnalyticsLabel } from './analyticslabel';
+import { AnalyticsParams } from "./analytics-params";
 
 export {
 	Analytics,
-	AnalyticsLabel,
+	AnalyticsParams,
 }

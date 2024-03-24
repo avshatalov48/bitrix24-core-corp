@@ -421,13 +421,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {string[]} desiredItemIds
+		 * @param {string[]} itemsToProcess
 		 * @param {Object[]} itemsFromServer
 		 * @return {{add: Object[], update: Object[], delete: string[]}}
 		 */
-		groupItemsByOperations(desiredItemIds, itemsFromServer)
+		groupItemsByOperations(itemsToProcess, itemsFromServer)
 		{
-			const preparedDesiredItemsIds = desiredItemIds.map((id) => String(id));
+			const preparedItemsToProcess = itemsToProcess.map((id) => String(id));
 			const { items } = this.state;
 			const currentItemsMap = new Map();
 
@@ -446,7 +446,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			const toUpdateItems = [];
 			const toDeleteIds = [];
 
-			preparedDesiredItemsIds.forEach((id) => {
+			preparedItemsToProcess.forEach((id) => {
 				if (itemsFromServerMap.has(id))
 				{
 					if (currentItemsMap.has(id))
@@ -469,6 +469,95 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				update: this.prepareItems(toUpdateItems),
 				delete: toDeleteIds,
 			};
+		}
+
+		processItemsAddOperation(addItems, showAnimateOnView)
+		{
+			let wasChanged = false;
+			if (Type.isArrayFilled(addItems))
+			{
+				if (showAnimateOnView)
+				{
+					this.addToAnimateItems(addItems);
+				}
+				addItems.forEach((item, index) => {
+					if (this.hasItem(item.id))
+					{
+						return;
+					}
+
+					wasChanged = true;
+					const position = this.findItemPosition(item, this.state.items);
+					this.state.items.splice(position, 0, item);
+
+					if (this.props.onItemAdded)
+					{
+						this.props.onItemAdded(item);
+					}
+				});
+			}
+
+			return wasChanged;
+		}
+
+		processItemsDeleteOperations(deleteItems)
+		{
+			let wasChanged = false;
+			if (Type.isArrayFilled(deleteItems))
+			{
+				deleteItems.forEach((itemId) => {
+					if (this.hasItem(itemId))
+					{
+						wasChanged = true;
+						const index = this.state.items.findIndex((item) => String(item.id) === String(itemId));
+						const itemToDelete = this.state.items.splice(index, 1)[0];
+
+						if (this.props.onItemDeleted)
+						{
+							this.props.onItemDeleted(itemToDelete);
+						}
+					}
+				});
+			}
+
+			return wasChanged;
+		}
+
+		processItemsUpdateOperations(updateItems, showAnimateOnView)
+		{
+			let wasChanged = false;
+			if (Type.isArrayFilled(updateItems))
+			{
+				if (showAnimateOnView)
+				{
+					this.addToAnimateItems(updateItems);
+				}
+
+				updateItems.forEach((item) => {
+					if (!this.hasItem(item.id))
+					{
+						return;
+					}
+					wasChanged = true;
+					const oldPosition = this.state.items.findIndex((elem) => item.id === elem.id);
+					this.state.items.splice(oldPosition, 1);
+					const newPosition = this.findItemPosition(item, this.state.items);
+
+					if (newPosition === this.state.items.length - 1)
+					{
+						item = this.getReloadedItemByIndex(this.state.items.length, item);
+					}
+
+					this.state.items.splice(newPosition, 0, item);
+
+					if (this.props.onItemUpdated)
+					{
+						this.props.onItemUpdated(item);
+					}
+				});
+			}
+
+			return wasChanged;
 		}
 
 		/**
@@ -494,82 +583,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return new Promise((resolve, reject) => {
 				let shouldUpdateSimpleList = false;
 
-				if (Type.isArrayFilled(addItems))
-				{
-					if (showAnimateOnView)
-					{
-						this.addToAnimateItems(addItems);
-					}
-					addItems.forEach((item, index) => {
-						if (this.hasItem(item.id))
-						{
-							return;
-						}
-
-						shouldUpdateSimpleList = true;
-
-						const position = this.findItemPosition(item, this.state.items);
-
-						this.state.items.splice(position, 0, item);
-
-						if (this.props.onItemAdded)
-						{
-							this.props.onItemAdded(item);
-						}
-					});
-				}
-
-				if (Type.isArrayFilled(deleteItems))
-				{
-					deleteItems.forEach((itemId) => {
-						if (this.hasItem(itemId))
-						{
-							shouldUpdateSimpleList = true;
-							const index = this.state.items.findIndex((item) => String(item.id) === String(itemId));
-							const itemToDelete = this.state.items.splice(index, 1)[0];
-
-							if (this.props.onItemDeleted)
-							{
-								this.props.onItemDeleted(itemToDelete);
-							}
-						}
-					});
-				}
-
-				if (Type.isArrayFilled(updateItems))
-				{
-					if (showAnimateOnView)
-					{
-						this.addToAnimateItems(updateItems);
-					}
-
-					updateItems.forEach((item) => {
-						if (!this.hasItem(item.id))
-						{
-							return;
-						}
-
-						shouldUpdateSimpleList = true;
-
-						const oldPosition = this.state.items.findIndex((elem) => item.id === elem.id);
-						this.state.items.splice(oldPosition, 1);
-
-						const newPosition = this.findItemPosition(item, this.state.items);
-
-						if (newPosition === this.state.items.length - 1)
-						{
-							item = this.getReloadedItemByIndex(this.state.items.length, item);
-						}
-
-						this.state.items.splice(newPosition, 0, item);
-
-						if (this.props.onItemUpdated)
-						{
-							this.props.onItemUpdated(item);
-						}
-					});
-				}
-
+				shouldUpdateSimpleList = this.processItemsAddOperation(addItems, showAnimateOnView) || shouldUpdateSimpleList;
+				shouldUpdateSimpleList = this.processItemsDeleteOperations(deleteItems) || shouldUpdateSimpleList;
+				shouldUpdateSimpleList = this.processItemsUpdateOperations(updateItems, showAnimateOnView)
+																	|| shouldUpdateSimpleList;
 				if (shouldUpdateSimpleList)
 				{
 					const preparedItems = this.prepareItemsForRender(this.state.items);

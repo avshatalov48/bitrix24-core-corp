@@ -315,7 +315,7 @@ class CVoxImplantEvent
 					"DISABLED" => [],
 				],
 				"status_notifications" => [
-					"NAME" => Loc::getMessage('VI_EVENTS_SIP_STATUS_NOTIFICATIONS'),
+					"NAME" => Loc::getMessage('VI_EVENTS_SIP_STATUS_NOTIFICATIONS_V2'),
 					"SITE" => "Y",
 					"MAIL" => "Y",
 					"XMPP" => "N",

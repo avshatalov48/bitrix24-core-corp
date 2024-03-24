@@ -14,7 +14,7 @@ class CallDurationGrid extends CallDuration implements IReportMultipleData
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}

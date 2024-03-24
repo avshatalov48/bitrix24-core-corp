@@ -94,11 +94,12 @@ class UserTopic extends Forum
 		$sqlHelper = $connection->getSqlHelper();
 
 		$forumId = Comment::getForumId();
-		$lastVisit = $sqlHelper->convertToDbDateTime(new DateTime());
+		$currentDateTime = new DateTime();
+		$lastVisit = $sqlHelper->convertToDbDateTime($currentDateTime);
 
 		$sql = "
 			SELECT
-					T.FORUM_TOPIC_ID
+					DISTINCT T.FORUM_TOPIC_ID
 				FROM b_tasks T
 				INNER JOIN b_tasks_scorer TS
 					ON TS.TASK_ID = T.ID
@@ -132,11 +133,15 @@ class UserTopic extends Forum
 
 		foreach ($chunks as $chunk)
 		{
-			$sql = "
-				INSERT INTO b_forum_user_topic (TOPIC_ID, USER_ID, FORUM_ID, LAST_VISIT)
-				VALUES " . implode(',', $chunk) . "
-				ON DUPLICATE KEY UPDATE LAST_VISIT = {$lastVisit}
-			";
+			$values = implode(',', $chunk);
+			$values = "VALUES {$values}";
+			$sql = $sqlHelper->prepareMergeSelect(
+				UserTopicTable::getTableName(),
+				['TOPIC_ID', 'USER_ID'],
+				['TOPIC_ID', 'USER_ID', 'FORUM_ID', 'LAST_VISIT'],
+				$values,
+				['LAST_VISIT' => $currentDateTime]
+			);
 			$connection->query($sql);
 		}
 	}
@@ -159,7 +164,8 @@ class UserTopic extends Forum
 		$sqlHelper = $connection->getSqlHelper();
 
 		$forumId = Comment::getForumId();
-		$lastVisit = $sqlHelper->convertToDbDateTime(new DateTime());
+		$currentDateTime = new DateTime();
+		$lastVisit = $sqlHelper->convertToDbDateTime($currentDateTime);
 
 		$intGroupIds = array_map(function($el) {
 			return (int) $el;
@@ -206,11 +212,15 @@ class UserTopic extends Forum
 
 		foreach ($chunks as $chunk)
 		{
-			$sql = "
-				INSERT INTO b_forum_user_topic (TOPIC_ID, USER_ID, FORUM_ID, LAST_VISIT)
-				VALUES " . implode(',', $chunk) . "
-				ON DUPLICATE KEY UPDATE LAST_VISIT = {$lastVisit}
-			";
+			$values = implode(',', $chunk);
+			$values = "VALUES {$values}";
+			$sql = $sqlHelper->prepareMergeSelect(
+				UserTopicTable::getTableName(),
+				['TOPIC_ID', 'USER_ID'],
+				['TOPIC_ID', 'USER_ID', 'FORUM_ID', 'LAST_VISIT'],
+				$values,
+				['LAST_VISIT' => $currentDateTime]
+			);
 			$connection->query($sql);
 		}
 	}

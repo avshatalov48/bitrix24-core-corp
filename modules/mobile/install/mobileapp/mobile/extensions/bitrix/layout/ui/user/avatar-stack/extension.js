@@ -3,12 +3,12 @@
  * */
 
 jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { ReduxAvatar } = require('layout/ui/user/avatar');
 
 	const defaultSize = 30;
 
 	/**
-	 * @class Avatar
+	 * @class AvatarStack
 	 * @param {object} props
 	 * @param {array<string>} props.avatars
 	 * @param {boolean} props.size = 30
@@ -30,8 +30,8 @@ jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
 					},
 				},
 				...this.avatars.map((id) => {
-					return Avatar({
-						id,
+					return ReduxAvatar({
+						id: Number(id),
 						size: this.size,
 						additionalStyles: {
 							image: this.styles.avatar,

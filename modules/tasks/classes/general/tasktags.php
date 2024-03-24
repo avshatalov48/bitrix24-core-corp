@@ -164,8 +164,16 @@ class CTaskTags
 
 	public static function GetList($arOrder, $arFilter)
 	{
+		$select = [
+			'ID',
+			'NAME',
+			'USER_ID',
+			LabelTable::getRelationAlias() . '.TASK_ID' => 'TASK_ID',
+			LabelTable::getRelationAlias() . '.ID' => 'LINK_ID',
+		];
 		$query = new TagQuery();
 		$query
+			->setSelect($select)
 			->setWhere($arFilter)
 			->setOrderBy($arOrder)
 		;

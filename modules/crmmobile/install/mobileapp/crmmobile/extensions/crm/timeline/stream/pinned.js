@@ -55,4 +55,3 @@ jn.define('crm/timeline/stream/pinned', (require, exports, module) => {
 
 	module.exports = { TimelineStreamPinned };
 });
-

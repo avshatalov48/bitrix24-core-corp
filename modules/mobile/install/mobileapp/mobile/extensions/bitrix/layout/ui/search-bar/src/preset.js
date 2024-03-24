@@ -29,7 +29,7 @@ jn.define('layout/ui/search-bar/preset', (require, exports, module) => {
 					text: this.props.name,
 					disabled: this.isDisabled(),
 				}),
-				this.props.active && CloseIcon(),
+				this.props.active && CloseIcon(`${this.props.id}_cross`),
 			];
 		}
 

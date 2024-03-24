@@ -10,6 +10,7 @@ class Channel implements \JsonSerializable, Arrayable
 	public const TYPE_SMS = 'sms';
 	public const TYPE_WHATSAPP = 'whatsapp';
 	public const TYPE_EMAIL = 'email';
+	public const TYPE_CHAT = 'im';
 
 	protected ?string $type = null;
 	protected ?string $identifier = null;
@@ -32,6 +33,7 @@ class Channel implements \JsonSerializable, Arrayable
 			$type !== static::TYPE_SMS
 			&& $type !== static::TYPE_WHATSAPP
 			&& $type !== static::TYPE_EMAIL
+			&& $type !== static::TYPE_CHAT
 		)
 		{
 			throw new ArgumentOutOfRangeException('type');

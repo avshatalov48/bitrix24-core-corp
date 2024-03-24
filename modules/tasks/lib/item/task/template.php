@@ -717,7 +717,7 @@ final class Template extends \Bitrix\Tasks\Item
 
 			if ($paramType != 1 && count($responsibles) == 1 && !$responsibles[0])
 			{
-				$result->addError('BAD_RESPONSIBLE_ERROR', Loc::getMessage('TASKS_ITEM_TASK_TEMPLATE_BAD_RESPONSIBLE_ERROR'));
+				$result->addError('BAD_RESPONSIBLE_ERROR', Loc::getMessage('TASKS_ITEM_TASK_TEMPLATE_BAD_ASSIGNEE_ERROR'));
 			}
 		}
 	}

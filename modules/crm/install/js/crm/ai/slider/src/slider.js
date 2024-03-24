@@ -1,4 +1,4 @@
-import { Loc, Type } from 'main.core';
+import { Dom, Loc, Type } from 'main.core';
 import { SidePanel } from 'ui.sidepanel';
 import { Layout } from 'ui.sidepanel.layout';
 import { Button } from 'ui.buttons';
@@ -21,6 +21,12 @@ export class Slider
 	};
 
 	isOpen = false;
+
+	#openedLayout: ?Layout = null;
+
+	get openedLayout(): ?Layout {
+		return this.#openedLayout;
+	}
 
 	constructor(options): void
 	{
@@ -72,9 +78,10 @@ export class Slider
 		this.content = content;
 	}
 
-	open(): Boolean
+	async open(): Boolean
 	{
-		this.isOpen = SidePanel.Instance.open(this.url, this.getSliderOptions());
+		this.#openedLayout = await this.makeLayout();
+		this.isOpen = SidePanel.Instance.open(this.url, await this.getSliderOptions(this.#openedLayout));
 
 		return this.isOpen;
 	}
@@ -85,7 +92,7 @@ export class Slider
 		{
 			return;
 		}
-
+		this.#openedLayout = null;
 		SidePanel.Instance.close();
 	}
 
@@ -94,12 +101,29 @@ export class Slider
 		SidePanel.Instance.destroy(this.url);
 	}
 
+	getInstance(): SidePanel
+	{
+		return SidePanel.Instance;
+	}
+
 	getDefaultUrl(): String
 	{
 		return 'crm.copilot-wrapper';
 	}
 
-	getSliderOptions(): Object
+	async makeLayout(): Promise<Layout>
+	{
+		return Layout.createLayout({
+			title: this.sliderTitle,
+			toolbar: this.toolbar,
+			content: this.content,
+			buttons: this.buttons,
+			design: { section: false },
+			extensions: ['crm.ai.slider', ...this.extensions],
+		});
+	}
+
+	async getSliderOptions(layout: Layout): Object
 	{
 		return {
 			contentClassName: this.getSliderContentClassName(),
@@ -110,14 +134,7 @@ export class Slider
 			allowChangeHistory: this.allowChangeHistory,
 			label: this.label,
 			contentCallback: (slider) => {
-				return Layout.createContent({
-					title: this.sliderTitle,
-					toolbar: this.toolbar,
-					content: this.content,
-					buttons: this.buttons,
-					design: { section: false },
-					extensions: ['crm.ai.slider', ...this.extensions],
-				});
+				return layout.render();
 			},
 			events: this.events,
 		};
@@ -157,5 +174,24 @@ export class Slider
 		});
 
 		return [helpButton];
+	}
+
+	footerDisplay(show: boolean): void
+	{
+		if (!this.#openedLayout)
+		{
+			return;
+		}
+
+		if (this.#openedLayout.getFooterContainer())
+		{
+			Dom.style(this.#openedLayout.getFooterContainer(), 'display', show ? 'block' : 'none');
+		}
+
+		const footerAnchor = this.#openedLayout.getContainer()?.getElementsByClassName('ui-sidepanel-layout-footer-anchor')[0];
+		if (footerAnchor)
+		{
+			Dom.style(footerAnchor, 'display', show ? 'block' : 'none');
+		}
 	}
 }

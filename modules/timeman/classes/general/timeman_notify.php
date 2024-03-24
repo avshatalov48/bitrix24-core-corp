@@ -353,7 +353,22 @@ class CTimeManNotify
 
 		$dbManagers = CUser::GetList(
 			'ID', 'ASC',
-			array('ID' => implode('|', $arManagers))
+			['ID' => implode('|', $arManagers)],
+			[
+				'FIELDS' => [
+					'ID',
+					'LOGIN',
+					'NAME',
+					'LAST_NAME',
+					'SECOND_NAME',
+					'TITLE',
+					'SECOND_NAME',
+					'EMAIL',
+					'WORK_POSITION',
+					'PERSONAL_PHOTO',
+					'PERSONAL_GENDER',
+				]
+			]
 		);
 
 		$arCurrentUserManagers = array();

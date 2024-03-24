@@ -35,6 +35,13 @@ if ((int)$arParams['USER_ID'] !== (int)$arResult['USER_ID'])
 	$createButtonUri->addParams(['RESPONSIBLE_ID' => $arParams['USER_ID']]);
 }
 
+$sectionType = $arResult['IS_SCRUM_PROJECT'] ? 'scrum' : (!empty($arParams['MENU_GROUP_ID']) ? 'project' : 'tasks');
+$createButtonUri->addParams([
+	'ta_sec' => $sectionType,
+	'ta_sub' => $arParams['VIEW_STATE_FOR_ANALYTICS'],
+	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'],
+]);
+
 $createButtonClass = 'ui-btn-split tasks-interface-filter-btn-add';
 $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-btn-themes' : ' ui-btn-success');
 ?>
@@ -141,8 +148,8 @@ $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-
 			return menuItems;
 		}
 
-		var createButtonExtra = BX('tasks-popupMenuAdd');
-		var menu = BX.Main.MenuManager.create({
+		const createButtonExtra = BX('tasks-popupMenuAdd');
+		const menu = BX.Main.MenuManager.create({
 			id: 'popupMenuAdd',
 			bindElement: createButtonExtra,
 			items: getMenuItems(),
@@ -151,7 +158,7 @@ $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-
 			angle: true
 		});
 
-		BX.bind(createButtonExtra, 'click', function() {
+		BX.bind(createButtonExtra, 'click', () => {
 			menu.popupWindow.show();
 		});
 	})();

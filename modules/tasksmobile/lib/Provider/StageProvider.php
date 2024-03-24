@@ -7,6 +7,7 @@ namespace Bitrix\TasksMobile\Provider;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\TasksMobile\Dto\Stage;
 use Bitrix\Socialnetwork\Item\Workgroup;
@@ -16,18 +17,22 @@ use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\TasksMobile\Dto\TaskRequestFilter;
 use Bitrix\TasksMobile\Exception\ModuleNotFoundException;
+use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use CTasks;
 
 final class StageProvider
 {
+	use PublicErrorsTrait;
+
 	private const STAGE_NAME_REQUIRED_ERROR_CODE = 1;
 	private const EDITING_PROHIBITED_ERROR_CODE = 2;
-	private const STAGE_ADD_ERROR_CODE = 3;
+	private const STAGE_UPDATE_ERROR_CODE = 3;
 	private const CREATED_STAGE_NOT_FOUND_ERROR_CODE = 4;
 	private const DELETION_PROHIBITED_ERROR_CODE = 5;
 	private const DELETING_STAGE_WITH_TASKS_ERROR_CODE = 6;
 	private const STAGE_DELETE_ERROR_CODE = 7;
 	private const STAGES_SORT_ORDER_SAVE_ERROR_CODE = 8;
+	private const STAGE_CREATE_ERROR_CODE = 9;
 
 	private string $workMode;
 	private int $userId;
@@ -117,14 +122,14 @@ final class StageProvider
 		$this->workMode = isset($this->projectId) ? StagesTable::WORK_MODE_GROUP : StagesTable::WORK_MODE_USER;
 		if (empty($name))
 		{
-			$result->addError(new Error('Stage name required', self::STAGE_NAME_REQUIRED_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('STAGE_NAME_REQUIRED_ERROR'), self::STAGE_NAME_REQUIRED_ERROR_CODE));
 
 			return $result;
 		}
 		if ($this->workMode === StagesTable::WORK_MODE_GROUP
 			&& !$this->hasEditProjectStagesPermission())
 		{
-			$result->addError(new Error('Editing prohibited', self::EDITING_PROHIBITED_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('EDITING_PROHIBITED_ERROR'), self::EDITING_PROHIBITED_ERROR_CODE));
 
 			return $result;
 		}
@@ -158,11 +163,11 @@ final class StageProvider
 				}
 			}
 
-			$result->addError(new Error('Created stage not found', self::CREATED_STAGE_NOT_FOUND_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('CREATED_STAGE_NOT_FOUND_ERROR'), self::CREATED_STAGE_NOT_FOUND_ERROR_CODE));
 		}
 		else
 		{
-			$result->addError(new Error('Stage add error', self::CREATED_STAGE_NOT_FOUND_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('STAGE_ADD_ERROR'), self::STAGE_CREATE_ERROR_CODE));
 		}
 
 		return $result;
@@ -223,13 +228,13 @@ final class StageProvider
 		$this->workMode = isset($this->projectId) ? StagesTable::WORK_MODE_GROUP : StagesTable::WORK_MODE_USER;
 		if (empty($name))
 		{
-			$result->addError(new Error('Stage name required', self::STAGE_NAME_REQUIRED_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('STAGE_NAME_REQUIRED_ERROR'), self::STAGE_NAME_REQUIRED_ERROR_CODE));
 
 			return $result;
 		}
 		if (!$this->hasEditStagesPermission([$stageId]))
 		{
-			$result->addError(new Error('Editing prohibited', self::EDITING_PROHIBITED_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('EDITING_PROHIBITED_ERROR'), self::EDITING_PROHIBITED_ERROR_CODE));
 
 			return $result;
 		}
@@ -245,7 +250,7 @@ final class StageProvider
 		StagesTable::setWorkMode($prevWorkMode);
 		if (!$res || !$res->isSuccess())
 		{
-			$result->addError(new Error('Stage add error', self::STAGE_ADD_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('STAGE_UPDATE_ERROR'),self::STAGE_UPDATE_ERROR_CODE));
 		}
 
 		return $result;
@@ -259,27 +264,29 @@ final class StageProvider
 		$stagesEntityId = $this->projectId ?? $this->userId;
 		if (!$this->hasEditStagesPermission([$id]))
 		{
-			$result->addError(new Error('Deletion prohibited', self::DELETION_PROHIBITED_ERROR_CODE));
+			$errors = $this->markErrorsAsPublic([new Error(Loc::getMessage('STAGE_DELETION_PROHIBITED_ERROR'), self::DELETION_PROHIBITED_ERROR_CODE)]);
+			$result->addErrors($errors);
 
 			return $result;
 		}
 		if ($this->stageHasTasks($id, $this->projectId ?? $this->userId))
 		{
-			$result->addError(new Error('Deleting stage with tasks is prohibited', self::DELETING_STAGE_WITH_TASKS_ERROR_CODE));
+			$errors = $this->markErrorsAsPublic([new Error(Loc::getMessage('STAGE_WITH_TASKS_DELETION_PROHIBITED_ERROR'), self::DELETING_STAGE_WITH_TASKS_ERROR_CODE)]);
+
+			$result->addErrors($errors);
+			return $result;
 		}
-		else
+
+		$prevWorkMode = StagesTable::getWorkMode();
+		StagesTable::setWorkMode($this->workMode);
+		$res = StagesTable::delete(
+			$id,
+			$stagesEntityId
+		);
+		StagesTable::setWorkMode($prevWorkMode);
+		if (!$res || !$res->isSuccess())
 		{
-			$prevWorkMode = StagesTable::getWorkMode();
-			StagesTable::setWorkMode($this->workMode);
-			$res = StagesTable::delete(
-				$id,
-				$stagesEntityId
-			);
-			StagesTable::setWorkMode($prevWorkMode);
-			if (!$res || !$res->isSuccess())
-			{
-				$result->addError(new Error('Deleting stage error', self::STAGE_DELETE_ERROR_CODE));
-			}
+			$result->addError(new Error(Loc::getMessage('STAGE_DELETION_ERROR'), self::STAGE_DELETE_ERROR_CODE));
 		}
 
 		return $result;
@@ -304,7 +311,7 @@ final class StageProvider
 				));
 				if (!isset($updateResult) || !$updateResult->isSuccess())
 				{
-					$result->addError(new Error('An error occurred while saving the sort order', self::STAGES_SORT_ORDER_SAVE_ERROR_CODE));
+					$result->addError(new Error(Loc::getMessage('STAGES_SORT_ORDER_UPDATE_ERROR'), self::STAGES_SORT_ORDER_SAVE_ERROR_CODE));
 
 					return $result;
 				}
@@ -313,7 +320,7 @@ final class StageProvider
 		}
 		else
 		{
-			$result->addError(new Error('Editing prohibited', self::EDITING_PROHIBITED_ERROR_CODE));
+			$result->addError(new Error(Loc::getMessage('EDITING_PROHIBITED_ERROR'), self::EDITING_PROHIBITED_ERROR_CODE));
 		}
 
 		return $result;

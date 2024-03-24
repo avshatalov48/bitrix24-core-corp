@@ -257,10 +257,14 @@ final class SaveEntityCommand extends Command
 		$isDateTimeField = $field->getType() === Field::TYPE_DATETIME;
 		$timezoneOffset = \CTimeZone::getOffset();
 		$useTimezone = ($field->getUserField()['SETTINGS']['USE_TIMEZONE'] ?? 'Y') === 'Y';
+		$isDynamicEntityType = \CCrmOwnerType::isPossibleDynamicTypeId($this->entity->getEntityTypeId());
 
-		$createFromTimestamp = static function ($timestamp) use ($isDateTimeField, $timezoneOffset, $useTimezone) {
+		$createFromTimestamp = static function ($timestamp) use ($isDateTimeField, $timezoneOffset, $useTimezone, $isDynamicEntityType) {
 			$object = $isDateTimeField
-				? DateTime::createFromTimestamp($timestamp)
+				? ($isDynamicEntityType && $useTimezone
+					? DateTime::createFromTimestamp($timestamp + $timezoneOffset)
+					: DateTime::createFromTimestamp($timestamp)
+				)
 				: Date::createFromTimestamp($timestamp + $timezoneOffset);
 
 			if ($isDateTimeField && !$useTimezone)
@@ -327,7 +331,7 @@ final class SaveEntityCommand extends Command
 	{
 		if (!empty($data) && is_array($data))
 		{
-			$uniqueEntityTypes = array_unique(array_map(static fn($val) => $val[0], $data));
+			$isMultipleEntityType = count(array_filter($field->getSettings(), static fn($val) => $val === 'Y')) > 1;
 			foreach ($data as $key => $value)
 			{
 				if (!empty($value) && is_array($value))
@@ -346,7 +350,7 @@ final class SaveEntityCommand extends Command
 
 					if ($entityTypeAbbr)
 					{
-						$data[$key] = count($uniqueEntityTypes) > 1 ? "{$entityTypeAbbr}_{$entityId}" : $entityId;
+						$data[$key] = $isMultipleEntityType ? "{$entityTypeAbbr}_{$entityId}" : $entityId;
 					}
 
 				}

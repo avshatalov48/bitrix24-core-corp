@@ -82,4 +82,3 @@ jn.define('crm/product-grid/services/product-wizard', (require, exports, module)
 
 	module.exports = { ProductWizard };
 });
-

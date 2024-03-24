@@ -5,6 +5,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Tasks\Internals\Task\Scenario\Scenario;
 
 /**
  * Class ScenarioTable
@@ -25,9 +26,9 @@ use Bitrix\Main\ORM\Fields\StringField;
  * @method static EO_Scenario_Result getById($id)
  * @method static EO_Scenario_Result getList(array $parameters = [])
  * @method static EO_Scenario_Entity getEntity()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Scenario createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Scenario\Scenario createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection createCollection()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Scenario wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Scenario\Scenario wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection wakeUpCollection($rows)
  */
 
@@ -36,6 +37,11 @@ class ScenarioTable extends DataManager
 	public const SCENARIO_DEFAULT = 'default';
 	public const SCENARIO_CRM = 'crm';
 	public const SCENARIO_MOBILE = 'mobile';
+
+	public static function getObjectClass(): string
+	{
+		return Scenario::class;
+	}
 
 	/**
 	 * Returns valid scenarios
@@ -104,16 +110,14 @@ class ScenarioTable extends DataManager
 	 */
 	public static function insertIgnore(int $taskId, array $scenarios): void
 	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
 		foreach (self::filterByValidScenarios($scenarios) as $scenario)
 		{
 			$scenario = Application::getConnection()->getSqlHelper()->forSql($scenario);
-			$sql = "
-				INSERT IGNORE INTO ". self::getTableName() ."
-				(`TASK_ID`, `SCENARIO`)
-				VALUES
-				($taskId, '$scenario')
-			";
-			Application::getConnection()->query($sql);
+			$sql = $helper->getInsertIgnore(self::getTableName(), '(TASK_ID, SCENARIO)', 'VALUES (' . $taskId . ', \'' . $scenario . '\')');
+			$connection->query($sql);
 		}
 	}
 

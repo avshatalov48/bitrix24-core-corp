@@ -75,7 +75,7 @@ class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (
 			$this->oldTask->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
-			&& $this->user->getPermission(PermissionDictionary::TASK_RESPONSE_DELEGATE)
+			&& $this->user->getPermission(PermissionDictionary::TASK_ASSIGNEE_DELEGATE)
 		)
 		{
 			return true;

@@ -1233,7 +1233,7 @@ class CAllControllerMember
 						ExecuteModuleEventEx($arEvent, array(&$arFields));
 					}
 
-					CEvent::Send("CONTROLLER_MEMBER_REGISTER", SITE_ID, $arFields);
+					CEvent::Send("CONTROLLER_MEMBER_REGISTER", CSite::GetDefSite(), $arFields);
 				}
 			}
 
@@ -1430,9 +1430,9 @@ class CAllControllerMember
 			}
 
 			if($bClose)
-				CEvent::Send("CONTROLLER_MEMBER_CLOSED", SITE_ID, $arFields);
+				CEvent::Send("CONTROLLER_MEMBER_CLOSED", CSite::GetDefSite(), $arFields);
 			else
-				CEvent::Send("CONTROLLER_MEMBER_OPENED", SITE_ID, $arFields);
+				CEvent::Send("CONTROLLER_MEMBER_OPENED", CSite::GetDefSite(), $arFields);
 		}
 
 		return $result;

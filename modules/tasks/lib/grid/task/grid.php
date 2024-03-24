@@ -22,7 +22,7 @@ class Grid extends \Bitrix\Tasks\Grid
 			->fillWithUfHeaders()
 			->markDefaultHeaders()
 			->colorize()
-			->applyScope();
+			->applyScopeStrategy();
 
 		return $this->headers;
 	}
@@ -99,7 +99,7 @@ class Grid extends \Bitrix\Tasks\Grid
 			],
 			'RESPONSIBLE_NAME' => [
 				'id' => 'RESPONSIBLE_NAME',
-				'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_RESPONSIBLE_NAME'),
+				'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_ASSIGNEE_NAME'),
 				'sort' => 'RESPONSIBLE_NAME',
 				'first_order' => 'desc',
 				'editable' => false,
@@ -287,16 +287,6 @@ class Grid extends \Bitrix\Tasks\Grid
 		)
 		{
 			$this->headers[$key]['color'] = Column\Color::BLUE;
-		}
-
-		return $this;
-	}
-
-	private function applyScope(): static
-	{
-		if ($this->isInScope())
-		{
-			$this->headers = $this->scope->apply();
 		}
 
 		return $this;

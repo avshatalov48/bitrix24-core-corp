@@ -11,8 +11,10 @@ use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\TagTable;
 use Exception;
 
-class TagConverter
+class TagConverter implements AgentInterface
 {
+	use AgentTrait;
+
 	public const OPTION_KEY = 'task_tag_converter';
 	public const LIMIT = 500;
 
@@ -23,16 +25,11 @@ class TagConverter
 		return Option::get('tasks', self::OPTION_KEY, 'null', '-') !== 'null';
 	}
 
-	private static function getAgentName(): string
-	{
-		return self::class . "::execute();";
-	}
-
 	public static function execute(): string
 	{
 		if (self::$processing)
 		{
-			return self::getAgentName();
+			return static::getAgentName();
 		}
 
 		self::$processing = true;
@@ -113,7 +110,7 @@ class TagConverter
 
 		Option::set('tasks', self::OPTION_KEY, 'process', '-');
 
-		return self::getAgentName();
+		return static::getAgentName();
 	}
 
 	private function getIdInLabelTable(array $tag): ?int
@@ -191,14 +188,14 @@ class TagConverter
 			return;
 		}
 		$relationsToImplode = implode(',', $relationsToImplode);
+		$connection = Application::getConnection();
+		$sql = $connection->getSqlHelper()->getInsertIgnore(
+			LabelTable::getRelationTable(),
+			' (TAG_ID, TASK_ID)',
+			" VALUES {$relationsToImplode}"
+		);
 
-		$sql =
-			'INSERT IGNORE INTO '
-			. LabelTable::getRelationTable()
-			. " (`TAG_ID`, `TASK_ID`) VALUES {$relationsToImplode}"
-		;
-
-		Application::getConnection()->query($sql);
+		$connection->query($sql);
 	}
 
 	private function markTagsAsConverted(array $tags): void
@@ -216,7 +213,7 @@ class TagConverter
 		$sql =
 			'UPDATE '
 			. TagTable::getTableName()
-			. " SET `CONVERTED` = 1 WHERE (`USER_ID`, `TASK_ID`, `NAME`) IN {$implode}"
+			. " SET CONVERTED = 1 WHERE (USER_ID, TASK_ID, NAME) IN {$implode}"
 		;
 
 		Application::getConnection()->query($sql);

@@ -19,7 +19,6 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 	const { debounce } = require('utils/function');
 	const { Line } = require('utils/skeleton');
 	const { Type } = require('type');
-	const { Feature } = require('feature');
 	const { settings } = require('assets/common');
 	const { ContextMenu } = require('layout/ui/context-menu');
 
@@ -145,20 +144,14 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			this.focus();
 			this.refreshSendButton();
 
-			if (Feature.isKeyboardEventsSupported())
-			{
-				Keyboard.on(Keyboard.Event.WillHide, this.onKeyboardToggleHandler);
-				Keyboard.on(Keyboard.Event.WillShow, this.onKeyboardToggleHandler);
-			}
+			Keyboard.on(Keyboard.Event.WillHide, this.onKeyboardToggleHandler);
+			Keyboard.on(Keyboard.Event.WillShow, this.onKeyboardToggleHandler);
 		}
 
 		componentWillUnmount()
 		{
-			if (Feature.isKeyboardEventsSupported())
-			{
-				Keyboard.off(Keyboard.Event.WillHide, this.onKeyboardToggleHandler);
-				Keyboard.off(Keyboard.Event.WillShow, this.onKeyboardToggleHandler);
-			}
+			Keyboard.off(Keyboard.Event.WillHide, this.onKeyboardToggleHandler);
+			Keyboard.off(Keyboard.Event.WillShow, this.onKeyboardToggleHandler);
 
 			super.componentWillUnmount();
 		}

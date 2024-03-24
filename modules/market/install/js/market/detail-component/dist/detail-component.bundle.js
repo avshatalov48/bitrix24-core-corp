@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,market_slider,market_listItem,market_rating,market_popupInstall,market_popupUninstall,market_scopeList,market_installStore,market_uninstallStore,main_core_events,main_popup,ui_designTokens,ui_vue3_pinia) {
 	'use strict';
@@ -49,7 +50,10 @@ this.BX = this.BX || {};
 	      return this.result.APP.BUTTONS.hasOwnProperty('NO_ACCESS_INSTALL') && this.result.APP.BUTTONS.NO_ACCESS_INSTALL === 'Y';
 	    },
 	    showConfigButton: function () {
-	      return this.result.APP.BUTTONS.hasOwnProperty('CONFIGURATION_IMPORT') && this.result.APP.BUTTONS.CONFIGURATION_IMPORT === 'Y';
+	      return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'CONFIGURATION_IMPORT') && this.result.APP.BUTTONS.CONFIGURATION_IMPORT === 'Y';
+	    },
+	    showReimportButton: function () {
+	      return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'REIMPORT') && this.result.APP.BUTTONS.REIMPORT === 'Y';
 	    },
 	    showUpdateButton: function () {
 	      return this.result.APP.BUTTONS.hasOwnProperty('UPDATE') && this.result.APP.BUTTONS.UPDATE === 'Y';
@@ -220,6 +224,10 @@ this.BX = this.BX || {};
 	      }
 	      this.showInstallPopup(true);
 	    },
+	    deleteApp: function () {
+	      this.setDeleteActionInfo(this.result.APP.ADDITIONAL_ACTION_DEL);
+	      this.deleteAction(this.result.APP.CODE);
+	    },
 	    configApp: function () {
 	      BX.SidePanel.Instance.open(this.result.IMPORT_PAGE);
 	    },
@@ -305,10 +313,15 @@ this.BX = this.BX || {};
 	      if (!this.pricePolicySlider) {
 	        return;
 	      }
+	      if (this.result.ADDITIONAL_MARKET_ACTION) {
+	        try {
+	          eval(this.result.ADDITIONAL_MARKET_ACTION);
+	        } catch (e) {}
+	      }
 	      BX.UI.InfoHelper.show(this.pricePolicySlider);
 	    },
 	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy']),
-	    ...ui_vue3_pinia.mapActions(market_uninstallStore.marketUninstallState, ['deleteApp'])
+	    ...ui_vue3_pinia.mapActions(market_uninstallStore.marketUninstallState, ['deleteAction', 'setDeleteActionInfo'])
 	  },
 	  template: `
 		<div class="market-detail">
@@ -351,9 +364,15 @@ this.BX = this.BX || {};
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG') }}
 							</button>
+							<button class="ui-btn ui-btn-success ui-btn-xs"
+									v-if="showReimportButton"
+									@click="configApp"
+							>
+								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_REIMPORT') }}
+							</button>
 							<button class="ui-btn ui-btn-light-border ui-btn-xs"
 									v-if="showDeleteButton"
-									@click="deleteApp($event, result.APP.CODE)"
+									@click="deleteApp"
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_DELETE') }}
 							</button>
@@ -469,9 +488,15 @@ this.BX = this.BX || {};
 						>
 							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG') }}
 						</button>
+						<button class="ui-btn ui-btn-success ui-btn-md"
+								v-if="showReimportButton"
+								@click="configApp"
+						>
+							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_REIMPORT') }}
+						</button>
 						<button class="ui-btn ui-btn-light-border ui-btn-md"
 								v-if="showDeleteButton"
-								@click="deleteApp($event, result.APP.CODE)"
+								@click="deleteApp"
 						>
 							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_DELETE') }}
 						</button>

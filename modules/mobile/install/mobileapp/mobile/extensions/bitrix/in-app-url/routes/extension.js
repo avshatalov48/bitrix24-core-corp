@@ -56,5 +56,34 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			PageManager.openWidget('list', widgetParams)
 				.then((list) => ProfileView.open({ userId, backdrop }, list));
 		}).name('open:user');
+
+		inAppUrl.register('/company/personal/user/:userId/blog/:postId/$', ({ postId }) => {
+			PageManager.openPage({
+				url: `mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=${postId}`,
+			});
+		}).name('blog:post');
+
+		inAppUrl.register('/company/personal/user/:userId/blog/:postId/\\?commentId=:commentId#com:com', ({ postId, commentId, com }) => {
+			PageManager.openPage({
+				url: `mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=${postId}&commentId=${commentId}#com${com}`,
+			});
+		}).name('blog:post:comment');
+
+		inAppUrl.register('/company/personal/log/:logId/$', ({ logId }) => {
+			PageManager.openPage({
+				url: `mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=LOG_ENTRY&ENTITY_ID=${logId}`,
+			});
+		}).name('log:entry');
+
+		inAppUrl.register('/workgroups/group/:groupId/$', ({ groupId }) => {
+			const data = {
+				projectId: groupId,
+				action: 'view',
+				siteId: env.siteId,
+				siteDir: env.siteDir,
+			};
+
+			BX.postComponentEvent('projectbackground::project::action', [data], 'background');
+		}).name('group:open');
 	};
 });

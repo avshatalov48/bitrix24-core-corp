@@ -42,7 +42,8 @@ class Im extends Volume\Module\Module
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
-		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
+		$sqlHelper = $connection->getSqlHelper();
+		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
 		// collect disk statistics
@@ -61,9 +62,9 @@ class Im extends Volume\Module\Module
 			SELECT 
 				'{$indicatorType}' as INDICATOR_TYPE,
 				{$ownerId} as OWNER_ID,
-				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
-				SUM(FILE_SIZE) as FILE_SIZE,
-				COUNT(*) as FILE_COUNT,
+				". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
+				COALESCE(SUM(FILE_SIZE), 0) as FILE_SIZE,
+				COALESCE(COUNT(*), 0) as FILE_COUNT,
 				0 as DISK_SIZE,
 				0 as DISK_COUNT
 			FROM
@@ -85,7 +86,7 @@ class Im extends Volume\Module\Module
 			$this->getSelect()
 		);
 
-		$tableName = VolumeTable::getTableName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

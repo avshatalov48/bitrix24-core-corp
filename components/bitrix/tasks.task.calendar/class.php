@@ -13,7 +13,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
@@ -109,7 +108,6 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 			}
 
 			$this->arResult['LIST'] = $mgrResult['DATA'];
-			$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::DEFAULT;
 
 			if ($this->errors->checkHasFatals())
 			{

@@ -8,7 +8,7 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 	const { DeadlinePicker } = require('tasks/deadline-picker');
 	const { DeadlineFriendlyDate } = require('tasks/layout/deadline-friendly-date');
 	const { executeIfOnline } = require('tasks/layout/online');
-	const { withPressed } = require('utils/color');
+	const { withPressed, transparent } = require('utils/color');
 	const { Moment } = require('utils/date');
 	const { PropTypes } = require('utils/validation');
 	const { showToast } = require('toast');
@@ -19,6 +19,7 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 		selectActions,
 		updateDeadline,
 	} = require('tasks/statemanager/redux/slices/tasks');
+	const { TaskStatus } = require('tasks/enum');
 
 	/**
 	 * @class DeadlinePillView
@@ -63,6 +64,22 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 
 		renderDeadlineText()
 		{
+			if (this.props.status === TaskStatus.DEFERRED)
+			{
+				return Text({
+					text: Loc.getMessage('TASKSMOBILE_DEADLINE_PILL_DEFERRED'),
+					style: Styles.deadlineText(false, this.props.isCompleted),
+				});
+			}
+
+			if (this.props.status === TaskStatus.SUPPOSEDLY_COMPLETED)
+			{
+				return Text({
+					text: Loc.getMessage('TASKSMOBILE_DEADLINE_PILL_SUPPOSEDLY_COMPLETED'),
+					style: Styles.deadlineText(false, false),
+				});
+			}
+
 			if (this.props.deadline > 0)
 			{
 				return new DeadlineFriendlyDate({
@@ -140,12 +157,17 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 
 	const Styles = {
 		wrapper: (isExpired, isCompleted, defaultBackgroundColor) => {
-			const backgroundColor = (isExpired && !isCompleted ? AppTheme.colors.accentSoftRed3 : defaultBackgroundColor);
-
 			return {
-				borderWidth: isExpired ? 0 : 1,
-				borderColor: AppTheme.colors.bgSeparatorPrimary,
-				backgroundColor: withPressed(backgroundColor),
+				borderWidth: 1,
+				borderColor: isExpired && !isCompleted
+					? transparent(AppTheme.colors.accentMainAlert, 0.3)
+					: AppTheme.colors.bgSeparatorPrimary,
+				backgroundColor: isExpired && !isCompleted
+					? {
+						default: defaultBackgroundColor,
+						pressed: AppTheme.colors.accentSoftRed1,
+					}
+					: withPressed(defaultBackgroundColor),
 				flexDirection: 'row',
 				alignItems: 'center',
 				justifyContent: 'center',
@@ -188,6 +210,7 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 			isExpired: task.isExpired,
 			isCompleted: selectIsCompleted(task),
 			canChange: selectActions(task).updateDeadline,
+			status: task.status,
 		};
 	};
 

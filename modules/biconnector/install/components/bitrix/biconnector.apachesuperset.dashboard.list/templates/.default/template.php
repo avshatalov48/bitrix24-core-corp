@@ -61,6 +61,15 @@ $APPLICATION->IncludeComponent(
 	])
 );
 
+$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
+$limitManager->setIsSuperset();
+if (!$limitManager->checkLimitWarning())
+{
+	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '', [
+		'SUPERSET_LIMIT' => 'Y',
+	]);
+}
+
 ?>
 </div>
 

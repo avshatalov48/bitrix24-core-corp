@@ -12,6 +12,7 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 	const { WarnLogger } = require('utils/logger/warn-logger');
 	const store = require('statemanager/redux/store');
 	const { showToast, showRemoveToast } = require('toast');
+	const { Haptics } = require('haptics');
 	const { dispatch } = store;
 	const {
 		selectById,
@@ -194,11 +195,25 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 						svgUri: actionIconMap[ActionMenu.action.complete],
 					},
 					onClickCallback: this.checkOnline(() => {
-						dispatch(
-							complete({
-								taskId: this.task.id,
-							}),
-						);
+						if (this.task.isResultRequired && !this.task.isOpenResultExists)
+						{
+							Haptics.notifyWarning();
+							showToast(
+								{
+									code: ActionMenu.action.complete,
+									message: Loc.getMessage('TASKSMOBILE_LAYOUT_ACTION_MENU_COMPLETE_RESULT_REQUIRED'),
+								},
+								this.layoutWidget,
+							);
+						}
+						else
+						{
+							dispatch(
+								complete({
+									taskId: this.task.id,
+								}),
+							);
+						}
 					}),
 				},
 				[ActionMenu.action.renew]: {

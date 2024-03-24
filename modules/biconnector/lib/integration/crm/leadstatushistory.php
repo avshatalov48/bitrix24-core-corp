@@ -148,7 +148,7 @@ class LeadStatusHistory
 
 		if (\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
 		{
-			$result['crm_deal']['DICTIONARY'] = [
+			$result['crm_lead_status_history']['DICTIONARY'] = [
 				\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT,
 			];
 		}

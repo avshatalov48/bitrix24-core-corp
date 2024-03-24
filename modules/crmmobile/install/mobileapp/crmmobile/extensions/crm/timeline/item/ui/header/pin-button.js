@@ -32,6 +32,11 @@ jn.define('crm/timeline/item/ui/header/pin-button', (require, exports, module) =
 						alignItems: 'center',
 					},
 					onClick: () => {
+						if (this.props.isReadonly)
+						{
+							return;
+						}
+
 						this.setState({ pinned: !this.state.pinned });
 						if (this.props.onClick)
 						{

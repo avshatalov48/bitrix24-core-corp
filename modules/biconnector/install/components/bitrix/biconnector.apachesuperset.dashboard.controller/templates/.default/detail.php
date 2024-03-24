@@ -34,7 +34,7 @@ if (!empty($arResult['ERROR_MESSAGES']))
 }
 
 $superset = new SupersetController(ProxyIntegrator::getInstance());
-$superset->createSuperset();
+$superset->initSuperset();
 
 if (
 	isset($arResult['VARIABLES']['dashboardId'])

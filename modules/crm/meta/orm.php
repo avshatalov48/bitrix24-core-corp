@@ -8070,46 +8070,46 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Contact resetSourceDescription()
 	 * @method \Bitrix\Crm\Contact unsetSourceDescription()
 	 * @method \string fillSourceDescription()
-	 * @method ?\string getFullName()
-	 * @method \Bitrix\Crm\Contact setFullName(?\string|\Bitrix\Main\DB\SqlExpression $fullName)
+	 * @method null|\string getFullName()
+	 * @method \Bitrix\Crm\Contact setFullName(null|\string|\Bitrix\Main\DB\SqlExpression $fullName)
 	 * @method bool hasFullName()
 	 * @method bool isFullNameFilled()
 	 * @method bool isFullNameChanged()
-	 * @method ?\string remindActualFullName()
-	 * @method ?\string requireFullName()
+	 * @method null|\string remindActualFullName()
+	 * @method null|\string requireFullName()
 	 * @method \Bitrix\Crm\Contact resetFullName()
 	 * @method \Bitrix\Crm\Contact unsetFullName()
-	 * @method ?\string fillFullName()
-	 * @method ?\string getName()
-	 * @method \Bitrix\Crm\Contact setName(?\string|\Bitrix\Main\DB\SqlExpression $name)
+	 * @method null|\string fillFullName()
+	 * @method null|\string getName()
+	 * @method \Bitrix\Crm\Contact setName(null|\string|\Bitrix\Main\DB\SqlExpression $name)
 	 * @method bool hasName()
 	 * @method bool isNameFilled()
 	 * @method bool isNameChanged()
-	 * @method ?\string remindActualName()
-	 * @method ?\string requireName()
+	 * @method null|\string remindActualName()
+	 * @method null|\string requireName()
 	 * @method \Bitrix\Crm\Contact resetName()
 	 * @method \Bitrix\Crm\Contact unsetName()
-	 * @method ?\string fillName()
-	 * @method ?\string getLastName()
-	 * @method \Bitrix\Crm\Contact setLastName(?\string|\Bitrix\Main\DB\SqlExpression $lastName)
+	 * @method null|\string fillName()
+	 * @method null|\string getLastName()
+	 * @method \Bitrix\Crm\Contact setLastName(null|\string|\Bitrix\Main\DB\SqlExpression $lastName)
 	 * @method bool hasLastName()
 	 * @method bool isLastNameFilled()
 	 * @method bool isLastNameChanged()
-	 * @method ?\string remindActualLastName()
-	 * @method ?\string requireLastName()
+	 * @method null|\string remindActualLastName()
+	 * @method null|\string requireLastName()
 	 * @method \Bitrix\Crm\Contact resetLastName()
 	 * @method \Bitrix\Crm\Contact unsetLastName()
-	 * @method ?\string fillLastName()
-	 * @method ?\string getSecondName()
-	 * @method \Bitrix\Crm\Contact setSecondName(?\string|\Bitrix\Main\DB\SqlExpression $secondName)
+	 * @method null|\string fillLastName()
+	 * @method null|\string getSecondName()
+	 * @method \Bitrix\Crm\Contact setSecondName(null|\string|\Bitrix\Main\DB\SqlExpression $secondName)
 	 * @method bool hasSecondName()
 	 * @method bool isSecondNameFilled()
 	 * @method bool isSecondNameChanged()
-	 * @method ?\string remindActualSecondName()
-	 * @method ?\string requireSecondName()
+	 * @method null|\string remindActualSecondName()
+	 * @method null|\string requireSecondName()
 	 * @method \Bitrix\Crm\Contact resetSecondName()
 	 * @method \Bitrix\Crm\Contact unsetSecondName()
-	 * @method ?\string fillSecondName()
+	 * @method null|\string fillSecondName()
 	 * @method \string getShortName()
 	 * @method \string remindActualShortName()
 	 * @method \string requireShortName()
@@ -8117,56 +8117,56 @@ namespace Bitrix\Crm {
 	 * @method bool isShortNameFilled()
 	 * @method \Bitrix\Crm\Contact unsetShortName()
 	 * @method \string fillShortName()
-	 * @method ?\int getPhoto()
-	 * @method \Bitrix\Crm\Contact setPhoto(?\int|\Bitrix\Main\DB\SqlExpression $photo)
+	 * @method null|\int getPhoto()
+	 * @method \Bitrix\Crm\Contact setPhoto(null|\int|\Bitrix\Main\DB\SqlExpression $photo)
 	 * @method bool hasPhoto()
 	 * @method bool isPhotoFilled()
 	 * @method bool isPhotoChanged()
-	 * @method ?\int remindActualPhoto()
-	 * @method ?\int requirePhoto()
+	 * @method null|\int remindActualPhoto()
+	 * @method null|\int requirePhoto()
 	 * @method \Bitrix\Crm\Contact resetPhoto()
 	 * @method \Bitrix\Crm\Contact unsetPhoto()
-	 * @method ?\int fillPhoto()
-	 * @method ?\string getPost()
-	 * @method \Bitrix\Crm\Contact setPost(?\string|\Bitrix\Main\DB\SqlExpression $post)
+	 * @method null|\int fillPhoto()
+	 * @method null|\string getPost()
+	 * @method \Bitrix\Crm\Contact setPost(null|\string|\Bitrix\Main\DB\SqlExpression $post)
 	 * @method bool hasPost()
 	 * @method bool isPostFilled()
 	 * @method bool isPostChanged()
-	 * @method ?\string remindActualPost()
-	 * @method ?\string requirePost()
+	 * @method null|\string remindActualPost()
+	 * @method null|\string requirePost()
 	 * @method \Bitrix\Crm\Contact resetPost()
 	 * @method \Bitrix\Crm\Contact unsetPost()
-	 * @method ?\string fillPost()
-	 * @method ?\string getAddress()
-	 * @method \Bitrix\Crm\Contact setAddress(?\string|\Bitrix\Main\DB\SqlExpression $address)
+	 * @method null|\string fillPost()
+	 * @method null|\string getAddress()
+	 * @method \Bitrix\Crm\Contact setAddress(null|\string|\Bitrix\Main\DB\SqlExpression $address)
 	 * @method bool hasAddress()
 	 * @method bool isAddressFilled()
 	 * @method bool isAddressChanged()
-	 * @method ?\string remindActualAddress()
-	 * @method ?\string requireAddress()
+	 * @method null|\string remindActualAddress()
+	 * @method null|\string requireAddress()
 	 * @method \Bitrix\Crm\Contact resetAddress()
 	 * @method \Bitrix\Crm\Contact unsetAddress()
-	 * @method ?\string fillAddress()
-	 * @method ?\string getComments()
-	 * @method \Bitrix\Crm\Contact setComments(?\string|\Bitrix\Main\DB\SqlExpression $comments)
+	 * @method null|\string fillAddress()
+	 * @method null|\string getComments()
+	 * @method \Bitrix\Crm\Contact setComments(null|\string|\Bitrix\Main\DB\SqlExpression $comments)
 	 * @method bool hasComments()
 	 * @method bool isCommentsFilled()
 	 * @method bool isCommentsChanged()
-	 * @method ?\string remindActualComments()
-	 * @method ?\string requireComments()
+	 * @method null|\string remindActualComments()
+	 * @method null|\string requireComments()
 	 * @method \Bitrix\Crm\Contact resetComments()
 	 * @method \Bitrix\Crm\Contact unsetComments()
-	 * @method ?\string fillComments()
-	 * @method ?\int getLeadId()
-	 * @method \Bitrix\Crm\Contact setLeadId(?\int|\Bitrix\Main\DB\SqlExpression $leadId)
+	 * @method null|\string fillComments()
+	 * @method null|\int getLeadId()
+	 * @method \Bitrix\Crm\Contact setLeadId(null|\int|\Bitrix\Main\DB\SqlExpression $leadId)
 	 * @method bool hasLeadId()
 	 * @method bool isLeadIdFilled()
 	 * @method bool isLeadIdChanged()
-	 * @method ?\int remindActualLeadId()
-	 * @method ?\int requireLeadId()
+	 * @method null|\int remindActualLeadId()
+	 * @method null|\int requireLeadId()
 	 * @method \Bitrix\Crm\Contact resetLeadId()
 	 * @method \Bitrix\Crm\Contact unsetLeadId()
-	 * @method ?\int fillLeadId()
+	 * @method null|\int fillLeadId()
 	 * @method \boolean getExport()
 	 * @method \Bitrix\Crm\Contact setExport(\boolean|\Bitrix\Main\DB\SqlExpression $export)
 	 * @method bool hasExport()
@@ -8177,16 +8177,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Contact resetExport()
 	 * @method \Bitrix\Crm\Contact unsetExport()
 	 * @method \boolean fillExport()
-	 * @method ?\string getTypeId()
-	 * @method \Bitrix\Crm\Contact setTypeId(?\string|\Bitrix\Main\DB\SqlExpression $typeId)
+	 * @method null|\string getTypeId()
+	 * @method \Bitrix\Crm\Contact setTypeId(null|\string|\Bitrix\Main\DB\SqlExpression $typeId)
 	 * @method bool hasTypeId()
 	 * @method bool isTypeIdFilled()
 	 * @method bool isTypeIdChanged()
-	 * @method ?\string remindActualTypeId()
-	 * @method ?\string requireTypeId()
+	 * @method null|\string remindActualTypeId()
+	 * @method null|\string requireTypeId()
 	 * @method \Bitrix\Crm\Contact resetTypeId()
 	 * @method \Bitrix\Crm\Contact unsetTypeId()
-	 * @method ?\string fillTypeId()
+	 * @method null|\string fillTypeId()
 	 * @method \Bitrix\Crm\EO_Status getTypeBy()
 	 * @method \Bitrix\Crm\EO_Status remindActualTypeBy()
 	 * @method \Bitrix\Crm\EO_Status requireTypeBy()
@@ -8207,46 +8207,46 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Contact resetWebformId()
 	 * @method \Bitrix\Crm\Contact unsetWebformId()
 	 * @method \int fillWebformId()
-	 * @method ?\string getOriginatorId()
-	 * @method \Bitrix\Crm\Contact setOriginatorId(?\string|\Bitrix\Main\DB\SqlExpression $originatorId)
+	 * @method null|\string getOriginatorId()
+	 * @method \Bitrix\Crm\Contact setOriginatorId(null|\string|\Bitrix\Main\DB\SqlExpression $originatorId)
 	 * @method bool hasOriginatorId()
 	 * @method bool isOriginatorIdFilled()
 	 * @method bool isOriginatorIdChanged()
-	 * @method ?\string remindActualOriginatorId()
-	 * @method ?\string requireOriginatorId()
+	 * @method null|\string remindActualOriginatorId()
+	 * @method null|\string requireOriginatorId()
 	 * @method \Bitrix\Crm\Contact resetOriginatorId()
 	 * @method \Bitrix\Crm\Contact unsetOriginatorId()
-	 * @method ?\string fillOriginatorId()
-	 * @method ?\string getOriginId()
-	 * @method \Bitrix\Crm\Contact setOriginId(?\string|\Bitrix\Main\DB\SqlExpression $originId)
+	 * @method null|\string fillOriginatorId()
+	 * @method null|\string getOriginId()
+	 * @method \Bitrix\Crm\Contact setOriginId(null|\string|\Bitrix\Main\DB\SqlExpression $originId)
 	 * @method bool hasOriginId()
 	 * @method bool isOriginIdFilled()
 	 * @method bool isOriginIdChanged()
-	 * @method ?\string remindActualOriginId()
-	 * @method ?\string requireOriginId()
+	 * @method null|\string remindActualOriginId()
+	 * @method null|\string requireOriginId()
 	 * @method \Bitrix\Crm\Contact resetOriginId()
 	 * @method \Bitrix\Crm\Contact unsetOriginId()
-	 * @method ?\string fillOriginId()
-	 * @method ?\string getOriginVersion()
-	 * @method \Bitrix\Crm\Contact setOriginVersion(?\string|\Bitrix\Main\DB\SqlExpression $originVersion)
+	 * @method null|\string fillOriginId()
+	 * @method null|\string getOriginVersion()
+	 * @method \Bitrix\Crm\Contact setOriginVersion(null|\string|\Bitrix\Main\DB\SqlExpression $originVersion)
 	 * @method bool hasOriginVersion()
 	 * @method bool isOriginVersionFilled()
 	 * @method bool isOriginVersionChanged()
-	 * @method ?\string remindActualOriginVersion()
-	 * @method ?\string requireOriginVersion()
+	 * @method null|\string remindActualOriginVersion()
+	 * @method null|\string requireOriginVersion()
 	 * @method \Bitrix\Crm\Contact resetOriginVersion()
 	 * @method \Bitrix\Crm\Contact unsetOriginVersion()
-	 * @method ?\string fillOriginVersion()
-	 * @method ?\Bitrix\Main\Type\Date getBirthdate()
-	 * @method \Bitrix\Crm\Contact setBirthdate(?\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $birthdate)
+	 * @method null|\string fillOriginVersion()
+	 * @method null|\Bitrix\Main\Type\Date getBirthdate()
+	 * @method \Bitrix\Crm\Contact setBirthdate(null|\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $birthdate)
 	 * @method bool hasBirthdate()
 	 * @method bool isBirthdateFilled()
 	 * @method bool isBirthdateChanged()
-	 * @method ?\Bitrix\Main\Type\Date remindActualBirthdate()
-	 * @method ?\Bitrix\Main\Type\Date requireBirthdate()
+	 * @method null|\Bitrix\Main\Type\Date remindActualBirthdate()
+	 * @method null|\Bitrix\Main\Type\Date requireBirthdate()
 	 * @method \Bitrix\Crm\Contact resetBirthdate()
 	 * @method \Bitrix\Crm\Contact unsetBirthdate()
-	 * @method ?\Bitrix\Main\Type\Date fillBirthdate()
+	 * @method null|\Bitrix\Main\Type\Date fillBirthdate()
 	 * @method \int getBirthdaySort()
 	 * @method \Bitrix\Crm\Contact setBirthdaySort(\int|\Bitrix\Main\DB\SqlExpression $birthdaySort)
 	 * @method bool hasBirthdaySort()
@@ -8257,16 +8257,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Contact resetBirthdaySort()
 	 * @method \Bitrix\Crm\Contact unsetBirthdaySort()
 	 * @method \int fillBirthdaySort()
-	 * @method ?\string getHonorific()
-	 * @method \Bitrix\Crm\Contact setHonorific(?\string|\Bitrix\Main\DB\SqlExpression $honorific)
+	 * @method null|\string getHonorific()
+	 * @method \Bitrix\Crm\Contact setHonorific(null|\string|\Bitrix\Main\DB\SqlExpression $honorific)
 	 * @method bool hasHonorific()
 	 * @method bool isHonorificFilled()
 	 * @method bool isHonorificChanged()
-	 * @method ?\string remindActualHonorific()
-	 * @method ?\string requireHonorific()
+	 * @method null|\string remindActualHonorific()
+	 * @method null|\string requireHonorific()
 	 * @method \Bitrix\Crm\Contact resetHonorific()
 	 * @method \Bitrix\Crm\Contact unsetHonorific()
-	 * @method ?\string fillHonorific()
+	 * @method null|\string fillHonorific()
 	 * @method \boolean getHasPhone()
 	 * @method \Bitrix\Crm\Contact setHasPhone(\boolean|\Bitrix\Main\DB\SqlExpression $hasPhone)
 	 * @method bool hasHasPhone()
@@ -8297,26 +8297,26 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Contact resetHasImol()
 	 * @method \Bitrix\Crm\Contact unsetHasImol()
 	 * @method \boolean fillHasImol()
-	 * @method ?\int getFaceId()
-	 * @method \Bitrix\Crm\Contact setFaceId(?\int|\Bitrix\Main\DB\SqlExpression $faceId)
+	 * @method null|\int getFaceId()
+	 * @method \Bitrix\Crm\Contact setFaceId(null|\int|\Bitrix\Main\DB\SqlExpression $faceId)
 	 * @method bool hasFaceId()
 	 * @method bool isFaceIdFilled()
 	 * @method bool isFaceIdChanged()
-	 * @method ?\int remindActualFaceId()
-	 * @method ?\int requireFaceId()
+	 * @method null|\int remindActualFaceId()
+	 * @method null|\int requireFaceId()
 	 * @method \Bitrix\Crm\Contact resetFaceId()
 	 * @method \Bitrix\Crm\Contact unsetFaceId()
-	 * @method ?\int fillFaceId()
-	 * @method ?\string getSearchContent()
-	 * @method \Bitrix\Crm\Contact setSearchContent(?\string|\Bitrix\Main\DB\SqlExpression $searchContent)
+	 * @method null|\int fillFaceId()
+	 * @method null|\string getSearchContent()
+	 * @method \Bitrix\Crm\Contact setSearchContent(null|\string|\Bitrix\Main\DB\SqlExpression $searchContent)
 	 * @method bool hasSearchContent()
 	 * @method bool isSearchContentFilled()
 	 * @method bool isSearchContentChanged()
-	 * @method ?\string remindActualSearchContent()
-	 * @method ?\string requireSearchContent()
+	 * @method null|\string remindActualSearchContent()
+	 * @method null|\string requireSearchContent()
 	 * @method \Bitrix\Crm\Contact resetSearchContent()
 	 * @method \Bitrix\Crm\Contact unsetSearchContent()
-	 * @method ?\string fillSearchContent()
+	 * @method null|\string fillSearchContent()
 	 * @method \int getCategoryId()
 	 * @method \Bitrix\Crm\Contact setCategoryId(\int|\Bitrix\Main\DB\SqlExpression $categoryId)
 	 * @method bool hasCategoryId()
@@ -8576,57 +8576,57 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Status_Collection fillSourceBy()
 	 * @method \string[] getSourceDescriptionList()
 	 * @method \string[] fillSourceDescription()
-	 * @method ?\string[] getFullNameList()
-	 * @method ?\string[] fillFullName()
-	 * @method ?\string[] getNameList()
-	 * @method ?\string[] fillName()
-	 * @method ?\string[] getLastNameList()
-	 * @method ?\string[] fillLastName()
-	 * @method ?\string[] getSecondNameList()
-	 * @method ?\string[] fillSecondName()
+	 * @method null|\string[] getFullNameList()
+	 * @method null|\string[] fillFullName()
+	 * @method null|\string[] getNameList()
+	 * @method null|\string[] fillName()
+	 * @method null|\string[] getLastNameList()
+	 * @method null|\string[] fillLastName()
+	 * @method null|\string[] getSecondNameList()
+	 * @method null|\string[] fillSecondName()
 	 * @method \string[] getShortNameList()
 	 * @method \string[] fillShortName()
-	 * @method ?\int[] getPhotoList()
-	 * @method ?\int[] fillPhoto()
-	 * @method ?\string[] getPostList()
-	 * @method ?\string[] fillPost()
-	 * @method ?\string[] getAddressList()
-	 * @method ?\string[] fillAddress()
-	 * @method ?\string[] getCommentsList()
-	 * @method ?\string[] fillComments()
-	 * @method ?\int[] getLeadIdList()
-	 * @method ?\int[] fillLeadId()
+	 * @method null|\int[] getPhotoList()
+	 * @method null|\int[] fillPhoto()
+	 * @method null|\string[] getPostList()
+	 * @method null|\string[] fillPost()
+	 * @method null|\string[] getAddressList()
+	 * @method null|\string[] fillAddress()
+	 * @method null|\string[] getCommentsList()
+	 * @method null|\string[] fillComments()
+	 * @method null|\int[] getLeadIdList()
+	 * @method null|\int[] fillLeadId()
 	 * @method \boolean[] getExportList()
 	 * @method \boolean[] fillExport()
-	 * @method ?\string[] getTypeIdList()
-	 * @method ?\string[] fillTypeId()
+	 * @method null|\string[] getTypeIdList()
+	 * @method null|\string[] fillTypeId()
 	 * @method \Bitrix\Crm\EO_Status[] getTypeByList()
 	 * @method \Bitrix\Crm\EO_Contact_Collection getTypeByCollection()
 	 * @method \Bitrix\Crm\EO_Status_Collection fillTypeBy()
 	 * @method \int[] getWebformIdList()
 	 * @method \int[] fillWebformId()
-	 * @method ?\string[] getOriginatorIdList()
-	 * @method ?\string[] fillOriginatorId()
-	 * @method ?\string[] getOriginIdList()
-	 * @method ?\string[] fillOriginId()
-	 * @method ?\string[] getOriginVersionList()
-	 * @method ?\string[] fillOriginVersion()
-	 * @method ?\Bitrix\Main\Type\Date[] getBirthdateList()
-	 * @method ?\Bitrix\Main\Type\Date[] fillBirthdate()
+	 * @method null|\string[] getOriginatorIdList()
+	 * @method null|\string[] fillOriginatorId()
+	 * @method null|\string[] getOriginIdList()
+	 * @method null|\string[] fillOriginId()
+	 * @method null|\string[] getOriginVersionList()
+	 * @method null|\string[] fillOriginVersion()
+	 * @method null|\Bitrix\Main\Type\Date[] getBirthdateList()
+	 * @method null|\Bitrix\Main\Type\Date[] fillBirthdate()
 	 * @method \int[] getBirthdaySortList()
 	 * @method \int[] fillBirthdaySort()
-	 * @method ?\string[] getHonorificList()
-	 * @method ?\string[] fillHonorific()
+	 * @method null|\string[] getHonorificList()
+	 * @method null|\string[] fillHonorific()
 	 * @method \boolean[] getHasPhoneList()
 	 * @method \boolean[] fillHasPhone()
 	 * @method \boolean[] getHasEmailList()
 	 * @method \boolean[] fillHasEmail()
 	 * @method \boolean[] getHasImolList()
 	 * @method \boolean[] fillHasImol()
-	 * @method ?\int[] getFaceIdList()
-	 * @method ?\int[] fillFaceId()
-	 * @method ?\string[] getSearchContentList()
-	 * @method ?\string[] fillSearchContent()
+	 * @method null|\int[] getFaceIdList()
+	 * @method null|\int[] fillFaceId()
+	 * @method null|\string[] getSearchContentList()
+	 * @method null|\string[] fillSearchContent()
 	 * @method \int[] getCategoryIdList()
 	 * @method \int[] fillCategoryId()
 	 * @method \int[] getLastActivityByList()
@@ -11649,56 +11649,56 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Company resetLogo()
 	 * @method \Bitrix\Crm\Company unsetLogo()
 	 * @method \string fillLogo()
-	 * @method ?\string getAddress()
-	 * @method \Bitrix\Crm\Company setAddress(?\string|\Bitrix\Main\DB\SqlExpression $address)
+	 * @method null|\string getAddress()
+	 * @method \Bitrix\Crm\Company setAddress(null|\string|\Bitrix\Main\DB\SqlExpression $address)
 	 * @method bool hasAddress()
 	 * @method bool isAddressFilled()
 	 * @method bool isAddressChanged()
-	 * @method ?\string remindActualAddress()
-	 * @method ?\string requireAddress()
+	 * @method null|\string remindActualAddress()
+	 * @method null|\string requireAddress()
 	 * @method \Bitrix\Crm\Company resetAddress()
 	 * @method \Bitrix\Crm\Company unsetAddress()
-	 * @method ?\string fillAddress()
-	 * @method ?\string getAddressLegal()
-	 * @method \Bitrix\Crm\Company setAddressLegal(?\string|\Bitrix\Main\DB\SqlExpression $addressLegal)
+	 * @method null|\string fillAddress()
+	 * @method null|\string getAddressLegal()
+	 * @method \Bitrix\Crm\Company setAddressLegal(null|\string|\Bitrix\Main\DB\SqlExpression $addressLegal)
 	 * @method bool hasAddressLegal()
 	 * @method bool isAddressLegalFilled()
 	 * @method bool isAddressLegalChanged()
-	 * @method ?\string remindActualAddressLegal()
-	 * @method ?\string requireAddressLegal()
+	 * @method null|\string remindActualAddressLegal()
+	 * @method null|\string requireAddressLegal()
 	 * @method \Bitrix\Crm\Company resetAddressLegal()
 	 * @method \Bitrix\Crm\Company unsetAddressLegal()
-	 * @method ?\string fillAddressLegal()
-	 * @method ?\string getBankingDetails()
-	 * @method \Bitrix\Crm\Company setBankingDetails(?\string|\Bitrix\Main\DB\SqlExpression $bankingDetails)
+	 * @method null|\string fillAddressLegal()
+	 * @method null|\string getBankingDetails()
+	 * @method \Bitrix\Crm\Company setBankingDetails(null|\string|\Bitrix\Main\DB\SqlExpression $bankingDetails)
 	 * @method bool hasBankingDetails()
 	 * @method bool isBankingDetailsFilled()
 	 * @method bool isBankingDetailsChanged()
-	 * @method ?\string remindActualBankingDetails()
-	 * @method ?\string requireBankingDetails()
+	 * @method null|\string remindActualBankingDetails()
+	 * @method null|\string requireBankingDetails()
 	 * @method \Bitrix\Crm\Company resetBankingDetails()
 	 * @method \Bitrix\Crm\Company unsetBankingDetails()
-	 * @method ?\string fillBankingDetails()
-	 * @method ?\string getComments()
-	 * @method \Bitrix\Crm\Company setComments(?\string|\Bitrix\Main\DB\SqlExpression $comments)
+	 * @method null|\string fillBankingDetails()
+	 * @method null|\string getComments()
+	 * @method \Bitrix\Crm\Company setComments(null|\string|\Bitrix\Main\DB\SqlExpression $comments)
 	 * @method bool hasComments()
 	 * @method bool isCommentsFilled()
 	 * @method bool isCommentsChanged()
-	 * @method ?\string remindActualComments()
-	 * @method ?\string requireComments()
+	 * @method null|\string remindActualComments()
+	 * @method null|\string requireComments()
 	 * @method \Bitrix\Crm\Company resetComments()
 	 * @method \Bitrix\Crm\Company unsetComments()
-	 * @method ?\string fillComments()
-	 * @method ?\string getCompanyType()
-	 * @method \Bitrix\Crm\Company setCompanyType(?\string|\Bitrix\Main\DB\SqlExpression $companyType)
+	 * @method null|\string fillComments()
+	 * @method null|\string getCompanyType()
+	 * @method \Bitrix\Crm\Company setCompanyType(null|\string|\Bitrix\Main\DB\SqlExpression $companyType)
 	 * @method bool hasCompanyType()
 	 * @method bool isCompanyTypeFilled()
 	 * @method bool isCompanyTypeChanged()
-	 * @method ?\string remindActualCompanyType()
-	 * @method ?\string requireCompanyType()
+	 * @method null|\string remindActualCompanyType()
+	 * @method null|\string requireCompanyType()
 	 * @method \Bitrix\Crm\Company resetCompanyType()
 	 * @method \Bitrix\Crm\Company unsetCompanyType()
-	 * @method ?\string fillCompanyType()
+	 * @method null|\string fillCompanyType()
 	 * @method \Bitrix\Crm\EO_Status getCompanyTypeBy()
 	 * @method \Bitrix\Crm\EO_Status remindActualCompanyTypeBy()
 	 * @method \Bitrix\Crm\EO_Status requireCompanyTypeBy()
@@ -11709,16 +11709,16 @@ namespace Bitrix\Crm {
 	 * @method bool isCompanyTypeByFilled()
 	 * @method bool isCompanyTypeByChanged()
 	 * @method \Bitrix\Crm\EO_Status fillCompanyTypeBy()
-	 * @method ?\string getIndustry()
-	 * @method \Bitrix\Crm\Company setIndustry(?\string|\Bitrix\Main\DB\SqlExpression $industry)
+	 * @method null|\string getIndustry()
+	 * @method \Bitrix\Crm\Company setIndustry(null|\string|\Bitrix\Main\DB\SqlExpression $industry)
 	 * @method bool hasIndustry()
 	 * @method bool isIndustryFilled()
 	 * @method bool isIndustryChanged()
-	 * @method ?\string remindActualIndustry()
-	 * @method ?\string requireIndustry()
+	 * @method null|\string remindActualIndustry()
+	 * @method null|\string requireIndustry()
 	 * @method \Bitrix\Crm\Company resetIndustry()
 	 * @method \Bitrix\Crm\Company unsetIndustry()
-	 * @method ?\string fillIndustry()
+	 * @method null|\string fillIndustry()
 	 * @method \Bitrix\Crm\EO_Status getIndustryBy()
 	 * @method \Bitrix\Crm\EO_Status remindActualIndustryBy()
 	 * @method \Bitrix\Crm\EO_Status requireIndustryBy()
@@ -11749,16 +11749,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Company resetCurrencyId()
 	 * @method \Bitrix\Crm\Company unsetCurrencyId()
 	 * @method \string fillCurrencyId()
-	 * @method ?\string getEmployees()
-	 * @method \Bitrix\Crm\Company setEmployees(?\string|\Bitrix\Main\DB\SqlExpression $employees)
+	 * @method null|\string getEmployees()
+	 * @method \Bitrix\Crm\Company setEmployees(null|\string|\Bitrix\Main\DB\SqlExpression $employees)
 	 * @method bool hasEmployees()
 	 * @method bool isEmployeesFilled()
 	 * @method bool isEmployeesChanged()
-	 * @method ?\string remindActualEmployees()
-	 * @method ?\string requireEmployees()
+	 * @method null|\string remindActualEmployees()
+	 * @method null|\string requireEmployees()
 	 * @method \Bitrix\Crm\Company resetEmployees()
 	 * @method \Bitrix\Crm\Company unsetEmployees()
-	 * @method ?\string fillEmployees()
+	 * @method null|\string fillEmployees()
 	 * @method \Bitrix\Crm\EO_Status getEmployeesBy()
 	 * @method \Bitrix\Crm\EO_Status remindActualEmployeesBy()
 	 * @method \Bitrix\Crm\EO_Status requireEmployeesBy()
@@ -11769,16 +11769,16 @@ namespace Bitrix\Crm {
 	 * @method bool isEmployeesByFilled()
 	 * @method bool isEmployeesByChanged()
 	 * @method \Bitrix\Crm\EO_Status fillEmployeesBy()
-	 * @method ?\int getLeadId()
-	 * @method \Bitrix\Crm\Company setLeadId(?\int|\Bitrix\Main\DB\SqlExpression $leadId)
+	 * @method null|\int getLeadId()
+	 * @method \Bitrix\Crm\Company setLeadId(null|\int|\Bitrix\Main\DB\SqlExpression $leadId)
 	 * @method bool hasLeadId()
 	 * @method bool isLeadIdFilled()
 	 * @method bool isLeadIdChanged()
-	 * @method ?\int remindActualLeadId()
-	 * @method ?\int requireLeadId()
+	 * @method null|\int remindActualLeadId()
+	 * @method null|\int requireLeadId()
 	 * @method \Bitrix\Crm\Company resetLeadId()
 	 * @method \Bitrix\Crm\Company unsetLeadId()
-	 * @method ?\int fillLeadId()
+	 * @method null|\int fillLeadId()
 	 * @method \int getWebformId()
 	 * @method \Bitrix\Crm\Company setWebformId(\int|\Bitrix\Main\DB\SqlExpression $webformId)
 	 * @method bool hasWebformId()
@@ -11789,36 +11789,36 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Company resetWebformId()
 	 * @method \Bitrix\Crm\Company unsetWebformId()
 	 * @method \int fillWebformId()
-	 * @method ?\string getOriginatorId()
-	 * @method \Bitrix\Crm\Company setOriginatorId(?\string|\Bitrix\Main\DB\SqlExpression $originatorId)
+	 * @method null|\string getOriginatorId()
+	 * @method \Bitrix\Crm\Company setOriginatorId(null|\string|\Bitrix\Main\DB\SqlExpression $originatorId)
 	 * @method bool hasOriginatorId()
 	 * @method bool isOriginatorIdFilled()
 	 * @method bool isOriginatorIdChanged()
-	 * @method ?\string remindActualOriginatorId()
-	 * @method ?\string requireOriginatorId()
+	 * @method null|\string remindActualOriginatorId()
+	 * @method null|\string requireOriginatorId()
 	 * @method \Bitrix\Crm\Company resetOriginatorId()
 	 * @method \Bitrix\Crm\Company unsetOriginatorId()
-	 * @method ?\string fillOriginatorId()
-	 * @method ?\string getOriginId()
-	 * @method \Bitrix\Crm\Company setOriginId(?\string|\Bitrix\Main\DB\SqlExpression $originId)
+	 * @method null|\string fillOriginatorId()
+	 * @method null|\string getOriginId()
+	 * @method \Bitrix\Crm\Company setOriginId(null|\string|\Bitrix\Main\DB\SqlExpression $originId)
 	 * @method bool hasOriginId()
 	 * @method bool isOriginIdFilled()
 	 * @method bool isOriginIdChanged()
-	 * @method ?\string remindActualOriginId()
-	 * @method ?\string requireOriginId()
+	 * @method null|\string remindActualOriginId()
+	 * @method null|\string requireOriginId()
 	 * @method \Bitrix\Crm\Company resetOriginId()
 	 * @method \Bitrix\Crm\Company unsetOriginId()
-	 * @method ?\string fillOriginId()
-	 * @method ?\string getOriginVersion()
-	 * @method \Bitrix\Crm\Company setOriginVersion(?\string|\Bitrix\Main\DB\SqlExpression $originVersion)
+	 * @method null|\string fillOriginId()
+	 * @method null|\string getOriginVersion()
+	 * @method \Bitrix\Crm\Company setOriginVersion(null|\string|\Bitrix\Main\DB\SqlExpression $originVersion)
 	 * @method bool hasOriginVersion()
 	 * @method bool isOriginVersionFilled()
 	 * @method bool isOriginVersionChanged()
-	 * @method ?\string remindActualOriginVersion()
-	 * @method ?\string requireOriginVersion()
+	 * @method null|\string remindActualOriginVersion()
+	 * @method null|\string requireOriginVersion()
 	 * @method \Bitrix\Crm\Company resetOriginVersion()
 	 * @method \Bitrix\Crm\Company unsetOriginVersion()
-	 * @method ?\string fillOriginVersion()
+	 * @method null|\string fillOriginVersion()
 	 * @method \boolean getHasPhone()
 	 * @method \Bitrix\Crm\Company setHasPhone(\boolean|\Bitrix\Main\DB\SqlExpression $hasPhone)
 	 * @method bool hasHasPhone()
@@ -11859,16 +11859,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Company resetIsMyCompany()
 	 * @method \Bitrix\Crm\Company unsetIsMyCompany()
 	 * @method \boolean fillIsMyCompany()
-	 * @method ?\string getSearchContent()
-	 * @method \Bitrix\Crm\Company setSearchContent(?\string|\Bitrix\Main\DB\SqlExpression $searchContent)
+	 * @method null|\string getSearchContent()
+	 * @method \Bitrix\Crm\Company setSearchContent(null|\string|\Bitrix\Main\DB\SqlExpression $searchContent)
 	 * @method bool hasSearchContent()
 	 * @method bool isSearchContentFilled()
 	 * @method bool isSearchContentChanged()
-	 * @method ?\string remindActualSearchContent()
-	 * @method ?\string requireSearchContent()
+	 * @method null|\string remindActualSearchContent()
+	 * @method null|\string requireSearchContent()
 	 * @method \Bitrix\Crm\Company resetSearchContent()
 	 * @method \Bitrix\Crm\Company unsetSearchContent()
-	 * @method ?\string fillSearchContent()
+	 * @method null|\string fillSearchContent()
 	 * @method \int getCategoryId()
 	 * @method \Bitrix\Crm\Company setCategoryId(\int|\Bitrix\Main\DB\SqlExpression $categoryId)
 	 * @method bool hasCategoryId()
@@ -12113,21 +12113,21 @@ namespace Bitrix\Crm {
 	 * @method \string[] fillTitle()
 	 * @method \string[] getLogoList()
 	 * @method \string[] fillLogo()
-	 * @method ?\string[] getAddressList()
-	 * @method ?\string[] fillAddress()
-	 * @method ?\string[] getAddressLegalList()
-	 * @method ?\string[] fillAddressLegal()
-	 * @method ?\string[] getBankingDetailsList()
-	 * @method ?\string[] fillBankingDetails()
-	 * @method ?\string[] getCommentsList()
-	 * @method ?\string[] fillComments()
-	 * @method ?\string[] getCompanyTypeList()
-	 * @method ?\string[] fillCompanyType()
+	 * @method null|\string[] getAddressList()
+	 * @method null|\string[] fillAddress()
+	 * @method null|\string[] getAddressLegalList()
+	 * @method null|\string[] fillAddressLegal()
+	 * @method null|\string[] getBankingDetailsList()
+	 * @method null|\string[] fillBankingDetails()
+	 * @method null|\string[] getCommentsList()
+	 * @method null|\string[] fillComments()
+	 * @method null|\string[] getCompanyTypeList()
+	 * @method null|\string[] fillCompanyType()
 	 * @method \Bitrix\Crm\EO_Status[] getCompanyTypeByList()
 	 * @method \Bitrix\Crm\EO_Company_Collection getCompanyTypeByCollection()
 	 * @method \Bitrix\Crm\EO_Status_Collection fillCompanyTypeBy()
-	 * @method ?\string[] getIndustryList()
-	 * @method ?\string[] fillIndustry()
+	 * @method null|\string[] getIndustryList()
+	 * @method null|\string[] fillIndustry()
 	 * @method \Bitrix\Crm\EO_Status[] getIndustryByList()
 	 * @method \Bitrix\Crm\EO_Company_Collection getIndustryByCollection()
 	 * @method \Bitrix\Crm\EO_Status_Collection fillIndustryBy()
@@ -12135,21 +12135,21 @@ namespace Bitrix\Crm {
 	 * @method \float[] fillRevenue()
 	 * @method \string[] getCurrencyIdList()
 	 * @method \string[] fillCurrencyId()
-	 * @method ?\string[] getEmployeesList()
-	 * @method ?\string[] fillEmployees()
+	 * @method null|\string[] getEmployeesList()
+	 * @method null|\string[] fillEmployees()
 	 * @method \Bitrix\Crm\EO_Status[] getEmployeesByList()
 	 * @method \Bitrix\Crm\EO_Company_Collection getEmployeesByCollection()
 	 * @method \Bitrix\Crm\EO_Status_Collection fillEmployeesBy()
-	 * @method ?\int[] getLeadIdList()
-	 * @method ?\int[] fillLeadId()
+	 * @method null|\int[] getLeadIdList()
+	 * @method null|\int[] fillLeadId()
 	 * @method \int[] getWebformIdList()
 	 * @method \int[] fillWebformId()
-	 * @method ?\string[] getOriginatorIdList()
-	 * @method ?\string[] fillOriginatorId()
-	 * @method ?\string[] getOriginIdList()
-	 * @method ?\string[] fillOriginId()
-	 * @method ?\string[] getOriginVersionList()
-	 * @method ?\string[] fillOriginVersion()
+	 * @method null|\string[] getOriginatorIdList()
+	 * @method null|\string[] fillOriginatorId()
+	 * @method null|\string[] getOriginIdList()
+	 * @method null|\string[] fillOriginId()
+	 * @method null|\string[] getOriginVersionList()
+	 * @method null|\string[] fillOriginVersion()
 	 * @method \boolean[] getHasPhoneList()
 	 * @method \boolean[] fillHasPhone()
 	 * @method \boolean[] getHasEmailList()
@@ -12158,8 +12158,8 @@ namespace Bitrix\Crm {
 	 * @method \boolean[] fillHasImol()
 	 * @method \boolean[] getIsMyCompanyList()
 	 * @method \boolean[] fillIsMyCompany()
-	 * @method ?\string[] getSearchContentList()
-	 * @method ?\string[] fillSearchContent()
+	 * @method null|\string[] getSearchContentList()
+	 * @method null|\string[] fillSearchContent()
 	 * @method \int[] getCategoryIdList()
 	 * @method \int[] fillCategoryId()
 	 * @method \int[] getLastActivityByList()
@@ -13259,16 +13259,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\ProductRow resetDiscountSum()
 	 * @method \Bitrix\Crm\ProductRow unsetDiscountSum()
 	 * @method \float fillDiscountSum()
-	 * @method ?\float getTaxRate()
-	 * @method \Bitrix\Crm\ProductRow setTaxRate(?\float|\Bitrix\Main\DB\SqlExpression $taxRate)
+	 * @method null|\float getTaxRate()
+	 * @method \Bitrix\Crm\ProductRow setTaxRate(null|\float|\Bitrix\Main\DB\SqlExpression $taxRate)
 	 * @method bool hasTaxRate()
 	 * @method bool isTaxRateFilled()
 	 * @method bool isTaxRateChanged()
-	 * @method ?\float remindActualTaxRate()
-	 * @method ?\float requireTaxRate()
+	 * @method null|\float remindActualTaxRate()
+	 * @method null|\float requireTaxRate()
 	 * @method \Bitrix\Crm\ProductRow resetTaxRate()
 	 * @method \Bitrix\Crm\ProductRow unsetTaxRate()
-	 * @method ?\float fillTaxRate()
+	 * @method null|\float fillTaxRate()
 	 * @method \boolean getTaxIncluded()
 	 * @method \Bitrix\Crm\ProductRow setTaxIncluded(\boolean|\Bitrix\Main\DB\SqlExpression $taxIncluded)
 	 * @method bool hasTaxIncluded()
@@ -13438,8 +13438,8 @@ namespace Bitrix\Crm {
 	 * @method \float[] fillDiscountRate()
 	 * @method \float[] getDiscountSumList()
 	 * @method \float[] fillDiscountSum()
-	 * @method ?\float[] getTaxRateList()
-	 * @method ?\float[] fillTaxRate()
+	 * @method null|\float[] getTaxRateList()
+	 * @method null|\float[] fillTaxRate()
 	 * @method \boolean[] getTaxIncludedList()
 	 * @method \boolean[] fillTaxIncluded()
 	 * @method \boolean[] getCustomizedList()
@@ -17946,6 +17946,26 @@ namespace Bitrix\Crm\Integration\AI\Model {
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetParentId()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetParentId()
 	 * @method \int fillParentId()
+	 * @method \int getStorageTypeId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setStorageTypeId(\int|\Bitrix\Main\DB\SqlExpression $storageTypeId)
+	 * @method bool hasStorageTypeId()
+	 * @method bool isStorageTypeIdFilled()
+	 * @method bool isStorageTypeIdChanged()
+	 * @method \int remindActualStorageTypeId()
+	 * @method \int requireStorageTypeId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetStorageTypeId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetStorageTypeId()
+	 * @method \int fillStorageTypeId()
+	 * @method \int getStorageElementId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setStorageElementId(\int|\Bitrix\Main\DB\SqlExpression $storageElementId)
+	 * @method bool hasStorageElementId()
+	 * @method bool isStorageElementIdFilled()
+	 * @method bool isStorageElementIdChanged()
+	 * @method \int remindActualStorageElementId()
+	 * @method \int requireStorageElementId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetStorageElementId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetStorageElementId()
+	 * @method \int fillStorageElementId()
 	 * @method \int getUserId()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
 	 * @method bool hasUserId()
@@ -17966,26 +17986,76 @@ namespace Bitrix\Crm\Integration\AI\Model {
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetExecutionStatus()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetExecutionStatus()
 	 * @method \string fillExecutionStatus()
-	 * @method ?\string getOperationStatus()
-	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setOperationStatus(?\string|\Bitrix\Main\DB\SqlExpression $operationStatus)
+	 * @method null|\string getErrorCode()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setErrorCode(null|\string|\Bitrix\Main\DB\SqlExpression $errorCode)
+	 * @method bool hasErrorCode()
+	 * @method bool isErrorCodeFilled()
+	 * @method bool isErrorCodeChanged()
+	 * @method null|\string remindActualErrorCode()
+	 * @method null|\string requireErrorCode()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetErrorCode()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetErrorCode()
+	 * @method null|\string fillErrorCode()
+	 * @method null|\string getErrorMessage()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setErrorMessage(null|\string|\Bitrix\Main\DB\SqlExpression $errorMessage)
+	 * @method bool hasErrorMessage()
+	 * @method bool isErrorMessageFilled()
+	 * @method bool isErrorMessageChanged()
+	 * @method null|\string remindActualErrorMessage()
+	 * @method null|\string requireErrorMessage()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetErrorMessage()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetErrorMessage()
+	 * @method null|\string fillErrorMessage()
+	 * @method \int getRetryCount()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setRetryCount(\int|\Bitrix\Main\DB\SqlExpression $retryCount)
+	 * @method bool hasRetryCount()
+	 * @method bool isRetryCountFilled()
+	 * @method bool isRetryCountChanged()
+	 * @method \int remindActualRetryCount()
+	 * @method \int requireRetryCount()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetRetryCount()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetRetryCount()
+	 * @method \int fillRetryCount()
+	 * @method null|\string getOperationStatus()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setOperationStatus(null|\string|\Bitrix\Main\DB\SqlExpression $operationStatus)
 	 * @method bool hasOperationStatus()
 	 * @method bool isOperationStatusFilled()
 	 * @method bool isOperationStatusChanged()
-	 * @method ?\string remindActualOperationStatus()
-	 * @method ?\string requireOperationStatus()
+	 * @method null|\string remindActualOperationStatus()
+	 * @method null|\string requireOperationStatus()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetOperationStatus()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetOperationStatus()
-	 * @method ?\string fillOperationStatus()
-	 * @method ?\string getResult()
-	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setResult(?\string|\Bitrix\Main\DB\SqlExpression $result)
+	 * @method null|\string fillOperationStatus()
+	 * @method null|\string getResult()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setResult(null|\string|\Bitrix\Main\DB\SqlExpression $result)
 	 * @method bool hasResult()
 	 * @method bool isResultFilled()
 	 * @method bool isResultChanged()
-	 * @method ?\string remindActualResult()
-	 * @method ?\string requireResult()
+	 * @method null|\string remindActualResult()
+	 * @method null|\string requireResult()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetResult()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetResult()
-	 * @method ?\string fillResult()
+	 * @method null|\string fillResult()
+	 * @method \boolean getIsFeedbackConsentGranted()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setIsFeedbackConsentGranted(\boolean|\Bitrix\Main\DB\SqlExpression $isFeedbackConsentGranted)
+	 * @method bool hasIsFeedbackConsentGranted()
+	 * @method bool isIsFeedbackConsentGrantedFilled()
+	 * @method bool isIsFeedbackConsentGrantedChanged()
+	 * @method \boolean remindActualIsFeedbackConsentGranted()
+	 * @method \boolean requireIsFeedbackConsentGranted()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetIsFeedbackConsentGranted()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetIsFeedbackConsentGranted()
+	 * @method \boolean fillIsFeedbackConsentGranted()
+	 * @method \boolean getIsFeedbackSent()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setIsFeedbackSent(\boolean|\Bitrix\Main\DB\SqlExpression $isFeedbackSent)
+	 * @method bool hasIsFeedbackSent()
+	 * @method bool isIsFeedbackSentFilled()
+	 * @method bool isIsFeedbackSentChanged()
+	 * @method \boolean remindActualIsFeedbackSent()
+	 * @method \boolean requireIsFeedbackSent()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetIsFeedbackSent()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetIsFeedbackSent()
+	 * @method \boolean fillIsFeedbackSent()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -18040,14 +18110,28 @@ namespace Bitrix\Crm\Integration\AI\Model {
 	 * @method \string[] fillTypeId()
 	 * @method \int[] getParentIdList()
 	 * @method \int[] fillParentId()
+	 * @method \int[] getStorageTypeIdList()
+	 * @method \int[] fillStorageTypeId()
+	 * @method \int[] getStorageElementIdList()
+	 * @method \int[] fillStorageElementId()
 	 * @method \int[] getUserIdList()
 	 * @method \int[] fillUserId()
 	 * @method \string[] getExecutionStatusList()
 	 * @method \string[] fillExecutionStatus()
-	 * @method ?\string[] getOperationStatusList()
-	 * @method ?\string[] fillOperationStatus()
-	 * @method ?\string[] getResultList()
-	 * @method ?\string[] fillResult()
+	 * @method null|\string[] getErrorCodeList()
+	 * @method null|\string[] fillErrorCode()
+	 * @method null|\string[] getErrorMessageList()
+	 * @method null|\string[] fillErrorMessage()
+	 * @method \int[] getRetryCountList()
+	 * @method \int[] fillRetryCount()
+	 * @method null|\string[] getOperationStatusList()
+	 * @method null|\string[] fillOperationStatus()
+	 * @method null|\string[] getResultList()
+	 * @method null|\string[] fillResult()
+	 * @method \boolean[] getIsFeedbackConsentGrantedList()
+	 * @method \boolean[] fillIsFeedbackConsentGranted()
+	 * @method \boolean[] getIsFeedbackSentList()
+	 * @method \boolean[] fillIsFeedbackSent()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -18931,6 +19015,716 @@ namespace Bitrix\Crm {
 	 */
 	class EO_Product_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+/* ORMENTITYANNOTATION:Bitrix\Crm\FieldContext\Model\ContactTable:crm/lib/fieldcontext/model/contacttable.php */
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Contact
+	 * @see \Bitrix\Crm\FieldContext\Model\ContactTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getContactId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact setContactId(\int|\Bitrix\Main\DB\SqlExpression $contactId)
+	 * @method bool hasContactId()
+	 * @method bool isContactIdFilled()
+	 * @method bool isContactIdChanged()
+	 * @method \string getFieldName()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact setFieldName(\string|\Bitrix\Main\DB\SqlExpression $fieldName)
+	 * @method bool hasFieldName()
+	 * @method bool isFieldNameFilled()
+	 * @method bool isFieldNameChanged()
+	 * @method \string getValueId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact setValueId(\string|\Bitrix\Main\DB\SqlExpression $valueId)
+	 * @method bool hasValueId()
+	 * @method bool isValueIdFilled()
+	 * @method bool isValueIdChanged()
+	 * @method \int getContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact setContext(\int|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method bool hasContext()
+	 * @method bool isContextFilled()
+	 * @method bool isContextChanged()
+	 * @method \int remindActualContext()
+	 * @method \int requireContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact resetContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact unsetContext()
+	 * @method \int fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact set($fieldName, $value)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact reset($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Contact wakeUp($data)
+	 */
+	class EO_Contact {
+		/* @var \Bitrix\Crm\FieldContext\Model\ContactTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\ContactTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Contact_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getContactIdList()
+	 * @method \string[] getFieldNameList()
+	 * @method \string[] getValueIdList()
+	 * @method \int[] getContextList()
+	 * @method \int[] fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\FieldContext\Model\EO_Contact $object)
+	 * @method bool has(\Bitrix\Crm\FieldContext\Model\EO_Contact $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact getByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact[] getAll()
+	 * @method bool remove(\Bitrix\Crm\FieldContext\Model\EO_Contact $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Contact_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Contact_Collection merge(?EO_Contact_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Contact_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\FieldContext\Model\ContactTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\ContactTable';
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Contact_Result exec()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Contact_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact_Collection fetchCollection()
+	 */
+	class EO_Contact_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact_Collection createCollection()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact wakeUpObject($row)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Contact_Collection wakeUpCollection($rows)
+	 */
+	class EO_Contact_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Crm\FieldContext\Model\QuoteTable:crm/lib/fieldcontext/model/quotetable.php */
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Quote
+	 * @see \Bitrix\Crm\FieldContext\Model\QuoteTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getQuoteId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote setQuoteId(\int|\Bitrix\Main\DB\SqlExpression $quoteId)
+	 * @method bool hasQuoteId()
+	 * @method bool isQuoteIdFilled()
+	 * @method bool isQuoteIdChanged()
+	 * @method \string getFieldName()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote setFieldName(\string|\Bitrix\Main\DB\SqlExpression $fieldName)
+	 * @method bool hasFieldName()
+	 * @method bool isFieldNameFilled()
+	 * @method bool isFieldNameChanged()
+	 * @method \string getValueId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote setValueId(\string|\Bitrix\Main\DB\SqlExpression $valueId)
+	 * @method bool hasValueId()
+	 * @method bool isValueIdFilled()
+	 * @method bool isValueIdChanged()
+	 * @method \int getContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote setContext(\int|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method bool hasContext()
+	 * @method bool isContextFilled()
+	 * @method bool isContextChanged()
+	 * @method \int remindActualContext()
+	 * @method \int requireContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote resetContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote unsetContext()
+	 * @method \int fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote set($fieldName, $value)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote reset($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Quote wakeUp($data)
+	 */
+	class EO_Quote {
+		/* @var \Bitrix\Crm\FieldContext\Model\QuoteTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\QuoteTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Quote_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getQuoteIdList()
+	 * @method \string[] getFieldNameList()
+	 * @method \string[] getValueIdList()
+	 * @method \int[] getContextList()
+	 * @method \int[] fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\FieldContext\Model\EO_Quote $object)
+	 * @method bool has(\Bitrix\Crm\FieldContext\Model\EO_Quote $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote getByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote[] getAll()
+	 * @method bool remove(\Bitrix\Crm\FieldContext\Model\EO_Quote $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Quote_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Quote_Collection merge(?EO_Quote_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Quote_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\FieldContext\Model\QuoteTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\QuoteTable';
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Quote_Result exec()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Quote_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote_Collection fetchCollection()
+	 */
+	class EO_Quote_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote_Collection createCollection()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote wakeUpObject($row)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Quote_Collection wakeUpCollection($rows)
+	 */
+	class EO_Quote_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Crm\FieldContext\Model\CompanyTable:crm/lib/fieldcontext/model/companytable.php */
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Company
+	 * @see \Bitrix\Crm\FieldContext\Model\CompanyTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getCompanyId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company setCompanyId(\int|\Bitrix\Main\DB\SqlExpression $companyId)
+	 * @method bool hasCompanyId()
+	 * @method bool isCompanyIdFilled()
+	 * @method bool isCompanyIdChanged()
+	 * @method \string getFieldName()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company setFieldName(\string|\Bitrix\Main\DB\SqlExpression $fieldName)
+	 * @method bool hasFieldName()
+	 * @method bool isFieldNameFilled()
+	 * @method bool isFieldNameChanged()
+	 * @method \string getValueId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company setValueId(\string|\Bitrix\Main\DB\SqlExpression $valueId)
+	 * @method bool hasValueId()
+	 * @method bool isValueIdFilled()
+	 * @method bool isValueIdChanged()
+	 * @method \int getContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company setContext(\int|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method bool hasContext()
+	 * @method bool isContextFilled()
+	 * @method bool isContextChanged()
+	 * @method \int remindActualContext()
+	 * @method \int requireContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company resetContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company unsetContext()
+	 * @method \int fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company set($fieldName, $value)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company reset($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Company wakeUp($data)
+	 */
+	class EO_Company {
+		/* @var \Bitrix\Crm\FieldContext\Model\CompanyTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\CompanyTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Company_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getCompanyIdList()
+	 * @method \string[] getFieldNameList()
+	 * @method \string[] getValueIdList()
+	 * @method \int[] getContextList()
+	 * @method \int[] fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\FieldContext\Model\EO_Company $object)
+	 * @method bool has(\Bitrix\Crm\FieldContext\Model\EO_Company $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company getByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company[] getAll()
+	 * @method bool remove(\Bitrix\Crm\FieldContext\Model\EO_Company $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Company_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Company_Collection merge(?EO_Company_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Company_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\FieldContext\Model\CompanyTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\CompanyTable';
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Company_Result exec()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Company_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company_Collection fetchCollection()
+	 */
+	class EO_Company_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company_Collection createCollection()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company wakeUpObject($row)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Company_Collection wakeUpCollection($rows)
+	 */
+	class EO_Company_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Crm\FieldContext\Model\LeadTable:crm/lib/fieldcontext/model/leadtable.php */
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Lead
+	 * @see \Bitrix\Crm\FieldContext\Model\LeadTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getLeadId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead setLeadId(\int|\Bitrix\Main\DB\SqlExpression $leadId)
+	 * @method bool hasLeadId()
+	 * @method bool isLeadIdFilled()
+	 * @method bool isLeadIdChanged()
+	 * @method \string getFieldName()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead setFieldName(\string|\Bitrix\Main\DB\SqlExpression $fieldName)
+	 * @method bool hasFieldName()
+	 * @method bool isFieldNameFilled()
+	 * @method bool isFieldNameChanged()
+	 * @method \string getValueId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead setValueId(\string|\Bitrix\Main\DB\SqlExpression $valueId)
+	 * @method bool hasValueId()
+	 * @method bool isValueIdFilled()
+	 * @method bool isValueIdChanged()
+	 * @method \int getContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead setContext(\int|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method bool hasContext()
+	 * @method bool isContextFilled()
+	 * @method bool isContextChanged()
+	 * @method \int remindActualContext()
+	 * @method \int requireContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead resetContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead unsetContext()
+	 * @method \int fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead set($fieldName, $value)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead reset($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Lead wakeUp($data)
+	 */
+	class EO_Lead {
+		/* @var \Bitrix\Crm\FieldContext\Model\LeadTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\LeadTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Lead_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getLeadIdList()
+	 * @method \string[] getFieldNameList()
+	 * @method \string[] getValueIdList()
+	 * @method \int[] getContextList()
+	 * @method \int[] fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\FieldContext\Model\EO_Lead $object)
+	 * @method bool has(\Bitrix\Crm\FieldContext\Model\EO_Lead $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead getByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead[] getAll()
+	 * @method bool remove(\Bitrix\Crm\FieldContext\Model\EO_Lead $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Lead_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Lead_Collection merge(?EO_Lead_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Lead_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\FieldContext\Model\LeadTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\LeadTable';
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Lead_Result exec()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Lead_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead_Collection fetchCollection()
+	 */
+	class EO_Lead_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead_Collection createCollection()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead wakeUpObject($row)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Lead_Collection wakeUpCollection($rows)
+	 */
+	class EO_Lead_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Crm\FieldContext\Model\DealTable:crm/lib/fieldcontext/model/dealtable.php */
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Deal
+	 * @see \Bitrix\Crm\FieldContext\Model\DealTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getDealId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal setDealId(\int|\Bitrix\Main\DB\SqlExpression $dealId)
+	 * @method bool hasDealId()
+	 * @method bool isDealIdFilled()
+	 * @method bool isDealIdChanged()
+	 * @method \string getFieldName()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal setFieldName(\string|\Bitrix\Main\DB\SqlExpression $fieldName)
+	 * @method bool hasFieldName()
+	 * @method bool isFieldNameFilled()
+	 * @method bool isFieldNameChanged()
+	 * @method \string getValueId()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal setValueId(\string|\Bitrix\Main\DB\SqlExpression $valueId)
+	 * @method bool hasValueId()
+	 * @method bool isValueIdFilled()
+	 * @method bool isValueIdChanged()
+	 * @method \int getContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal setContext(\int|\Bitrix\Main\DB\SqlExpression $context)
+	 * @method bool hasContext()
+	 * @method bool isContextFilled()
+	 * @method bool isContextChanged()
+	 * @method \int remindActualContext()
+	 * @method \int requireContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal resetContext()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal unsetContext()
+	 * @method \int fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal set($fieldName, $value)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal reset($fieldName)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Deal wakeUp($data)
+	 */
+	class EO_Deal {
+		/* @var \Bitrix\Crm\FieldContext\Model\DealTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\DealTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * EO_Deal_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getDealIdList()
+	 * @method \string[] getFieldNameList()
+	 * @method \string[] getValueIdList()
+	 * @method \int[] getContextList()
+	 * @method \int[] fillContext()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\FieldContext\Model\EO_Deal $object)
+	 * @method bool has(\Bitrix\Crm\FieldContext\Model\EO_Deal $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal getByPrimary($primary)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal[] getAll()
+	 * @method bool remove(\Bitrix\Crm\FieldContext\Model\EO_Deal $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\FieldContext\Model\EO_Deal_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Deal_Collection merge(?EO_Deal_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Deal_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\FieldContext\Model\DealTable */
+		static public $dataClass = '\Bitrix\Crm\FieldContext\Model\DealTable';
+	}
+}
+namespace Bitrix\Crm\FieldContext\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Deal_Result exec()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Deal_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal fetchObject()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal_Collection fetchCollection()
+	 */
+	class EO_Deal_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal_Collection createCollection()
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal wakeUpObject($row)
+	 * @method \Bitrix\Crm\FieldContext\Model\EO_Deal_Collection wakeUpCollection($rows)
+	 */
+	class EO_Deal_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Crm\Observer\Entity\ObserverTable:crm/lib/observer/entity/observertable.php */
 namespace Bitrix\Crm\Observer\Entity {
 	/**
@@ -19149,6 +19943,124 @@ namespace Bitrix\Crm\Observer\Entity {
 	 */
 	class EO_Observer_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+/* ORMENTITYANNOTATION:Bitrix\Crm\Terminal\TerminalPaymentTable:crm/lib/terminal/terminalpaymenttable.php */
+namespace Bitrix\Crm\Terminal {
+	/**
+	 * EO_TerminalPayment
+	 * @see \Bitrix\Crm\Terminal\TerminalPaymentTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getPaymentId()
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment setPaymentId(\int|\Bitrix\Main\DB\SqlExpression $paymentId)
+	 * @method bool hasPaymentId()
+	 * @method bool isPaymentIdFilled()
+	 * @method bool isPaymentIdChanged()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment set($fieldName, $value)
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment reset($fieldName)
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\Terminal\EO_TerminalPayment wakeUp($data)
+	 */
+	class EO_TerminalPayment {
+		/* @var \Bitrix\Crm\Terminal\TerminalPaymentTable */
+		static public $dataClass = '\Bitrix\Crm\Terminal\TerminalPaymentTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\Terminal {
+	/**
+	 * EO_TerminalPayment_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getPaymentIdList()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\Terminal\EO_TerminalPayment $object)
+	 * @method bool has(\Bitrix\Crm\Terminal\EO_TerminalPayment $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment getByPrimary($primary)
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment[] getAll()
+	 * @method bool remove(\Bitrix\Crm\Terminal\EO_TerminalPayment $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_TerminalPayment_Collection merge(?EO_TerminalPayment_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_TerminalPayment_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\Terminal\TerminalPaymentTable */
+		static public $dataClass = '\Bitrix\Crm\Terminal\TerminalPaymentTable';
+	}
+}
+namespace Bitrix\Crm\Terminal {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_TerminalPayment_Result exec()
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment fetchObject()
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_TerminalPayment_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment fetchObject()
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection fetchCollection()
+	 */
+	class EO_TerminalPayment_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection createCollection()
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment wakeUpObject($row)
+	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection wakeUpCollection($rows)
+	 */
+	class EO_TerminalPayment_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Crm\DealTable:crm/lib/deal.php */
 namespace Bitrix\Crm {
 	/**
@@ -19267,16 +20179,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Deal resetOpened()
 	 * @method \Bitrix\Crm\EO_Deal unsetOpened()
 	 * @method \boolean fillOpened()
-	 * @method ?\int getLeadId()
-	 * @method \Bitrix\Crm\EO_Deal setLeadId(?\int|\Bitrix\Main\DB\SqlExpression $leadId)
+	 * @method null|\int getLeadId()
+	 * @method \Bitrix\Crm\EO_Deal setLeadId(null|\int|\Bitrix\Main\DB\SqlExpression $leadId)
 	 * @method bool hasLeadId()
 	 * @method bool isLeadIdFilled()
 	 * @method bool isLeadIdChanged()
-	 * @method ?\int remindActualLeadId()
-	 * @method ?\int requireLeadId()
+	 * @method null|\int remindActualLeadId()
+	 * @method null|\int requireLeadId()
 	 * @method \Bitrix\Crm\EO_Deal resetLeadId()
 	 * @method \Bitrix\Crm\EO_Deal unsetLeadId()
-	 * @method ?\int fillLeadId()
+	 * @method null|\int fillLeadId()
 	 * @method \Bitrix\Crm\EO_Lead getLeadBy()
 	 * @method \Bitrix\Crm\EO_Lead remindActualLeadBy()
 	 * @method \Bitrix\Crm\EO_Lead requireLeadBy()
@@ -19368,16 +20280,16 @@ namespace Bitrix\Crm {
 	 * @method void removeAllContactBindings()
 	 * @method \Bitrix\Crm\EO_Deal resetContactBindings()
 	 * @method \Bitrix\Crm\EO_Deal unsetContactBindings()
-	 * @method ?\int getQuoteId()
-	 * @method \Bitrix\Crm\EO_Deal setQuoteId(?\int|\Bitrix\Main\DB\SqlExpression $quoteId)
+	 * @method null|\int getQuoteId()
+	 * @method \Bitrix\Crm\EO_Deal setQuoteId(null|\int|\Bitrix\Main\DB\SqlExpression $quoteId)
 	 * @method bool hasQuoteId()
 	 * @method bool isQuoteIdFilled()
 	 * @method bool isQuoteIdChanged()
-	 * @method ?\int remindActualQuoteId()
-	 * @method ?\int requireQuoteId()
+	 * @method null|\int remindActualQuoteId()
+	 * @method null|\int requireQuoteId()
 	 * @method \Bitrix\Crm\EO_Deal resetQuoteId()
 	 * @method \Bitrix\Crm\EO_Deal unsetQuoteId()
-	 * @method ?\int fillQuoteId()
+	 * @method null|\int fillQuoteId()
 	 * @method \string getTitle()
 	 * @method \Bitrix\Crm\EO_Deal setTitle(\string|\Bitrix\Main\DB\SqlExpression $title)
 	 * @method bool hasTitle()
@@ -19388,16 +20300,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Deal resetTitle()
 	 * @method \Bitrix\Crm\EO_Deal unsetTitle()
 	 * @method \string fillTitle()
-	 * @method ?\string getProductId()
-	 * @method \Bitrix\Crm\EO_Deal setProductId(?\string|\Bitrix\Main\DB\SqlExpression $productId)
+	 * @method null|\string getProductId()
+	 * @method \Bitrix\Crm\EO_Deal setProductId(null|\string|\Bitrix\Main\DB\SqlExpression $productId)
 	 * @method bool hasProductId()
 	 * @method bool isProductIdFilled()
 	 * @method bool isProductIdChanged()
-	 * @method ?\string remindActualProductId()
-	 * @method ?\string requireProductId()
+	 * @method null|\string remindActualProductId()
+	 * @method null|\string requireProductId()
 	 * @method \Bitrix\Crm\EO_Deal resetProductId()
 	 * @method \Bitrix\Crm\EO_Deal unsetProductId()
-	 * @method ?\string fillProductId()
+	 * @method null|\string fillProductId()
 	 * @method \int getCategoryId()
 	 * @method \Bitrix\Crm\EO_Deal setCategoryId(\int|\Bitrix\Main\DB\SqlExpression $categoryId)
 	 * @method bool hasCategoryId()
@@ -19428,26 +20340,26 @@ namespace Bitrix\Crm {
 	 * @method bool isStageByFilled()
 	 * @method bool isStageByChanged()
 	 * @method \Bitrix\Crm\EO_Status fillStageBy()
-	 * @method ?\string getStageSemanticId()
-	 * @method \Bitrix\Crm\EO_Deal setStageSemanticId(?\string|\Bitrix\Main\DB\SqlExpression $stageSemanticId)
+	 * @method null|\string getStageSemanticId()
+	 * @method \Bitrix\Crm\EO_Deal setStageSemanticId(null|\string|\Bitrix\Main\DB\SqlExpression $stageSemanticId)
 	 * @method bool hasStageSemanticId()
 	 * @method bool isStageSemanticIdFilled()
 	 * @method bool isStageSemanticIdChanged()
-	 * @method ?\string remindActualStageSemanticId()
-	 * @method ?\string requireStageSemanticId()
+	 * @method null|\string remindActualStageSemanticId()
+	 * @method null|\string requireStageSemanticId()
 	 * @method \Bitrix\Crm\EO_Deal resetStageSemanticId()
 	 * @method \Bitrix\Crm\EO_Deal unsetStageSemanticId()
-	 * @method ?\string fillStageSemanticId()
-	 * @method ?\boolean getIsNew()
-	 * @method \Bitrix\Crm\EO_Deal setIsNew(?\boolean|\Bitrix\Main\DB\SqlExpression $isNew)
+	 * @method null|\string fillStageSemanticId()
+	 * @method null|\boolean getIsNew()
+	 * @method \Bitrix\Crm\EO_Deal setIsNew(null|\boolean|\Bitrix\Main\DB\SqlExpression $isNew)
 	 * @method bool hasIsNew()
 	 * @method bool isIsNewFilled()
 	 * @method bool isIsNewChanged()
-	 * @method ?\boolean remindActualIsNew()
-	 * @method ?\boolean requireIsNew()
+	 * @method null|\boolean remindActualIsNew()
+	 * @method null|\boolean requireIsNew()
 	 * @method \Bitrix\Crm\EO_Deal resetIsNew()
 	 * @method \Bitrix\Crm\EO_Deal unsetIsNew()
-	 * @method ?\boolean fillIsNew()
+	 * @method null|\boolean fillIsNew()
 	 * @method \boolean getIsRecurring()
 	 * @method \Bitrix\Crm\EO_Deal setIsRecurring(\boolean|\Bitrix\Main\DB\SqlExpression $isRecurring)
 	 * @method bool hasIsRecurring()
@@ -19498,16 +20410,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Deal resetClosed()
 	 * @method \Bitrix\Crm\EO_Deal unsetClosed()
 	 * @method \boolean fillClosed()
-	 * @method ?\string getTypeId()
-	 * @method \Bitrix\Crm\EO_Deal setTypeId(?\string|\Bitrix\Main\DB\SqlExpression $typeId)
+	 * @method null|\string getTypeId()
+	 * @method \Bitrix\Crm\EO_Deal setTypeId(null|\string|\Bitrix\Main\DB\SqlExpression $typeId)
 	 * @method bool hasTypeId()
 	 * @method bool isTypeIdFilled()
 	 * @method bool isTypeIdChanged()
-	 * @method ?\string remindActualTypeId()
-	 * @method ?\string requireTypeId()
+	 * @method null|\string remindActualTypeId()
+	 * @method null|\string requireTypeId()
 	 * @method \Bitrix\Crm\EO_Deal resetTypeId()
 	 * @method \Bitrix\Crm\EO_Deal unsetTypeId()
-	 * @method ?\string fillTypeId()
+	 * @method null|\string fillTypeId()
 	 * @method \Bitrix\Crm\EO_Status getTypeBy()
 	 * @method \Bitrix\Crm\EO_Status remindActualTypeBy()
 	 * @method \Bitrix\Crm\EO_Status requireTypeBy()
@@ -19588,26 +20500,26 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Deal resetAccountCurrencyId()
 	 * @method \Bitrix\Crm\EO_Deal unsetAccountCurrencyId()
 	 * @method \string fillAccountCurrencyId()
-	 * @method ?\int getProbability()
-	 * @method \Bitrix\Crm\EO_Deal setProbability(?\int|\Bitrix\Main\DB\SqlExpression $probability)
+	 * @method null|\int getProbability()
+	 * @method \Bitrix\Crm\EO_Deal setProbability(null|\int|\Bitrix\Main\DB\SqlExpression $probability)
 	 * @method bool hasProbability()
 	 * @method bool isProbabilityFilled()
 	 * @method bool isProbabilityChanged()
-	 * @method ?\int remindActualProbability()
-	 * @method ?\int requireProbability()
+	 * @method null|\int remindActualProbability()
+	 * @method null|\int requireProbability()
 	 * @method \Bitrix\Crm\EO_Deal resetProbability()
 	 * @method \Bitrix\Crm\EO_Deal unsetProbability()
-	 * @method ?\int fillProbability()
-	 * @method ?\string getComments()
-	 * @method \Bitrix\Crm\EO_Deal setComments(?\string|\Bitrix\Main\DB\SqlExpression $comments)
+	 * @method null|\int fillProbability()
+	 * @method null|\string getComments()
+	 * @method \Bitrix\Crm\EO_Deal setComments(null|\string|\Bitrix\Main\DB\SqlExpression $comments)
 	 * @method bool hasComments()
 	 * @method bool isCommentsFilled()
 	 * @method bool isCommentsChanged()
-	 * @method ?\string remindActualComments()
-	 * @method ?\string requireComments()
+	 * @method null|\string remindActualComments()
+	 * @method null|\string requireComments()
 	 * @method \Bitrix\Crm\EO_Deal resetComments()
 	 * @method \Bitrix\Crm\EO_Deal unsetComments()
-	 * @method ?\string fillComments()
+	 * @method null|\string fillComments()
 	 * @method \Bitrix\Main\Type\Date getBegindate()
 	 * @method \Bitrix\Crm\EO_Deal setBegindate(\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $begindate)
 	 * @method bool hasBegindate()
@@ -19642,16 +20554,16 @@ namespace Bitrix\Crm {
 	 * @method bool isClosedateShortFilled()
 	 * @method \Bitrix\Crm\EO_Deal unsetClosedateShort()
 	 * @method \Bitrix\Main\Type\DateTime fillClosedateShort()
-	 * @method ?\Bitrix\Main\Type\DateTime getEventDate()
-	 * @method \Bitrix\Crm\EO_Deal setEventDate(?\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $eventDate)
+	 * @method null|\Bitrix\Main\Type\DateTime getEventDate()
+	 * @method \Bitrix\Crm\EO_Deal setEventDate(null|\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $eventDate)
 	 * @method bool hasEventDate()
 	 * @method bool isEventDateFilled()
 	 * @method bool isEventDateChanged()
-	 * @method ?\Bitrix\Main\Type\DateTime remindActualEventDate()
-	 * @method ?\Bitrix\Main\Type\DateTime requireEventDate()
+	 * @method null|\Bitrix\Main\Type\DateTime remindActualEventDate()
+	 * @method null|\Bitrix\Main\Type\DateTime requireEventDate()
 	 * @method \Bitrix\Crm\EO_Deal resetEventDate()
 	 * @method \Bitrix\Crm\EO_Deal unsetEventDate()
-	 * @method ?\Bitrix\Main\Type\DateTime fillEventDate()
+	 * @method null|\Bitrix\Main\Type\DateTime fillEventDate()
 	 * @method \Bitrix\Main\Type\DateTime getEventDateShort()
 	 * @method \Bitrix\Main\Type\DateTime remindActualEventDateShort()
 	 * @method \Bitrix\Main\Type\DateTime requireEventDateShort()
@@ -19659,16 +20571,16 @@ namespace Bitrix\Crm {
 	 * @method bool isEventDateShortFilled()
 	 * @method \Bitrix\Crm\EO_Deal unsetEventDateShort()
 	 * @method \Bitrix\Main\Type\DateTime fillEventDateShort()
-	 * @method ?\string getEventId()
-	 * @method \Bitrix\Crm\EO_Deal setEventId(?\string|\Bitrix\Main\DB\SqlExpression $eventId)
+	 * @method null|\string getEventId()
+	 * @method \Bitrix\Crm\EO_Deal setEventId(null|\string|\Bitrix\Main\DB\SqlExpression $eventId)
 	 * @method bool hasEventId()
 	 * @method bool isEventIdFilled()
 	 * @method bool isEventIdChanged()
-	 * @method ?\string remindActualEventId()
-	 * @method ?\string requireEventId()
+	 * @method null|\string remindActualEventId()
+	 * @method null|\string requireEventId()
 	 * @method \Bitrix\Crm\EO_Deal resetEventId()
 	 * @method \Bitrix\Crm\EO_Deal unsetEventId()
-	 * @method ?\string fillEventId()
+	 * @method null|\string fillEventId()
 	 * @method \Bitrix\Crm\EO_Status getEventBy()
 	 * @method \Bitrix\Crm\EO_Status remindActualEventBy()
 	 * @method \Bitrix\Crm\EO_Status requireEventBy()
@@ -19689,16 +20601,16 @@ namespace Bitrix\Crm {
 	 * @method bool isEventRelationFilled()
 	 * @method bool isEventRelationChanged()
 	 * @method \Bitrix\Crm\EO_EventRelations fillEventRelation()
-	 * @method ?\string getEventDescription()
-	 * @method \Bitrix\Crm\EO_Deal setEventDescription(?\string|\Bitrix\Main\DB\SqlExpression $eventDescription)
+	 * @method null|\string getEventDescription()
+	 * @method \Bitrix\Crm\EO_Deal setEventDescription(null|\string|\Bitrix\Main\DB\SqlExpression $eventDescription)
 	 * @method bool hasEventDescription()
 	 * @method bool isEventDescriptionFilled()
 	 * @method bool isEventDescriptionChanged()
-	 * @method ?\string remindActualEventDescription()
-	 * @method ?\string requireEventDescription()
+	 * @method null|\string remindActualEventDescription()
+	 * @method null|\string requireEventDescription()
 	 * @method \Bitrix\Crm\EO_Deal resetEventDescription()
 	 * @method \Bitrix\Crm\EO_Deal unsetEventDescription()
-	 * @method ?\string fillEventDescription()
+	 * @method null|\string fillEventDescription()
 	 * @method \float getExchRate()
 	 * @method \Bitrix\Crm\EO_Deal setExchRate(\float|\Bitrix\Main\DB\SqlExpression $exchRate)
 	 * @method bool hasExchRate()
@@ -19709,16 +20621,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Deal resetExchRate()
 	 * @method \Bitrix\Crm\EO_Deal unsetExchRate()
 	 * @method \float fillExchRate()
-	 * @method ?\string getLocationId()
-	 * @method \Bitrix\Crm\EO_Deal setLocationId(?\string|\Bitrix\Main\DB\SqlExpression $locationId)
+	 * @method null|\string getLocationId()
+	 * @method \Bitrix\Crm\EO_Deal setLocationId(null|\string|\Bitrix\Main\DB\SqlExpression $locationId)
 	 * @method bool hasLocationId()
 	 * @method bool isLocationIdFilled()
 	 * @method bool isLocationIdChanged()
-	 * @method ?\string remindActualLocationId()
-	 * @method ?\string requireLocationId()
+	 * @method null|\string remindActualLocationId()
+	 * @method null|\string requireLocationId()
 	 * @method \Bitrix\Crm\EO_Deal resetLocationId()
 	 * @method \Bitrix\Crm\EO_Deal unsetLocationId()
-	 * @method ?\string fillLocationId()
+	 * @method null|\string fillLocationId()
 	 * @method \int getWebformId()
 	 * @method \Bitrix\Crm\EO_Deal setWebformId(\int|\Bitrix\Main\DB\SqlExpression $webformId)
 	 * @method bool hasWebformId()
@@ -19759,16 +20671,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Deal resetSourceDescription()
 	 * @method \Bitrix\Crm\EO_Deal unsetSourceDescription()
 	 * @method \string fillSourceDescription()
-	 * @method ?\string getOriginatorId()
-	 * @method \Bitrix\Crm\EO_Deal setOriginatorId(?\string|\Bitrix\Main\DB\SqlExpression $originatorId)
+	 * @method null|\string getOriginatorId()
+	 * @method \Bitrix\Crm\EO_Deal setOriginatorId(null|\string|\Bitrix\Main\DB\SqlExpression $originatorId)
 	 * @method bool hasOriginatorId()
 	 * @method bool isOriginatorIdFilled()
 	 * @method bool isOriginatorIdChanged()
-	 * @method ?\string remindActualOriginatorId()
-	 * @method ?\string requireOriginatorId()
+	 * @method null|\string remindActualOriginatorId()
+	 * @method null|\string requireOriginatorId()
 	 * @method \Bitrix\Crm\EO_Deal resetOriginatorId()
 	 * @method \Bitrix\Crm\EO_Deal unsetOriginatorId()
-	 * @method ?\string fillOriginatorId()
+	 * @method null|\string fillOriginatorId()
 	 * @method \Bitrix\Crm\EO_ExternalSale getOriginatorBy()
 	 * @method \Bitrix\Crm\EO_ExternalSale remindActualOriginatorBy()
 	 * @method \Bitrix\Crm\EO_ExternalSale requireOriginatorBy()
@@ -19779,46 +20691,46 @@ namespace Bitrix\Crm {
 	 * @method bool isOriginatorByFilled()
 	 * @method bool isOriginatorByChanged()
 	 * @method \Bitrix\Crm\EO_ExternalSale fillOriginatorBy()
-	 * @method ?\string getOriginId()
-	 * @method \Bitrix\Crm\EO_Deal setOriginId(?\string|\Bitrix\Main\DB\SqlExpression $originId)
+	 * @method null|\string getOriginId()
+	 * @method \Bitrix\Crm\EO_Deal setOriginId(null|\string|\Bitrix\Main\DB\SqlExpression $originId)
 	 * @method bool hasOriginId()
 	 * @method bool isOriginIdFilled()
 	 * @method bool isOriginIdChanged()
-	 * @method ?\string remindActualOriginId()
-	 * @method ?\string requireOriginId()
+	 * @method null|\string remindActualOriginId()
+	 * @method null|\string requireOriginId()
 	 * @method \Bitrix\Crm\EO_Deal resetOriginId()
 	 * @method \Bitrix\Crm\EO_Deal unsetOriginId()
-	 * @method ?\string fillOriginId()
-	 * @method ?\string getAdditionalInfo()
-	 * @method \Bitrix\Crm\EO_Deal setAdditionalInfo(?\string|\Bitrix\Main\DB\SqlExpression $additionalInfo)
+	 * @method null|\string fillOriginId()
+	 * @method null|\string getAdditionalInfo()
+	 * @method \Bitrix\Crm\EO_Deal setAdditionalInfo(null|\string|\Bitrix\Main\DB\SqlExpression $additionalInfo)
 	 * @method bool hasAdditionalInfo()
 	 * @method bool isAdditionalInfoFilled()
 	 * @method bool isAdditionalInfoChanged()
-	 * @method ?\string remindActualAdditionalInfo()
-	 * @method ?\string requireAdditionalInfo()
+	 * @method null|\string remindActualAdditionalInfo()
+	 * @method null|\string requireAdditionalInfo()
 	 * @method \Bitrix\Crm\EO_Deal resetAdditionalInfo()
 	 * @method \Bitrix\Crm\EO_Deal unsetAdditionalInfo()
-	 * @method ?\string fillAdditionalInfo()
-	 * @method ?\string getSearchContent()
-	 * @method \Bitrix\Crm\EO_Deal setSearchContent(?\string|\Bitrix\Main\DB\SqlExpression $searchContent)
+	 * @method null|\string fillAdditionalInfo()
+	 * @method null|\string getSearchContent()
+	 * @method \Bitrix\Crm\EO_Deal setSearchContent(null|\string|\Bitrix\Main\DB\SqlExpression $searchContent)
 	 * @method bool hasSearchContent()
 	 * @method bool isSearchContentFilled()
 	 * @method bool isSearchContentChanged()
-	 * @method ?\string remindActualSearchContent()
-	 * @method ?\string requireSearchContent()
+	 * @method null|\string remindActualSearchContent()
+	 * @method null|\string requireSearchContent()
 	 * @method \Bitrix\Crm\EO_Deal resetSearchContent()
 	 * @method \Bitrix\Crm\EO_Deal unsetSearchContent()
-	 * @method ?\string fillSearchContent()
-	 * @method ?\string getOrderStage()
-	 * @method \Bitrix\Crm\EO_Deal setOrderStage(?\string|\Bitrix\Main\DB\SqlExpression $orderStage)
+	 * @method null|\string fillSearchContent()
+	 * @method null|\string getOrderStage()
+	 * @method \Bitrix\Crm\EO_Deal setOrderStage(null|\string|\Bitrix\Main\DB\SqlExpression $orderStage)
 	 * @method bool hasOrderStage()
 	 * @method bool isOrderStageFilled()
 	 * @method bool isOrderStageChanged()
-	 * @method ?\string remindActualOrderStage()
-	 * @method ?\string requireOrderStage()
+	 * @method null|\string remindActualOrderStage()
+	 * @method null|\string requireOrderStage()
 	 * @method \Bitrix\Crm\EO_Deal resetOrderStage()
 	 * @method \Bitrix\Crm\EO_Deal unsetOrderStage()
-	 * @method ?\string fillOrderStage()
+	 * @method null|\string fillOrderStage()
 	 * @method \int getMovedById()
 	 * @method \Bitrix\Crm\EO_Deal setMovedById(\int|\Bitrix\Main\DB\SqlExpression $movedById)
 	 * @method bool hasMovedById()
@@ -20082,8 +20994,8 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Main\EO_User_Collection fillAssignedBy()
 	 * @method \boolean[] getOpenedList()
 	 * @method \boolean[] fillOpened()
-	 * @method ?\int[] getLeadIdList()
-	 * @method ?\int[] fillLeadId()
+	 * @method null|\int[] getLeadIdList()
+	 * @method null|\int[] fillLeadId()
 	 * @method \Bitrix\Crm\EO_Lead[] getLeadByList()
 	 * @method \Bitrix\Crm\EO_Deal_Collection getLeadByCollection()
 	 * @method \Bitrix\Crm\EO_Lead_Collection fillLeadBy()
@@ -20109,12 +21021,12 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\Binding\EO_DealContact_Collection[] getContactBindingsList()
 	 * @method \Bitrix\Crm\Binding\EO_DealContact_Collection getContactBindingsCollection()
 	 * @method \Bitrix\Crm\Binding\EO_DealContact_Collection fillContactBindings()
-	 * @method ?\int[] getQuoteIdList()
-	 * @method ?\int[] fillQuoteId()
+	 * @method null|\int[] getQuoteIdList()
+	 * @method null|\int[] fillQuoteId()
 	 * @method \string[] getTitleList()
 	 * @method \string[] fillTitle()
-	 * @method ?\string[] getProductIdList()
-	 * @method ?\string[] fillProductId()
+	 * @method null|\string[] getProductIdList()
+	 * @method null|\string[] fillProductId()
 	 * @method \int[] getCategoryIdList()
 	 * @method \int[] fillCategoryId()
 	 * @method \string[] getStageIdList()
@@ -20122,10 +21034,10 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Status[] getStageByList()
 	 * @method \Bitrix\Crm\EO_Deal_Collection getStageByCollection()
 	 * @method \Bitrix\Crm\EO_Status_Collection fillStageBy()
-	 * @method ?\string[] getStageSemanticIdList()
-	 * @method ?\string[] fillStageSemanticId()
-	 * @method ?\boolean[] getIsNewList()
-	 * @method ?\boolean[] fillIsNew()
+	 * @method null|\string[] getStageSemanticIdList()
+	 * @method null|\string[] fillStageSemanticId()
+	 * @method null|\boolean[] getIsNewList()
+	 * @method null|\boolean[] fillIsNew()
 	 * @method \boolean[] getIsRecurringList()
 	 * @method \boolean[] fillIsRecurring()
 	 * @method \Bitrix\Crm\EO_DealRecur[] getCrmDealRecurringList()
@@ -20137,8 +21049,8 @@ namespace Bitrix\Crm {
 	 * @method \boolean[] fillIsRepeatedApproach()
 	 * @method \boolean[] getClosedList()
 	 * @method \boolean[] fillClosed()
-	 * @method ?\string[] getTypeIdList()
-	 * @method ?\string[] fillTypeId()
+	 * @method null|\string[] getTypeIdList()
+	 * @method null|\string[] fillTypeId()
 	 * @method \Bitrix\Crm\EO_Status[] getTypeByList()
 	 * @method \Bitrix\Crm\EO_Deal_Collection getTypeByCollection()
 	 * @method \Bitrix\Crm\EO_Status_Collection fillTypeBy()
@@ -20156,10 +21068,10 @@ namespace Bitrix\Crm {
 	 * @method \float[] fillTaxValueAccount()
 	 * @method \string[] getAccountCurrencyIdList()
 	 * @method \string[] fillAccountCurrencyId()
-	 * @method ?\int[] getProbabilityList()
-	 * @method ?\int[] fillProbability()
-	 * @method ?\string[] getCommentsList()
-	 * @method ?\string[] fillComments()
+	 * @method null|\int[] getProbabilityList()
+	 * @method null|\int[] fillProbability()
+	 * @method null|\string[] getCommentsList()
+	 * @method null|\string[] fillComments()
 	 * @method \Bitrix\Main\Type\Date[] getBegindateList()
 	 * @method \Bitrix\Main\Type\Date[] fillBegindate()
 	 * @method \Bitrix\Main\Type\DateTime[] getBegindateShortList()
@@ -20168,24 +21080,24 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Main\Type\Date[] fillClosedate()
 	 * @method \Bitrix\Main\Type\DateTime[] getClosedateShortList()
 	 * @method \Bitrix\Main\Type\DateTime[] fillClosedateShort()
-	 * @method ?\Bitrix\Main\Type\DateTime[] getEventDateList()
-	 * @method ?\Bitrix\Main\Type\DateTime[] fillEventDate()
+	 * @method null|\Bitrix\Main\Type\DateTime[] getEventDateList()
+	 * @method null|\Bitrix\Main\Type\DateTime[] fillEventDate()
 	 * @method \Bitrix\Main\Type\DateTime[] getEventDateShortList()
 	 * @method \Bitrix\Main\Type\DateTime[] fillEventDateShort()
-	 * @method ?\string[] getEventIdList()
-	 * @method ?\string[] fillEventId()
+	 * @method null|\string[] getEventIdList()
+	 * @method null|\string[] fillEventId()
 	 * @method \Bitrix\Crm\EO_Status[] getEventByList()
 	 * @method \Bitrix\Crm\EO_Deal_Collection getEventByCollection()
 	 * @method \Bitrix\Crm\EO_Status_Collection fillEventBy()
 	 * @method \Bitrix\Crm\EO_EventRelations[] getEventRelationList()
 	 * @method \Bitrix\Crm\EO_Deal_Collection getEventRelationCollection()
 	 * @method \Bitrix\Crm\EO_EventRelations_Collection fillEventRelation()
-	 * @method ?\string[] getEventDescriptionList()
-	 * @method ?\string[] fillEventDescription()
+	 * @method null|\string[] getEventDescriptionList()
+	 * @method null|\string[] fillEventDescription()
 	 * @method \float[] getExchRateList()
 	 * @method \float[] fillExchRate()
-	 * @method ?\string[] getLocationIdList()
-	 * @method ?\string[] fillLocationId()
+	 * @method null|\string[] getLocationIdList()
+	 * @method null|\string[] fillLocationId()
 	 * @method \int[] getWebformIdList()
 	 * @method \int[] fillWebformId()
 	 * @method \string[] getSourceIdList()
@@ -20195,19 +21107,19 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Status_Collection fillSourceBy()
 	 * @method \string[] getSourceDescriptionList()
 	 * @method \string[] fillSourceDescription()
-	 * @method ?\string[] getOriginatorIdList()
-	 * @method ?\string[] fillOriginatorId()
+	 * @method null|\string[] getOriginatorIdList()
+	 * @method null|\string[] fillOriginatorId()
 	 * @method \Bitrix\Crm\EO_ExternalSale[] getOriginatorByList()
 	 * @method \Bitrix\Crm\EO_Deal_Collection getOriginatorByCollection()
 	 * @method \Bitrix\Crm\EO_ExternalSale_Collection fillOriginatorBy()
-	 * @method ?\string[] getOriginIdList()
-	 * @method ?\string[] fillOriginId()
-	 * @method ?\string[] getAdditionalInfoList()
-	 * @method ?\string[] fillAdditionalInfo()
-	 * @method ?\string[] getSearchContentList()
-	 * @method ?\string[] fillSearchContent()
-	 * @method ?\string[] getOrderStageList()
-	 * @method ?\string[] fillOrderStage()
+	 * @method null|\string[] getOriginIdList()
+	 * @method null|\string[] fillOriginId()
+	 * @method null|\string[] getAdditionalInfoList()
+	 * @method null|\string[] fillAdditionalInfo()
+	 * @method null|\string[] getSearchContentList()
+	 * @method null|\string[] fillSearchContent()
+	 * @method null|\string[] getOrderStageList()
+	 * @method null|\string[] fillOrderStage()
 	 * @method \int[] getMovedByIdList()
 	 * @method \int[] fillMovedById()
 	 * @method \Bitrix\Main\Type\DateTime[] getMovedTimeList()
@@ -21550,166 +22462,6 @@ namespace Bitrix\Crm\Binding {
 	 * @method \Bitrix\Crm\Binding\EO_LeadContact_Collection wakeUpCollection($rows)
 	 */
 	class EO_LeadContact_Entity extends \Bitrix\Main\ORM\Entity {}
-}
-/* ORMENTITYANNOTATION:Bitrix\Crm\Binding\QuoteContactTable:crm/lib/binding/quotecontact.php */
-namespace Bitrix\Crm\Binding {
-	/**
-	 * EO_QuoteContact
-	 * @see \Bitrix\Crm\Binding\QuoteContactTable
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int getQuoteId()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact setQuoteId(\int|\Bitrix\Main\DB\SqlExpression $quoteId)
-	 * @method bool hasQuoteId()
-	 * @method bool isQuoteIdFilled()
-	 * @method bool isQuoteIdChanged()
-	 * @method \int getContactId()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact setContactId(\int|\Bitrix\Main\DB\SqlExpression $contactId)
-	 * @method bool hasContactId()
-	 * @method bool isContactIdFilled()
-	 * @method bool isContactIdChanged()
-	 * @method \int getSort()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact setSort(\int|\Bitrix\Main\DB\SqlExpression $sort)
-	 * @method bool hasSort()
-	 * @method bool isSortFilled()
-	 * @method bool isSortChanged()
-	 * @method \int remindActualSort()
-	 * @method \int requireSort()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact resetSort()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact unsetSort()
-	 * @method \int fillSort()
-	 * @method \int getRoleId()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact setRoleId(\int|\Bitrix\Main\DB\SqlExpression $roleId)
-	 * @method bool hasRoleId()
-	 * @method bool isRoleIdFilled()
-	 * @method bool isRoleIdChanged()
-	 * @method \int remindActualRoleId()
-	 * @method \int requireRoleId()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact resetRoleId()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact unsetRoleId()
-	 * @method \int fillRoleId()
-	 * @method \boolean getIsPrimary()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact setIsPrimary(\boolean|\Bitrix\Main\DB\SqlExpression $isPrimary)
-	 * @method bool hasIsPrimary()
-	 * @method bool isIsPrimaryFilled()
-	 * @method bool isIsPrimaryChanged()
-	 * @method \boolean remindActualIsPrimary()
-	 * @method \boolean requireIsPrimary()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact resetIsPrimary()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact unsetIsPrimary()
-	 * @method \boolean fillIsPrimary()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @property-read array $primary
-	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
-	 * @property-read \Bitrix\Main\Type\Dictionary $customData
-	 * @property \Bitrix\Main\Authentication\Context $authContext
-	 * @method mixed get($fieldName)
-	 * @method mixed remindActual($fieldName)
-	 * @method mixed require($fieldName)
-	 * @method bool has($fieldName)
-	 * @method bool isFilled($fieldName)
-	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact set($fieldName, $value)
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact reset($fieldName)
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact unset($fieldName)
-	 * @method void addTo($fieldName, $value)
-	 * @method void removeFrom($fieldName, $value)
-	 * @method void removeAll($fieldName)
-	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
-	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Crm\Binding\EO_QuoteContact wakeUp($data)
-	 */
-	class EO_QuoteContact {
-		/* @var \Bitrix\Crm\Binding\QuoteContactTable */
-		static public $dataClass = '\Bitrix\Crm\Binding\QuoteContactTable';
-		/**
-		 * @param bool|array $setDefaultValues
-		 */
-		public function __construct($setDefaultValues = true) {}
-	}
-}
-namespace Bitrix\Crm\Binding {
-	/**
-	 * EO_QuoteContact_Collection
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int[] getQuoteIdList()
-	 * @method \int[] getContactIdList()
-	 * @method \int[] getSortList()
-	 * @method \int[] fillSort()
-	 * @method \int[] getRoleIdList()
-	 * @method \int[] fillRoleId()
-	 * @method \boolean[] getIsPrimaryList()
-	 * @method \boolean[] fillIsPrimary()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Crm\Binding\EO_QuoteContact $object)
-	 * @method bool has(\Bitrix\Crm\Binding\EO_QuoteContact $object)
-	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact getByPrimary($primary)
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact[] getAll()
-	 * @method bool remove(\Bitrix\Crm\Binding\EO_QuoteContact $object)
-	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Crm\Binding\EO_QuoteContact_Collection wakeUp($data)
-	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
-	 * @method void offsetSet() ArrayAccess
-	 * @method void offsetExists() ArrayAccess
-	 * @method void offsetUnset() ArrayAccess
-	 * @method void offsetGet() ArrayAccess
-	 * @method void rewind() Iterator
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact current() Iterator
-	 * @method mixed key() Iterator
-	 * @method void next() Iterator
-	 * @method bool valid() Iterator
-	 * @method int count() Countable
-	 * @method EO_QuoteContact_Collection merge(?EO_QuoteContact_Collection $collection)
-	 * @method bool isEmpty()
-	 */
-	class EO_QuoteContact_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Crm\Binding\QuoteContactTable */
-		static public $dataClass = '\Bitrix\Crm\Binding\QuoteContactTable';
-	}
-}
-namespace Bitrix\Crm\Binding {
-	/**
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @method EO_QuoteContact_Result exec()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact fetchObject()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 */
-	class EO_QuoteContact_Query extends \Bitrix\Main\ORM\Query\Query {}
-	/**
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact fetchObject()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact_Collection fetchCollection()
-	 */
-	class EO_QuoteContact_Result extends \Bitrix\Main\ORM\Query\Result {}
-	/**
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact createObject($setDefaultValues = true)
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact_Collection createCollection()
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact wakeUpObject($row)
-	 * @method \Bitrix\Crm\Binding\EO_QuoteContact_Collection wakeUpCollection($rows)
-	 */
-	class EO_QuoteContact_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Crm\Binding\DealContactTable:crm/lib/binding/dealcontact.php */
 namespace Bitrix\Crm\Binding {
@@ -23165,184 +23917,6 @@ namespace Bitrix\Crm\Ml\Internals {
 	 * @method \Bitrix\Crm\Ml\Internals\EO_PredictionHistory_Collection wakeUpCollection($rows)
 	 */
 	class EO_PredictionHistory_Entity extends \Bitrix\Main\ORM\Entity {}
-}
-/* ORMENTITYANNOTATION:Bitrix\Crm\Workflow\EntityStageTable:crm/lib/workflow/entitystagetable.php */
-namespace Bitrix\Crm\Workflow {
-	/**
-	 * EO_EntityStage
-	 * @see \Bitrix\Crm\Workflow\EntityStageTable
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int getId()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage setId(\int|\Bitrix\Main\DB\SqlExpression $id)
-	 * @method bool hasId()
-	 * @method bool isIdFilled()
-	 * @method bool isIdChanged()
-	 * @method \int getEntityId()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
-	 * @method bool hasEntityId()
-	 * @method bool isEntityIdFilled()
-	 * @method bool isEntityIdChanged()
-	 * @method \int remindActualEntityId()
-	 * @method \int requireEntityId()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage resetEntityId()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage unsetEntityId()
-	 * @method \int fillEntityId()
-	 * @method \string getWorkflowCode()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage setWorkflowCode(\string|\Bitrix\Main\DB\SqlExpression $workflowCode)
-	 * @method bool hasWorkflowCode()
-	 * @method bool isWorkflowCodeFilled()
-	 * @method bool isWorkflowCodeChanged()
-	 * @method \string remindActualWorkflowCode()
-	 * @method \string requireWorkflowCode()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage resetWorkflowCode()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage unsetWorkflowCode()
-	 * @method \string fillWorkflowCode()
-	 * @method \string getStage()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage setStage(\string|\Bitrix\Main\DB\SqlExpression $stage)
-	 * @method bool hasStage()
-	 * @method bool isStageFilled()
-	 * @method bool isStageChanged()
-	 * @method \string remindActualStage()
-	 * @method \string requireStage()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage resetStage()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage unsetStage()
-	 * @method \string fillStage()
-	 * @method \Bitrix\Main\Type\DateTime getUpdatedAt()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage setUpdatedAt(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updatedAt)
-	 * @method bool hasUpdatedAt()
-	 * @method bool isUpdatedAtFilled()
-	 * @method bool isUpdatedAtChanged()
-	 * @method \Bitrix\Main\Type\DateTime remindActualUpdatedAt()
-	 * @method \Bitrix\Main\Type\DateTime requireUpdatedAt()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage resetUpdatedAt()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage unsetUpdatedAt()
-	 * @method \Bitrix\Main\Type\DateTime fillUpdatedAt()
-	 * @method \int getUpdatedBy()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage setUpdatedBy(\int|\Bitrix\Main\DB\SqlExpression $updatedBy)
-	 * @method bool hasUpdatedBy()
-	 * @method bool isUpdatedByFilled()
-	 * @method bool isUpdatedByChanged()
-	 * @method \int remindActualUpdatedBy()
-	 * @method \int requireUpdatedBy()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage resetUpdatedBy()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage unsetUpdatedBy()
-	 * @method \int fillUpdatedBy()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @property-read array $primary
-	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
-	 * @property-read \Bitrix\Main\Type\Dictionary $customData
-	 * @property \Bitrix\Main\Authentication\Context $authContext
-	 * @method mixed get($fieldName)
-	 * @method mixed remindActual($fieldName)
-	 * @method mixed require($fieldName)
-	 * @method bool has($fieldName)
-	 * @method bool isFilled($fieldName)
-	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage set($fieldName, $value)
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage reset($fieldName)
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage unset($fieldName)
-	 * @method void addTo($fieldName, $value)
-	 * @method void removeFrom($fieldName, $value)
-	 * @method void removeAll($fieldName)
-	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
-	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Crm\Workflow\EO_EntityStage wakeUp($data)
-	 */
-	class EO_EntityStage {
-		/* @var \Bitrix\Crm\Workflow\EntityStageTable */
-		static public $dataClass = '\Bitrix\Crm\Workflow\EntityStageTable';
-		/**
-		 * @param bool|array $setDefaultValues
-		 */
-		public function __construct($setDefaultValues = true) {}
-	}
-}
-namespace Bitrix\Crm\Workflow {
-	/**
-	 * EO_EntityStage_Collection
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int[] getIdList()
-	 * @method \int[] getEntityIdList()
-	 * @method \int[] fillEntityId()
-	 * @method \string[] getWorkflowCodeList()
-	 * @method \string[] fillWorkflowCode()
-	 * @method \string[] getStageList()
-	 * @method \string[] fillStage()
-	 * @method \Bitrix\Main\Type\DateTime[] getUpdatedAtList()
-	 * @method \Bitrix\Main\Type\DateTime[] fillUpdatedAt()
-	 * @method \int[] getUpdatedByList()
-	 * @method \int[] fillUpdatedBy()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Crm\Workflow\EO_EntityStage $object)
-	 * @method bool has(\Bitrix\Crm\Workflow\EO_EntityStage $object)
-	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage getByPrimary($primary)
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage[] getAll()
-	 * @method bool remove(\Bitrix\Crm\Workflow\EO_EntityStage $object)
-	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Crm\Workflow\EO_EntityStage_Collection wakeUp($data)
-	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
-	 * @method void offsetSet() ArrayAccess
-	 * @method void offsetExists() ArrayAccess
-	 * @method void offsetUnset() ArrayAccess
-	 * @method void offsetGet() ArrayAccess
-	 * @method void rewind() Iterator
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage current() Iterator
-	 * @method mixed key() Iterator
-	 * @method void next() Iterator
-	 * @method bool valid() Iterator
-	 * @method int count() Countable
-	 * @method EO_EntityStage_Collection merge(?EO_EntityStage_Collection $collection)
-	 * @method bool isEmpty()
-	 */
-	class EO_EntityStage_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Crm\Workflow\EntityStageTable */
-		static public $dataClass = '\Bitrix\Crm\Workflow\EntityStageTable';
-	}
-}
-namespace Bitrix\Crm\Workflow {
-	/**
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @method EO_EntityStage_Result exec()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage fetchObject()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 */
-	class EO_EntityStage_Query extends \Bitrix\Main\ORM\Query\Query {}
-	/**
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage fetchObject()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage_Collection fetchCollection()
-	 */
-	class EO_EntityStage_Result extends \Bitrix\Main\ORM\Query\Result {}
-	/**
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage createObject($setDefaultValues = true)
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage_Collection createCollection()
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage wakeUpObject($row)
-	 * @method \Bitrix\Crm\Workflow\EO_EntityStage_Collection wakeUpCollection($rows)
-	 */
-	class EO_EntityStage_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Crm\Kanban\SupervisorTable:crm/lib/kanban/supervisor.php */
 namespace Bitrix\Crm\Kanban {
@@ -26061,6 +26635,16 @@ namespace Bitrix\Crm\Model {
 	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry resetCountryCode()
 	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry unsetCountryCode()
 	 * @method \string fillCountryCode()
+	 * @method \Bitrix\Crm\EO_FieldMulti getFm()
+	 * @method \Bitrix\Crm\EO_FieldMulti remindActualFm()
+	 * @method \Bitrix\Crm\EO_FieldMulti requireFm()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry setFm(\Bitrix\Crm\EO_FieldMulti $object)
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry resetFm()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry unsetFm()
+	 * @method bool hasFm()
+	 * @method bool isFmFilled()
+	 * @method bool isFmChanged()
+	 * @method \Bitrix\Crm\EO_FieldMulti fillFm()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -26109,6 +26693,9 @@ namespace Bitrix\Crm\Model {
 	 * @method \int[] fillFmId()
 	 * @method \string[] getCountryCodeList()
 	 * @method \string[] fillCountryCode()
+	 * @method \Bitrix\Crm\EO_FieldMulti[] getFmList()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry_Collection getFmCollection()
+	 * @method \Bitrix\Crm\EO_FieldMulti_Collection fillFm()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -28467,6 +29054,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_FieldMulti resetValue()
 	 * @method \Bitrix\Crm\EO_FieldMulti unsetValue()
 	 * @method \string fillValue()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry getPhoneCountry()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry remindActualPhoneCountry()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry requirePhoneCountry()
+	 * @method \Bitrix\Crm\EO_FieldMulti setPhoneCountry(\Bitrix\Crm\Model\EO_FieldMultiPhoneCountry $object)
+	 * @method \Bitrix\Crm\EO_FieldMulti resetPhoneCountry()
+	 * @method \Bitrix\Crm\EO_FieldMulti unsetPhoneCountry()
+	 * @method bool hasPhoneCountry()
+	 * @method bool isPhoneCountryFilled()
+	 * @method bool isPhoneCountryChanged()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry fillPhoneCountry()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -28523,6 +29120,9 @@ namespace Bitrix\Crm {
 	 * @method \string[] fillComplexId()
 	 * @method \string[] getValueList()
 	 * @method \string[] fillValue()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry[] getPhoneCountryList()
+	 * @method \Bitrix\Crm\EO_FieldMulti_Collection getPhoneCountryCollection()
+	 * @method \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry_Collection fillPhoneCountry()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -35613,36 +36213,36 @@ namespace Bitrix\Crm {
 	 * @method bool isIsConvertFilled()
 	 * @method \Bitrix\Crm\EO_Lead unsetIsConvert()
 	 * @method \boolean fillIsConvert()
-	 * @method ?\string getStatusDescription()
-	 * @method \Bitrix\Crm\EO_Lead setStatusDescription(?\string|\Bitrix\Main\DB\SqlExpression $statusDescription)
+	 * @method null|\string getStatusDescription()
+	 * @method \Bitrix\Crm\EO_Lead setStatusDescription(null|\string|\Bitrix\Main\DB\SqlExpression $statusDescription)
 	 * @method bool hasStatusDescription()
 	 * @method bool isStatusDescriptionFilled()
 	 * @method bool isStatusDescriptionChanged()
-	 * @method ?\string remindActualStatusDescription()
-	 * @method ?\string requireStatusDescription()
+	 * @method null|\string remindActualStatusDescription()
+	 * @method null|\string requireStatusDescription()
 	 * @method \Bitrix\Crm\EO_Lead resetStatusDescription()
 	 * @method \Bitrix\Crm\EO_Lead unsetStatusDescription()
-	 * @method ?\string fillStatusDescription()
-	 * @method ?\string getStatusSemanticId()
-	 * @method \Bitrix\Crm\EO_Lead setStatusSemanticId(?\string|\Bitrix\Main\DB\SqlExpression $statusSemanticId)
+	 * @method null|\string fillStatusDescription()
+	 * @method null|\string getStatusSemanticId()
+	 * @method \Bitrix\Crm\EO_Lead setStatusSemanticId(null|\string|\Bitrix\Main\DB\SqlExpression $statusSemanticId)
 	 * @method bool hasStatusSemanticId()
 	 * @method bool isStatusSemanticIdFilled()
 	 * @method bool isStatusSemanticIdChanged()
-	 * @method ?\string remindActualStatusSemanticId()
-	 * @method ?\string requireStatusSemanticId()
+	 * @method null|\string remindActualStatusSemanticId()
+	 * @method null|\string requireStatusSemanticId()
 	 * @method \Bitrix\Crm\EO_Lead resetStatusSemanticId()
 	 * @method \Bitrix\Crm\EO_Lead unsetStatusSemanticId()
-	 * @method ?\string fillStatusSemanticId()
-	 * @method ?\string getProductId()
-	 * @method \Bitrix\Crm\EO_Lead setProductId(?\string|\Bitrix\Main\DB\SqlExpression $productId)
+	 * @method null|\string fillStatusSemanticId()
+	 * @method null|\string getProductId()
+	 * @method \Bitrix\Crm\EO_Lead setProductId(null|\string|\Bitrix\Main\DB\SqlExpression $productId)
 	 * @method bool hasProductId()
 	 * @method bool isProductIdFilled()
 	 * @method bool isProductIdChanged()
-	 * @method ?\string remindActualProductId()
-	 * @method ?\string requireProductId()
+	 * @method null|\string remindActualProductId()
+	 * @method null|\string requireProductId()
 	 * @method \Bitrix\Crm\EO_Lead resetProductId()
 	 * @method \Bitrix\Crm\EO_Lead unsetProductId()
-	 * @method ?\string fillProductId()
+	 * @method null|\string fillProductId()
 	 * @method \float getOpportunity()
 	 * @method \Bitrix\Crm\EO_Lead setOpportunity(\float|\Bitrix\Main\DB\SqlExpression $opportunity)
 	 * @method bool hasOpportunity()
@@ -35723,46 +36323,46 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Lead resetTitle()
 	 * @method \Bitrix\Crm\EO_Lead unsetTitle()
 	 * @method \string fillTitle()
-	 * @method ?\string getFullName()
-	 * @method \Bitrix\Crm\EO_Lead setFullName(?\string|\Bitrix\Main\DB\SqlExpression $fullName)
+	 * @method null|\string getFullName()
+	 * @method \Bitrix\Crm\EO_Lead setFullName(null|\string|\Bitrix\Main\DB\SqlExpression $fullName)
 	 * @method bool hasFullName()
 	 * @method bool isFullNameFilled()
 	 * @method bool isFullNameChanged()
-	 * @method ?\string remindActualFullName()
-	 * @method ?\string requireFullName()
+	 * @method null|\string remindActualFullName()
+	 * @method null|\string requireFullName()
 	 * @method \Bitrix\Crm\EO_Lead resetFullName()
 	 * @method \Bitrix\Crm\EO_Lead unsetFullName()
-	 * @method ?\string fillFullName()
-	 * @method ?\string getName()
-	 * @method \Bitrix\Crm\EO_Lead setName(?\string|\Bitrix\Main\DB\SqlExpression $name)
+	 * @method null|\string fillFullName()
+	 * @method null|\string getName()
+	 * @method \Bitrix\Crm\EO_Lead setName(null|\string|\Bitrix\Main\DB\SqlExpression $name)
 	 * @method bool hasName()
 	 * @method bool isNameFilled()
 	 * @method bool isNameChanged()
-	 * @method ?\string remindActualName()
-	 * @method ?\string requireName()
+	 * @method null|\string remindActualName()
+	 * @method null|\string requireName()
 	 * @method \Bitrix\Crm\EO_Lead resetName()
 	 * @method \Bitrix\Crm\EO_Lead unsetName()
-	 * @method ?\string fillName()
-	 * @method ?\string getLastName()
-	 * @method \Bitrix\Crm\EO_Lead setLastName(?\string|\Bitrix\Main\DB\SqlExpression $lastName)
+	 * @method null|\string fillName()
+	 * @method null|\string getLastName()
+	 * @method \Bitrix\Crm\EO_Lead setLastName(null|\string|\Bitrix\Main\DB\SqlExpression $lastName)
 	 * @method bool hasLastName()
 	 * @method bool isLastNameFilled()
 	 * @method bool isLastNameChanged()
-	 * @method ?\string remindActualLastName()
-	 * @method ?\string requireLastName()
+	 * @method null|\string remindActualLastName()
+	 * @method null|\string requireLastName()
 	 * @method \Bitrix\Crm\EO_Lead resetLastName()
 	 * @method \Bitrix\Crm\EO_Lead unsetLastName()
-	 * @method ?\string fillLastName()
-	 * @method ?\string getSecondName()
-	 * @method \Bitrix\Crm\EO_Lead setSecondName(?\string|\Bitrix\Main\DB\SqlExpression $secondName)
+	 * @method null|\string fillLastName()
+	 * @method null|\string getSecondName()
+	 * @method \Bitrix\Crm\EO_Lead setSecondName(null|\string|\Bitrix\Main\DB\SqlExpression $secondName)
 	 * @method bool hasSecondName()
 	 * @method bool isSecondNameFilled()
 	 * @method bool isSecondNameChanged()
-	 * @method ?\string remindActualSecondName()
-	 * @method ?\string requireSecondName()
+	 * @method null|\string remindActualSecondName()
+	 * @method null|\string requireSecondName()
 	 * @method \Bitrix\Crm\EO_Lead resetSecondName()
 	 * @method \Bitrix\Crm\EO_Lead unsetSecondName()
-	 * @method ?\string fillSecondName()
+	 * @method null|\string fillSecondName()
 	 * @method \string getShortName()
 	 * @method \string remindActualShortName()
 	 * @method \string requireShortName()
@@ -35770,46 +36370,46 @@ namespace Bitrix\Crm {
 	 * @method bool isShortNameFilled()
 	 * @method \Bitrix\Crm\EO_Lead unsetShortName()
 	 * @method \string fillShortName()
-	 * @method ?\string getCompanyTitle()
-	 * @method \Bitrix\Crm\EO_Lead setCompanyTitle(?\string|\Bitrix\Main\DB\SqlExpression $companyTitle)
+	 * @method null|\string getCompanyTitle()
+	 * @method \Bitrix\Crm\EO_Lead setCompanyTitle(null|\string|\Bitrix\Main\DB\SqlExpression $companyTitle)
 	 * @method bool hasCompanyTitle()
 	 * @method bool isCompanyTitleFilled()
 	 * @method bool isCompanyTitleChanged()
-	 * @method ?\string remindActualCompanyTitle()
-	 * @method ?\string requireCompanyTitle()
+	 * @method null|\string remindActualCompanyTitle()
+	 * @method null|\string requireCompanyTitle()
 	 * @method \Bitrix\Crm\EO_Lead resetCompanyTitle()
 	 * @method \Bitrix\Crm\EO_Lead unsetCompanyTitle()
-	 * @method ?\string fillCompanyTitle()
-	 * @method ?\string getPost()
-	 * @method \Bitrix\Crm\EO_Lead setPost(?\string|\Bitrix\Main\DB\SqlExpression $post)
+	 * @method null|\string fillCompanyTitle()
+	 * @method null|\string getPost()
+	 * @method \Bitrix\Crm\EO_Lead setPost(null|\string|\Bitrix\Main\DB\SqlExpression $post)
 	 * @method bool hasPost()
 	 * @method bool isPostFilled()
 	 * @method bool isPostChanged()
-	 * @method ?\string remindActualPost()
-	 * @method ?\string requirePost()
+	 * @method null|\string remindActualPost()
+	 * @method null|\string requirePost()
 	 * @method \Bitrix\Crm\EO_Lead resetPost()
 	 * @method \Bitrix\Crm\EO_Lead unsetPost()
-	 * @method ?\string fillPost()
-	 * @method ?\string getAddress()
-	 * @method \Bitrix\Crm\EO_Lead setAddress(?\string|\Bitrix\Main\DB\SqlExpression $address)
+	 * @method null|\string fillPost()
+	 * @method null|\string getAddress()
+	 * @method \Bitrix\Crm\EO_Lead setAddress(null|\string|\Bitrix\Main\DB\SqlExpression $address)
 	 * @method bool hasAddress()
 	 * @method bool isAddressFilled()
 	 * @method bool isAddressChanged()
-	 * @method ?\string remindActualAddress()
-	 * @method ?\string requireAddress()
+	 * @method null|\string remindActualAddress()
+	 * @method null|\string requireAddress()
 	 * @method \Bitrix\Crm\EO_Lead resetAddress()
 	 * @method \Bitrix\Crm\EO_Lead unsetAddress()
-	 * @method ?\string fillAddress()
-	 * @method ?\string getComments()
-	 * @method \Bitrix\Crm\EO_Lead setComments(?\string|\Bitrix\Main\DB\SqlExpression $comments)
+	 * @method null|\string fillAddress()
+	 * @method null|\string getComments()
+	 * @method \Bitrix\Crm\EO_Lead setComments(null|\string|\Bitrix\Main\DB\SqlExpression $comments)
 	 * @method bool hasComments()
 	 * @method bool isCommentsFilled()
 	 * @method bool isCommentsChanged()
-	 * @method ?\string remindActualComments()
-	 * @method ?\string requireComments()
+	 * @method null|\string remindActualComments()
+	 * @method null|\string requireComments()
 	 * @method \Bitrix\Crm\EO_Lead resetComments()
 	 * @method \Bitrix\Crm\EO_Lead unsetComments()
-	 * @method ?\string fillComments()
+	 * @method null|\string fillComments()
 	 * @method \float getExchRate()
 	 * @method \Bitrix\Crm\EO_Lead setExchRate(\float|\Bitrix\Main\DB\SqlExpression $exchRate)
 	 * @method bool hasExchRate()
@@ -35830,46 +36430,46 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Lead resetWebformId()
 	 * @method \Bitrix\Crm\EO_Lead unsetWebformId()
 	 * @method \int fillWebformId()
-	 * @method ?\string getOriginatorId()
-	 * @method \Bitrix\Crm\EO_Lead setOriginatorId(?\string|\Bitrix\Main\DB\SqlExpression $originatorId)
+	 * @method null|\string getOriginatorId()
+	 * @method \Bitrix\Crm\EO_Lead setOriginatorId(null|\string|\Bitrix\Main\DB\SqlExpression $originatorId)
 	 * @method bool hasOriginatorId()
 	 * @method bool isOriginatorIdFilled()
 	 * @method bool isOriginatorIdChanged()
-	 * @method ?\string remindActualOriginatorId()
-	 * @method ?\string requireOriginatorId()
+	 * @method null|\string remindActualOriginatorId()
+	 * @method null|\string requireOriginatorId()
 	 * @method \Bitrix\Crm\EO_Lead resetOriginatorId()
 	 * @method \Bitrix\Crm\EO_Lead unsetOriginatorId()
-	 * @method ?\string fillOriginatorId()
-	 * @method ?\string getOriginId()
-	 * @method \Bitrix\Crm\EO_Lead setOriginId(?\string|\Bitrix\Main\DB\SqlExpression $originId)
+	 * @method null|\string fillOriginatorId()
+	 * @method null|\string getOriginId()
+	 * @method \Bitrix\Crm\EO_Lead setOriginId(null|\string|\Bitrix\Main\DB\SqlExpression $originId)
 	 * @method bool hasOriginId()
 	 * @method bool isOriginIdFilled()
 	 * @method bool isOriginIdChanged()
-	 * @method ?\string remindActualOriginId()
-	 * @method ?\string requireOriginId()
+	 * @method null|\string remindActualOriginId()
+	 * @method null|\string requireOriginId()
 	 * @method \Bitrix\Crm\EO_Lead resetOriginId()
 	 * @method \Bitrix\Crm\EO_Lead unsetOriginId()
-	 * @method ?\string fillOriginId()
-	 * @method ?\Bitrix\Main\Type\DateTime getDateClosed()
-	 * @method \Bitrix\Crm\EO_Lead setDateClosed(?\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateClosed)
+	 * @method null|\string fillOriginId()
+	 * @method null|\Bitrix\Main\Type\DateTime getDateClosed()
+	 * @method \Bitrix\Crm\EO_Lead setDateClosed(null|\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateClosed)
 	 * @method bool hasDateClosed()
 	 * @method bool isDateClosedFilled()
 	 * @method bool isDateClosedChanged()
-	 * @method ?\Bitrix\Main\Type\DateTime remindActualDateClosed()
-	 * @method ?\Bitrix\Main\Type\DateTime requireDateClosed()
+	 * @method null|\Bitrix\Main\Type\DateTime remindActualDateClosed()
+	 * @method null|\Bitrix\Main\Type\DateTime requireDateClosed()
 	 * @method \Bitrix\Crm\EO_Lead resetDateClosed()
 	 * @method \Bitrix\Crm\EO_Lead unsetDateClosed()
-	 * @method ?\Bitrix\Main\Type\DateTime fillDateClosed()
-	 * @method ?\Bitrix\Main\Type\Date getBirthdate()
-	 * @method \Bitrix\Crm\EO_Lead setBirthdate(?\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $birthdate)
+	 * @method null|\Bitrix\Main\Type\DateTime fillDateClosed()
+	 * @method null|\Bitrix\Main\Type\Date getBirthdate()
+	 * @method \Bitrix\Crm\EO_Lead setBirthdate(null|\Bitrix\Main\Type\Date|\Bitrix\Main\DB\SqlExpression $birthdate)
 	 * @method bool hasBirthdate()
 	 * @method bool isBirthdateFilled()
 	 * @method bool isBirthdateChanged()
-	 * @method ?\Bitrix\Main\Type\Date remindActualBirthdate()
-	 * @method ?\Bitrix\Main\Type\Date requireBirthdate()
+	 * @method null|\Bitrix\Main\Type\Date remindActualBirthdate()
+	 * @method null|\Bitrix\Main\Type\Date requireBirthdate()
 	 * @method \Bitrix\Crm\EO_Lead resetBirthdate()
 	 * @method \Bitrix\Crm\EO_Lead unsetBirthdate()
-	 * @method ?\Bitrix\Main\Type\Date fillBirthdate()
+	 * @method null|\Bitrix\Main\Type\Date fillBirthdate()
 	 * @method \int getBirthdaySort()
 	 * @method \Bitrix\Crm\EO_Lead setBirthdaySort(\int|\Bitrix\Main\DB\SqlExpression $birthdaySort)
 	 * @method bool hasBirthdaySort()
@@ -35880,16 +36480,16 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Lead resetBirthdaySort()
 	 * @method \Bitrix\Crm\EO_Lead unsetBirthdaySort()
 	 * @method \int fillBirthdaySort()
-	 * @method ?\string getHonorific()
-	 * @method \Bitrix\Crm\EO_Lead setHonorific(?\string|\Bitrix\Main\DB\SqlExpression $honorific)
+	 * @method null|\string getHonorific()
+	 * @method \Bitrix\Crm\EO_Lead setHonorific(null|\string|\Bitrix\Main\DB\SqlExpression $honorific)
 	 * @method bool hasHonorific()
 	 * @method bool isHonorificFilled()
 	 * @method bool isHonorificChanged()
-	 * @method ?\string remindActualHonorific()
-	 * @method ?\string requireHonorific()
+	 * @method null|\string remindActualHonorific()
+	 * @method null|\string requireHonorific()
 	 * @method \Bitrix\Crm\EO_Lead resetHonorific()
 	 * @method \Bitrix\Crm\EO_Lead unsetHonorific()
-	 * @method ?\string fillHonorific()
+	 * @method null|\string fillHonorific()
 	 * @method \boolean getHasPhone()
 	 * @method \Bitrix\Crm\EO_Lead setHasPhone(\boolean|\Bitrix\Main\DB\SqlExpression $hasPhone)
 	 * @method bool hasHasPhone()
@@ -35937,26 +36537,26 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Lead resetIsReturnCustomer()
 	 * @method \Bitrix\Crm\EO_Lead unsetIsReturnCustomer()
 	 * @method \boolean fillIsReturnCustomer()
-	 * @method ?\int getFaceId()
-	 * @method \Bitrix\Crm\EO_Lead setFaceId(?\int|\Bitrix\Main\DB\SqlExpression $faceId)
+	 * @method null|\int getFaceId()
+	 * @method \Bitrix\Crm\EO_Lead setFaceId(null|\int|\Bitrix\Main\DB\SqlExpression $faceId)
 	 * @method bool hasFaceId()
 	 * @method bool isFaceIdFilled()
 	 * @method bool isFaceIdChanged()
-	 * @method ?\int remindActualFaceId()
-	 * @method ?\int requireFaceId()
+	 * @method null|\int remindActualFaceId()
+	 * @method null|\int requireFaceId()
 	 * @method \Bitrix\Crm\EO_Lead resetFaceId()
 	 * @method \Bitrix\Crm\EO_Lead unsetFaceId()
-	 * @method ?\int fillFaceId()
-	 * @method ?\string getSearchContent()
-	 * @method \Bitrix\Crm\EO_Lead setSearchContent(?\string|\Bitrix\Main\DB\SqlExpression $searchContent)
+	 * @method null|\int fillFaceId()
+	 * @method null|\string getSearchContent()
+	 * @method \Bitrix\Crm\EO_Lead setSearchContent(null|\string|\Bitrix\Main\DB\SqlExpression $searchContent)
 	 * @method bool hasSearchContent()
 	 * @method bool isSearchContentFilled()
 	 * @method bool isSearchContentChanged()
-	 * @method ?\string remindActualSearchContent()
-	 * @method ?\string requireSearchContent()
+	 * @method null|\string remindActualSearchContent()
+	 * @method null|\string requireSearchContent()
 	 * @method \Bitrix\Crm\EO_Lead resetSearchContent()
 	 * @method \Bitrix\Crm\EO_Lead unsetSearchContent()
-	 * @method ?\string fillSearchContent()
+	 * @method null|\string fillSearchContent()
 	 * @method \boolean getIsManualOpportunity()
 	 * @method \Bitrix\Crm\EO_Lead setIsManualOpportunity(\boolean|\Bitrix\Main\DB\SqlExpression $isManualOpportunity)
 	 * @method bool hasIsManualOpportunity()
@@ -36310,12 +36910,12 @@ namespace Bitrix\Crm {
 	 * @method \Bitrix\Crm\EO_Status_Collection fillStatusBy()
 	 * @method \boolean[] getIsConvertList()
 	 * @method \boolean[] fillIsConvert()
-	 * @method ?\string[] getStatusDescriptionList()
-	 * @method ?\string[] fillStatusDescription()
-	 * @method ?\string[] getStatusSemanticIdList()
-	 * @method ?\string[] fillStatusSemanticId()
-	 * @method ?\string[] getProductIdList()
-	 * @method ?\string[] fillProductId()
+	 * @method null|\string[] getStatusDescriptionList()
+	 * @method null|\string[] fillStatusDescription()
+	 * @method null|\string[] getStatusSemanticIdList()
+	 * @method null|\string[] fillStatusSemanticId()
+	 * @method null|\string[] getProductIdList()
+	 * @method null|\string[] fillProductId()
 	 * @method \float[] getOpportunityList()
 	 * @method \float[] fillOpportunity()
 	 * @method \string[] getCurrencyIdList()
@@ -36333,40 +36933,40 @@ namespace Bitrix\Crm {
 	 * @method \string[] fillSourceDescription()
 	 * @method \string[] getTitleList()
 	 * @method \string[] fillTitle()
-	 * @method ?\string[] getFullNameList()
-	 * @method ?\string[] fillFullName()
-	 * @method ?\string[] getNameList()
-	 * @method ?\string[] fillName()
-	 * @method ?\string[] getLastNameList()
-	 * @method ?\string[] fillLastName()
-	 * @method ?\string[] getSecondNameList()
-	 * @method ?\string[] fillSecondName()
+	 * @method null|\string[] getFullNameList()
+	 * @method null|\string[] fillFullName()
+	 * @method null|\string[] getNameList()
+	 * @method null|\string[] fillName()
+	 * @method null|\string[] getLastNameList()
+	 * @method null|\string[] fillLastName()
+	 * @method null|\string[] getSecondNameList()
+	 * @method null|\string[] fillSecondName()
 	 * @method \string[] getShortNameList()
 	 * @method \string[] fillShortName()
-	 * @method ?\string[] getCompanyTitleList()
-	 * @method ?\string[] fillCompanyTitle()
-	 * @method ?\string[] getPostList()
-	 * @method ?\string[] fillPost()
-	 * @method ?\string[] getAddressList()
-	 * @method ?\string[] fillAddress()
-	 * @method ?\string[] getCommentsList()
-	 * @method ?\string[] fillComments()
+	 * @method null|\string[] getCompanyTitleList()
+	 * @method null|\string[] fillCompanyTitle()
+	 * @method null|\string[] getPostList()
+	 * @method null|\string[] fillPost()
+	 * @method null|\string[] getAddressList()
+	 * @method null|\string[] fillAddress()
+	 * @method null|\string[] getCommentsList()
+	 * @method null|\string[] fillComments()
 	 * @method \float[] getExchRateList()
 	 * @method \float[] fillExchRate()
 	 * @method \int[] getWebformIdList()
 	 * @method \int[] fillWebformId()
-	 * @method ?\string[] getOriginatorIdList()
-	 * @method ?\string[] fillOriginatorId()
-	 * @method ?\string[] getOriginIdList()
-	 * @method ?\string[] fillOriginId()
-	 * @method ?\Bitrix\Main\Type\DateTime[] getDateClosedList()
-	 * @method ?\Bitrix\Main\Type\DateTime[] fillDateClosed()
-	 * @method ?\Bitrix\Main\Type\Date[] getBirthdateList()
-	 * @method ?\Bitrix\Main\Type\Date[] fillBirthdate()
+	 * @method null|\string[] getOriginatorIdList()
+	 * @method null|\string[] fillOriginatorId()
+	 * @method null|\string[] getOriginIdList()
+	 * @method null|\string[] fillOriginId()
+	 * @method null|\Bitrix\Main\Type\DateTime[] getDateClosedList()
+	 * @method null|\Bitrix\Main\Type\DateTime[] fillDateClosed()
+	 * @method null|\Bitrix\Main\Type\Date[] getBirthdateList()
+	 * @method null|\Bitrix\Main\Type\Date[] fillBirthdate()
 	 * @method \int[] getBirthdaySortList()
 	 * @method \int[] fillBirthdaySort()
-	 * @method ?\string[] getHonorificList()
-	 * @method ?\string[] fillHonorific()
+	 * @method null|\string[] getHonorificList()
+	 * @method null|\string[] fillHonorific()
 	 * @method \boolean[] getHasPhoneList()
 	 * @method \boolean[] fillHasPhone()
 	 * @method \boolean[] getHasEmailList()
@@ -36377,10 +36977,10 @@ namespace Bitrix\Crm {
 	 * @method \string[] fillLogin()
 	 * @method \boolean[] getIsReturnCustomerList()
 	 * @method \boolean[] fillIsReturnCustomer()
-	 * @method ?\int[] getFaceIdList()
-	 * @method ?\int[] fillFaceId()
-	 * @method ?\string[] getSearchContentList()
-	 * @method ?\string[] fillSearchContent()
+	 * @method null|\int[] getFaceIdList()
+	 * @method null|\int[] fillFaceId()
+	 * @method null|\string[] getSearchContentList()
+	 * @method null|\string[] fillSearchContent()
 	 * @method \boolean[] getIsManualOpportunityList()
 	 * @method \boolean[] fillIsManualOpportunity()
 	 * @method \int[] getMovedByIdList()
@@ -37116,136 +37716,6 @@ namespace Bitrix\Crm\Cleaning\Entity {
 	 * @method \Bitrix\Crm\Cleaning\Entity\EO_Cleaning_Collection wakeUpCollection($rows)
 	 */
 	class EO_Cleaning_Entity extends \Bitrix\Main\ORM\Entity {}
-}
-/* ORMENTITYANNOTATION:Bitrix\Crm\QuoteElementTable:crm/lib/quoteelement.php */
-namespace Bitrix\Crm {
-	/**
-	 * EO_QuoteElement
-	 * @see \Bitrix\Crm\QuoteElementTable
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int getQuoteId()
-	 * @method \Bitrix\Crm\EO_QuoteElement setQuoteId(\int|\Bitrix\Main\DB\SqlExpression $quoteId)
-	 * @method bool hasQuoteId()
-	 * @method bool isQuoteIdFilled()
-	 * @method bool isQuoteIdChanged()
-	 * @method \string getStorageTypeId()
-	 * @method \Bitrix\Crm\EO_QuoteElement setStorageTypeId(\string|\Bitrix\Main\DB\SqlExpression $storageTypeId)
-	 * @method bool hasStorageTypeId()
-	 * @method bool isStorageTypeIdFilled()
-	 * @method bool isStorageTypeIdChanged()
-	 * @method \int getElementId()
-	 * @method \Bitrix\Crm\EO_QuoteElement setElementId(\int|\Bitrix\Main\DB\SqlExpression $elementId)
-	 * @method bool hasElementId()
-	 * @method bool isElementIdFilled()
-	 * @method bool isElementIdChanged()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @property-read array $primary
-	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
-	 * @property-read \Bitrix\Main\Type\Dictionary $customData
-	 * @property \Bitrix\Main\Authentication\Context $authContext
-	 * @method mixed get($fieldName)
-	 * @method mixed remindActual($fieldName)
-	 * @method mixed require($fieldName)
-	 * @method bool has($fieldName)
-	 * @method bool isFilled($fieldName)
-	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Crm\EO_QuoteElement set($fieldName, $value)
-	 * @method \Bitrix\Crm\EO_QuoteElement reset($fieldName)
-	 * @method \Bitrix\Crm\EO_QuoteElement unset($fieldName)
-	 * @method void addTo($fieldName, $value)
-	 * @method void removeFrom($fieldName, $value)
-	 * @method void removeAll($fieldName)
-	 * @method \Bitrix\Main\ORM\Data\Result delete()
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
-	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Crm\EO_QuoteElement wakeUp($data)
-	 */
-	class EO_QuoteElement {
-		/* @var \Bitrix\Crm\QuoteElementTable */
-		static public $dataClass = '\Bitrix\Crm\QuoteElementTable';
-		/**
-		 * @param bool|array $setDefaultValues
-		 */
-		public function __construct($setDefaultValues = true) {}
-	}
-}
-namespace Bitrix\Crm {
-	/**
-	 * EO_QuoteElement_Collection
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 * @method \int[] getQuoteIdList()
-	 * @method \string[] getStorageTypeIdList()
-	 * @method \int[] getElementIdList()
-	 *
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Crm\EO_QuoteElement $object)
-	 * @method bool has(\Bitrix\Crm\EO_QuoteElement $object)
-	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Crm\EO_QuoteElement getByPrimary($primary)
-	 * @method \Bitrix\Crm\EO_QuoteElement[] getAll()
-	 * @method bool remove(\Bitrix\Crm\EO_QuoteElement $object)
-	 * @method void removeByPrimary($primary)
-	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Crm\EO_QuoteElement_Collection wakeUp($data)
-	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
-	 * @method void offsetSet() ArrayAccess
-	 * @method void offsetExists() ArrayAccess
-	 * @method void offsetUnset() ArrayAccess
-	 * @method void offsetGet() ArrayAccess
-	 * @method void rewind() Iterator
-	 * @method \Bitrix\Crm\EO_QuoteElement current() Iterator
-	 * @method mixed key() Iterator
-	 * @method void next() Iterator
-	 * @method bool valid() Iterator
-	 * @method int count() Countable
-	 * @method EO_QuoteElement_Collection merge(?EO_QuoteElement_Collection $collection)
-	 * @method bool isEmpty()
-	 */
-	class EO_QuoteElement_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Crm\QuoteElementTable */
-		static public $dataClass = '\Bitrix\Crm\QuoteElementTable';
-	}
-}
-namespace Bitrix\Crm {
-	/**
-	 * Common methods:
-	 * ---------------
-	 *
-	 * @method EO_QuoteElement_Result exec()
-	 * @method \Bitrix\Crm\EO_QuoteElement fetchObject()
-	 * @method \Bitrix\Crm\EO_QuoteElement_Collection fetchCollection()
-	 *
-	 * Custom methods:
-	 * ---------------
-	 *
-	 */
-	class EO_QuoteElement_Query extends \Bitrix\Main\ORM\Query\Query {}
-	/**
-	 * @method \Bitrix\Crm\EO_QuoteElement fetchObject()
-	 * @method \Bitrix\Crm\EO_QuoteElement_Collection fetchCollection()
-	 */
-	class EO_QuoteElement_Result extends \Bitrix\Main\ORM\Query\Result {}
-	/**
-	 * @method \Bitrix\Crm\EO_QuoteElement createObject($setDefaultValues = true)
-	 * @method \Bitrix\Crm\EO_QuoteElement_Collection createCollection()
-	 * @method \Bitrix\Crm\EO_QuoteElement wakeUpObject($row)
-	 * @method \Bitrix\Crm\EO_QuoteElement_Collection wakeUpCollection($rows)
-	 */
-	class EO_QuoteElement_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Crm\UtmTable:crm/lib/utm.php */
 namespace Bitrix\Crm {

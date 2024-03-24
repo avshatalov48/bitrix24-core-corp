@@ -51,7 +51,11 @@ class Careteam
 						'RESULT' => 'OK'
 					]);
 
-					if (isset($params['BOT_PROPERTIES']) && !empty($params['BOT_PROPERTIES']))
+					if (
+						isset($params['BOT_PROPERTIES'])
+						&& !empty($params['BOT_PROPERTIES'])
+						&& is_string($params['BOT_PROPERTIES'])
+					)
 					{
 						$botProperties = \Bitrix\Main\Web\Json::decode($params['BOT_PROPERTIES']);
 						if (is_array($botProperties) && !empty($botProperties))

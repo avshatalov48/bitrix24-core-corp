@@ -19,7 +19,7 @@ class TaskQuery
 	private bool $skipUfEscape = false;
 	private bool $skipTitleEscape = false;
 	private bool $makeAccessFilter = false;
-	private bool $distinct = false;
+	private bool $distinct = true;
 	private array $params = [];
 
 	private array $select = [];
@@ -198,6 +198,12 @@ class TaskQuery
 	public function andWhere($filter): self
 	{
 		$this->where = array_merge($this->where, $filter);
+		return $this;
+	}
+
+	public function addWhere(string $key, $value): self
+	{
+		$this->where = array_merge($this->where, [$key => $value]);
 		return $this;
 	}
 

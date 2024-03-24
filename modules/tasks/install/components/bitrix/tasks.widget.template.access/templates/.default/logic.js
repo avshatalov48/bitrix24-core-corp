@@ -181,7 +181,8 @@ BX.namespace('Tasks.Component');
 								id: 'user',
 								options: {
 									inviteGuestLink: false,
-									inviteEmployeeLink: false
+									inviteEmployeeLink: false,
+									analyticsSource: 'task',
 								}
 							},
 							{

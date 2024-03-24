@@ -248,7 +248,7 @@ class CrmContacts extends CrmEntity
 			{
 				$filter = [
 					'SEARCH_CONTENT' => $search,
-					'%FULL_NAME' => $search,
+					'?FULL_NAME' => $search,
 					'@CATEGORY_ID' => 0,
 					'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
 				];

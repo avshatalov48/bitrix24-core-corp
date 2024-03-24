@@ -70,16 +70,16 @@ abstract class Manager
 		foreach($data as $field => $value)
 		{
 			$start = mb_substr($field, 0, 3);
-			if($start == 'UF_' || $start == static::SE_PREFIX) // we have no other fields that start from SE_ or UF_, so allow
+			if ($start === 'UF_' || $start === static::SE_PREFIX) // we have no other fields that start from SE_ or UF_, so allow
 			{
 				continue;
 			}
 
-			if(!isset($fieldMap[$field]))
+			if (!isset($fieldMap[$field]))
 			{
 				$errors->add('UNKNOWN_FIELD', 'Unknown field given: "'.$field.'"', Collection::TYPE_FATAL, array('FIELD' => $field));
 			}
-			elseif(!$fieldMap[$field][1]) // WRITE
+			elseif (!$fieldMap[$field][1]) // WRITE
 			{
 				$errors->add('FIELD_NOT_ALLOWED', 'Field is not allowed to write: "'.$field.'"', Collection::TYPE_FATAL, array('FIELD' => $field));
 			}

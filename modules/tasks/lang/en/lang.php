@@ -1,6 +1,8 @@
 <?php
 $MESS["TASKS_ACCESS_DENIED"] = "Insufficient permission to perform operation.";
 $MESS["TASKS_ACTION_NOT_ALLOWED"] = "This task action is not allowed.";
+$MESS["TASKS_BAD_ASSIGNEE"] = "Assignee not specified.";
+$MESS["TASKS_BAD_ASSIGNEE_EX"] = "User specified as assignee was not found.";
 $MESS["TASKS_BAD_CREATED_BY"] = "Task creator is not specified.";
 $MESS["TASKS_BAD_DEPENDS_ON_ID"] = "The previous task is not specified.";
 $MESS["TASKS_BAD_DEPENDS_ON_ID_EX"] = "The previous task was not found.";

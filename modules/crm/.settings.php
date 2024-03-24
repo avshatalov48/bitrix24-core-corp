@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 
 return array(
@@ -153,6 +154,24 @@ return array(
 			'crm.service.broker.quote' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Quote',
 			],
+			'crm.service.sign.b2e.type' => [
+				'className' => \Bitrix\Crm\Service\Sign\B2e\TypeService::class,
+			],
+			'crm.service.sign.b2e.language' => [
+				'className' => \Bitrix\Crm\Service\Sign\B2e\LanguageService::class,
+			],
+			'crm.service.sign.b2e.trigger' => [
+				'className' => \Bitrix\Crm\Service\Sign\B2e\TriggerService::class,
+			],
+			'crm.service.sign.b2e.stage' => [
+				'className' => \Bitrix\Crm\Service\Sign\B2e\StageService::class,
+			],
+			'crm.service.sign.b2e.item' => [
+				'className' => \Bitrix\Crm\Service\Sign\B2e\ItemService::class,
+			],
+			'crm.service.sign.b2e.status' => [
+				'className' => \Bitrix\Crm\Service\Sign\B2e\StatusService::class,
+			],
 			'crm.service.director' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Director',
 			],
@@ -216,6 +235,9 @@ return array(
 			'crm.kanban.entity.order' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Order',
 			],
+			'crm.kanban.entity.activity' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Activity',
+			],
 			'crm.kanban.entity.dynamic' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Dynamic',
 			],
@@ -227,6 +249,9 @@ return array(
 			],
 			'crm.kanban.entity.smartDocument' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\SmartDocument',
+			],
+			'crm.kanban.entity.smartB2eDocument' => [
+				'className' => \Bitrix\Crm\Kanban\Entity\SmartB2eDocument::class ,
 			],
 			'crm.listEntity.entity.lead' => [
 				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Lead',
@@ -242,6 +267,9 @@ return array(
 			],
 			'crm.listEntity.entity.order' => [
 				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Order',
+			],
+			'crm.listEntity.entity.activity' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Activity',
 			],
 			'crm.listEntity.entity.contact' => [
 				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Contact',
@@ -455,6 +483,13 @@ return array(
 					'provider' => [
 						'moduleId' => 'crm',
 						'className' => TimelinePingProvider::class,
+					],
+				],
+				[
+					'entityId' => 'placeholder',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => PlaceholderProvider::class,
 					],
 				],
 			],

@@ -17,3 +17,5 @@ $MESS["CRM_GRID_HINT_FOR_NOT_VISIBLE_SMART_INVOICE_TEXT"] = "Прокрутит�
 
 $MESS["CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TITLE"] = "Элементы найдены";
 $MESS["CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TEXT"] = "Прокрутите вправо, чтобы увидеть элементы, которые вы искали";
+
+$MESS['CRM_KANBAN_ITEM_COUNTER_LIMIT_IS_EXCEEDED'] = 'Счётчик не работает, когда много незакрытых дел. Закрыть их можно в разделе Мои дела';

@@ -102,4 +102,3 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 
 	module.exports = { DuplicatesContent };
 });
-

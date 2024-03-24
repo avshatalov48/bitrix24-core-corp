@@ -254,18 +254,23 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		$result = new Result();
 		$entity = static::compileItemIndexEntity($type);
 		$entity->createDbTable();
-		global $DB;
-		if(!$DB->TableExists($entity->getDBTableName()))
+		$connection = Application::getConnection();
+
+		if(!$connection->isTableExists($entity->getDBTableName()))
 		{
 			$result->addError(new Error('Could not create item index table'));
 			return $result;
 		}
 
-		if($DB->Query('CREATE FULLTEXT INDEX '.$entity->getDBTableName().'_search ON '.$entity->getDBTableName().'(SEARCH_CONTENT)', true))
-		{
-			$entity->enableFullTextIndex('SEARCH_CONTENT');
-		}
-		else
+		$createIndexResult = $connection->createIndex(
+			$entity->getDBTableName(),
+			$entity->getDBTableName() . '_search',
+			['SEARCH_CONTENT'],
+			null,
+			$connection::INDEX_FULLTEXT,
+		);
+
+		if (!$createIndexResult)
 		{
 			$result->addError(new Error('Could not create item fulltext index'));
 		}
@@ -304,7 +309,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		if(empty($type))
 		{
 			throw new SystemException(sprintf(
-				'Invalid type description `%s`.', mydump($rawType)
+				'Invalid type description \'%s\'.', mydump($rawType)
 			));
 		}
 		$factory = Driver::getInstance()->getFactory();

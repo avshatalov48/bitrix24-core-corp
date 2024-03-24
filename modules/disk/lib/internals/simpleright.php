@@ -129,6 +129,8 @@ final class SimpleRightTable extends DataManager
 		else
 		{
 			$pathTable = ObjectPathTable::getTableName();
+			if ($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection)
+			{
 			$sql = "
 				DELETE r FROM b_disk_simple_right r
 				WHERE r.OBJECT_ID IN (
@@ -137,6 +139,18 @@ final class SimpleRightTable extends DataManager
 					WHERE p.PARENT_ID = {$objectId}
 				)
 			";
+		}
+			else
+			{
+				$sql = "
+					DELETE FROM b_disk_simple_right r
+					WHERE r.OBJECT_ID IN (
+						SELECT p.OBJECT_ID
+						FROM {$pathTable} p
+						WHERE p.PARENT_ID = {$objectId}
+					)
+				";
+			}
 		}
 
 		$connection->queryExecute($sql);

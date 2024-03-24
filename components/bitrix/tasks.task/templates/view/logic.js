@@ -96,6 +96,7 @@ BX.namespace('Tasks.Component');
 		this.extendWatch();
 
 		this.handleEvent();
+		this.clearNewAnalyticsParams();
 		this.temporalCommentFix();
 
 		if (
@@ -305,15 +306,25 @@ BX.namespace('Tasks.Component');
 	{
 		BX.bind(this.layout.createButton, 'click', this.onCreateButtonClick.bind(this));
 
-		var paths = this.paths;
-		var groupId = this.parameters.groupId;
-		var messages = this.messages;
+		const paths = this.paths;
+		const groupId = this.parameters.groupId;
+		const messages = this.messages;
+		const newTaskPath = BX.Uri.addParam(paths.newTask, {
+			ta_sec: 'tasks',
+			ta_sub: 'task_card',
+			ta_el: 'create_button',
+		});
+		const newSubTaskPath = BX.Uri.addParam(paths.newSubTask, {
+			ta_sec: 'tasks',
+			ta_sub: 'task_card',
+			ta_el: 'create_button',
+		});
 
 		this.createButtonMenu = [
 			{
-				text: messages.addTask,
-				className: 'menu-popup-item menu-popup-no-icon',
-				href: paths.newTask,
+				text : messages.addTask,
+				className : 'menu-popup-item menu-popup-no-icon',
+				href: newTaskPath,
 			},
 		];
 		if (this.isTemplatesAvailable)
@@ -349,19 +360,19 @@ BX.namespace('Tasks.Component');
 								{
 									this.isSubMenuLoaded = true;
 									this.getSubMenu().removeMenuItem('loading');
-									var subMenu = [];
+									const subMenu = [];
 									if (response.data.length > 0)
 									{
-										var tasksTemplateUrlTemplate =
-											paths.newTask
-											+ (paths.newTask.indexOf('?') !== -1 ? '&' : '?')
+										const tasksTemplateUrlTemplate =
+											newTaskPath
+											+ (newTaskPath.indexOf('?') !== -1 ? '&' : '?')
 											+ (groupId > 0 ? 'GROUP_ID=' + groupId + '&' : '')
 											+ 'TEMPLATE='
 										;
 										BX.Tasks.each(response.data, function(item, k) {
 											subMenu.push({
 												text: BX.util.htmlspecialchars(item.TITLE),
-												href: tasksTemplateUrlTemplate + item.ID
+												href: tasksTemplateUrlTemplate + item.ID,
 											});
 										});
 									}
@@ -390,9 +401,9 @@ BX.namespace('Tasks.Component');
 				delimiter: true,
 			},
 			{
-				text: messages.addSubTask,
-				className: 'menu-popup-item menu-popup-no-icon',
-				href: paths.newSubTask,
+				text : messages.addSubTask,
+				className : 'menu-popup-item menu-popup-no-icon',
+				href: newSubTaskPath,
 			},
 		);
 
@@ -580,8 +591,8 @@ BX.namespace('Tasks.Component');
 
 	BX.Tasks.Component.TaskView.prototype.onImportantButtonClick = function(node)
 	{
-		var priority = BX.data(node, 'priority');
-		var newPriority = (priority == 2) ? 1 : 2;
+		const priority = parseInt(BX.data(node, 'priority'));
+		const newPriority = (priority === 2) ? 1 : 2;
 
 		BX.ajax.runComponentAction('bitrix:tasks.task', 'setPriority', {
 			mode: 'class',
@@ -627,7 +638,7 @@ BX.namespace('Tasks.Component');
 		parameters = parameters || {};
 		var data = parameters.task || {};
 
-		if(type == 'UPDATE' && data.ID == this.parameters.taskId)
+		if(type === 'UPDATE' && data.ID == this.parameters.taskId)
 		{
 			if(BX.type.isNotEmptyString(data.REAL_STATUS))
 			{
@@ -686,6 +697,13 @@ BX.namespace('Tasks.Component');
 
 	BX.Tasks.Component.TaskView.prototype.initSwitcher = function()
 	{
+		BX.Event.EventEmitter.emit('BX.Tasks.TaskView:onBeforeInitSwitcher', {
+			taskId: this.taskId,
+			groupId: this.parameters.groupId,
+			taskSwitcherTabs: document.getElementById('task-switcher'),
+			taskSwitcherBlocks: document.getElementsByClassName('task-comments-and-log')[0],
+		});
+
 		if (!this.layout.switcher)
 		{
 			return;
@@ -920,6 +938,20 @@ BX.namespace('Tasks.Component');
 				workHours: this.parameters.workHours,
 				workSettings: this.parameters.workSettings
 			});
+		}
+	};
+
+	BX.Tasks.Component.TaskView.prototype.clearNewAnalyticsParams = function ()
+	{
+		const url = new URL(window.location.href);
+		const section = url.searchParams.get('ta_sec');
+
+		if (section)
+		{
+			url.searchParams.delete('ta_sec');
+			url.searchParams.delete('ta_sub');
+			url.searchParams.delete('ta_el');
+			window.history.replaceState(null, null, url.toString());
 		}
 	};
 

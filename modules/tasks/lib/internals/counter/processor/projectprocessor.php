@@ -60,7 +60,7 @@ class ProjectProcessor
 
 		if ($userId)
 		{
-			$where[] = '`USER_ID` = ' . $userId;
+			$where[] = 'USER_ID = ' . $userId;
 		}
 
 		if (!empty($groupIds))
@@ -77,7 +77,7 @@ class ProjectProcessor
 			array_values(CounterDictionary::MAP_MUTED_COMMENTS),
 			[CounterDictionary::COUNTER_GROUP_COMMENTS]
 		);
-		$where[] = "`TYPE` IN ('". implode("','", $types) ."')";
+		$where[] = "TYPE IN ('". implode("','", $types) ."')";
 
 		$where = (!empty($where)) ? ('WHERE ' . implode(' AND ', $where)) : '';
 

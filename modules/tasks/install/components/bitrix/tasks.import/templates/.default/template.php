@@ -242,7 +242,7 @@ if ($arResult['IFRAME'])
 													</div>
 												</div>
 												<div class="tasks-entity-widget-content-block tasks-entity-widget-content-block-field-text">
-													<div class="tasks-entity-widget-content-block-title"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_DEFAULT_RESPONSIBLE')?></div>
+													<div class="tasks-entity-widget-content-block-title"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_DEFAULT_ASSIGNEE')?></div>
 													<div class="tasks-entity-widget-content-block-inner tasks-member-selector-container">
 														<?
 														$APPLICATION->IncludeComponent(

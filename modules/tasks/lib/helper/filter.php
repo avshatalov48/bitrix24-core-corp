@@ -11,7 +11,7 @@ use Bitrix\Tasks\Internals\Counter\Type;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Item\Task;
-use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
+use Bitrix\Tasks\Replication\Replicator\RegularTaskReplicator;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Update\Preset;
@@ -606,7 +606,7 @@ class Filter extends Common
 		{
 			$filter['RESPONSIBLE_ID'] = [
 				'id' => 'RESPONSIBLE_ID',
-				'name' => Loc::getMessage('TASKS_HELPER_FLT_RESPONSIBLE_ID'),
+				'name' => Loc::getMessage('TASKS_HELPER_FLT_ASSIGNEE_ID'),
 				'type' => 'dest_selector',
 				'params' => [
 					'apiVersion' => '3',
@@ -699,7 +699,7 @@ class Filter extends Common
 					'OVERDUED' => Loc::getMessage('TASKS_FILTER_PARAMS_OVERDUED'),
 					'FAVORITE' => Loc::getMessage('TASKS_FILTER_PARAMS_FAVORITE'),
 					'ANY_TASK' => Loc::getMessage('TASKS_FILTER_PARAMS_ANY_TASK'),
-					'IS_REGULAR' => Loc::getMessage('TASKS_FILTER_PARAMS_IS_REGULAR'),
+					// 'IS_REGULAR' => Loc::getMessage('TASKS_FILTER_PARAMS_IS_REGULAR'),
 				],
 			];
 		}

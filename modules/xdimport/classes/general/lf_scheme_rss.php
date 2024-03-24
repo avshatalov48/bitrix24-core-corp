@@ -68,7 +68,6 @@ class CXDILFSchemeRSS
 
 		if ($strData <> '')
 		{
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/xml.php");
 			$objXML = new CDataXML();
 			$res = $objXML->LoadString($strData);
 			if($res !== false)
@@ -119,22 +118,28 @@ class CXDILFSchemeRSS
 
 	private static function FormatArray(&$arRes)
 	{
-		if(is_array($arRes["title"][0]["#"]))
+		if (is_array($arRes["title"][0]["#"] ?? null))
+		{
 			$arRes["title"][0]["#"] = $arRes["title"][0]["#"]["cdata-section"][0]["#"];
-		if(is_array($arRes["link"][0]["#"]))
+		}
+		if (is_array($arRes["link"][0]["#"] ?? null))
+		{
 			$arRes["link"][0]["#"] = $arRes["link"][0]["#"]["cdata-section"][0]["#"];
-		if(is_array($arRes["description"][0]["#"]))
+		}
+		if (is_array($arRes["description"][0]["#"] ?? null))
+		{
 			$arRes["description"][0]["#"] = $arRes["description"][0]["#"]["cdata-section"][0]["#"];
+		}
 
 		$arResult = array(
-			"title" => $arRes["title"][0]["#"],
-			"link" => $arRes["link"][0]["#"],
-			"description" => $arRes["description"][0]["#"],
-			"lastBuildDate" => $arRes["lastBuildDate"][0]["#"],
-			"ttl" => $arRes["ttl"][0]["#"],
+			"title" => $arRes["title"][0]["#"] ?? null,
+			"link" => $arRes["link"][0]["#"] ?? null,
+			"description" => $arRes["description"][0]["#"] ?? null,
+			"lastBuildDate" => $arRes["lastBuildDate"][0]["#"] ?? null,
+			"ttl" => $arRes["ttl"][0]["#"] ?? null,
 		);
 
-		if ($arRes["image"])
+		if ($arRes["image"] ?? null)
 		{
 			if(is_array($arRes["image"][0]["#"]))
 			{
@@ -153,6 +158,8 @@ class CXDILFSchemeRSS
 				$arResult["image"]["height"] = $arRes["image"][0]["@"]["height"];
 			}
 		}
+
+		$arRes["item"] = is_array($arRes["item"] ?? null) ? $arRes["item"] : [];
 
 		foreach($arRes["item"] as $i => $arItem)
 		{

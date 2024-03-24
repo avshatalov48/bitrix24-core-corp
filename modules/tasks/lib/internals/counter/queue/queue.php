@@ -62,12 +62,12 @@ class Queue
 		$req = [];
 		foreach ($tasks as $taskId)
 		{
-			$req[] = $userId .',"'. $type .'",' . (int) $taskId;
+			$req[] = $userId .',\''. $type .'\',' . (int) $taskId;
 		}
 
 		$sql = "
-			INSERT INTO `". QueueTable::getTableName(). "`
-			(`USER_ID`, `TYPE`, `TASK_ID`)
+			INSERT INTO ". QueueTable::getTableName(). "
+			(USER_ID, TYPE, TASK_ID)
 			VALUES
 			(". implode("),(", $req) .")
 		";

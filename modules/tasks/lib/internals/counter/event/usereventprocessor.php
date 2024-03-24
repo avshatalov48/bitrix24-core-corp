@@ -242,7 +242,7 @@ class UserEventProcessor
 	private function handleUpdated(array $toUpdate, array $toDelete, $readAll): array
 	{
 		$taskIds = array_unique(array_merge($toUpdate[CounterDictionary::COUNTER_NEW_COMMENTS], $toUpdate[CounterDictionary::COUNTER_EXPIRED]));
-		$taskIds = array_diff($taskIds, array_keys($toDelete));
+		$taskIds = array_values(array_diff($taskIds, array_keys($toDelete)));
 		$members = $this->getTasksMembers($taskIds);
 
 		foreach ($members as $userId => $taskIds)
@@ -280,7 +280,7 @@ class UserEventProcessor
 	{
 		if (
 			empty($taskIds)
-			|| (count($taskIds) === 1 && $taskIds[0] == 0)
+			|| (count($taskIds) === 1 && (int) $taskIds[0] === 0)
 		)
 		{
 			return [];

@@ -4,16 +4,27 @@
 jn.define('settings/disabled-tools', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Type } = require('type');
+	const { NotifyManager } = require('notify-manager');
 	/**
 	 * @public
 	 * @param {string} toolId
+	 * @param {bool} showLoadingIndicator
 	 * @returns {Promise<boolean>}
 	 */
-	async function checkDisabledToolById(toolId)
+	async function checkDisabledToolById(toolId, showLoadingIndicator = true)
 	{
+		if (showLoadingIndicator)
+		{
+			NotifyManager.showLoadingIndicator();
+		}
+
 		const disabledTools = await getDisabledTools();
 
-		console.log(disabledTools);
+		if (showLoadingIndicator)
+		{
+			NotifyManager.hideLoadingIndicatorWithoutFallback();
+		}
+
 		if (!Type.isNil(disabledTools))
 		{
 			return toolId in disabledTools;
@@ -67,5 +78,5 @@ jn.define('settings/disabled-tools', (require, exports, module) => {
 		return executor;
 	}
 
-	module.exports = { checkDisabledToolById };
+	module.exports = { checkDisabledToolById, fetchDisabledTools };
 });

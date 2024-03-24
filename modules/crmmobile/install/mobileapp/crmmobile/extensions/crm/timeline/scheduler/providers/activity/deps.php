@@ -12,6 +12,7 @@ return [
 		'utils/date/formats',
 		'utils/object',
 
+		'layout/ui/user/empty-avatar',
 		'layout/ui/item-selector',
 		'layout/ui/date-pill',
 		'layout/ui/fields/file',

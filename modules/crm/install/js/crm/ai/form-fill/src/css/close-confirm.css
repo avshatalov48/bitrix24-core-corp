@@ -9,3 +9,6 @@
 .crm-ai-form-fill__close-confirm .popup-window-overlay {
 	border-radius: var(--layout-border-radius);
 }
+.crm-ai-form-fill__close-confirm.hidden-footer .popup-window-overlay {
+	border-radius: var(--layout-border-radius-all);
+}

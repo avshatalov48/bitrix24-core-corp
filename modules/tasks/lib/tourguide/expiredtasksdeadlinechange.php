@@ -1,12 +1,18 @@
 <?php
 namespace Bitrix\Tasks\TourGuide;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\LogTable;
 use Bitrix\Tasks\TourGuide;
+use Bitrix\Tasks\TourGuide\Exception\TourGuideException;
+use Exception;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,47 +23,55 @@ Loc::loadMessages(__FILE__);
  */
 class ExpiredTasksDeadlineChange extends TourGuide
 {
-	public static $instance;
-
 	protected const OPTION_NAME = 'expiredTasksDeadlineChange';
 
+	/**
+	 * @throws TourGuideException
+	 */
 	public function proceed(): bool
 	{
-		if (!$this->canPotentiallyProceed())
+		try
 		{
-			return false;
-		}
+			if (!$this->canPotentiallyProceed())
+			{
+				return false;
+			}
 
-		if (!$this->isNeededExpiredTasksCountReached())
-		{
-			return false;
-		}
+			if (!$this->isNeededExpiredTasksCountReached())
+			{
+				return false;
+			}
 
-		if ($this->isOldUser() || $this->isAlreadyChangeDeadline())
-		{
-			$this->finish();
-			return false;
-		}
-
-		if (($currentStep = $this->getCurrentStep()) && !$currentStep->isFinished())
-		{
-			$currentStep->makeTry();
-
-			if ($currentStep->isFinished() && $this->isCurrentStepTheLast())
+			if ($this->isOldUser() || $this->isAlreadyChangeDeadline())
 			{
 				$this->finish();
+				return false;
+			}
+
+			if (($currentStep = $this->getCurrentStep()) && !$currentStep->isFinished())
+			{
+				$currentStep->makeTry();
+
+				if ($currentStep->isFinished() && $this->isCurrentStepTheLast())
+				{
+					$this->finish();
+					return true;
+				}
+
+				$currentStep->setAdditionalData(['expiredTasksCountToCheck' => 6]);
+
+				$this->saveToLocalSession();
+				$this->saveData();
+
 				return true;
 			}
 
-			$currentStep->setAdditionalData(['expiredTasksCountToCheck' => 6]);
-
-			$this->saveToLocalSession();
-			$this->saveData();
-
-			return true;
+			return false;
 		}
-
-		return false;
+		catch (Exception $exception)
+		{
+			throw new TourGuideException($exception->getMessage());
+		}
 	}
 
 	public function canPotentiallyProceed(): bool
@@ -65,6 +79,12 @@ class ExpiredTasksDeadlineChange extends TourGuide
 		return !$this->isFinished() && !$this->isInLocalSession();
 	}
 
+	/**
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
 	private function isNeededExpiredTasksCountReached(): bool
 	{
 		$counter = Counter::getInstance($this->getUserId());
@@ -76,6 +96,11 @@ class ExpiredTasksDeadlineChange extends TourGuide
 		return $currentCount >= $this->getNeededExpiredTasksCount();
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	private function isOldUser(): bool
 	{
 		$query = UserTable::query();
@@ -92,6 +117,11 @@ class ExpiredTasksDeadlineChange extends TourGuide
 		return (bool)$query->exec()->fetch();
 	}
 
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	private function isAlreadyChangeDeadline(): bool
 	{
 		$query = LogTable::query();

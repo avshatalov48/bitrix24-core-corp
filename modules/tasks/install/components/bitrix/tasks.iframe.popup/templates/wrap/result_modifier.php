@@ -4,7 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 // js extension to be registered instead of script.js
 
 $folder = $this->GetFolder();
-$extensionId = 'tasks_component_ext_'.rand(999, 9999999);
+$extensionId = 'tasks_iframe_popup_wrap';
 
 CJSCore::RegisterExt(
 	$extensionId,

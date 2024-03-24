@@ -1,4 +1,4 @@
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/crm/activity/index.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
@@ -16,19 +16,21 @@ if (CModule::IncludeModule("crm")):
 			"PATH_TO_USER_PROFILE" => "/company/personal/user/#user_id#/",
 			"ELEMENT_ID" => $_REQUEST["id"] ?? '',
 			"SEF_FOLDER" => "/crm/activity/",
-			"SEF_URL_TEMPLATES" => Array(
+			"SEF_URL_TEMPLATES" => [
 				'index' => 'index.php',
 				'list' => '',
-				'widget' => 'widget/',
-			),
-			"VARIABLE_ALIASES" => Array(
-				"index" => Array(),
-				"list" => Array(),
-				"widget" => Array(),
-			)
+				'widget' => 'widget/', // @todo remove this?
+				'kanban' => 'kanban/',
+			],
+			"VARIABLE_ALIASES" => [
+				'index' => [],
+				'list' => [],
+				'widget' => [], // @todo remove this?
+				'kanban' => [],
+			],
 		),
 		false
 	);
 endif;
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");
-?>

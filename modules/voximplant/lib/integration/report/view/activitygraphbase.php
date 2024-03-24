@@ -35,7 +35,7 @@ class ActivityGraphBase extends Activity
 	public function handlerFinallyBeforePassToView($dataFromReport)
 	{
 		$result = [];
-		if ($dataFromReport['items'])
+		if (!empty($dataFromReport['items']))
 		{
 			$items = [];
 			foreach ($dataFromReport['items'] as $item)
@@ -77,7 +77,7 @@ class ActivityGraphBase extends Activity
 		$result['config']['labelY'] = $this->getWeekDaysMap();
 		$result['config']['labelX'] = $this->getHourList();
 
-		$result['config']['workingHours'] = $dataFromReport['workingHours'];
+		$result['config']['workingHours'] = $dataFromReport['workingHours'] ?? 0;
 
 		return $result;
 	}

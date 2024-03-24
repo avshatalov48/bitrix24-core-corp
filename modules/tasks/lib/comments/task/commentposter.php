@@ -404,7 +404,7 @@ class CommentPoster
 		if ($this->authorId !== $responsibleId)
 		{
 			$partName = 'responsible';
-			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_RESPONSIBLE_ID';
+			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ASSIGNEE';
 			$messageKey = $this->getLastVersionedMessageKey($messageKey);
 			$replace = ['#NEW_VALUE#' => $this->parseUserToLinked($responsibleId)];
 			$addComment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
@@ -513,7 +513,7 @@ class CommentPoster
 				continue;
 			}
 
-			$fieldKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_{$field}";
+			$fieldKey = "COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_{$this->mapKey($field)}";
 			$fieldKey = $this->getLastVersionedMessageKey($fieldKey);
 			$fieldReplaces = [
 				'#OLD_VALUE#' => $values['OLD'],
@@ -575,8 +575,10 @@ class CommentPoster
 			case 'PRIORITY':
 			case 'TASK_CONTROL':
 			case 'ALLOW_TIME_TRACKING':
-			case 'ALLOW_CHANGE_DEADLINE':
 				$new = Loc::getMessage("COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_{$field}_{$new}");
+				break;
+			case 'ALLOW_CHANGE_DEADLINE':
+				$new = Loc::getMessage("COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_{$field}_{$new}_V2");
 				break;
 
 			case 'PARENT_ID':
@@ -1014,7 +1016,7 @@ class CommentPoster
 		$userToLinkFunction = function (int $userId) {
 			return $this->parseUserToLinked($userId);
 		};
-		$messageKey = 'COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS';
+		$messageKey = 'COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS_MSGVER_1';
 		$messageKey = $this->getLastVersionedMessageKey($messageKey);
 		$replace = ['#MEMBERS#' => implode(', ', array_map($userToLinkFunction, $members))];
 		$message = Loc::getMessage($messageKey, $replace);
@@ -1519,5 +1521,14 @@ class CommentPoster
 	private function getTaskWatchers(int $taskId): array
 	{
 		return array_map('intval', \CPullWatch::GetUserList("TASK_VIEW_{$taskId}"));
+	}
+
+	private function mapKey(string $key): string
+	{
+		return match ($key)
+		{
+			'RESPONSIBLE_ID' => 'ASSIGNEE',
+			default => $key,
+		};
 	}
 }

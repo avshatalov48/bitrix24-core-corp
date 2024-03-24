@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Form = this.BX.Crm.Form || {};
@@ -77,7 +78,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getInput)[_getInput]().value;
 	  }
 	  setValue(value) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _getInput)[_getInput]().value = main_core.Text.encode(value);
+	    babelHelpers.classPrivateFieldLooseBase(this, _getInput)[_getInput]().value = value;
 	    babelHelpers.classPrivateFieldLooseBase(this, _onInput)[_onInput]();
 	  }
 	  getLayout() {
@@ -827,6 +828,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	}
 	function _getFieldsFactoryTypesFilter2() {
 	  var _babelHelpers$classPr2, _babelHelpers$classPr3;
+	  debugger;
 	  const defaultFilter = main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(Selector, _defaultFieldsFactoryFilter)[_defaultFieldsFactoryFilter]);
 	  const customFilter = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getOptions$2)[_getOptions$2]()) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.fieldsFactory) == null ? void 0 : _babelHelpers$classPr3.filter;
 	  if (main_core.Type.isPlainObject(customFilter)) {
@@ -883,7 +885,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	    });
 	    const filter = babelHelpers.classPrivateFieldLooseBase(this, _getFieldsFactoryTypesFilter)[_getFieldsFactoryTypesFilter]();
 	    if (main_core.Type.isFunction(filter)) {
-	      factory.types = babelHelpers.classPrivateFieldLooseBase(this, _applyFieldsFactoryTypesFilter)[_applyFieldsFactoryTypesFilter](factory.types, Selector.defaultFieldsFactoryFilter);
+	      factory.types = babelHelpers.classPrivateFieldLooseBase(this, _applyFieldsFactoryTypesFilter)[_applyFieldsFactoryTypesFilter](factory.types, babelHelpers.classPrivateFieldLooseBase(Selector, _defaultFieldsFactoryFilter)[_defaultFieldsFactoryFilter]);
 	      factory.types = filter(factory.types);
 	    }
 	    if (main_core.Type.isPlainObject(filter)) {
@@ -980,7 +982,7 @@ this.BX.Crm.Form = this.BX.Crm.Form || {};
 	Object.defineProperty(Selector, _defaultFieldsFactoryFilter, {
 	  writable: true,
 	  value: {
-	    '-types': ['employee']
+	    '-types': ['employee', 'datetime']
 	  }
 	});
 

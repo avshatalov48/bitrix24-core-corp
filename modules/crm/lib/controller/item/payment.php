@@ -11,6 +11,8 @@ use Bitrix\Salescenter;
 
 final class Payment extends Crm\Controller\Base
 {
+	private bool $previousSynchronizationStatus = true;
+
 	/**
 	 * @param int $entityId
 	 * @param int $entityTypeId
@@ -39,13 +41,15 @@ final class Payment extends Crm\Controller\Base
 		$preparedFilter = $this->prepareFilterFields($filter);
 		$preparedOrder = $this->prepareOrderFields($order);
 
-		return $repository->getPaymentDocumentsForEntityByFilter(
+		$result = $repository->getPaymentDocumentsForEntityByFilter(
 			$entityId,
 			$entityTypeId,
 			$preparedFilter,
 			$preparedSelect,
 			$preparedOrder
 		);
+
+		return $this->convertKeysToCamelCase($result);
 	}
 
 	/**
@@ -66,13 +70,15 @@ final class Payment extends Crm\Controller\Base
 
 		$fields = $this->getFieldsOnSelect();
 
-		return array_filter(
+		$filteredFields = array_filter(
 			$paymentItem,
 			static function ($key) use ($fields){
 				return in_array($key, $fields, true);
 			},
 			ARRAY_FILTER_USE_KEY
 		);
+
+		return $this->convertKeysToCamelCase($filteredFields);
 	}
 
 	public function addAction(int $entityId, int $entityTypeId, array $fields = []): ?int
@@ -85,6 +91,11 @@ final class Payment extends Crm\Controller\Base
 		$builder = SalesCenter\Builder\Manager::getBuilder(
 			Sale\Helpers\Order\Builder\SettingsContainer::BUILDER_SCENARIO_PAYMENT
 		);
+
+		if ($fields)
+		{
+			$fields = $this->convertKeysToUpper($fields);
+		}
 
 		$builderFields = $this->getFieldsOnAddForBuilder($entityId, $entityTypeId, $fields);
 
@@ -127,11 +138,11 @@ final class Payment extends Crm\Controller\Base
 		return $payment->getId();
 	}
 
-	public function updateAction(int $id, array $fields) : bool
+	public function updateAction(int $id, array $fields) : ?bool
 	{
 		$availableFields = $this->getFieldsOnUpdate();
 
-		$fields = $this->convertValuesToUpper($fields);
+		$fields = $this->convertKeysToUpper($fields);
 		$fields = array_filter(
 			$fields,
 			static function($key) use ($availableFields) {
@@ -148,7 +159,7 @@ final class Payment extends Crm\Controller\Base
 		return $this->updateInternal($id, $fields);
 	}
 
-	protected function updateInternal(int $id, array $fields)
+	protected function updateInternal(int $id, array $fields) : ?bool
 	{
 		$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
 
@@ -156,7 +167,7 @@ final class Payment extends Crm\Controller\Base
 		{
 			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_PAYMENT_NO_PERMISSION')));
 
-			return false;
+			return null;
 		}
 
 		$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
@@ -171,12 +182,9 @@ final class Payment extends Crm\Controller\Base
 			}
 		}
 
-		if (!$result->isSuccess())
-		{
-			$this->addErrors($result->getErrors());
-		}
+		$this->addErrors($result->getErrors());
 
-		return false;
+		return null;
 	}
 
 	/**
@@ -218,18 +226,18 @@ final class Payment extends Crm\Controller\Base
 
 	/**
 	 * @param int $id
-	 * @return bool
+	 * @return bool|null
 	 */
-	public function payAction(int $id): bool
+	public function payAction(int $id): ?bool
 	{
 		return $this->updateInternal($id, ['PAID' => 'Y']);
 	}
 
 	/**
 	 * @param int $id
-	 * @return bool
+	 * @return bool|null
 	 */
-	public function unpayAction(int $id): bool
+	public function unpayAction(int $id): ?bool
 	{
 		return $this->updateInternal($id, ['PAID' => 'N']);
 	}
@@ -416,5 +424,33 @@ final class Payment extends Crm\Controller\Base
 	private function enableAutofillInPayment() : void
 	{
 		EventsHandler\Payment::enableExecution();
+	}
+
+	protected function processBeforeAction(Main\Engine\Action $action)
+	{
+		$result = parent::processBeforeAction($action);
+
+		$this->disableEntitySynchronization();
+
+		return $result;
+	}
+
+	protected function processAfterAction(Main\Engine\Action $action, $result)
+	{
+		parent::processAfterAction($action, $result);
+
+		$this->enableEntitySynchronization();
+	}
+
+	private function enableEntitySynchronization() : void
+	{
+		Crm\Order\Configuration::setEnabledEntitySynchronization($this->previousSynchronizationStatus);
+	}
+
+	private function disableEntitySynchronization() : void
+	{
+		$this->previousSynchronizationStatus = Crm\Order\Configuration::isEnabledEntitySynchronization();
+
+		Crm\Order\Configuration::setEnabledEntitySynchronization(false);
 	}
 }

@@ -118,6 +118,10 @@ class KeyManager
 		{
 			$save['DATE_CREATE'] = new DateTime();
 			$save['CREATED_BY'] = $data['USER_ID'];
+			if (!empty($data['SERVICE_ID']))
+			{
+				$save['SERVICE_ID'] = $data['SERVICE_ID'];
+			}
 			$addResult = KeyTable::add($save);
 			if ($addResult->isSuccess())
 			{
@@ -207,15 +211,12 @@ class KeyManager
 		);
 	}
 
-	public static function createAccessKey(CurrentUser $user): \Bitrix\Main\Result
+	protected static function createKeyInner(array $fields): \Bitrix\Main\Result
 	{
 		$result = new \Bitrix\Main\Result();
 		$key = \Bitrix\BIConnector\KeyManager::generateAccessKey();
-		$resultSave = \Bitrix\BIConnector\KeyManager::save([
-			'USER_ID' => $user->getId(),
-			'ACTIVE' => true,
-			'ACCESS_KEY' => $key,
-		]);
+		$fields['ACCESS_KEY'] = $key;
+		$resultSave = \Bitrix\BIConnector\KeyManager::save($fields);
 		if (!($resultSave instanceof ErrorCollection))
 		{
 			$result->setData(['ACCESS_KEY' => $key]);
@@ -226,6 +227,16 @@ class KeyManager
 		}
 
 		return $result;
+	}
+
+	public static function createAccessKey(CurrentUser $user): \Bitrix\Main\Result
+	{
+		$keyParameters = [
+			'USER_ID' => $user->getId(),
+			'ACTIVE' => true,
+		];
+
+		return static::createKeyInner($keyParameters);
 	}
 
 	public static function getAccessKey(): ?string
@@ -253,7 +264,7 @@ class KeyManager
 
 	public static function getOrCreateAccessKey(CurrentUser $user, $checkPermission = true): ?string
 	{
-		if ($user->canDoOperation('biconnector_key_manage') || !$checkPermission)
+		if (!$checkPermission || static::canManageKey($user))
 		{
 			$accessKey = \Bitrix\BIConnector\KeyManager::getAccessKey();
 			if (!$accessKey)
@@ -271,5 +282,14 @@ class KeyManager
 		}
 
 		return null;
+	}
+
+	/**
+	 * @param CurrentUser $user
+	 * @return bool
+	 */
+	public static function canManageKey(CurrentUser $user): bool
+	{
+		return $user->canDoOperation('biconnector_key_manage');
 	}
 }

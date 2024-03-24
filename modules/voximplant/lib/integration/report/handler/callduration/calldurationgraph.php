@@ -14,12 +14,12 @@ class CallDurationGraph extends CallDuration implements IReportMultipleGroupedDa
 	public function getMultipleGroupedData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}
 
-		$filterParameters = $this->getFilterParameters();
+		//$filterParameters = $this->getFilterParameters();
 
 		$startDate = $calculatedData['startDate'];
 		$finishDate = $calculatedData['finishDate'];

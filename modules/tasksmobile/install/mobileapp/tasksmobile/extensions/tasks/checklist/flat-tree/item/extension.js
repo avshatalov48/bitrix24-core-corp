@@ -9,6 +9,8 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 	const memberTypes = {
 		A: 'accomplice',
 		U: 'auditor',
+		accomplice: 'A',
+		auditor: 'U',
 	};
 
 	class CheckListFlatTreeItem
@@ -20,6 +22,8 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			/** @type {CheckListFlatTree} */
 			this.checkList = checkList;
 			this.item = item;
+
+			this.updateListViewType();
 		}
 
 		static createItem(prevItem = {})
@@ -32,11 +36,13 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 				type: CheckListFlatTreeItem.getItemType(),
 				nodeId,
 				focused: true,
+				isNew: false,
 				action: {
 					add: true,
 					addAccomplice: true,
 					modify: true,
 					remove: true,
+					toggle: true,
 				},
 				fields: {
 					id: nodeId,
@@ -57,6 +63,9 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			}, prevItem);
 		}
 
+		/**
+		 * @returns {string} itemType
+		 */
 		static getItemType()
 		{
 			return 'checkListItem';
@@ -82,12 +91,14 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			this.checkList = checkList;
 		}
 
-		updateItemType()
+		getType()
 		{
-			this.item.type = this.createHashType({
-				attachments: this.getAttachments(),
-				focused: this.isFocused(),
-			});
+			return this.item.type;
+		}
+
+		updateListViewType()
+		{
+			this.item.type = this.createHashType();
 		}
 
 		createHashType()
@@ -99,9 +110,20 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 				isComplete: this.getIsComplete(),
 				isImportant: this.getIsImportant(),
 				displayDepth: this.getDepth(),
+				totalCount: this.getDescendantsCount(),
 			};
 
+			if (this.isNew())
+			{
+				params.nodeId = this.getNodeId();
+			}
+
 			return `${CheckListFlatTreeItem.getItemType()}-${hashCode(JSON.stringify(params))}`;
+		}
+
+		getIndex()
+		{
+			return this.item.index;
 		}
 
 		getItem()
@@ -112,6 +134,11 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		getId()
 		{
 			return this.item.id;
+		}
+
+		getKey()
+		{
+			return this.item.key;
 		}
 
 		getParent()
@@ -162,16 +189,8 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		getDepth()
 		{
 			const displaySortIndex = this.getDisplaySortIndex();
-			const maxDepth = 5;
 
-			const depth = (displaySortIndex.match(/\./g) || []).length;
-
-			if (depth > 0)
-			{
-				return Math.min(depth, maxDepth) * 15;
-			}
-
-			return 0;
+			return (displaySortIndex.match(/\./g) || []).length;
 		}
 
 		getNodeId()
@@ -187,16 +206,6 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		setCompletedCount(completedCount)
 		{
 			this.fields.completedCount = completedCount;
-		}
-
-		getTotalCount()
-		{
-			return this.fields.totalCount;
-		}
-
-		setTotalCount(totalCount)
-		{
-			this.fields.totalCount = totalCount;
 		}
 
 		getCompletedCount()
@@ -222,7 +231,6 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		setAttachments(attachments)
 		{
 			this.fields.attachments = attachments;
-			this.updateItemType();
 		}
 
 		addAttachments(inputAttachments)
@@ -235,13 +243,11 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		removeAttachment(id)
 		{
 			delete this.fields.attachments[id];
-			this.updateItemType();
 		}
 
 		updateAttachment(attachment)
 		{
 			this.fields.attachments[attachment.id] = attachment;
-			this.updateItemType();
 		}
 
 		getTaskId()
@@ -257,6 +263,16 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		isFocused()
 		{
 			return this.item.focused;
+		}
+
+		isNew()
+		{
+			return this.item.isNew;
+		}
+
+		setIsNew(isNew)
+		{
+			this.item.isNew = isNew;
 		}
 
 		isFirstListDescendant()
@@ -309,14 +325,20 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			return true;
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
 		hasAnotherCheckLists()
 		{
 			return true;
 		}
 
-		shouldBeDeletedOnBlur()
+		/**
+		 * @returns {boolean}
+		 */
+		hasItemTitle()
 		{
-			return !this.getTitle().trim();
+			return Boolean(this.getTitle().trim());
 		}
 
 		blur()
@@ -329,9 +351,19 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			this.item.focused = true;
 		}
 
+		getMembersCount()
+		{
+			return Object.keys(this.getMembers()).length;
+		}
+
 		getMembers()
 		{
 			return this.fields.members;
+		}
+
+		setMembers(members)
+		{
+			this.fields.members = members;
 		}
 
 		getMember(id)
@@ -347,11 +379,6 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			const members = this.getMembers();
 
 			members[member.id] = member;
-		}
-
-		removeMember(id)
-		{
-			delete this.getMember(id);
 		}
 
 		getMemberType(type)
@@ -450,12 +477,6 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			this.setCompletedCount(completedCount);
 		}
 
-		updateTotalCount()
-		{
-			const totalCount = this.countTotalCount();
-			this.setTotalCount(totalCount);
-		}
-
 		updateCounter()
 		{
 			const parent = this.getParent();
@@ -470,7 +491,6 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		updateCounts()
 		{
 			this.updateCompletedCount();
-			this.updateTotalCount();
 		}
 
 		countCompletedCount(recursively = false)
@@ -492,28 +512,14 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			return completedCount;
 		}
 
-		countTotalCount(recursively = false)
-		{
-			let totalCount = 0;
-
-			if (recursively)
-			{
-				this.getDescendants().forEach((descendant) => {
-					totalCount += 1;
-					totalCount += descendant.countTotalCount(recursively);
-				});
-			}
-			else
-			{
-				totalCount = this.getDescendantsCount();
-			}
-
-			return totalCount;
-		}
-
 		updateComplete(complete)
 		{
 			const action = complete ? 'complete' : 'renew';
+
+			if (!this.getTaskId())
+			{
+				return;
+			}
 
 			BX.ajax.runAction(
 				`tasks.task.checklist.${action}`,

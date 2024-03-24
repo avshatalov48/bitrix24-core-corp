@@ -68,10 +68,13 @@ class TaskStageTable extends Entity\DataManager
 		$sqlSearch = \CTasks::GetFilter($filter);
 
 		$connection = \Bitrix\Main\Application::getConnection();
-		$sql = 'INSERT IGNORE INTO ' . self::getTableName()
-				. ' (TASK_ID, STAGE_ID) '
-				. 'SELECT T.ID, ' . $id . ' FROM ' . Task::getTableName() . ' T '
-				. 'WHERE ' . implode(' AND ', $sqlSearch) . ';';
+		$sql = $connection->getSqlHelper()->getInsertIgnore(
+			self::getTableName(),
+			' (TASK_ID, STAGE_ID)',
+			' SELECT T.ID, ' . $id . ' FROM ' . Task::getTableName() . ' T '
+			. 'WHERE ' . implode(' AND ', $sqlSearch)
+		);
+
 		$connection->query($sql);
 	}
 

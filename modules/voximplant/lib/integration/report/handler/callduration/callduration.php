@@ -2,12 +2,10 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\CallDuration;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Voximplant\Integration\Report\CallType;
 use Bitrix\Voximplant\Integration\Report\Handler\Base;
@@ -23,10 +21,6 @@ abstract class CallDuration extends Base
 	 * Prepares report data.
 	 *
 	 * @return array|mixed
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws SystemException
 	 */
 	public function prepare()
 	{
@@ -69,8 +63,6 @@ abstract class CallDuration extends Base
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function getQueryForReport($startDate, $finishDate, $previousStartDate, $previousFinishDate, $filterParameters): Query
 	{
@@ -97,8 +89,6 @@ abstract class CallDuration extends Base
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function getBaseQuery($startDate, $finishDate, $filterParameters): Query
 	{
@@ -120,32 +110,29 @@ abstract class CallDuration extends Base
 	 * @param $callType
 	 * @param string $columnName
 	 * @param bool $isMainQuery
-	 *
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function addCallDurationField(Query $query, $callType, string $columnName, bool $isMainQuery = false): void
 	{
 		switch ($callType)
 		{
 			case CallType::INCOMING:
-				$expression = 'sum(if((%s = 2 and %s = 200), %s, null))';
+				$expression = 'SUM(CASE WHEN %s = 2 and %s = 200 THEN %s ELSE null END)';
 				$buildFrom = ['INCOMING', 'CALL_FAILED_CODE', 'CALL_DURATION'];
 				break;
 			case CallType::OUTGOING:
-				$expression = 'sum(if(%s = 1 and %s = 200, %s, null))';
+				$expression = 'SUM(CASE WHEN %s = 1 and %s = 200 THEN %s ELSE null END)';
 				$buildFrom = ['INCOMING', 'CALL_FAILED_CODE', 'CALL_DURATION'];
 				break;
 			case CallType::MISSED:
-				$expression = 'sum(if(%s = 2 and %s <> 200, %s, null))';
+				$expression = 'SUM(CASE WHEN %s = 2 and %s <> 200 THEN %s ELSE null END)';
 				$buildFrom = ['INCOMING', 'CALL_FAILED_CODE', 'CALL_DURATION'];
 				break;
 			case CallType::CALLBACK:
-				$expression = 'sum(if(%s = 4, %s, null))';
+				$expression = 'SUM(CASE WHEN %s = 4 THEN %s ELSE null END)';
 				$buildFrom = ['INCOMING', 'CALL_DURATION'];
 				break;
 			default:
-				$expression = 'sum(%s)';
+				$expression = 'SUM(%s)';
 				$buildFrom = ['CALL_DURATION'];
 				break;
 		}
@@ -168,17 +155,14 @@ abstract class CallDuration extends Base
 	 *
 	 * @param Query $query
 	 * @param string $columnName
-	 *
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function addCallDurationCompareField(Query $query, string $columnName): void
 	{
 		$query->addSelect($columnName . '_COMPARE');
 		$query->registerRuntimeField(new ExpressionField(
 			$columnName . '_COMPARE',
-			'if(%s = 0, null, round((%s - %s) / %s * 100, 1))',
-			[$columnName, $columnName, 'previous.' . $columnName, 'previous.' . $columnName]
+			'CASE WHEN %1$s = 0 THEN null ELSE round((%1$s - %2$s) / %2$s * 100, 1) END',
+			[$columnName, 'previous.'.$columnName]
 		));
 	}
 }

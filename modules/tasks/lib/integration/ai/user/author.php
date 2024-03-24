@@ -41,10 +41,10 @@ class Author
 
 	private function init(): void
 	{
-		$members = TaskObject::createFromFields(['ID' => $this->taskId])
+		$this->creator = TaskObject::wakeUpObject(['ID' => $this->taskId])
 				->getMemberService()
-				->get([static::ROLE], new WorkConfig());
-
-		$this->creator = array_pop($members->getData()[static::ROLE]);
+				->get([static::ROLE], new WorkConfig())
+				->getMembers(static::ROLE)
+				->pop();
 	}
 }

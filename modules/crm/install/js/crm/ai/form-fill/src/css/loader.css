@@ -4,8 +4,15 @@
 	right: 0;
 	bottom: 0;
 	left: 0;
-	/*background-color: #fff;*/
-	/*backdrop-filter: blur(16px); rgba(255, 255, 255, 0.40)*/
+	background-color: rgba(255, 255, 255, 0.40);
+	backdrop-filter: blur(16px);
+	border-radius: var(--layout-border-radius-all);
+	padding-bottom: 12px;
+}
+
+.bx-crm-ai-merge-fields-loading__image {
+	width: 100%;
+	height: 100%;
 	background-image: url("../images/preloader.svg");
 	background-repeat: no-repeat;
 	background-size: cover;

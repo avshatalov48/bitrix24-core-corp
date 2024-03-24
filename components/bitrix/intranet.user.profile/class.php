@@ -153,6 +153,9 @@ class CIntranetUserProfileComponent extends UserProfile
 			}
 		}
 
+		$this->arResult['ADDITIONAL_BLOCKS'] = $this->getAdditionalBlocks();
+		$this->arResult['IS_ADDITIONAL_BLOCK'] = !empty($this->arResult['ADDITIONAL_BLOCKS']);
+
 		$this->processShowYear();
 
 		$this->arResult["DISK_INFO"] = $this->getDiskInfo();

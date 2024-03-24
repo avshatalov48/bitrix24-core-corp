@@ -28,6 +28,8 @@ class Template
 	private $ufManager;
 	private $application;
 
+	private $userId;
+
 	private $templateId;
 	private $template;
 
@@ -37,7 +39,7 @@ class Template
 	private $skipAgent = false;
 
 
-	public function __construct(private int $userId)
+	public function __construct(int $userId)
 	{
 		global $DB;
 		global $USER_FIELD_MANAGER;
@@ -46,6 +48,8 @@ class Template
 		$this->db = $DB;
 		$this->ufManager = $USER_FIELD_MANAGER;
 		$this->application = $APPLICATION;
+
+		$this->userId = $userId;
 	}
 
 	/**

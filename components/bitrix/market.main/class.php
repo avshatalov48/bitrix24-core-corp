@@ -36,7 +36,8 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 	{
 		$this->prepareResult();
 
-		$this->arResult = array_merge($this->arResult, Toolbar::getInfo());
+		$marketAction = $this->arResult['ADDITIONAL_MARKET_ACTION'] ?? '';
+		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction));
 
 		$this->includeComponentTemplate();
 
@@ -113,6 +114,8 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 		if (isset($response[Transport::METHOD_TOTAL_APPS])) {
 			$this->arResult['TOTAL_APPS'] = NumberApps::get($response[Transport::METHOD_TOTAL_APPS]);
 			$this->arResult['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
+			$this->arResult['ADDITIONAL_CONTENT'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_CONTENT'] ?? '';
+			$this->arResult['ADDITIONAL_MARKET_ACTION'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_MARKET_ACTION'] ?? '';
 		}
 	}
 

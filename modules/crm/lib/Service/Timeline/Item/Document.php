@@ -53,8 +53,7 @@ final class Document extends Configurable
 	{
 		$blocks = [];
 
-		$data = $this->getDocument()->getFile(false)->getData();
-		$title = $data['title'] ?? null;
+		$title = $this->getDocument()?->getTitle() ?: Loc::getMessage('CRM_COMMON_EMPTY_VALUE');
 
 		$blocks['title'] =
 			(new Layout\Body\ContentBlock\LineOfTextBlocks())
@@ -106,7 +105,7 @@ final class Document extends Configurable
 		$myCompanyRequisiteCaption = Loc::getMessage('CRM_COMMON_EMPTY_VALUE');
 		$clientRequisiteCaption = Loc::getMessage('CRM_COMMON_EMPTY_VALUE');
 
-		$provider = $this->getDocument()->getProvider();
+		$provider = $this->getDocument()?->getProvider();
 		if ($provider instanceof CrmEntityDataProvider)
 		{
 			[$myCompanyRequisites, ] = $provider->getMyCompanyRequisitesAndBankDetail();
@@ -155,7 +154,7 @@ final class Document extends Configurable
 
 	private function getMyCompanyTitle(): ?string
 	{
-		$provider = $this->getDocument()->getProvider();
+		$provider = $this->getDocument()?->getProvider();
 		if ($provider instanceof CrmEntityDataProvider)
 		{
 			$myCompanyProvider = $provider->getMyCompanyProvider();
@@ -170,7 +169,7 @@ final class Document extends Configurable
 
 	private function getClientTitle(): ?string
 	{
-		$provider = $this->getDocument()->getProvider();
+		$provider = $this->getDocument()?->getProvider();
 		if (!($provider instanceof CrmEntityDataProvider))
 		{
 			return null;
@@ -209,11 +208,12 @@ final class Document extends Configurable
 		{
 			if ($signIntegration::isEnabledInCurrentTariff())
 			{
-				if (\Bitrix\Crm\Service\Container::getInstance()
-				->getUserPermissions()
-				->checkAddPermissions(\CCrmOwnerType::SmartDocument))
+				if ($this->getContext()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartDocument))
 				{
-					$signButton = (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_SIGN'), Layout\Footer\Button::TYPE_SECONDARY))
+					$signButton = (new Layout\Footer\Button(
+						Loc::getMessage('CRM_COMMON_ACTION_SIGN'),
+						Layout\Footer\Button::TYPE_SECONDARY,
+					))
 						->setAction(
 							(new Layout\Action\JsEvent('Document:ConvertDeal'))
 								->addActionParamInt('documentId', $this->getDocumentId())
@@ -225,7 +225,10 @@ final class Document extends Configurable
 			}
 			else
 			{
-				$signButton = (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_SIGN'), Layout\Footer\Button::TYPE_SECONDARY))
+				$signButton = (new Layout\Footer\Button(
+					Loc::getMessage('CRM_COMMON_ACTION_SIGN'),
+					Layout\Footer\Button::TYPE_SECONDARY,
+				))
 					->setAction(
 						(new Layout\Action\JsEvent('Document:ShowInfoHelperSlider'))
 							->addActionParamString('infoHelperCode', 'limit_crm_sign_integration')

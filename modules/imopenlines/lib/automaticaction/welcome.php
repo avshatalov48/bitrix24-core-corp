@@ -91,7 +91,7 @@ class Welcome
 		{
 			$result = Im::addAutomaticSystemMessage(
 				$this->session['CHAT_ID'],
-				$this->config['WELCOME_MESSAGE_TEXT']
+				$this->getReplacedText($this->config['WELCOME_MESSAGE_TEXT'])
 			);
 
 			if ($this->session['SOURCE'] === Connector::TYPE_LIVECHAT && $this->clientChat)
@@ -136,7 +136,7 @@ class Welcome
 
 		Im::addMessage([
 			"TO_CHAT_ID" => $this->session['CHAT_ID'],
-			"MESSAGE" => FormHandler::buildSentFormMessageForOperator($welcomeFormName),
+			"MESSAGE" => FormHandler::buildSentFormMessageForOperator($welcomeFormName, $this->session['USER_LANG']),
 			"ATTACH" => $attach,
 			"SYSTEM" => 'Y',
 			"IMPORTANT_CONNECTOR" => 'Y',
@@ -199,5 +199,14 @@ class Welcome
 		}
 
 		return false;
+	}
+
+	private function getReplacedText(string $text): string
+	{
+		$replace = [
+			'#SESSION_ID#' => $this->session['ID']
+		];
+
+		return strtr($text, $replace);
 	}
 }

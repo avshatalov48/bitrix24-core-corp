@@ -9,6 +9,7 @@ $MESS["TAG_IS_SUCCESSFULLY_UPDATED"] = "Tag has been updated in all tasks.";
 $MESS["TASKS_BY_TAG_LIST"] = "Tasks";
 $MESS["TASKS_TAG_ALREADY_EXISTS"] = "This tag already exists.";
 $MESS["TASKS_TAG_EMPTY_TAG_NAME"] = "Name cannot be empty.";
+$MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_ASSIGNEE"] = "Assignee";
 $MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_NAME"] = "Task name";
 $MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_RESPONSIBLE"] = "Responsible person";
 $MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_STATUS"] = "Status";

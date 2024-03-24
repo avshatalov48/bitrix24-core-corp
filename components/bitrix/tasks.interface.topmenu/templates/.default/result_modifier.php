@@ -20,8 +20,9 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 $isMenu = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === true;
-$arResult['BX24_RU_ZONE'] = ModuleManager::isModuleInstalled('bitrix24') &&
-							preg_match("/^(ru)_/", COption::GetOptionString("main", "~controller_group_name", ""));
+$arResult['BX24_RU_ZONE'] = ModuleManager::isModuleInstalled('bitrix24')
+	&& preg_match("/^(ru)_/", COption::GetOptionString("main", "~controller_group_name", ""))
+;
 
 // create template controller with js-dependency injections
 $arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
@@ -61,29 +62,33 @@ $urlRoleTemplate = (
 );
 $tasksLink = CComponentEngine::makePathFromTemplate(
 	$urlRoleTemplate,
-	array(
+	[
 		'group_id' => $arParams['GROUP_ID'],
 		'user_id' => $arParams['USER_ID']
-	)
+	]
 );
+
+$taskEditLink = \Bitrix\Tasks\Slider\Path\TaskPathMaker::getPath([
+	'action' => 'edit',
+	'task_id' => 0,
+	'user_id' => $arParams['USER_ID'],
+	'group_id' => $arParams['GROUP_ID']
+]);
+$taskEditLink = new Uri($taskEditLink);
+$taskEditLink->addParams([
+	'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
+	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['horizontal_menu'],
+]);
 
 $arResult['ITEMS'][] = array(
 	"TEXT" => GetMessage("TASKS_PANEL_TAB_TASKS"),
-	"URL" => $tasksLink.'?F_CANCEL=Y&F_SECTION=ADVANCED&F_STATE=sR'.$strIframe2,
+	"URL" => $tasksLink . '?F_CANCEL=Y&F_SECTION=ADVANCED&F_STATE=sR' . $strIframe2,
 	"ID" => "view_all",
 	'CLASS' => $arParams['PROJECT_VIEW'] === 'Y' ? '' : 'tasks_role_link',
-	'SUB_LINK' => array(
+	'SUB_LINK' => [
 		'CLASS' => '',
-		'URL' => CComponentEngine::makePathFromTemplate(
-			($arParams['PATH_TO_USER_TASKS_TASK'] ?? null),
-			array(
-				'action' => 'edit',
-				'task_id' => 0,
-				'user_id' => $arParams['USER_ID'],
-				'group_id' => $arParams['GROUP_ID']
-			)
-		)
-	),
+		'URL' => $taskEditLink->getUri(),
+	],
 	"IS_ACTIVE" => (isset($arParams["MARK_TEMPLATES"]) && $arParams["MARK_TEMPLATES"] !== "Y" &&
 					isset($arParams["MARK_SECTION_PROJECTS"]) && $arParams["MARK_SECTION_PROJECTS"] !== "Y" &&
 					isset($arParams["MARK_SECTION_PROJECTS_LIST"]) && $arParams["MARK_SECTION_PROJECTS_LIST"] !== "Y" &&
@@ -241,7 +246,7 @@ if ($arResult["BX24_RU_ZONE"])
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
-		"URL" => "/marketplace/category/tasks/",
+		"URL" => \Bitrix\Tasks\Integration\Market\Router::getCategoryPath('tasks'),
 		"ID" => "view_apps",
 		'IS_DISABLED' => true,
 	);

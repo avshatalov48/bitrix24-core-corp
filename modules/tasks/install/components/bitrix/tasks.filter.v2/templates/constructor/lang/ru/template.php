@@ -25,6 +25,7 @@ $MESS["TASKS_FIELD_TITLE"] = "Название";
 $MESS["TASKS_FIELD_GROUP"] = "Проект (группа)";
 $MESS["TASKS_FIELD_DIRECTOR"] = "Постановщик";
 $MESS["TASKS_FIELD_RESPOSNSIBLE"] = "Ответственный";
+$MESS["TASKS_FIELD_ASSIGNEE"] = "Исполнитель";
 $MESS["TASKS_FIELD_ACCOMPLICE"] = "Соисполнитель";
 $MESS["TASKS_FIELD_AUDITOR"] = "Наблюдатель";
 $MESS["TASKS_FIELD_STATUS"] = "Статус";

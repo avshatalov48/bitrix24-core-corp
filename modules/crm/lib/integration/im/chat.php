@@ -75,7 +75,7 @@ class Chat
 		}
 		if($entityTypeId === \CCrmOwnerType::Company)
 		{
-			return Crm\Entity\Contact::getResponsibleID($entityId);
+			return Crm\Entity\Company::getResponsibleID($entityId);
 		}
 
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);

@@ -7,7 +7,12 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 
-Extension::load(array("ui.graph.circle", "ui.buttons.icons", "ui.design-tokens", "ui.fonts.opensans"));
+Extension::load([
+	"ui.graph.circle",
+	"ui.buttons.icons",
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+]);
 
 $isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 
@@ -80,6 +85,12 @@ if ($isBitrix24Template)
 {
 	$this->SetViewTarget('inside_pagetitle');
 }
+$addTaskPath = new \Bitrix\Main\Web\Uri($arParams['PATH_TO_TASK_ADD']);
+$addTaskPath->addParams([
+	'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
+	'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['efficiency'],
+	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'],
+]);
 
 //region FILTER
 
@@ -106,9 +117,8 @@ if ($isBitrix24Template)
 				array("HIDE_ICONS" => true)
 			); ?>
 		</div>
-
 		<div class="pagetitle-container pagetitle-align-right-container task-report-filter-btn-add" style="padding-right: 30px;">
-			<a class="ui-btn ui-btn-primary ui-btn-icon-add" href="<?=$arParams['PATH_TO_TASK_ADD']?>">
+			<a class="ui-btn ui-btn-primary ui-btn-icon-add" href="<?=$addTaskPath?>">
 				<?=GetMessage('TASKS_ADD_TASK')?>
 			</a>
 		</div>

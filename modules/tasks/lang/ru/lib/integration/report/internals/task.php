@@ -7,6 +7,7 @@ $MESS["TASKS_TASK_ENTITY_PRIORITY_FIELD"] = "Важность";
 $MESS["TASKS_TASK_ENTITY_STATUS_FIELD"] = "Статус (устаревший)";
 $MESS["TASKS_TASK_ENTITY_STATUS_PSEUDO_FIELD"] = "Статус";
 $MESS["TASKS_TASK_ENTITY_RESPONSIBLE_FIELD"] = "Ответственный";
+$MESS['TASKS_TASK_ENTITY_ASSIGNEE_FIELD'] = 'Исполнитель';
 $MESS["TASKS_TASK_ENTITY_START_DATE_PLAN_FIELD"] = "Планируемая дата начала";
 $MESS["TASKS_TASK_ENTITY_END_DATE_PLAN_FIELD"] = "Планируемая дата завершения";
 $MESS["TASKS_TASK_ENTITY_DURATION_PLAN_HOURS_FIELD"] = "Планируемая длительность";

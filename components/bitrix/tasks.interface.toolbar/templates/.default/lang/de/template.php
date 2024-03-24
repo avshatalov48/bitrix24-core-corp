@@ -39,5 +39,7 @@ $MESS["TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS"] = "Jetzt können Sie den Forts
 Die Zähler der neuen Kommentare und überfälligen Aufgaben helfen Ihnen, die besonders wichtigen Bereiche stets im Fokus zu haben.<br><br>
 In jeder Ansicht (Liste, Planer, Frist oder Kanban) werden die Aufgaben nach ihrem aktiven Status sortiert. Die Aufgabe wird nach ober verschoben, wenn sie einen neuen Kommentar bekommt oder ihre Frist geändert wird.<br>";
 $MESS["TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_BUTTON"] = "Details";
+$MESS["TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_MSGVER_1"] = "Zähler für neue Kommentare und überfällige Aufgaben helfen Ihnen, sich auf die Bereiche zu fokussieren, die Ihre besondere Aufmerksamkeit verlangen.<br><br>
+Die Aufgaben in jeder Ansicht (Liste, Planer, Frist oder Kanban) werden nach Datum ihrer jeweiligen letzten Aktivität sortiert. Die Aufgabe wird nach oben in der Liste verschoben, wenn dort ein neuer Kommentar hinzugefügt oder die Frist geändert werden.<br>";
 $MESS["TASKS_TEMPLATE_SPOTLIGHT_TIMELINE"] = "Nutzen Sie die neue Ansicht, um Ihre Aufgaben zu planen und Fristen einzuhalten.";
 $MESS["TASKS_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT"] = "Hier können Sie Automatisierungsregeln und Trigger konfigurieren";

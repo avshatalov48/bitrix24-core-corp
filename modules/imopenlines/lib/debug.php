@@ -28,12 +28,14 @@ class Debug
 						'SESSION_ID' => $session->getData('ID'),
 						'TYPE' => 'session: ' . $type,
 						'DATA' => $data,
-						'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
+						'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6)
 					));
 				}
 				catch (\Bitrix\Main\SystemException $e)
 				{
-
+				}
+				catch (\Exception $e)
+				{
 				}
 			}
 		}
@@ -55,12 +57,14 @@ class Debug
 					'SESSION_ID' => 0,
 					'TYPE' => 'agent: ' . $type,
 					'DATA' => $data,
-					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
+					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6)
 				));
 			}
 			catch (\Bitrix\Main\SystemException $e)
 			{
-
+			}
+			catch (\Exception $e)
+			{
 			}
 		}
 	}
@@ -82,12 +86,14 @@ class Debug
 					'SESSION_ID' => $sessionId,
 					'TYPE' => 'queue: ' . $type,
 					'DATA' => $data,
-					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
+					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6)
 				));
 			}
 			catch (\Bitrix\Main\SystemException $e)
 			{
-
+			}
+			catch (\Exception $e)
+			{
 			}
 		}
 	}
@@ -109,12 +115,14 @@ class Debug
 					'SESSION_ID' => $sessionId,
 					'TYPE' => 'queue event: ' . $type,
 					'DATA' => $data,
-					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
+					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6)
 				));
 			}
 			catch (\Bitrix\Main\SystemException $e)
 			{
-
+			}
+			catch (\Exception $e)
+			{
 			}
 		}
 	}

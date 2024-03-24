@@ -235,18 +235,20 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 	 */
 	private function getUserTasksToNotice(array $userIds): array
 	{
-		$connection = Application::getConnection();
-		$preparedUserIds = implode(',', $userIds);
+		if (empty($userIds))
+		{
+			return [];
+		}
 
-		$res = $connection->query("
-			SELECT 
-				USER_ID,
-			    `TYPE`,
-				SUM(`VALUE`) as CNT
-			FROM ". Counter\CounterTable::getTableName() ."
-			WHERE USER_ID IN ({$preparedUserIds})
-			GROUP BY USER_ID, `TYPE`
-		")->fetchAll();
+		$query = Counter\CounterTable::query();
+		$query
+			->setSelect(['USER_ID', 'TYPE'])
+			->addSelect($query::expr()->sum('VALUE'), 'CNT')
+			->whereIn('USER_ID', $userIds)
+			->addGroup('USER_ID')
+			->addGroup('TYPE');
+
+		$res = $query->fetchAll();
 
 		$tasksToNotice = [];
 		foreach ($res as $row)
@@ -383,6 +385,7 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 	 */
 	private function getUsersResultWithNavigation(): Result
 	{
+		$helper = Application::getConnection()->getSqlHelper();
 		return UserTable::getList([
 			'select' => [
 				'ID',
@@ -394,7 +397,7 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 				'EMAIL',
 				'TITLE',
 				'UF_DEPARTMENT',
-				new ExpressionField('EFFECTIVE', 'IFNULL(%1$s, 100)', ['COUNTER.CNT']),
+				new ExpressionField('EFFECTIVE', $helper->getIsNullFunction('%1$s', 100), ['COUNTER.CNT']),
 			],
 			'filter' => $this->getManageFilter(),
 			'count_total' => true,
@@ -411,10 +414,11 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 	 */
 	private function getAllUsersResult(): Result
 	{
+		$helper = Application::getConnection()->getSqlHelper();
 		return UserTable::getList([
 			'select' => [
 				'ID',
-				new ExpressionField('EFFECTIVE', 'IFNULL(%1$s, 100)', ['COUNTER.CNT']),
+				new ExpressionField('EFFECTIVE', $helper->getIsNullFunction('%1$s', 100), ['COUNTER.CNT']),
 			],
 			'filter' => $this->getManageFilter(),
 		]);

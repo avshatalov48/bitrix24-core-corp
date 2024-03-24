@@ -11,7 +11,7 @@ final class Filter
 		global $DB;
 
 		$gridOptionsRes = $DB->query("
-			SELECT * FROM `b_user_option`
+			SELECT * FROM b_user_option
 			WHERE 
 				`USER_ID`={$userId} 
 				AND `CATEGORY` = 'main.ui.filter'
@@ -42,7 +42,7 @@ final class Filter
 					'filter_rows'=>join(',',array_keys($fields))
 				);
 				$DB->query(
-					"UPDATE `b_user_option` SET
+					"UPDATE b_user_option SET
 						`VALUE` = '".$DB->ForSql(serialize($gridOptions['VALUE']))."' WHERE
 						`ID` = '".$DB->ForSql($gridOptions["ID"])."'"
 				);

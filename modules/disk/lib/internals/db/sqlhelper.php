@@ -37,7 +37,7 @@ final class SqlHelper
 		}
 	}
 
-	public static function upsertBatch($tableName, array $items, array $updateFields)
+	public static function upsertBatch(string $tableName, array $primaryFields, array $items, array $updateFields): void
 	{
 		if (!$items)
 		{
@@ -47,24 +47,50 @@ final class SqlHelper
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
-		$query = $prefix = '';
-		list($update) = $sqlHelper->prepareUpdate($tableName, $updateFields);
+		$tableFields = $connection->getTableFields($tableName);
 
+		$query = '';
 		foreach ($items as $item)
 		{
-			list($prefix, $values) = $sqlHelper->prepareInsert($tableName, $item);
+			$item = array_change_key_case($item, CASE_UPPER);
 
-			$query .= ($query ? ', ' : ' ') . '(' . $values . ')';
+			$columns = [];
+			$values = [];
+			foreach ($item as $columnName => $value)
+			{
+				if (isset($tableFields[$columnName]))
+				{
+					$columns[] = $columnName;
+					$values[] = $sqlHelper->convertToDb($value, $tableFields[$columnName]);
+				}
+			}
+
+			$query .= ($query ? ', ' : ' ') . '(' . implode(', ', $values) . ')';
 			if (mb_strlen($query) > self::MAX_LENGTH_BATCH_MYSQL_QUERY)
 			{
-				$connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query} ON DUPLICATE KEY UPDATE {$update}");
+				$sql = $sqlHelper->prepareMergeSelect(
+					$tableName,
+					$primaryFields,
+					$columns,
+					" VALUES {$query} ",
+					$updateFields
+				);
+				$connection->queryExecute($sql);
+
 				$query = '';
 			}
 		}
 
-		if ($query && $prefix && $update)
+		if ($query && $columns)
 		{
-			$connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query} ON DUPLICATE KEY UPDATE {$update}");
+			$sql = $sqlHelper->prepareMergeSelect(
+				$tableName,
+				$primaryFields,
+				$columns,
+				" VALUES {$query} ",
+				$updateFields
+			);
+			$connection->queryExecute($sql);
 		}
 	}
 }

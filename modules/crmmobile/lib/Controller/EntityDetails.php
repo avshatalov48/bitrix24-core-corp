@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\Catalog;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;

@@ -333,23 +333,26 @@ BX.CRM.Kanban.Item.prototype = {
 
 	appendLastActivityTime: function(lastActivity)
 	{
-		const timestamp = BX.Text.toInteger(lastActivity.timestamp);
-		if (timestamp <= 0)
+		let timestampInUserTimezone = BX.Text.toInteger(lastActivity.timestamp); // server converts timezone to user before send
+		if (timestampInUserTimezone <= 0)
 		{
 			return;
 		}
 
-		const serverNow = BX.Crm.DateTime.Factory.getServerNow();
-		const serverNowTimestamp = Math.round(serverNow.getTime() / 1000);
+		const utcTimestamp = timestampInUserTimezone - BX.Main.Timezone.Offset.USER_TO_SERVER;
 
-		const timestampInServerTimeZone = Math.round(
-			BX.Crm.DateTime.Factory.createFromTimestampInServerTimezone(timestamp).getTime() / 1000
-		);
+		const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
+		const userToBrowserOffset = userToUTCOffset + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
 
+		const timestampThatWillCreateCorrectTimeWhenPassedToDateObject = utcTimestamp + userToBrowserOffset;
+
+		const userNowTimestamp = BX.Main.Timezone.BrowserTime.getTimestamp() + userToBrowserOffset;
+
+		// const userNowTimestamp = BX.Main.Timezone.UserTime.getTimestamp();
 		const ago = (
-			serverNowTimestamp - timestampInServerTimeZone <= 60
+			userNowTimestamp - timestampThatWillCreateCorrectTimeWhenPassedToDateObject <= 60
 				? BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'))
-				: this.getFormattedLastActiveDateTime(timestampInServerTimeZone, serverNowTimestamp)
+				: this.getFormattedLastActiveDateTime(timestampThatWillCreateCorrectTimeWhenPassedToDateObject, userNowTimestamp)
 		);
 
 		const timeAgo = BX.Tag.render`
@@ -396,15 +399,14 @@ BX.CRM.Kanban.Item.prototype = {
 
 	getFormattedLastActiveDateTime: function(timestamp, userNow)
 	{
-		const { Format } = BX.Crm.DateTime.Dictionary;
 		const isCurrentYear = (new Date(timestamp * 1000)).getFullYear() === (new Date()).getFullYear();
 		const defaultFormat = (
 			isCurrentYear
-				? Format.DAY_SHORT_MONTH_FORMAT
-				: Format.MEDIUM_DATE_FORMAT
+				? BX.Main.DateTimeFormat.getFormat('DAY_SHORT_MONTH_FORMAT')
+				: BX.Main.DateTimeFormat.getFormat('MEDIUM_DATE_FORMAT')
 		);
 
-		let shortTimeFormat = Format.SHORT_TIME_FORMAT;
+		let shortTimeFormat = BX.Main.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
 		shortTimeFormat = shortTimeFormat.replace(/\b(a)\b/, 'A'); // for uppercase AM/PM markers: h:i a => h:i A
 
 		const formattedDateTime = BX.Main.DateTimeFormat.format(
@@ -1215,6 +1217,12 @@ BX.CRM.Kanban.Item.prototype = {
 			this.container.appendChild(this.planner);
 		}
 
+		const limitExceededIcon = (
+			gridData.isActivityLimitIsExceeded
+				? BX.Tag.render`<span class="crm-kanban-item-activity">${this.getActivityCounterHtml()}</span>`
+				: null
+		);
+
 		// phone, mail, chat
 		this.contactPhone = BX.create("span", {
 			props: {
@@ -1245,6 +1253,7 @@ BX.CRM.Kanban.Item.prototype = {
 				className: "crm-kanban-item-connect"
 			},
 			children: [
+				limitExceededIcon,
 				this.activityEmpty,
 				this.activityExist,
 				this.contactPhone,
@@ -1952,7 +1961,14 @@ BX.CRM.Kanban.Item.prototype = {
 
 	getActivityCounterHtml(value, additionalClass = '')
 	{
-		if (value > 99)
+		let title = null;
+		if (this.getGridData().isActivityLimitIsExceeded)
+		{
+			value = '?';
+			additionalClass += ' crm-kanban-item-activity-counter--limit-exceeded';
+			title = `title="${BX.Loc.getMessage('CRM_KANBAN_ITEM_COUNTER_LIMIT_IS_EXCEEDED')}"`;
+		}
+		else if (value > 99)
 		{
 			value = '99+';
 			additionalClass += ' crm-kanban-item-activity-counter--narrow';
@@ -1963,7 +1979,7 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 
 		return `
-			<span class="crm-kanban-item-activity-counter ${additionalClass}">
+			<span class="crm-kanban-item-activity-counter ${additionalClass}" ${title}>
 				<span class="item-activity-counter__before"></span>
 				${value}
 				<span class="item-activity-counter__after"></span>

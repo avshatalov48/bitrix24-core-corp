@@ -35,7 +35,7 @@ class TerminalPaymentList
 		});
 	}
 
-	setPaidStatus(id: number, value: string)
+	setPaidStatus(id: number, value: string): void
 	{
 		this.grid.tableFade();
 		ajax.runAction('crm.order.payment.setPaid', {
@@ -55,7 +55,7 @@ class TerminalPaymentList
 		});
 	}
 
-	deletePayment(id)
+	deletePayment(id): void
 	{
 		MessageBox.confirm(
 			Loc.getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TEMPLATE_TITLE_DELETE_CONTENT'),
@@ -89,7 +89,7 @@ class TerminalPaymentList
 		);
 	}
 
-	deletePayments()
+	deletePayments(): void
 	{
 		const paymentIds = this.grid.getRows().getSelectedIds();
 		ajax.runAction(
@@ -117,31 +117,33 @@ class TerminalPaymentList
 		});
 	}
 
-	openSmsSettingsSlider()
+	openTerminalSettingsSlider(event, menuItem): void
 	{
 		BX.SidePanel.Instance.open(this.settingsSliderUrl, {
-			width: 700,
+			width: 900,
 			cacheable: false,
 			allowChangeTitle: false,
 			allowChangeHistory: false,
 		});
+		menuItem.getMenuWindow().close();
 	}
 
-	openQrAuthPopup()
+	openQrAuthPopup(): void
 	{
 		(new QrAuth()).show();
 	}
 
-	openHelpdesk(event)
+	openHelpdesk(event, menuItem): void
 	{
 		if (top.BX.Helper)
 		{
-			top.BX.Helper.show("redirect=detail&code=17603024");
+			top.BX.Helper.show('redirect=detail&code=17603024');
 			event.preventDefault();
 		}
+		menuItem.getMenuWindow().close();
 	}
 
-	onGridUpdatedHandler(event: BaseEvent)
+	onGridUpdatedHandler(event: BaseEvent): void
 	{
 		const [grid] = event.getCompatData();
 
@@ -161,7 +163,7 @@ class TerminalPaymentList
 		}
 	}
 
-	openPaymentInSalescenter(params: SalescenterParams)
+	openPaymentInSalescenter(params: SalescenterParams): void
 	{
 		const options = {
 			context: 'terminal_list',

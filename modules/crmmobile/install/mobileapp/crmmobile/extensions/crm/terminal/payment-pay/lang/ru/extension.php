@@ -4,6 +4,8 @@ $MESS['M_CRM_TL_PAYMENT_PAY_VIA_QR_FAST_MONEY_TRANSFER'] = 'Оплата по QR
 $MESS['M_CRM_TL_PAYMENT_PAY_VIA_QR_SBERBANK'] = 'Оплата по QR-коду СберБанк';
 $MESS['M_CRM_TL_PAYMENT_PAY_VIA_QR_PAYMENT_LINK'] = 'Оплата по ссылке';
 
+$MESS['M_CRM_TL_PAYMENT_PAY_NO_PAY_METHODS'] = 'Терминал не готов к приёму платежей. Включите хотя бы один способ оплаты в настройках терминала или обратитесь к своему руководителю';
+
 $MESS['M_CRM_TL_PAYMENT_PAY_SCAN_QR'] = 'Попросите клиента навести камеру телефона на QR-код ';
 $MESS['M_CRM_TL_PAYMENT_PAY_PLEASE_WAIT'] = 'Пожалуйста, подождите';
 

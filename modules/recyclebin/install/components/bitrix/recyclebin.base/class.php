@@ -18,6 +18,11 @@ abstract class RecyclebinBaseComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
+		if (!\Bitrix\Main\Loader::includeModule('recyclebin'))
+		{
+			return;
+		}
+
 		$this->doPreActions();
 		$this->getData();
 		$this->doPostActions();

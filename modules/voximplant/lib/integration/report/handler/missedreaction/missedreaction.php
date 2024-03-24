@@ -2,15 +2,12 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\MissedReaction;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ObjectException;
-use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Voximplant\Model\StatisticMissedTable;
@@ -27,10 +24,6 @@ class MissedReaction extends Base implements IReportMultipleData
 	 * Prepares report data.
 	 *
 	 * @return array|mixed
-	 * @throws ArgumentException
-	 * @throws ObjectException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
 	 */
 	public function prepare()
 	{
@@ -73,8 +66,6 @@ class MissedReaction extends Base implements IReportMultipleData
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	public function getQueryForReport($startDate, $finishDate, $previousStartDate, $previousFinishDate, $filterParameters): Query
 	{
@@ -103,6 +94,8 @@ class MissedReaction extends Base implements IReportMultipleData
 	{
 		$query = StatisticMissedTable::query();
 
+		$helper = Application::getConnection()->getSqlHelper();
+
 		$query->addSelect('PORTAL_USER_ID');
 		$query->addSelect('CALL_MISSED');
 		$query->addSelect('UNANSWERED');
@@ -114,28 +107,33 @@ class MissedReaction extends Base implements IReportMultipleData
 
 		$query->registerRuntimeField(new ExpressionField(
 			'CALL_MISSED',
-			'count(%s)',
+			'COUNT(%s)',
 			['ID']
 		));
 
 		$query->registerRuntimeField(new ExpressionField(
 			'UNANSWERED',
-			'(sum(if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 0, 1)))',
+			'SUM(CASE WHEN '.$helper->addDaysToDateTime(-1, '%s').' <= %s THEN 0 ELSE 1 END)',
 			['CALLBACK_CALL_START_DATE', 'CALL_START_DATE'])
 		);
 
 		$query->registerRuntimeField(new ExpressionField(
+			'RESPONSE_TIME',
+			'SUM(CASE WHEN %1$s is not null THEN TIMESTAMPDIFF(MINUTE, %2$s, %1$s) ELSE 0 END)',
+			['CALLBACK_CALL_START_DATE', 'CALL_START_DATE']
+		));
+
+		$query->registerRuntimeField(new ExpressionField(
+			'CALLBACK_COUNT',
+			'SUM(CASE WHEN %1$s is not null THEN (CASE WHEN '.$helper->addDaysToDateTime(-1, '%1$s').' <= %2$s THEN 1 ELSE 0 END) ELSE 0 END)',
+			['CALLBACK_CALL_START_DATE', 'CALL_START_DATE']
+		));
+
+		$query->registerRuntimeField(new ExpressionField(
 			'AVG_RESPONSE_TIME',
-			'round(sum(if(%s is not null, TIMESTAMPDIFF(MINUTE, %s, %s), 0)) / (sum(if(%s is not null, if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 1, 0), 0))))',
-			[
-				'CALLBACK_CALL_START_DATE',
-				'CALL_START_DATE',
-				'CALLBACK_CALL_START_DATE',
-				'CALLBACK_CALL_START_DATE',
-				'CALLBACK_CALL_START_DATE',
-				'CALL_START_DATE',
-			])
-		);
+			'ROUND(%s / %s, 0)',
+			['RESPONSE_TIME', 'CALLBACK_COUNT']
+		));
 
 		return $query;
 	}
@@ -144,14 +142,13 @@ class MissedReaction extends Base implements IReportMultipleData
 	 * @param $requestParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws ObjectException
-	 * @throws SystemException
 	 */
 	public function prepareEntityListFilter($requestParameters): Query
 	{
 		$missedReactionQuery = StatisticMissedTable::query();
 		$fields = StatisticMissedTable::getEntity()->getScalarFields();
+
+		$helper = Application::getConnection()->getSqlHelper();
 
 		foreach ($fields as $field)
 		{
@@ -163,7 +160,7 @@ class MissedReaction extends Base implements IReportMultipleData
 		{
 			$missedReactionQuery->registerRuntimeField(new ExpressionField(
 				'UNANSWERED',
-				"if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 'N', 'Y')",
+				"CASE WHEN ".$helper->addDaysToDateTime(-1, '%s')." <= %s THEN 'N' ELSE 'Y' END",
 				['CALLBACK_CALL_START_DATE', 'CALL_START_DATE'])
 			);
 
@@ -199,12 +196,11 @@ class MissedReaction extends Base implements IReportMultipleData
 	 * Converts data from a report handler for a grid
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ObjectException
 	 */
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}

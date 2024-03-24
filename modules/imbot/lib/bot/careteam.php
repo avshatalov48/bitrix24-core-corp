@@ -27,7 +27,7 @@ class Careteam extends Base
 
 		$botId = \Bitrix\Im\Bot::register([
 			'CODE' => self::BOT_CODE,
-			'TYPE' => \Bitrix\Im\Bot::TYPE_OPENLINE,
+			'TYPE' => \Bitrix\Im\Bot::TYPE_BOT,
 			'MODULE_ID' => self::MODULE_ID,
 			'CLASS' => __CLASS__,
 			'METHOD_MESSAGE_ADD' => 'onMessageAdd',

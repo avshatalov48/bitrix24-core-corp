@@ -10,26 +10,6 @@ jn.define('feature', (require, exports, module) => {
 	 */
 	class Feature
 	{
-		static isShareDialogSupportsFiles()
-		{
-			return minApiVersion(47, 'isShareDialogSupportsFiles');
-		}
-
-		static isGridViewSupported()
-		{
-			return minApiVersion(47, 'isGridViewSupported');
-		}
-
-		static isKeyboardEventsSupported()
-		{
-			return minApiVersion(48, 'isKeyboardEventsSupported');
-		}
-
-		static isOAuthSupported()
-		{
-			return minApiVersion(48, 'isOAuthSupported');
-		}
-
 		static isReceivePaymentSupported()
 		{
 			return minApiVersion(49, 'isReceivePaymentSupported');

@@ -8,7 +8,7 @@ jn.define('layout/ui/info-helper', (require, exports, module) => {
 	{
 		render()
 		{
-			return new View(
+			return View(
 				{},
 				WebView({
 					style: {

@@ -109,6 +109,16 @@ class HistoryItem
 			return new Item\LogMessage\SignDocument($context, $model);
 		}
 
+		if ($typeId === TimelineType::SIGN_B2E_DOCUMENT && Item\SignB2eDocument::isActive())
+		{
+			return new Item\SignB2eDocument($context, $model);
+		}
+
+		if ($typeId === TimelineType::SIGN_B2E_DOCUMENT_LOG && Item\LogMessage\SignB2eDocument::isActive())
+		{
+			return new Item\LogMessage\SignB2eDocument($context, $model);
+		}
+
 		if ($typeId === TimelineType::LOG_MESSAGE)
 		{
 			switch ($typeCategoryId)

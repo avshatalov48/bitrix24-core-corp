@@ -3,6 +3,9 @@
 namespace Bitrix\Intranet\Component;
 
 use Bitrix\Intranet\Util;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -18,6 +21,7 @@ use Bitrix\UI;
 
 class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {
+	public const ON_PROFILE_CONFIG_ADDITIONAL_BLOCKS = 'onProfileConfigAdditionalBlocks';
 	/** @var ErrorCollection errorCollection */
 	protected $errorCollection;
 	protected $form;
@@ -1135,5 +1139,32 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				Option::set("bitrix24", $type, $value);
 			}
 		}
+	}
+
+	public function getAdditionalBlocks(): array
+	{
+		$result = [];
+		$event = new Event(
+			'intranet',
+			self::ON_PROFILE_CONFIG_ADDITIONAL_BLOCKS,
+			[
+				'profileId' => $this->getUserId()
+			]
+		);
+		EventManager::getInstance()->send($event);
+		foreach ($event->getResults() as $eventResult)
+		{
+			if (
+				($eventResult->getType() === EventResult::SUCCESS)
+				&& ($additionalBlock = $eventResult->getParameters()['additionalBlock'])
+				&& isset($additionalBlock['COMPONENT_NAME'])
+				&& is_string($additionalBlock['COMPONENT_NAME'])
+			)
+			{
+				$result[] = $additionalBlock;
+			}
+		}
+
+		return $result;
 	}
 }

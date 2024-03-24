@@ -151,7 +151,7 @@ class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorab
 			];
 		}
 
-		if ((!$this->arParams['ENTITY_TYPE']) ?? null)
+		if (!($this->arParams['ENTITY_TYPE'] ?? null))
 		{
 			$list[] = [
 				'id' => 'ENTITY_TYPE',

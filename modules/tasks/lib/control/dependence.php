@@ -52,7 +52,7 @@ class Dependence
 
 		$sql = "
 			INSERT INTO ". RelatedTable::getTableName() ."
-			(`TASK_ID`, `DEPENDS_ON_ID`)
+			(TASK_ID, DEPENDS_ON_ID)
 			VALUES
 			(". implode("),(", $insertRows) .")
 		";

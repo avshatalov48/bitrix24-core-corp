@@ -863,13 +863,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 	public static function InitUserEntity()
 	{
-		if (!CModule::IncludeModule("calendar"))
-		{
-			return;
-		}
-
-		//if (!defined("BX_NO_ACCELERATOR_RESET"))
-		//	define("BX_NO_ACCELERATOR_RESET", true);
+		return \Bitrix\Main\Loader::includeModule('calendar');
 	}
 
 	public static function getBasenameWithoutExtension($href)
@@ -880,12 +874,15 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 	public static function DataSync($paramEntityType = null, $paramEntityId = 0)
 	{
+		if (!\Bitrix\Main\Loader::includeModule('calendar'))
+		{
+			return "CDavGroupdavClientCalendar::DataSync();";
+		}
+
 		if (DAV_CALDAV_DEBUG)
 		{
 			CDav::WriteToLog("Starting CalDAV sync", "SYNCC");
 		}
-
-		self::InitUserEntity();
 
 		$maxNumber = 5;
 		$index = 0;
@@ -1144,7 +1141,9 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		}
 
 		if (DAV_CALDAV_DEBUG)
+		{
 			CDav::WriteToLog("CalDAV sync finished", "SYNCC");
+		}
 
 		return "CDavGroupdavClientCalendar::DataSync();";
 	}
@@ -1185,7 +1184,9 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		$result = $client->PutCalendarItem($calendarXmlId, SITE_ID, $arFields);
 
 		if (!is_null($result))
+		{
 			return $result;
+		}
 
 		return $client->GetErrors();
 	}
@@ -1202,7 +1203,6 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		{
 			return null;
 		}
-
 
 		$arConnection = CDavConnection::GetById($connectionId);
 		if (!is_array($arConnection))

@@ -46,6 +46,10 @@ class Selector extends Main\Engine\JsonController
 		{
 			$hiddenTypes[] = \CCrmOwnerType::SmartDocument;
 		}
+		if ((int)($options['hideSmartB2eDocument'] ?? 0))
+		{
+			$hiddenTypes[] = \CCrmOwnerType::SmartB2eDocument;
+		}
 		if (isset($options['presetId']) && is_numeric($options['presetId']))
 		{
 			$presetId = (int)$options['presetId'];

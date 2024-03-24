@@ -125,13 +125,13 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 			}
 		},
 		{
-			condition: ({ entityTypeId, categoryId }, { getState }) => {
+			condition: ({ entityTypeId, categoryId, forceFetch = false }, { getState }) => {
 				const state = getState();
 				const status = state[reducerName].status;
 				const currentEntityTypeId = state[reducerName].currentEntityTypeId;
 				const currentKanbanSettingsId = state[reducerName].currentKanbanSettingsId;
 
-				return !(
+				return forceFetch || !(
 					(status === STATUS.loading || status === STATUS.success)
 					&& currentEntityTypeId === entityTypeId
 					&& currentKanbanSettingsId

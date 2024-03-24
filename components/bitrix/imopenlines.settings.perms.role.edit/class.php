@@ -16,6 +16,8 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 	protected $id;
 	protected $errors;
 
+	protected const HELP_DESK_CODE = '19505854';
+
 	public function __construct($component)
 	{
 		parent::__construct($component);
@@ -88,6 +90,7 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 		$uri = new \Bitrix\Main\Web\Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
 		$uri->addParams(array('action-line' => 'role-add'));
 		$this->arResult['ACTION_URI'] = htmlspecialcharsbx($uri->getUri());
+		$this->arResult['RIGHTS_ARTICLE_URL'] = \Bitrix\UI\Util::getArticleUrlByCode(self::HELP_DESK_CODE);
 	}
 
 	/**

@@ -303,19 +303,20 @@ BX.namespace('Tasks.Component');
 			}
 		}
 	});
-	Item.prepareData = function(data)
-	{
+	Item.prepareData = function(data) {
 		// "template logic" emulation :(
 
 		var text = '';
 
-		if(data.RECEPIENT_TYPE == 'R' || data.RECEPIENT_TYPE == 'O' || data.RECEPIENT_TYPE == 'S')
+		const version = data.RECEPIENT_TYPE === 'R' ? '_V2' : '';
+
+		if (data.RECEPIENT_TYPE === 'R' || data.RECEPIENT_TYPE === 'O' || data.RECEPIENT_TYPE === 'S')
 		{
-			text = BX.message('TASKS_TTDP_TEMPLATE_REMINDER_RECEPIENT_TYPE_'+data.RECEPIENT_TYPE);
+			text = BX.message('TASKS_TTDP_TEMPLATE_REMINDER_RECEPIENT_TYPE_' + data.RECEPIENT_TYPE + version);
 		}
 
-		data.REMINDER_TEXT = data.REMIND_DATE+' '+text;
-		data.TRANSPORT_CLASS = data.TRANSPORT == 'J' ? 'transport-j' : '';
+		data.REMINDER_TEXT = data.REMIND_DATE + ' ' + text;
+		data.TRANSPORT_CLASS = data.TRANSPORT === 'J' ? 'transport-j' : '';
 
 		return data;
 	};

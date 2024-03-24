@@ -33,7 +33,7 @@ class RegularTaskReplicated
 
 		if ($responsible instanceof User)
 		{
-			$description .= Loc::getMessage('TASKS_MESSAGE_RESPONSIBLE_ID', null, $recipient->getLang());
+			$description .= Loc::getMessage('TASKS_MESSAGE_ASSIGNEE_ID', null, $recipient->getLang());
 			$description .= ': '. $responsible->toString($nameTemplate) . "\r\n";
 		}
 

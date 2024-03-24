@@ -345,7 +345,8 @@ export class Settings
 					{
 						id: 'user',
 						options: {
-							inviteEmployeeLink: false
+							inviteEmployeeLink: false,
+							analyticsSource: 'task',
 						}
 					},
 					{

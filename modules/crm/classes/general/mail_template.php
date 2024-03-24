@@ -363,7 +363,7 @@ class CAllCrmMailTemplate
 				);
 			}
 
-			if(!(isset($arFields['TITLE']) && $arFields['TITLE'] !== ''))
+			if (!isset($arFields['TITLE']) || trim($arFields['TITLE']) === '')
 			{
 				self::RegisterError(
 					new CCrmMailTemplateError(
@@ -383,7 +383,7 @@ class CAllCrmMailTemplate
 				);
 			}
 
-			if(isset($arFields['TITLE']) && $arFields['TITLE'] === '')
+			if (isset($arFields['TITLE']) && trim($arFields['TITLE']) === '')
 			{
 				self::RegisterError(
 					new CCrmMailTemplateError(
@@ -468,6 +468,7 @@ class CAllCrmMailTemplate
 			$userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
 		}
 
+		$typeIds = [$ownerTypeId, 0];
 		return \CCrmMailTemplate::getList(
 			[
 				'SORT' => 'ASC',
@@ -475,11 +476,7 @@ class CAllCrmMailTemplate
 			],
 			[
 				'IS_ACTIVE' => 'Y',
-				'__INNER_FILTER_TYPE' => [
-					'LOGIC' => 'OR',
-					'__INNER_FILTER_TYPE_1' => ['ENTITY_TYPE_ID' => $ownerTypeId],
-					'__INNER_FILTER_TYPE_2' => ['ENTITY_TYPE_ID' => 0],
-				],
+				'@ENTITY_TYPE_ID' => $typeIds,
 				'__INNER_FILTER_SCOPE' => [
 					'LOGIC' => 'OR',
 					'__INNER_FILTER_PERSONAL' => ['OWNER_ID' => $userId],

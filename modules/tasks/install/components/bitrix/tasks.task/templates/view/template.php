@@ -2,13 +2,18 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util;
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -16,7 +21,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
-UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'tasks.comment-action-controller']);
+UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.analytics',
+	'tasks.comment-action-controller',
+	'tasks.analytics',
+]);
 
 $templateData = $arResult["TEMPLATE_DATA"];
 
@@ -123,6 +134,20 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 		['HIDE_ICONS' => true]
 	);
 
+	$pathToNewTask = TaskPathMaker::getPath([
+		'user_id' => $arParams['USER_ID'],
+		'group_id' => $arParams['GROUP_ID'],
+		'action' => 'edit',
+		'task_id' => 0,
+	]);
+
+	$pathToNewTask = new \Bitrix\Main\Web\Uri($pathToNewTask);
+	$pathToNewTask->addParams([
+		'ta_sec' => 'tasks',
+		'ta_sub' => 'task_card',
+		'ta_el' => 'create_button',
+	]);
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.filter.buttons',
 		'.default',
@@ -132,15 +157,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 			'ADD_BUTTON' => [
 				'NAME' => Loc::getMessage('TASKS_ADD_TASK_SHORT'),
 				'ID' => 'task-detail-create-button',
-				'URL' => CComponentEngine::makePathFromTemplate(
-					($arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']),
-					[
-						'user_id' => $arParams['USER_ID'],
-						'group_id' => $arParams['GROUP_ID'],
-						'action' => 'edit',
-						'task_id' => 0,
-					]
-				),
+				'URL' => $pathToNewTask->getUri(),
 			],
 		]
 	);
@@ -279,7 +296,7 @@ if (
 				<?endif?>
 				<div class="task-detail-extra-right"><?php
 
-					if ($arResult["LIKE_TEMPLATE"] == 'like_react')
+					if ($arResult["LIKE_TEMPLATE"] === 'like_react')
 					{
 						?><div class="task-detail-like --flex"><?
 
@@ -371,9 +388,17 @@ if (
 				?></div>
 
 				<? if (!empty($templateData["RELATED_TASK"])):?>
+					<?php
+						$relatedTaskUri = new \Bitrix\Main\Web\Uri($templateData["RELATED_TASK"]["URL"]);
+						$relatedTaskUri->addParams([
+							'ta_sec' => Analytics::SECTION['tasks'],
+							'ta_sub' => Analytics::SUB_SECTION['task_card'],
+							'ta_el' => Analytics::ELEMENT['title_click'],
+						]);
+					?>
 					<div class="task-detail-supertask"><?
 						?><span class="task-detail-supertask-label"><?=Loc::getMessage("TASKS_PARENT_TASK")?>:</span><?
-						?><span class="task-detail-supertask-name"><a href="<?=$templateData["RELATED_TASK"]["URL"]?>"
+						?><span class="task-detail-supertask-name"><a href="<?=$relatedTaskUri->getUri()?>"
 																	  class="task-detail-group-link"><?=htmlspecialcharsbx($templateData["RELATED_TASK"]["TITLE"])?></a></span>
 					</div>
 				<? endif ?>
@@ -858,6 +883,16 @@ $APPLICATION->IncludeComponent(
 
 $this->EndViewTarget();
 $isTemplatesAvailable = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+if (!empty($request->get('ta_sec')))
+{
+	Analytics::getInstance($arParams["USER_ID"])->onTaskView(
+		$request->get('ta_sec'),
+		$request->get('ta_el'),
+		$request->get('ta_sub')
+	);
+}
 ?>
 
 <script>
@@ -866,7 +901,7 @@ $isTemplatesAvailable = (new Settings())->isToolAvailable(Settings::TOOLS['templ
 		<?CJSCore::Init("CJSTask"); // ONLY to make BX.CJSTask.fixWin() available?>
 		var eventTaskUgly = <?tasksRenderJSON(
 			$arResult["DATA"]["EVENT_TASK_SAFE"],
-			intval($arResult["DATA"]["EVENT_TASK"]["CHILDREN_COUNT"]),
+			(int)$arResult["DATA"]["EVENT_TASK"]["CHILDREN_COUNT"],
 			array(
 				"PATH_TO_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"]
 			),
@@ -944,7 +979,8 @@ $isTemplatesAvailable = (new Settings())->isToolAvailable(Settings::TOOLS['templ
 		isTemplatesAvailable: <?=CUtil::PhpToJSObject($isTemplatesAvailable)?>,
 	});
 
-	if (window.B24) {
+	if (window.B24)
+	{
 		B24.updateCounters({"tasks_total": <?=(int)CUserCounter::GetValue($USER->GetID(), 'tasks_total')?>});
 	}
 </script>

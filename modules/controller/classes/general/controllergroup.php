@@ -1,5 +1,5 @@
 <?php
-require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/admin_tools.php");
+
 IncludeModuleLangFile(__FILE__);
 
 class CControllerGroup

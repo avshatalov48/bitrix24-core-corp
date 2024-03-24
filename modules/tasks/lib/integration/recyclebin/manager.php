@@ -3,12 +3,14 @@ namespace Bitrix\Tasks\Integration\Recyclebin;
 
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 
 class Manager
 {
-	const TASKS_RECYCLEBIN_ENTITY = 'tasks_task';
-	const TASKS_TEMPLATE_RECYCLEBIN_ENTITY = 'tasks_template';
-	const MODULE_ID = 'tasks';
+	public const TASKS_RECYCLEBIN_ENTITY = 'tasks_task';
+	public const TASKS_TEMPLATE_RECYCLEBIN_ENTITY = 'tasks_template';
+	public const MODULE_ID = 'tasks';
 
 	/**
 	 * @return EventResult
@@ -35,8 +37,8 @@ class Manager
 
 	/**
 	 * @return EventResult
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
 	public static function onAdditionalDataRequest(): EventResult
 	{

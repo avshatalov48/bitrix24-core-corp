@@ -5,6 +5,7 @@ $MESS["TASKS_TASK_TAG_ACCESS_DENIED"] = "Insufficient permissions.";
 $MESS["TASKS_TASK_TAG_ALREADY_EXISTS"] = "This tag already exists.";
 $MESS["TASKS_TASK_TAG_UNKNOWN_ERROR"] = "Cannot add tag. Please try again.";
 $MESS["TASKS_TEMPLATE_CREATE_FORBIDDEN"] = "Cannot create template because access was denied";
+$MESS["TASKS_TT_AUTO_CHANGE_ASSIGNEE"] = "Assignee for this task has been changed.";
 $MESS["TASKS_TT_AUTO_CHANGE_GROUP"] = "Task has been attached to the current project";
 $MESS["TASKS_TT_AUTO_CHANGE_ORIGINATOR"] = "Task creator has been automatically changed to current user";
 $MESS["TASKS_TT_AUTO_CHANGE_PARENT"] = "Task has been attached to the parent task";

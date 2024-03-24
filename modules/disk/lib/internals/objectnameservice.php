@@ -301,13 +301,18 @@ final class ObjectNameService
 			$filterByLike = '';
 		}
 
+		$regexpCondition = $sqlHelper->getRegexpOperator(
+			"SUBSTR(NAME, {$lengthL} + 1, CHAR_LENGTH(NAME) - {$lengthL} - {$lengthR})",
+			"'^[1-9][[:digit:]]*$'"
+		);
+
 		$sql = "
 			SELECT NAME FROM b_disk_object 
 			WHERE 
 				PARENT_ID = {$underObjectId} AND 
 				{$filterByLike}
 				LEFT(NAME, {$lengthL}) = '" . $sqlHelper->forSql($left) . "' AND
-				MID(NAME, {$lengthL} + 1, CHAR_LENGTH(NAME) - {$lengthL} - {$lengthR}) regexp '^[1-9][[:digit:]]*$' AND
+				{$regexpCondition} AND
 				RIGHT(NAME, {$lengthR}) = '" . $sqlHelper->forSql($right) . "'
 			ORDER BY CHAR_LENGTH(NAME) DESC, NAME DESC
 			LIMIT 1;

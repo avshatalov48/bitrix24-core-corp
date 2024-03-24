@@ -17,7 +17,7 @@ class EntityCounterFactory
 		return ($factory && $factory->isCountersEnabled());
 	}
 
-	static public function createNamed($code, $userID = 0)
+	public static function createNamed($code, $userID = 0)
 	{
 		if($code === self::TOTAL_COUNTER) {
 			return self::createTotalCounter($code, $userID);
@@ -34,13 +34,18 @@ class EntityCounterFactory
 
 		if (CustomSectionProvider::isCustomSectionPageCounter($code))
 		{
+			if (CustomSectionProvider::isSystemPageCounter($code))
+			{
+				return null;
+			}
+
 			return self::createCustomPageCounter($code, $userID);
 		}
 
 		return null;
 	}
 
-	static public function create($entityTypeID, $typeID, $userID = 0, array $extras = null)
+	public static function create($entityTypeID, $typeID, $userID = 0, array $extras = null)
 	{
 		if(!is_int($entityTypeID))
 		{

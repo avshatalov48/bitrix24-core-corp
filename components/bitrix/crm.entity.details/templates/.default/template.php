@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 /** @var array $arParams */
@@ -105,6 +108,20 @@ $tabContainerId = "{$guid}_tabs";
 		{
 			$onClickValue = $tab['tariffLock'];
 			$locked = true;
+		}
+		elseif (
+			isset($tab['slider']['uri'])
+			&& is_string($tab['slider']['uri'])
+			&& $tab['slider']['uri'] !== ''
+		)
+		{
+			$url = new Uri($tab['slider']['uri']);
+			$queryParams = !empty($tab['slider']['params'])
+				? '?' . http_build_query($tab['slider']['params'])
+				: ''
+			;
+			$uri = htmlspecialcharsbx(CUtil::JSEscape($url)) . $queryParams;
+			$onClickValue = "BX.SidePanel.Instance.open('". $uri ."', ". CUtil::PhpToJSObject($tab['slider']['sliderParams']) .")";
 		}
 		else
 		{

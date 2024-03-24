@@ -7,9 +7,9 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 	 */
 	class Feature
 	{
-		static isCallBetaAvailable()
+		static isBitrixCallEnabled()
 		{
-			return this.getOption('isCallBetaAvailable', false);
+			return this.getOption('isBitrixCallEnabled', false);
 		}
 
 		/**

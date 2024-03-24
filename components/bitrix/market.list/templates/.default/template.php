@@ -2,6 +2,7 @@
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Market\Content;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
@@ -23,6 +24,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
  */
 
 Extension::load(\Bitrix\Market\Extension::getList());
+Content::showAdditional($arResult);
 ?>
 
 <div id="market-wrapper-vue"></div>

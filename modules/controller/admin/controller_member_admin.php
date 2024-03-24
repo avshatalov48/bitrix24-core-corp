@@ -155,7 +155,10 @@ if ($USER->CanDoOperation("controller_member_edit") && $lAdmin->EditAction())
 			$lAdmin->AddUpdateError(GetMessage("CTRL_MEMB_ADMIN_SAVE_ERR")." #".$ID.": ".$e->GetString(), $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
+		else
+		{
+			$DB->Commit();
+		}
 	}
 }
 
@@ -199,7 +202,10 @@ if (
 				$DB->Rollback();
 				$lAdmin->AddGroupError(GetMessage("CTRL_MEMB_ADMIN_DEL_ERR"), $ID);
 			}
-			$DB->Commit();
+			else
+			{
+				$DB->Commit();
+			}
 			break;
 
 		case "activate":

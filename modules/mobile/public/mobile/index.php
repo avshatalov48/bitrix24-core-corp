@@ -172,11 +172,11 @@ $APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default",
 		'PATH_TO_TASKS_SNM_ROUTER' => SITE_DIR.'mobile/tasks/snmrouter/'
 			. '?routePage=__ROUTE_PAGE__'
 			. '&USER_ID=#USER_ID#'
-			. '&GROUP_ID=' . (int) $_GET['group_id']
+			. '&GROUP_ID=' . (int) ($_GET['group_id'] ?? null)
 			. '&LIST_MODE=TASKS_FROM_GROUP',
 		"SET_LOG_CACHE" => "Y",
 		"IMAGE_MAX_WIDTH" => 550,
-		"DATE_TIME_FORMAT" => ((intval($_GET["detail_log_id"]) > 0 || $_REQUEST["ACTION"] == "CONVERT") ? "j F Y G:i" : ""),
+		"DATE_TIME_FORMAT" => ((intval($_GET["detail_log_id"] ?? null) > 0 || ($_REQUEST["ACTION"] ?? null) == "CONVERT") ? "j F Y G:i" : ""),
 		"CHECK_PERMISSIONS_DEST" => "N",
 	),
 	false,

@@ -138,7 +138,7 @@ class StageTable extends ORM\Data\DataManager
 		{
 			$result->addError(new ORM\EntityError(Loc::getMessage('RPA_STAGE_TABLE_DELETE_ERROR_ITEMS')));
 		}
-		if($stage->isSuccess())
+		if ($stage->isSuccess() && $itemsCount > 0)
 		{
 			$result->addError(new ORM\EntityError(Loc::getMessage('RPA_STAGE_TABLE_DELETE_ERROR_SUCCESS')));
 		}

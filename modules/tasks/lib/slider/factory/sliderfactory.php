@@ -19,6 +19,7 @@ class SliderFactory
 
 	public const PERSONAL_CONTEXT = PathMaker::PERSONAL_CONTEXT;
 	public const GROUP_CONTEXT = PathMaker::GROUP_CONTEXT;
+	public const SPACE_CONTEXT = PathMaker::SPACE_CONTEXT;
 	public const EDIT_ACTION = PathMaker::EDIT_ACTION;
 	public const VIEW_ACTION = PathMaker::DEFAULT_ACTION;
 
@@ -69,7 +70,7 @@ class SliderFactory
 		switch ($entityType)
 		{
 			case self::TASK:
-				if (!in_array($context, [PathMaker::PERSONAL_CONTEXT, PathMaker::GROUP_CONTEXT], true))
+				if (!in_array($context, [PathMaker::PERSONAL_CONTEXT, PathMaker::GROUP_CONTEXT, PathMaker::SPACE_CONTEXT], true))
 				{
 					throw new UnknownEntityContextException('Wrong entity context.');
 				}

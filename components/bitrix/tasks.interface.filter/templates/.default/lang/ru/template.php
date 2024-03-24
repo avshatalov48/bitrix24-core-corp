@@ -35,6 +35,7 @@ $MESS['TASKS_BTN_SORT_TITLE'] = "Название";
 $MESS['TASKS_BTN_SORT_DEADLINE'] = "Крайний срок";
 $MESS['TASKS_BTN_SORT_ORIGINATOR_NAME'] = "Постановщик";
 $MESS['TASKS_BTN_SORT_RESPONSIBLE_NAME'] = "Ответственный";
+$MESS['TASKS_BTN_SORT_RESPONSIBLE_NAME_MSGVER_1'] = 'Исполнитель';
 $MESS['TASKS_BTN_SORT_PRIORITY'] = "Важность";
 $MESS['TASKS_BTN_SORT_MARK'] = "Оценка";
 $MESS['TASKS_BTN_SORT_MARK_MSGVER_1'] = "Оценка";
@@ -43,11 +44,13 @@ $MESS['TASKS_BTN_SORT_ALLOW_TIME_TRACKING']= "Учитывать время";
 $MESS['TASKS_BTN_SORT_CREATED_DATE'] = "Дата создания";
 $MESS['TASKS_BTN_SORT_CHANGED_DATE'] = "Дата изменения";
 $MESS['TASKS_BTN_SORT_ACTIVITY_DATE'] = "По активности";
+$MESS['TASKS_BTN_SORT_ACTIVITY_DATE_MSGVER_1'] = "По активности";
 $MESS['TASKS_BTN_SORT_CLOSED_DATE'] = "Дата закрытия";
 $MESS['TASKS_BTN_SORT_SORTING'] = "Моя сортировка";
 
 $MESS['TASKS_SPOTLIGHT_ADD_TASK'] = "Эта кнопка создает задачу";
 $MESS['TASKS_BTN_GROUP_BY_POPUP_TEXT'] = "При сортировке «по активности» группировка задач не доступна";
+$MESS['TASKS_BTN_GROUP_BY_POPUP_TEXT_MSGVER_1'] = "При сортировке «по активности» группировка задач не доступна";
 
 $MESS['TASKS_LINK_CREATE_GROUP'] = 'Создать группу';
 $MESS['TASKS_LINK_CREATE_PROJECT'] = 'Создать проект';

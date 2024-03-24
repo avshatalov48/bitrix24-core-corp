@@ -72,7 +72,7 @@ class CTaskElapsedTime
 			if (isset($arParams['SOURCE_SYSTEM']) && ($arParams['SOURCE_SYSTEM'] === 'Y'))
 				$arFields['SOURCE'] = CTaskElapsedItem::SOURCE_SYSTEM;
 
-			if ($arFields['CREATED_DATE'])
+			if ($arFields['CREATED_DATE'] ?? null)
 				$createdDate = Bitrix\Main\Type\DateTime::createFromUserTime($arFields['CREATED_DATE']);
 			else
 				$createdDate = new Bitrix\Main\Type\DateTime();

@@ -189,7 +189,7 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function getBuilderDataBySmartInvoice(Item\SmartInvoice $invoice): array
 	{
-		$order = $this->findOrderForEntity(\CCrmOwnerType::Deal, $invoice->getId());
+		$order = $this->findOrderForEntity(\CCrmOwnerType::SmartInvoice, $invoice->getId());
 
 		return [
 			'ID' => $order ? $order->getId() : 0,

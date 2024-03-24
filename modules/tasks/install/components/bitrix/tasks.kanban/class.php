@@ -14,9 +14,10 @@ use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
 
 use Bitrix\Tasks\Component\Kanban\ScrumManager;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\Intranet\Settings;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -141,7 +142,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		// get data of user or group
-		if ($this->taskType == static::TASK_TYPE_USER)
+		if ($this->taskType === static::TASK_TYPE_USER)
 		{
 			$result['USER'] = \CUser::GetByID($params['USER_ID'])->fetch();
 			if (!$result['USER'])
@@ -150,7 +151,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$init = false;
 			}
 		}
-		elseif ($this->taskType == static::TASK_TYPE_GROUP)
+		elseif ($this->taskType === static::TASK_TYPE_GROUP)
 		{
 			$result['GROUP'] = \CSocNetGroup::GetByID($params['GROUP_ID']);
 			if (!$result['GROUP'])
@@ -478,7 +479,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 		$groupId = $this->arParams['GROUP_ID'];
 
-		if ($this->arParams['PERSONAL'] == 'Y')
+		if ($this->arParams['PERSONAL'] === 'Y')
 		{
 			$access = $this->isAdmin();
 		}
@@ -958,7 +959,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		);
 		// personl sort
 		if (
-			$this->arParams['PERSONAL'] != 'Y' &&
+			$this->arParams['PERSONAL'] !== 'Y' &&
 			$this->taskType == static::TASK_TYPE_GROUP
 		)
 		{
@@ -1222,7 +1223,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 	{
 		$columns = [];
 		$counts = [];
-		$timeLineMode = $this->arParams['TIMELINE_MODE'] == 'Y';
+		$timeLineMode = $this->arParams['TIMELINE_MODE'] === 'Y';
+		$viewModeForAnalytics = Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
 		$filter = $this->getFilter();
 		$stageList = StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']);
 
@@ -1271,16 +1273,17 @@ class TasksKanbanComponent extends \CBitrixComponent
 				: $stage['TO_UPDATE_ACCESS'] !== false
 			;
 
-			$columns[$stage['ID']] = array(
+			$columns[$stage['ID']] = [
 				'id' => $stage['ID'],
 				'name' => $stage['TITLE'],
 				'color' => $stage['COLOR'],
 				'type' => $stage['SYSTEM_TYPE'],
 				'sort' => $stage['SORT'],
 				'total' => $count,
-				'canSort' => $this->isAdmin() && $this->arParams['TIMELINE_MODE'] != 'Y',
+				'canSort' => $this->isAdmin() && $this->arParams['TIMELINE_MODE'] !== 'Y',
 				'canAddItem' => $canAddItem,
-			);
+				'viewStateName'=> $viewModeForAnalytics,
+			];
 		}
 
 		$columns = $this->sendEvent('KanbanComponentGetColumns', $columns);
@@ -2073,7 +2076,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$this->arResult['ITS_MY_TASKS'] = $this->itsMyTasks();
 		$this->arResult['TOURS'] = $this->processTours();
 		$this->arResult['ADMINS'] = [];
-		$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::DEFAULT;
+		$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::getDefault();
 		if (!$this->isScrum())
 		{
 			// Kanban User Selected Fields
@@ -3774,10 +3777,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 				return;
 			}
 
-			if ($task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE) ||
-				$task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE))
+			if (
+				$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE)
+				|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+			)
 			{
 				$task->complete();
+				$this->onTaskComplete();
 			}
 		}
 		catch(\Exception $exception)
@@ -4095,6 +4101,18 @@ class TasksKanbanComponent extends \CBitrixComponent
 			}
 
 			return $taskIds;
+		}
+	}
+
+	private function onTaskComplete(): void
+	{
+		if ($this->isScrum())
+		{
+			Analytics::getInstance($this->userId)->onTaskComplete(
+				Analytics::SECTION['scrum'],
+				Analytics::SUB_SECTION['kanban'],
+				Analytics::ELEMENT['complete_button'],
+			);
 		}
 	}
 }

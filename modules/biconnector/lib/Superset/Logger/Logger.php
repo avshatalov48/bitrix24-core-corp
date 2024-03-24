@@ -11,7 +11,7 @@ class Logger
 	 * @param Error[] $errors
 	 * @return void
 	 */
-	final static public function logErrors(array $errors): void
+	final public static function logErrors(array $errors): void
 	{
 		$result = [];
 		foreach ($errors as $error)
@@ -20,25 +20,51 @@ class Logger
 		}
 
 		\CEventLog::Add([
-			'SEVERITY' => 'ERROR',
-			'AUDIT_TYPE_ID' => static::getAuditType(),
+			'SEVERITY' => \CEventLog::SEVERITY_ERROR,
+			'AUDIT_TYPE_ID' => static::getAuditType(\CEventLog::SEVERITY_ERROR),
 			'MODULE_ID' => 'biconnector',
 			'DESCRIPTION' => Json::encode($result),
 		]);
 	}
 
 	/**
+	 * @param string $message
+	 * @param array $params additional data that contains in log message
+	 * @return void
+	 */
+	final public static function logInfo(string $message, array $params = []): void
+	{
+		$desc = [
+			'message' => $message,
+		];
+
+		if (!empty($params))
+		{
+			$desc += $params;
+		}
+
+		$message = \Bitrix\Main\Web\Json::encode($desc);
+
+		\CEventLog::Add([
+			'SEVERITY' => \CEventLog::SEVERITY_INFO,
+			'AUDIT_TYPE_ID' => static::getAuditType(\CEventLog::SEVERITY_INFO),
+			'MODULE_ID' => 'biconnector',
+			'DESCRIPTION' => $message,
+		]);
+	}
+
+	/**
 	 * @return string
 	 */
-	final protected static function getAuditType(): string
+	final protected static function getAuditType(string $actionType = "ERROR"): string
 	{
 		$subType = static::getAuditSubType();
 		if ($subType === null)
 		{
-			return 'SUPERSET_ERROR';
+			return "SUPERSET_{$actionType}";
 		}
 
-		return 'SUPERSET_' . $subType . '_ERROR';
+		return "SUPERSET_{$subType}_{$actionType}";
 	}
 
 	/**

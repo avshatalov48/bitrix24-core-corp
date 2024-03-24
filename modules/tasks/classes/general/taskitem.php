@@ -17,6 +17,7 @@ use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Helper\Analytics;
 use \Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -277,37 +278,42 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$arNewTaskData['DESCRIPTION_IN_BBCODE'] = 'N';			// Set HTML mode
 		}
 		else
+		{
 			$arNewTaskData['DESCRIPTION_IN_BBCODE'] = 'Y';
+		}
 
-		if ( ! isset($arNewTaskData['CREATED_BY']) )
+		if (!isset($arNewTaskData['CREATED_BY']))
+		{
 			$arNewTaskData['CREATED_BY'] = $executiveUserId;
+		}
 
 		// Check some conditions for non-admins
 		if (
-			( ! CTasksTools::IsAdmin($executiveUserId) )
-			&& ( ! CTasksTools::IsPortalB24Admin($executiveUserId) )
+			isset($arNewTaskData['GROUP_ID'])
+			&& ($arNewTaskData['GROUP_ID'] > 0)
+			&& (!\Bitrix\Tasks\Util\User::isAdmin($executiveUserId))
+			&& (!\Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($executiveUserId))
+			&& \Bitrix\Tasks\Integration\Socialnetwork::includeModule()
 		)
 		{
-			if (isset($arNewTaskData['GROUP_ID']) && ($arNewTaskData['GROUP_ID'] > 0) && \Bitrix\Tasks\Integration\Socialnetwork::includeModule())
-			{
-
-				if (
-					! CSocNetFeaturesPerms::CanPerformOperation(
-						$executiveUserId, SONET_ENTITY_GROUP,
-						$arNewTaskData['GROUP_ID'], 'tasks', 'create_tasks'
-					)
+			if (
+				!CSocNetFeaturesPerms::CanPerformOperation(
+					$executiveUserId, SONET_ENTITY_GROUP,
+					$arNewTaskData['GROUP_ID'], 'tasks', 'create_tasks'
 				)
-				{
-					throw new TasksException(
-						serialize(array(array('text' => GetMessage('TASKS_TASK_CREATE_ACCESS_DENIED'), 'id' => 'ERROR_TASK_CREATE_ACCESS_DENIED'))),
-						TasksException::TE_ACCESS_DENIED
-					);
-				}
+			)
+			{
+				throw new TasksException(
+					serialize(array(array('text' => GetMessage('TASKS_TASK_CREATE_ACCESS_DENIED'), 'id' => 'ERROR_TASK_CREATE_ACCESS_DENIED'))),
+					TasksException::TE_ACCESS_DENIED
+				);
 			}
 		}
 
 		if (!TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_SAVE, null, \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewTaskData)))
 		{
+			static::sendTaskCreateAnalytics($arNewTaskData, (int)$executiveUserId);
+
 			throw new TasksException(
 				serialize(array(array('text' => GetMessage('TASKS_TASK_CREATE_ACCESS_DENIED'), 'id' => 'ERROR_TASK_CREATE_ACCESS_DENIED'))),
 				TasksException::TE_ACCESS_DENIED
@@ -320,6 +326,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			!TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_READ, $parentId)
 		)
 		{
+			static::sendTaskCreateAnalytics($arNewTaskData, (int)$executiveUserId);
+
 			throw new TasksException(
 				Loc::getMessage('TASKS_BAD_PARENT_ID'),
 				TasksException::TE_ACTION_NOT_ALLOWED
@@ -327,7 +335,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 
 		if ( ! array_key_exists('GUID', $arNewTaskData) )
-			$arNewTaskData['GUID'] = CTasksTools::genUuid();
+		{
+			$arNewTaskData['GUID'] = \Bitrix\Tasks\Util::generateUUID();
+		}
 
 		$arParams = array_merge($parameters, array(
 			'USER_ID'			   => $executiveUserId,
@@ -337,7 +347,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$o = new CTasks();
 		/** @noinspection PhpDeprecationInspection */
 		$rc = $o->Add($arNewTaskData, $arParams);
-		if ( ! ($rc > 0) )
+		if (!($rc > 0))
 		{
 			static::throwExceptionVerbose($o->GetErrors());
 		}
@@ -3403,6 +3413,23 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 
 		return $entityUserFields;
+	}
+
+	protected static function sendTaskCreateAnalytics(array $fields, int $userId, bool $status = false): void
+	{
+		if (!empty($fields['TASKS_ANALYTICS_SECTION']))
+		{
+			$parentId = (int)($fields['PARENT_ID'] ?? null);
+			$event = $parentId ? Analytics::EVENT['subtask_add'] : Analytics::EVENT['task_create'];
+
+			Analytics::getInstance($userId)->onTaskCreate(
+				$event,
+				$fields['TASKS_ANALYTICS_SECTION'],
+				$fields['TASKS_ANALYTICS_ELEMENT'] ?? null,
+				$fields['TASKS_ANALYTICS_SUB_SECTION'] ?? null,
+				$status
+			);
+		}
 	}
 
 	/**

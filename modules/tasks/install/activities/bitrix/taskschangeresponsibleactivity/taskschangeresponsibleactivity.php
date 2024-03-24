@@ -93,7 +93,7 @@ class CBPTasksChangeResponsibleActivity extends CBPActivity
 
 		$dialog->setMap([
 			'Responsible' => [
-				'Name' => GetMessage('TASKS_CHANGE_RESPONSIBLE_NEW'),
+				'Name' => GetMessage('TASKS_CHANGE_RESPONSIBLE_NEW_V2'),
 				'FieldName' => 'responsible',
 				'Type' => 'user',
 				'Required' => true,

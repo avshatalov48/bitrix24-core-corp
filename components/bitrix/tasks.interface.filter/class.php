@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Scrum\Service\SprintService;
+use Bitrix\Tasks\TourGuide\PresetsMoved;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 
 Loader::includeModule('socialnetwork');
@@ -52,7 +53,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 	public function executeComponent()
 	{
-		$this->arResult['isPresetAhaMomentViewed'] = $this->isPresetAhaMomentViewed();
+		$this->arResult['showPresetTourGuide'] = $this->showPresetTourGuide();
 		return parent::executeComponent();
 	}
 
@@ -138,16 +139,9 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 	public function markPresetAhaMomentViewedAction(): array
 	{
-		$result = CUserOptions::SetOption(
-			'tasks',
-			static::PRESET_AHA_MOMENT_VIEWED_KEY,
-			'Y',
-			false,
-			$this->userId
-		);
-
+		PresetsMoved::getInstance($this->userId)->finish();
 		return [
-			'result' => $result,
+			'result' => true,
 		];
 	}
 
@@ -453,13 +447,13 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
 
-	private function isPresetAhaMomentViewed(): bool
+	private function showPresetTourGuide(): bool
 	{
-		return CUserOptions::GetOption(
-			'tasks',
-			static::PRESET_AHA_MOMENT_VIEWED_KEY,
-			'N',
-			$this->userId
-		) === 'Y';
+		return PresetsMoved::getInstance($this->userId)->proceed();
+	}
+
+	protected function getData()
+	{
+		$this->arParams['VIEW_STATE_FOR_ANALYTICS'] = \Bitrix\Tasks\Helper\Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
 	}
 }

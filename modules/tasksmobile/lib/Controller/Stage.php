@@ -17,6 +17,16 @@ class Stage extends Base
 		];
 	}
 
+	private function processResult(Result $result)
+	{
+		if (!$result->isSuccess())
+		{
+			$this->errorCollection->add($result->getErrors());
+		}
+
+		return $this->convertKeysToCamelCase($result->getData());
+	}
+
 	/**
 	 * @param int|null $projectId
 	 * @param TaskRequestFilter $searchParams
@@ -31,12 +41,8 @@ class Stage extends Base
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId(), $searchParams, $extra);
 		$result = $stageProvider->getPlannerStages($projectId);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	/**
@@ -53,12 +59,8 @@ class Stage extends Base
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId(), $searchParams, $extra);
 		$result = $stageProvider->getDeadlineStages($projectId);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	/**
@@ -76,36 +78,24 @@ class Stage extends Base
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId(), $searchParams, $extra);
 		$result = $stageProvider->getProjectStages($projectId, $taskId);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function updatePlannerStagesOrderAction(array $stagesOrder = []): array
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->updateStagesSortOrder(null, $stagesOrder);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function updateKanbanStagesOrderAction(int $projectId, array $stagesOrder = []): array
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->updateStagesSortOrder($projectId, $stagesOrder);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function addPlannerStageAction(
@@ -116,12 +106,8 @@ class Stage extends Base
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->addStage(null, $name, $color, $afterId);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function addKanbanStageAction(
@@ -133,59 +119,39 @@ class Stage extends Base
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->addStage($projectId, $name, $color, $afterId);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function deletePlannerStageAction(int $stageId): array
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->deleteStage($stageId);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function deleteKanbanStageAction(int $stageId, int $projectId): array
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->deleteStage($stageId, $projectId);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function updatePlannerStageAction(int $stageId, string $name, string $color)
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->updateStage($stageId, null, $name, $color);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 
 	public function updateKanbanStageAction(int $projectId, int $stageId, string $name, string $color)
 	{
 		$stageProvider = new StageProvider($this->getCurrentUser()->getId());
 		$result = $stageProvider->updateStage($stageId, $projectId, $name, $color);
-		if (!$result->isSuccess())
-		{
-			$this->errorCollection->add($result->getErrors());
-		}
 
-		return $this->convertKeysToCamelCase($result->getData());
+		return $this->processResult($result);
 	}
 }

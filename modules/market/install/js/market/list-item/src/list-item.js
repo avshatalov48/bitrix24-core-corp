@@ -109,7 +109,8 @@ export const ListItem = {
 							this.contextMenu.close();
 						}
 
-						this.deleteApp(event, this.item.CODE, this.$root.currentUri);
+						this.setDeleteActionInfo(this.item.ADDITIONAL_ACTION_DEL);
+						this.deleteAction(this.item.CODE, this.$root.currentUri);
 					},
 				});
 			}
@@ -257,7 +258,7 @@ export const ListItem = {
 			this.showInstallPopup(true);
 		},
 		...mapActions(marketInstallState, ['showInstallPopup', 'setAppInfo',]),
-		...mapActions(marketUninstallState, ['deleteApp',]),
+		...mapActions(marketUninstallState, ['deleteAction', 'setDeleteActionInfo']),
 		...mapActions(ratingStore, ['isActiveStar', 'getAppRating',]),
 	},
 	template: `

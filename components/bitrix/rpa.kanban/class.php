@@ -245,7 +245,7 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 		$count = $itemDataClass::getList([
 			'select' => [
 				'STAGE_ID',
-				new ExpressionField('count', 'COUNT(*)'),
+				new ExpressionField('COUNT', 'COUNT(*)'),
 			],
 			'group' => ['STAGE_ID'],
 			'filter' => $filter,
@@ -254,7 +254,7 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 
 		while($stageCount = $count->fetch())
 		{
-			$result[$stageCount['STAGE_ID']] = (int) $stageCount['count'];
+			$result[$stageCount['STAGE_ID']] = (int) $stageCount['COUNT'];
 		}
 
 		return $result;

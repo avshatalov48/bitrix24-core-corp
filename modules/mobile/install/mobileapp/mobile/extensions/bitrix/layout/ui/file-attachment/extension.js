@@ -2,7 +2,7 @@
  * @module layout/ui/file-attachment
  */
 jn.define('layout/ui/file-attachment', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { AppTheme } = require('apptheme/extended');
 	const { clip } = require('assets/common');
 	const { throttle } = require('utils/function');
 	const { Loc } = require('loc');
@@ -132,8 +132,8 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 						borderTopLeftRadius: 12,
 						borderTopRightRadius: 12,
 					},
-					radius: 5,
-					// color: transparent(AppTheme.colors.base0, 0.06),
+					radius: 1,
+					color: AppTheme.colors.shadowPrimary,
 					offset: {
 						x: 0,
 						y: -5,
@@ -238,6 +238,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 
 			this.useGridViewAdapter()
 				.then((adapter) => adapter.deleteRow(index))
+				.catch(console.error)
 				.finally(() => {
 					if (this.props.onDeleteAttachmentItem)
 					{
@@ -261,7 +262,7 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 		 */
 		scrollToBottom()
 		{
-			this.useGridViewAdapter().then((adapter) => adapter.scrollToBottom());
+			this.useGridViewAdapter().then((adapter) => adapter.scrollToBottom()).catch(console.error);
 		}
 
 		get showAddButton()
@@ -270,7 +271,5 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {
-		FileAttachment,
-	};
+	module.exports = { FileAttachment };
 });

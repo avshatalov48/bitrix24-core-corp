@@ -12,6 +12,7 @@ use Bitrix\Crm\Order\Permissions;
 use Bitrix\Crm\Terminal\OrderProperty;
 use Bitrix\Sale\Payment;
 use Bitrix\SalesCenter\Component\PaymentSlip;
+use Bitrix\Crm\Terminal\Config\TerminalPaysystemManager;
 
 Loc::loadMessages(__DIR__ . '/Payment.php');
 
@@ -70,7 +71,9 @@ class DtoItemDataConverter
 					? Terminal\PaymentSystemRepository::getByPayment($payment)
 					: []
 			,
+			'paymentSystems' => [],
 			'fields' => [],
+			'isLinkPaymentEnabled' => TerminalPaysystemManager::getInstance()->getConfig()->isLinkPaymentEnabled(),
 		]);
 
 		return $itemData;

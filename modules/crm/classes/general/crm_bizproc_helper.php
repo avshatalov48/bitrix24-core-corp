@@ -49,6 +49,10 @@ class CCrmBizProcHelper
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class;
 		}
+		elseif ($ownerTypeID === CCrmOwnerType::SmartB2eDocument)
+		{
+			$docName = \Bitrix\Crm\Integration\BizProc\Document\SmartB2eDocument::class;
+		}
 		elseif(CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID))
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class;

@@ -3,24 +3,26 @@
  */
 jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
 	const { Haptics } = require('haptics');
-	const { erase } = require('assets/common');
+	const AppTheme = require('apptheme');
 	const { useCallback } = require('utils/function');
-	const { CheckListMenu } = require('tasks/layout/checklist/list/src/menu');
-	const { UserSelectionManager } = require('layout/ui/user-selection-manager');
-	const { ItemAttachments } = require('tasks/layout/checklist/list/src/attachments');
+	const { ItemMembers } = require('tasks/layout/checklist/list/src/actions/members');
+	const { ItemAttachments } = require('tasks/layout/checklist/list/src/actions/attachments');
 	const { ItemTextField } = require('tasks/layout/checklist/list/src/text-field');
-	const { CheckBoxCounter } = require('tasks/layout/checklist/list/src/checkbox-counter');
-
-	const borderColor = AppTheme.colors.bgSeparatorSecondary;
-	const ERASE_SIZE = 28;
+	const { CheckBoxCounter } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter');
+	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
+	const { ButtonRemove } = require('tasks/layout/checklist/list/src/buttons/button-remove');
 
 	/**
-	 * @class Item
+	 * @class ChecklistItem
 	 */
-	class Item extends LayoutComponent
+	class ChecklistItem extends LayoutComponent
 	{
+		/**
+		 * @param {Object} props
+		 * @param {CheckListFlatTreeItem} [props.item]
+		 * @param {boolean} [props.isFocused]
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -31,75 +33,124 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 			this.counterRef = null;
 			/** @type {ItemTextField} */
 			this.textRef = null;
+			/** @type {ButtonRemove} */
+			this.buttonRemoveRef = null;
 
-			this.handleOnToggleComplete = this.handleOnToggleComplete.bind(this);
-			this.handleOnChangeTitle = this.handleOnChangeTitle.bind(this);
-			this.handleOnRemove = this.handleOnRemove.bind(this);
+			this.handleOnBlur = this.handleOnBlur.bind(this);
 			this.handleOnFocus = this.handleOnFocus.bind(this);
+			this.handleOnRemove = this.handleOnRemove.bind(this);
 			this.handleOnSubmit = this.handleOnSubmit.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
-			this.handleOnToggleImportant = this.handleOnToggleImportant.bind(this);
-			this.handleOnMoveToCheckList = this.handleOnMoveToCheckList.bind(this);
-			this.openUserSelectionManager = this.openUserSelectionManager.bind(this);
+			this.handleOnChangeAttachments = this.handleOnChangeAttachments.bind(this);
+			this.handleOnChangeTitle = this.handleOnChangeTitle.bind(this);
+			this.handleOnToggleComplete = this.handleOnToggleComplete.bind(this);
 		}
 
 		render()
 		{
-			const { item, isFocused } = this.props;
+			const { item } = this.props;
 
-			return View(
-				{
-					testId: `checkListItem-${item.getNodeId()}`,
-					style: {
-						flexDirection: 'column',
-						paddingTop: 16,
-						paddingHorizontal: 18,
-					},
-				},
-				View(
-					{
-						style: {
-							marginLeft: item.getDepth(),
-							paddingBottom: 16,
-							borderBottomWidth: 1,
-							borderBottomColor: borderColor,
-						},
-					},
+			return ChecklistItemView({
+				testId: `checkListItem-${item.getNodeId()}`,
+				divider: true,
+				children: [
 					View(
 						{
 							style: {
-								flexDirection: 'row',
-								alignItems: 'flex-start',
-
+								flexDirection: 'column',
 							},
 						},
-						this.renderCheckbox(),
-						this.renderTextField(),
-						isFocused && this.renderDeleteButton(),
+						View(
+							{
+								style: {
+									flexDirection: 'row',
+									alignItems: 'flex-start',
+								},
+								onClick: () => {
+									this.textInputFocus();
+								},
+							},
+							this.renderCheckbox(),
+							this.renderTextField(),
+							!item.isRoot() && new ButtonRemove({
+								ref: (buttonRemoveRef) => {
+									this.buttonRemoveRef = buttonRemoveRef;
+								},
+								onClick: useCallback(this.handleOnRemove),
+							}),
+						),
+						this.renderActions(),
 					),
-					this.renderAttachments(),
-					isFocused && this.renderMenu(),
-				),
+				],
+			});
+		}
+
+		/**
+		 * @private
+		 */
+		isShowActionRow()
+		{
+			const { item } = this.props;
+
+			return item.getMembersCount() > 0 || item.getAttachmentsCount() > 0;
+		}
+
+		/**
+		 * @private
+		 * @return {[ItemAttachments]}
+		 */
+		renderActions()
+		{
+			const { item } = this.props;
+			const marginLeft = 36 + item.getDepth() * 12;
+
+			return View(
+				{
+					style: {
+						display: this.isShowActionRow() ? 'flex' : 'none',
+						marginTop: this.isShowActionRow() ? 8 : 0,
+						marginLeft,
+						flexDirection: 'row',
+					},
+				},
+				this.renderAttachments(),
+				this.renderMembers(),
 			);
 		}
 
-		renderDeleteButton()
+		/**
+		 * @private
+		 * @return View
+		 */
+		renderMembers()
 		{
-			return Image({
-				style: {
-					width: ERASE_SIZE,
-					height: ERASE_SIZE,
-				},
-				svg: {
-					content: erase(),
-				},
-				resizeMode: 'center',
+			const { item, openUserSelectionManager } = this.props;
+
+			return new ItemMembers({
+				item,
 				onClick: () => {
-					this.eraseItem();
+					openUserSelectionManager(item.getId());
 				},
 			});
 		}
 
+		setMembersToText(members)
+		{
+			const { item } = this.props;
+			const itemTitle = item.getTitle().trim();
+			const slicePosition = this.textRef?.getCursorPosition() ?? itemTitle.length;
+			const startPosition = itemTitle.slice(0, slicePosition).trim();
+			const endPosition = itemTitle.slice(slicePosition, itemTitle.length).trim();
+			const title = `${startPosition} ${members.join(' ')} ${endPosition}`.trim();
+
+			this.handleOnChangeTitle(title);
+			this.textRef.reload();
+		}
+
+		/**
+		 * @private
+		 * @returns {ItemAttachments}
+		 */
 		renderAttachments()
 		{
 			const { item, parentWidget, diskConfig } = this.props;
@@ -111,10 +162,14 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 				item,
 				diskConfig,
 				parentWidget,
-				onChange: this.handleOnChange,
+				onChange: this.handleOnChangeAttachments,
 			});
 		}
 
+		/**
+		 * @private
+		 * @returns {ItemTextField}
+		 */
 		renderTextField()
 		{
 			const { item, parentWidget, isFocused } = this.props;
@@ -123,74 +178,26 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 				ref: useCallback((ref) => {
 					this.textRef = ref;
 				}),
-				parentWidget,
 				isFocused,
-				completed: item.getIsComplete(),
-				title: useCallback(() => item.getTitle()),
-				members: item.getMembers(),
+				parentWidget,
+				placeholder: Loc.getMessage(`TASKSMOBILE_LAYOUT_${item.isRoot() ? 'LIST' : 'ITEM'}_INPUT_PLACEHOLDER`),
+				onBlur: this.handleOnBlur,
 				onFocus: this.handleOnFocus,
-				onSubmit: this.handleOnSubmit,
-				onChangeText: this.handleOnChangeTitle,
+				completed: item.getIsComplete(),
+				getTitle: useCallback(() => item.getTitle()),
+				members: item.getMembers(),
+				onSubmit: useCallback(this.handleOnSubmit),
+				onChangeText: useCallback(this.handleOnChangeTitle),
 				styles: {
 					fontWeight: item.isRoot() ? '500' : '400',
 				},
 			});
 		}
 
-		renderMenu()
-		{
-			const { item } = this.props;
-
-			if (item.isRoot())
-			{
-				return null;
-			}
-
-			const { parentWidget, onShowSelector, onListToggle, onTabMove } = this.props;
-
-			return new CheckListMenu({
-				item,
-				onTabMove,
-				parentWidget,
-				onListToggle,
-				onShowSelector,
-				extendedMenu: true,
-				onMoveToCheckList: this.handleOnMoveToCheckList,
-				onToggleImportant: this.handleOnToggleImportant,
-				openUserSelectionManager: this.openUserSelectionManager,
-				onAddFile: useCallback(() => this.attachmentsRef.addFile()),
-			});
-		}
-
-		openUserSelectionManager()
-		{
-			const { item, parentWidget } = this.props;
-
-			const sectionsData = {
-				auditor: {
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_TITLE_AUDITOR'),
-					addButtonText: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_ADD_AUDITOR'),
-				},
-				accomplice: {
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_TITLE_ACCOMPLICE'),
-					addButtonText: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_ADD_ACCOMPLICE'),
-				},
-			};
-			const members = item.getMembers();
-			const users = Object.keys(item.getMembers()).map((id) => {
-				const { type, name = '', avatar = '' } = members[id];
-
-				return {
-					id: Number(id),
-					section: item.getMemberType(type),
-					title: name,
-					image: avatar,
-				};
-			});
-
-			UserSelectionManager.open({ users, sectionsData, parentWidget });
-		}
-
+		/**
+		 * @private
+		 * @returns {CheckBoxCounter|null}
+		 */
 		renderCheckbox()
 		{
 			const { item } = this.props;
@@ -208,27 +215,46 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 						alignItems: 'center',
 					},
 				},
+				...this.renderDepth(),
 				new CheckBoxCounter({
 					ref: useCallback((ref) => {
 						this.counterRef = ref;
 					}),
+					onClick: useCallback(this.handleOnToggleComplete),
 					checked: item.getIsComplete(),
-					progressMode: item.getDescendantsCount(),
-					onClick: this.handleOnToggleComplete,
-					isDisabled: !item.checkCanToggle(),
+					important: item.getIsImportant(),
+					disabled: !item.checkCanToggle(),
 					totalCount: item.getDescendantsCount(),
 					completedCount: item.getCompleteCount(),
-					isImportant: item.getIsImportant(),
+					progressMode: item.getDescendantsCount() > 0,
 				}),
 			);
 		}
 
-		handleOnMoveToCheckList()
+		renderDepth()
 		{
-			const { item, onMoveToCheckList } = this.props;
-			if (onMoveToCheckList)
+			const { item } = this.props;
+
+			return Array.from({ length: item.getDepth() }).map(() => View({
+				style: {
+					marginRight: 8,
+					width: 6,
+					height: 1,
+					alignItems: 'center',
+					backgroundColor: AppTheme.colors.base6,
+				},
+			}));
+		}
+
+		handleOnChangeAttachments()
+		{
+			const { updateRows, item } = this.props;
+
+			this.handleOnChange();
+
+			if (updateRows)
 			{
-				onMoveToCheckList(item.getMoveIds());
+				updateRows([item.getId()]);
 			}
 		}
 
@@ -237,6 +263,7 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 			const { item } = this.props;
 
 			item.setTitle(title);
+			item.setIsNew(false);
 			this.handleOnChange();
 		}
 
@@ -248,32 +275,6 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 			item.toggleComplete();
 
 			onToggleComplete(item);
-		}
-
-		handleOnToggleImportant()
-		{
-			const { item } = this.props;
-			item.toggleImportant(!item.getIsImportant());
-
-			this.counterRef.toggleAnimateImportant(item.getIsImportant())
-				.then(() => {
-					this.handleOnChange();
-				})
-				.catch(console.error);
-		}
-
-		eraseItem()
-		{
-			const { item } = this.props;
-			if (item.getTitle())
-			{
-				this.handleOnChangeTitle('');
-				this.textRef.clear();
-			}
-			else
-			{
-				this.handleOnRemove();
-			}
 		}
 
 		handleOnChange()
@@ -289,16 +290,36 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 		handleOnSubmit()
 		{
 			const { item, onAdd } = this.props;
-
 			if (item.getTitle() && onAdd)
 			{
 				onAdd(item);
 			}
 		}
 
+		handleOnBlur()
+		{
+			if (this.buttonRemoveRef)
+			{
+				this.buttonRemoveRef.hide();
+			}
+
+			const { item } = this.props;
+			const { onBlur } = this.props;
+
+			if (onBlur)
+			{
+				onBlur(item);
+			}
+		}
+
 		handleOnFocus()
 		{
 			const { item, onFocus } = this.props;
+
+			if (this.buttonRemoveRef)
+			{
+				this.buttonRemoveRef.show();
+			}
 
 			if (onFocus)
 			{
@@ -316,6 +337,59 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 			}
 		}
 
+		textInputFocus()
+		{
+			if (this.textRef)
+			{
+				this.textRef.focus();
+			}
+		}
+
+		textInputBlur()
+		{
+			if (this.textRef)
+			{
+				this.textRef.blur();
+			}
+		}
+
+		clearText(item)
+		{
+			if (item.getTitle())
+			{
+				this.handleOnChangeTitle('');
+				this.textRef.clear();
+			}
+		}
+
+		addFile()
+		{
+			this.attachmentsRef.addFile();
+		}
+
+		toggleImportant()
+		{
+			const { item } = this.props;
+			item.toggleImportant(!item.getIsImportant());
+
+			return new Promise((resolve) => {
+				this.counterRef.toggleAnimateImportant(item.getIsImportant())
+					.then(() => {
+						this.handleOnChange();
+						resolve();
+					})
+					.catch(console.error);
+			});
+		}
+
+		toggleCompleteText()
+		{
+			if (this.textRef)
+			{
+				this.textRef.completeItem();
+			}
+		}
+
 		updateProgress(progressParams)
 		{
 			if (!this.counterRef)
@@ -327,6 +401,5 @@ jn.define('tasks/layout/checklist/list/src/item', (require, exports, module) => 
 		}
 	}
 
-	module.exports = { Item };
+	module.exports = { ChecklistItem };
 });
-

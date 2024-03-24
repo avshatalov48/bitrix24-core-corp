@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-tab/type/traits/open-chat', (require, exports, module) => {
 	const { EntityChatOpener } = require('crm/entity-chat-opener');
+
 	function openChat(params, action, itemId) // action, itemId, customParam)
 	{
 		return new Promise((resolve, reject) => {
@@ -10,7 +11,7 @@ jn.define('crm/entity-tab/type/traits/open-chat', (require, exports, module) => 
 				() => {
 					resolve();
 				},
-				error => {
+				(error) => {
 					console.error(error);
 					reject(error);
 				},

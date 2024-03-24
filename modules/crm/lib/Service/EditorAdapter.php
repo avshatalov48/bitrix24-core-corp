@@ -1017,7 +1017,8 @@ class EditorAdapter
 		bool $isPaymentsEnabled = false
 	): array
 	{
-		$type = ($isPaymentsEnabled && Loader::includeModule('salescenter')) ? 'moneyPay' : 'money';
+		$isSalescenterIncluded = Loader::includeModule('salescenter');
+		$type = ($isPaymentsEnabled && $isSalescenterIncluded) ? 'moneyPay' : 'money';
 		return [
 			'name' => $fieldName ?? static::FIELD_OPPORTUNITY,
 			'title' => $title,
@@ -1036,6 +1037,10 @@ class EditorAdapter
 				'formattedWithCurrency' => 'FORMATTED_' . static::FIELD_OPPORTUNITY,
 				'isShowPaymentDocuments' => $isPaymentsEnabled,
 				'isWithOrdersMode' => \CCrmSaleHelper::isWithOrdersMode(),
+				'isSalescenterToolEnabled' =>
+					$isSalescenterIncluded
+					&& \Bitrix\Salescenter\Restriction\ToolAvailabilityManager::getInstance()->checkSalescenterAvailability()
+				,
 			],
 		];
 	}

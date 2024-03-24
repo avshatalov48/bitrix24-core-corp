@@ -181,7 +181,7 @@ class Comment extends Base
 
 	protected function processFiles(array $fields): array
 	{
-		$files = is_array($fields['files']) ? $fields['files'] : [];
+		$files = is_array($fields['files'] ?? null) ? $fields['files'] : [];
 		$uiComment = static::getUiComment();
 		$userField = $uiComment->getFileUserFields();
 		if (!$userField)
@@ -335,6 +335,11 @@ class Comment extends Base
 			'#TYPE#' => $item->getType()->getTitle(),
 			'#COMMENT#' => $text,
 		]);
+
+		if (!$message)
+		{
+			return;
+		}
 
 		$uiComment->sendMentions(
 			$timeline->getId(),

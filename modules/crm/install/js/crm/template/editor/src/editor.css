@@ -1,0 +1,40 @@
+.crm-template-editor__scope {
+	--color-background: rgba(82,92,105,.08);
+	--color-hover: rgba(82,92,105,.1);
+	--color-text: var(--ui-color-text-subtle, #A8ADB4);
+	--font-size: var(--ui-font-size-xs, 12px);
+	--font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+
+.crm-template-editor-header {
+	padding-bottom: 10px;
+}
+
+.crm-template-editor-footer {
+	padding-top: 10px;
+}
+
+.crm-template-editor-element-pill {
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	background-color: var(--ui-color-palette-orange-25, #FFE9BE);
+	font-weight: var(--ui-typography-text-lg-font-weight, 400);
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	min-height: 21px;
+	padding: 0 9px 0 9px;
+	border-radius: 64px;
+	cursor: pointer;
+}
+
+.crm-template-editor-element-pill.--selected {
+	background-color: #EAF8FD;
+}
+
+.crm-template-editor-element-pill:after {
+	content: '\005E';
+	margin: 0 0 2px 3px;
+	font-weight: var(--ui-typography-text-lg-font-weight, 400);
+	transform: rotate(180deg);
+}

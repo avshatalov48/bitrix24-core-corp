@@ -33,4 +33,6 @@ class TimelineType
 	public const CALENDAR_SHARING = 26;
 	public const TASK = 27;
 	public const AI_CALL_PROCESSING = 28;
+	public const SIGN_B2E_DOCUMENT = 29;
+	public const SIGN_B2E_DOCUMENT_LOG = 30;
 }

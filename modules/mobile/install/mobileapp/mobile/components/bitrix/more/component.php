@@ -211,71 +211,64 @@ $arResult["menu"][] = [
 				]
 			],
 			"useLetterImage" => true,
-			"subtitle" => $apiVersion < 27 || !$canEditProfile ? GetMessage("MENU_VIEW_PROFILE") : GetMessage("MENU_EDIT_PROFILE"),
+			"subtitle" => $canEditProfile ? GetMessage("MENU_EDIT_PROFILE") : GetMessage("MENU_VIEW_PROFILE"),
 			"params" => [
 				"url" => SITE_DIR . "mobile/users/?ID=" . $userId,
 				"onclick" => <<<JS
-						if(Application.getApiVersion() < 27)
-						{
-							PageManager.openPage({url:this.params.url});
-						}
-						else
-						{
-							let canEdit = Boolean($canEditProfile);
-							let imageUrl =  this.imageUrl? this.imageUrl: "";
-							let top = {
-										imageUrl: imageUrl,
-										value: imageUrl,
-										title: this.title,
-										subtitle: "$workPosition",
-										sectionCode: "top",
-										height: 160,
-										type:"userpic",
-										useLetterImage:true,
-										color:"#2e455a"
-							};
+					let canEdit = Boolean($canEditProfile);
+					let imageUrl =  this.imageUrl? this.imageUrl: "";
+					let top = {
+								imageUrl: imageUrl,
+								value: imageUrl,
+								title: this.title,
+								subtitle: "$workPosition",
+								sectionCode: "top",
+								height: 160,
+								type:"userpic",
+								useLetterImage:true,
+								color:"#2e455a"
+					};
 
-							PageManager.openComponent("JSStackComponent",
-							{
-								scriptPath:"$editProfilePath",
-								componentCode: "profile.view",
-								params: {
-									"userId": $userId,
-									mode:canEdit?"edit":"view",
-									items:[
-											top,
-											{ type:"loading", sectionCode:"1", title:""}
-										],
-										sections:[
-											{id: "top", backgroundColor:"#f0f0f0"},
-											{id: "1", backgroundColor:"#f0f0f0"},
-										]
-								},
-								rootWidget:{
-									name:canEdit?"form":"list",
-									settings:{
-										objectName:"form",
-										items:[
-											{
-												"id":"PERSONAL_PHOTO",
-												useLetterImage:true,
-												color:"#2e455a",
-												imageUrl: this.imageUrl,
-												type:"userpic",
-												title:this.title,
-												sectionCode:"0"},
-											{ type:"loading", sectionCode:"1", title:""}
-										],
-										sections:[
-											{id: "0", backgroundColor:"#f0f0f0"},
-											{id: "1", backgroundColor:"#f0f0f0"},
-										],
-										groupStyle: true,
-										title: BX.message("PROFILE_INFO")
-									}
-								}
-							});
+					PageManager.openComponent("JSStackComponent",
+					{
+						scriptPath:"$editProfilePath",
+						componentCode: "profile.view",
+						params: {
+							"userId": $userId,
+							mode:canEdit?"edit":"view",
+							items:[
+									top,
+									{ type:"loading", sectionCode:"1", title:""}
+								],
+								sections:[
+									{id: "top", backgroundColor:"#f0f0f0"},
+									{id: "1", backgroundColor:"#f0f0f0"},
+								]
+						},
+						rootWidget:{
+							name:canEdit?"form":"list",
+							settings:{
+								objectName:"form",
+								items:[
+									{
+										"id":"PERSONAL_PHOTO",
+										useLetterImage:true,
+										color:"#2e455a",
+										imageUrl: this.imageUrl,
+										type:"userpic",
+										title:this.title,
+										sectionCode:"0"},
+									{ type:"loading", sectionCode:"1", title:""}
+								],
+								sections:[
+									{id: "0", backgroundColor:"#f0f0f0"},
+									{id: "1", backgroundColor:"#f0f0f0"},
+								],
+								groupStyle: true,
+								title: BX.message("PROFILE_INFO")
+							}
 						}
+					});
 
 JS
 
@@ -307,7 +300,7 @@ if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
 		"min_api_version" => 31,
 		"imageUrl" => $this->getPath() . "/images/favorite/icon-stress.png?1",
 		"color" => "#55D0E0",
-		"hidden"=>\Bitrix\MobileApp\Mobile::$apiVersion < 31,
+		"hidden"=> false,
 		"attrs" => [
 			"id" => "stress",
 			"onclick"=>""

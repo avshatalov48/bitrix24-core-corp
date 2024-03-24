@@ -1074,6 +1074,12 @@ abstract class Base implements Volume\IVolumeIndicator, IErrorable
 			$limitSql = 'LIMIT '.$this->getLimit();
 		}
 
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
+		}
+
 		$querySql = "
 			SELECT
 				files.ID as FILE_ID,
@@ -1088,7 +1094,7 @@ abstract class Base implements Volume\IVolumeIndicator, IErrorable
 					SELECT  object_id, max(id) as id
 					FROM b_disk_version 
 					GROUP BY object_id
-					ORDER BY NULL
+					{$prefSql}
 				) head ON head.OBJECT_ID = files.ID
 			
 				LEFT JOIN b_disk_attached_object attached
@@ -1100,7 +1106,7 @@ abstract class Base implements Volume\IVolumeIndicator, IErrorable
 					ON link.OBJECT_ID = ver.OBJECT_ID
 					AND link.VERSION_ID = ver.ID
 					AND link.VERSION_ID != head.ID
-					AND ifnull(link.TYPE, -1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+					AND COALESCE(link.TYPE, -1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 			WHERE 
 				files.TYPE = ". ObjectTable::TYPE_FILE. "

@@ -678,7 +678,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			],
 			'RESPONSIBLE_ID' => [
 				'id' => 'RESPONSIBLE_ID',
-				'name' => Loc::getMessage('TASKS_TAG_GRID_TASK_COLUMN_TASK_RESPONSIBLE'),
+				'name' => Loc::getMessage('TASKS_TAG_GRID_TASK_COLUMN_TASK_ASSIGNEE'),
 				'sort' => false,
 				'first_order' => 'asc',
 				'default' => true,

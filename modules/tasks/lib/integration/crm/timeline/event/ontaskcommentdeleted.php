@@ -29,7 +29,7 @@ class OnTaskCommentDeleted implements TimeLineEvent
 		return [
 			'AUTHOR_ID' => $this->userId,
 			'TASK_FILE_IDS' => $this->fileIds,
-			'TASK_ID' => $this->task->getId(),
+			'TASK_ID' => $this->task?->getId(),
 			'REFRESH_TASK_ACTIVITY' => true,
 		];
 	}

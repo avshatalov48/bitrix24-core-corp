@@ -60,15 +60,15 @@ jn.define('apptheme', (require, exports, module) => {
 			return nativeAppTheme.setId(id);
 		}
 
-		static toggle(ontoggle = null)
+		static toggle(onToggle = null)
 		{
 			const currentId = AppTheme.id;
 			const newId = currentId === DARK ? LIGHT : DARK;
 			AppTheme.setId(newId);
 
-			if (ontoggle !== null && typeof ontoggle === 'function')
+			if (onToggle !== null && typeof onToggle === 'function')
 			{
-				ontoggle.apply(null, [newId]);
+				onToggle.apply(null, [newId]);
 			}
 			else
 			{

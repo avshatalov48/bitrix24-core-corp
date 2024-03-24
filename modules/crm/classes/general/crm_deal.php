@@ -1744,6 +1744,9 @@ class CAllCrmDeal
 				$arFields['ASSIGNED_BY_ID'] = $userID;
 			}
 		}
+		$arFields['CREATED_BY_ID'] = (int)($arFields['CREATED_BY_ID'] ?? 0);
+		$arFields['MODIFY_BY_ID'] = (int)($arFields['MODIFY_BY_ID'] ?? 0);
+		$arFields['ASSIGNED_BY_ID'] = (int)($arFields['ASSIGNED_BY_ID'] ?? 0);
 
 		if(!isset($arFields['TITLE']) || !is_string($arFields['TITLE']) || trim($arFields['TITLE']) === '')
 		{

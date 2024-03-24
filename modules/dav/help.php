@@ -25,7 +25,7 @@ else
 	$APPLICATION->SetTitle(GetMessage("DAV_HELP_NAME"));
 }
 
-echo str_replace("#SERVER#", $_SERVER["SERVER_NAME"], GetMessage('DAV_HELP_TEXT'));
+echo str_replace("#SERVER#", $_SERVER["SERVER_NAME"], GetMessage('DAV_HELP_TEXT_1'));
 
 if ($inDialog)
 {

@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 	const { chevronDown } = require('assets/common');
 	const AppTheme = require('apptheme');
 	const { BaseField } = require('layout/ui/fields/base');
+	const { TaskStatus } = require('tasks/enum');
 	const { ActionMenu } = require('tasks/layout/task/actionMenu');
 	const { ActionButton } = require('tasks/layout/task/fields/status/actionButton');
 
@@ -16,23 +17,23 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 			const locPrefix = 'TASKSMOBILE_LAYOUT_TASK_FIELDS_STATUS';
 
 			return {
-				[Task.statusList.pending]: {
+				[TaskStatus.PENDING]: {
 					title: Loc.getMessage(`${locPrefix}_PENDING`),
 					backgroundColor: AppTheme.colors.accentExtraAqua,
 				},
-				[Task.statusList.inprogress]: {
+				[TaskStatus.IN_PROGRESS]: {
 					title: Loc.getMessage(`${locPrefix}_IN_PROGRESS`),
 					backgroundColor: AppTheme.colors.accentMainSuccess,
 				},
-				[Task.statusList.waitCtrl]: {
+				[TaskStatus.SUPPOSEDLY_COMPLETED]: {
 					title: Loc.getMessage(`${locPrefix}_SUPPOSEDLY_COMPLETED`),
 					backgroundColor: AppTheme.colors.accentMainWarning,
 				},
-				[Task.statusList.completed]: {
+				[TaskStatus.COMPLETED]: {
 					title: Loc.getMessage(`${locPrefix}_COMPLETED`),
 					backgroundColor: AppTheme.colors.base4,
 				},
-				[Task.statusList.deferred]: {
+				[TaskStatus.DEFERRED]: {
 					title: Loc.getMessage(`${locPrefix}_DEFERRED`),
 					backgroundColor: AppTheme.colors.base4,
 				},

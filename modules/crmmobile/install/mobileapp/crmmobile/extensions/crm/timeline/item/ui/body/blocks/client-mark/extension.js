@@ -75,4 +75,3 @@ jn.define('crm/timeline/item/ui/body/blocks/client-mark', (require, exports, mod
 
 	module.exports = { TimelineItemBodyClientMark };
 });
-

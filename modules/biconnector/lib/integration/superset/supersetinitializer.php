@@ -6,13 +6,16 @@ use Bitrix\BIConnector\Integration\Superset\Integrator\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Superset\ActionFilter\ProxyAuth;
+use Bitrix\BIConnector\Superset\KeyManager;
 use Bitrix\BIConnector\Superset\Logger\SupersetInitializerLogger;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\BIConnector\Superset\UI\DashboardManager;
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Error;
+use Bitrix\Main\Type\DateTime;
 
 final class SupersetInitializer
 {
@@ -21,6 +24,8 @@ final class SupersetInitializer
 	public const SUPERSET_STATUS_FROZEN = 'FROZEN';
 	public const SUPERSET_STATUS_DISABLED = 'DISABLED';
 	public const SUPERSET_STATUS_DOESNT_EXISTS = 'DOESNT_EXISTS'; // If portal startup superset first time
+
+	public const FREEZE_REASON_TARIFF = 'TARIFF';
 
 	private const LAST_STARTUP_ATTEMPT_OPTION = 'last_superset_startup_attempt';
 
@@ -31,12 +36,10 @@ final class SupersetInitializer
 	{
 		$status = self::getSupersetStatus();
 		$canSendAnotherRequest = ($status === self::SUPERSET_STATUS_LOAD && self::needCheckSupersetStatus());
-		if (
-			($status === self::SUPERSET_STATUS_DISABLED || $status === self::SUPERSET_STATUS_DOESNT_EXISTS)
-			|| $canSendAnotherRequest
-		)
+		if (!self::isSupersetExist() || $canSendAnotherRequest)
 		{
-			Option::set('biconnector', self::LAST_STARTUP_ATTEMPT_OPTION, (new DateTime())->getTimestamp());
+			SupersetInitializerLogger::logInfo("portal make superset startup", ['current_status' => $status]);
+			self::fixLastStartupAttempt();
 			self::startSupersetInitialize($status !== self::SUPERSET_STATUS_LOAD);
 
 			if ($status !== self::SUPERSET_STATUS_LOAD)
@@ -49,6 +52,11 @@ final class SupersetInitializer
 		return $status;
 	}
 
+	public static function fixLastStartupAttempt(): void
+	{
+		Option::set('biconnector', self::LAST_STARTUP_ATTEMPT_OPTION, (new DateTime())->getTimestamp());
+	}
+
 	private static function needCheckSupersetStatus(): bool
 	{
 		$lastCheck = (int)Option::get('biconnector', self::LAST_STARTUP_ATTEMPT_OPTION, 0);
@@ -58,9 +66,9 @@ final class SupersetInitializer
 			return true;
 		}
 
-		$lastCheckTime = DateTime::createFromTimestamp($lastCheck)->add('20 minutes');
+		$lastCheckTime = DateTime::createFromTimestamp($lastCheck)->add('10 minutes');
 
-		return (new DateTime()) >= $lastCheckTime; // check again after 20 minutes
+		return (new DateTime()) >= $lastCheckTime; // check again after 10 minutes
 	}
 
 	public static function createSuperset(): string
@@ -147,7 +155,19 @@ final class SupersetInitializer
 		self::onSupersetCreated();
 	}
 
-	public static function unfreezeSuperset(): void
+	public static function freezeSuperset(array $params = []): void
+	{
+		$proxyIntegrator = ProxyIntegrator::getInstance();
+		$proxyIntegrator->freezeSuperset($params);
+	}
+
+	public static function unfreezeSuperset(array $params = []): void
+	{
+		$proxyIntegrator = ProxyIntegrator::getInstance();
+		$proxyIntegrator->unfreezeSuperset($params);
+	}
+
+	public static function setSupersetUnfreezed(): void
 	{
 		self::setSupersetStatus(self::SUPERSET_STATUS_READY);
 		DashboardManager::notifySupersetUnfreeze();
@@ -177,9 +197,15 @@ final class SupersetInitializer
 		}
 
 		$user = \Bitrix\Main\Engine\CurrentUser::get();
-		$accessKey = \Bitrix\BIConnector\KeyManager::getOrCreateAccessKey($user, false);
-
-		Option::set('biconnector', '~superset_key', $accessKey);
+		$accessKey = KeyManager::getAccessKey();
+		if ($accessKey === null)
+		{
+			$createdResult = KeyManager::createAccessKey($user);
+			if ($createdResult->isSuccess())
+			{
+				$accessKey = $createdResult->getData()['ACCESS_KEY'] ?? null;
+			}
+		}
 
 		if ($accessKey === null)
 		{
@@ -190,7 +216,7 @@ final class SupersetInitializer
 		if ($response->getStatus() === IntegratorResponse::STATUS_CREATED)
 		{
 			self::enableSuperset();
-			
+
 			return $response->getStatus();
 		}
 
@@ -214,7 +240,19 @@ final class SupersetInitializer
 
 	public static function isSupersetActive(): bool
 	{
-		return self::getSupersetStatus() === self::SUPERSET_STATUS_READY;
+		$activeStatuses = [
+			self::SUPERSET_STATUS_READY,
+			self::SUPERSET_STATUS_FROZEN,
+		];
+
+		return in_array(self::getSupersetStatus(), $activeStatuses);
+	}
+
+	public static function isSupersetExist(): bool
+	{
+		$status = self::getSupersetStatus();
+
+		return $status !== self::SUPERSET_STATUS_DOESNT_EXISTS && $status !== self::SUPERSET_STATUS_DISABLED;
 	}
 
 	public static function isSupersetLoad(): bool
@@ -225,6 +263,11 @@ final class SupersetInitializer
 		];
 
 		return in_array(self::getSupersetStatus(), $possibleLoadStatus, true);
+	}
+
+	public static function isSupersetFrozen(): bool
+	{
+		return self::getSupersetStatus() === self::SUPERSET_STATUS_FROZEN;
 	}
 
 	public static function onUnsuccessfulSupersetStartup(Error ...$errors): void
@@ -271,5 +314,71 @@ final class SupersetInitializer
 		}
 
 		DashboardManager::notifyBatchDashboardStatus($notifyList);
+	}
+
+	public static function onBitrix24LicenseChange(): void
+	{
+		if (self::getSupersetStatus() === self::SUPERSET_STATUS_DOESNT_EXISTS)
+		{
+			return;
+		}
+
+		if (Loader::includeModule('bitrix24'))
+		{
+			$params = [
+				'reason' => self::FREEZE_REASON_TARIFF,
+			];
+
+			if (Feature::isFeatureEnabledFor('bi_constructor', \CBitrix24::getLicenseType()))
+			{
+				self::unfreezeSuperset($params);
+			}
+			else
+			{
+				self::freezeSuperset($params);
+			}
+		}
+	}
+
+	public static function refreshSupersetDomainConnection(): ?string
+	{
+		if (!self::isSupersetExist())
+		{
+			return null;
+		}
+
+		$response = ProxyIntegrator::getInstance()->refreshDomainConnection();
+
+		if (!$response->hasErrors() && $response->getStatus() === IntegratorResponse::STATUS_OK)
+		{
+			return null;
+		}
+
+		$className = __CLASS__;
+		$agentName = "\\$className::refreshSupersetDomainConnection();";
+		$agent = \CAgent::GetList(
+				['ID' => 'DESC'],
+				[
+					'MODULE_ID' => 'biconnector',
+					'NAME' => $agentName,
+				]
+			)
+			->Fetch()
+		;
+
+		if (!$agent)
+		{
+			\CAgent::AddAgent(
+				$agentName,
+				'biconnector',
+				'N',
+				3600,
+				'',
+				'Y',
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 1800, 'FULL')
+			);
+		}
+
+		return $agentName;
 	}
 }

@@ -12,5 +12,6 @@ return [
 		'feature',
 		'settings/disabled-tools',
 		'layout/ui/info-helper',
+		'notify-manager',
 	],
 ];

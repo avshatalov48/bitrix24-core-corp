@@ -4,7 +4,7 @@ namespace Bitrix\CrmMobile\Controller\ReceivePayment;
 
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 use Bitrix\CrmMobile\Controller\PrimaryAutoWiredEntity;
-use Bitrix\CrmMobile\Controller\PublicErrorsTrait;
+use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\JsonController;
 

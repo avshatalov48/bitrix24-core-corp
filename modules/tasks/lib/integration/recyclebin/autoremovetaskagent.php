@@ -1,6 +1,7 @@
 <?php
 /**
  * Bitrix Framework
+ *
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2022 Bitrix
@@ -8,29 +9,48 @@
 
 namespace Bitrix\Tasks\Integration\Recyclebin;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Update\AgentInterface;
+use Bitrix\Tasks\Update\AgentTrait;
 
-class AutoRemoveTaskAgent
+class AutoRemoveTaskAgent implements AgentInterface
 {
+	use AgentTrait;
+
+	private const OPTION_KEY = 'auto_cleaning_enabled';
+
 	private static bool $processing = false;
+
 	private RecyclebinTasksRepositoryInterface $repository;
+
+	public static function execute(): string
+	{
+		return (new static(new RecycleBinOrmRepository()))->run();
+	}
 
 	public function __construct(RecyclebinTasksRepositoryInterface $repository)
 	{
 		$this->repository = $repository;
 	}
 
-	public function execute(): string
+	/**
+	 * @uses RecycleBinOrmRepository
+	 * @uses RecycleBinMemoryRepository
+	 */
+	public function run(): string
 	{
-		// check if recyclebin module is loaded
-		if (!Loader::includeModule('recyclebin'))
+		if (
+			!Loader::includeModule('recyclebin')
+			|| !$this->isEnabled()
+		)
 		{
 			return '';
 		}
-		// check if another agent is processing
+
 		if ($this->isProcessing())
 		{
-			return $this->getAgentName();
+			return static::getAgentName();
 		}
 
 		$this->startProcessing();
@@ -40,13 +60,7 @@ class AutoRemoveTaskAgent
 		);
 		$this->stopProcessing();
 
-		return $this->getAgentName();
-	}
-
-	public function getAgentName(): string
-	{
-		// ex. (new Bitrix\Tasks\Integration\Recyclebin\AutoRemoveTaskAgent(new Bitrix\Tasks\Integration\Recyclebin\RecycleBinMemoryRepository()))->execute();
-		return "(new " . self::class . "(new " . get_class($this->repository) . "()))->execute();";
+		return static::getAgentName();
 	}
 
 	public function isProcessing(): bool
@@ -65,5 +79,10 @@ class AutoRemoveTaskAgent
 		{
 			self::$processing = false;
 		}
+	}
+
+	private function isEnabled(): bool
+	{
+		return Option::get(Manager::MODULE_ID, static::OPTION_KEY, 'N', '-') === 'Y';
 	}
 }

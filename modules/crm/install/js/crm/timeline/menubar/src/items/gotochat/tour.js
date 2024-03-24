@@ -1,5 +1,6 @@
 import { Dom, Event, Loc, Reflection, Runtime } from 'main.core';
 import { Guide } from 'ui.tour';
+import { TourInterface } from 'crm.tour-manager';
 import './gotochat.css';
 
 const UserOptions = Reflection.namespace('BX.userOptions');
@@ -7,20 +8,13 @@ const UserOptions = Reflection.namespace('BX.userOptions');
 const ARTICLE_CODE = '18114500';
 
 /** @memberof BX.Crm.Timeline.MenuBar.GoToChat */
-export default class Tour
+export default class Tour implements TourInterface
 {
 	#guideBindElement: ?HTMLElement = null;
 	#targetElementRect: ?DOMRect = null;
 	#observerTimeoutId: number = null;
 	#guide: ?Guide = null;
 	#spotlight: ?BX.SpotLight = null;
-
-	static show(): void
-	{
-		const instance = new Tour();
-
-		instance.showGuide();
-	}
 
 	constructor()
 	{
@@ -29,26 +23,42 @@ export default class Tour
 		Event.bind(window, 'resize', this.onWindowResize);
 	}
 
-	showGuide(): void
+	canShow(): boolean
+	{
+		return true;
+	}
+
+	show(): void
 	{
 		this.#spotlight = this.#createSpotlight();
 		this.#spotlight.show();
 
-		this.#guide = this.#createGuide(
-			this.getGuideBindElement(),
-			{
-				onClose: () => {
-					UserOptions.save('crm', 'gotochat', 'isTimelineTourViewedInWeb', 1);
-					this.#spotlight.close();
-					if (this.#observerTimeoutId)
-					{
-						clearInterval(this.#observerTimeoutId);
-						this.#observerTimeoutId = null;
-					}
+		this.getGuide().showNextStep();
+	}
+
+	getGuide(): Guide
+	{
+		if (!this.#guide)
+		{
+			this.#guide = this.#createGuide(
+				this.getGuideBindElement(),
+				{
+					onClose: () => {
+						UserOptions.save('crm', 'gotochat', 'isTimelineTourViewedInWeb', 1);
+						this.#spotlight.close();
+						if (this.#observerTimeoutId)
+						{
+							clearInterval(this.#observerTimeoutId);
+							this.#observerTimeoutId = null;
+						}
+
+						Event.unbind(window, 'resize', this.onWindowResize);
+					},
 				},
-			},
-		);
-		this.#guide.showNextStep();
+			);
+		}
+
+		return this.#guide;
 	}
 
 	onWindowResize()

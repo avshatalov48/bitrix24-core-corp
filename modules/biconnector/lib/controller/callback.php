@@ -4,6 +4,7 @@ namespace Bitrix\BIConnector\Controller;
 
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\ActionFilter\ProxyAuth;
+use Bitrix\BIConnector\Superset\Logger\SupersetInitializerLogger;
 use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Controller;
@@ -21,7 +22,7 @@ class Callback extends Controller
 	{
 		if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_FROZEN)
 		{
-			SupersetInitializer::unfreezeSuperset();
+			SupersetInitializer::setSupersetUnfreezed();
 
 			return;
 		}
@@ -43,5 +44,10 @@ class Callback extends Controller
 		{
 			SupersetInitializer::enableSuperset();
 		}
+	}
+
+	public function freezeAction(): void
+	{
+		SupersetInitializerLogger::logInfo('Portal got freeze action', ['current_status' => SupersetInitializer::getSupersetStatus()]);
 	}
 }

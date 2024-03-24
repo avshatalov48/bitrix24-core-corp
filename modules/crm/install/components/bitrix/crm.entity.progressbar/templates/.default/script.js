@@ -1,3 +1,4 @@
+/* eslint-disable */
 BX.namespace("BX.Crm");
 if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 {
@@ -122,41 +123,66 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					this.adjustSteps(currentStepIndex, BX.Crm.EntityDetailProgressControl.getStepColor(currentStepInfo));
 				}
 
-				BX.addCustomEvent(window, "Crm.EntityModel.Change", BX.delegate(this.onEntityModelChange, this));
+				BX.addCustomEvent(window, 'Crm.EntityModel.Change', this.onEntityModelChange.bind(this));
+				BX.addCustomEvent(window, 'BX.Crm.EntityEditor:onEntityReload', this.onEntityReload.bind(this));
 			},
-			onEntityModelChange: function(sender, eventArgs)
+			onEntityReload(event)
 			{
-				if(BX.prop.getInteger(eventArgs, "entityTypeId", 0) !== this._entityTypeId
-					|| BX.prop.getInteger(eventArgs, "entityId", 0) !== this._entityId
+				const { entityId, entityTypeName, entityData } = event;
+				const { entityFieldName: stepIdFieldName } = this.getSettings();
+
+				if (
+					this.getEntityId() !== entityId
+					|| this.getEntityTypeName() !== entityTypeName
+					|| stepIdFieldName === ''
 				)
 				{
 					return;
 				}
 
-				var fieldName = BX.prop.getString(this._settings, "entityFieldName", "");
-				if(fieldName === "")
+				const stepId = entityData[stepIdFieldName];
+				if (stepId === this.getCurrentStepId())
 				{
 					return;
 				}
 
-				if(!BX.prop.getBoolean(eventArgs, "forAll", false) && fieldName !== BX.prop.getString(eventArgs, "fieldName", ""))
+				this.setCurrentStepByIdAndAdjustSteps(stepId);
+			},
+			onEntityModelChange(sender, eventArgs)
+			{
+				if (
+					BX.prop.getInteger(eventArgs, 'entityTypeId', 0) !== this.getEntityTypeId()
+					|| BX.prop.getInteger(eventArgs, 'entityId', 0) !== this.getEntityId()
+				)
 				{
 					return;
 				}
 
-				var currentStepId = sender.getField(fieldName, "");
-				if(currentStepId === this._currentStepId)
+				const { entityFieldName: stepIdFieldName } = this.getSettings();
+				if (stepIdFieldName === '')
 				{
 					return;
 				}
 
-				var currentStepIndex = this.findStepInfoIndex(currentStepId);
-				if(currentStepIndex >= 0)
+				if (
+					!BX.prop.getBoolean(eventArgs, 'forAll', false)
+					&& stepIdFieldName !== BX.prop.getString(eventArgs, 'fieldName', '')
+				)
 				{
-					var currentStepInfo = this._stepInfos[currentStepIndex];
-					this.setCurrentStep(currentStepInfo);
-					this.adjustSteps(currentStepIndex, BX.Crm.EntityDetailProgressControl.getStepColor(currentStepInfo));
+					return;
 				}
+
+				const currentStepId = sender.getField(stepIdFieldName, '');
+				if (currentStepId === this.getCurrentStepId())
+				{
+					return;
+				}
+
+				this.setCurrentStepByIdAndAdjustSteps(currentStepId);
+			},
+			getSettings()
+			{
+				return this._settings;
 			},
 			getEntityId: function()
 			{
@@ -190,6 +216,10 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 			getTerminationStep: function()
 			{
 				return this._steps.length > 0 ? this._steps[this._steps.length - 1] : null;
+			},
+			getStepInfo(stepIndex)
+			{
+				return this._stepInfos[stepIndex];
 			},
 			getStepById: function(stepId)
 			{
@@ -283,6 +313,20 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				);
 
 				return true;
+			},
+			setCurrentStepByIdAndAdjustSteps(id)
+			{
+				const stepIndex = this.findStepInfoIndex(id);
+				if (stepIndex < 0)
+				{
+					return;
+				}
+
+				const stepInfo = this.getStepInfo(stepIndex);
+				const stepColor = BX.Crm.EntityDetailProgressControl.getStepColor(stepInfo);
+
+				this.setCurrentStep(stepInfo);
+				this.adjustSteps(stepIndex, stepColor);
 			},
 			adjustFinalStepName: function()
 			{
@@ -459,7 +503,8 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 			},
 			onEntityEditorDialogClose: function(sender, eventParams)
 			{
-				if(!(this._entityTypeId === BX.prop.getInteger(eventParams, "entityTypeId", 0)
+				if(
+					!(this._entityTypeId === BX.prop.getInteger(eventParams, "entityTypeId", 0)
 					&& this._entityId === BX.prop.getInteger(eventParams, "entityId", 0))
 				)
 				{
@@ -472,14 +517,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				if(BX.prop.getBoolean(eventParams, "isCancelled", true) && this._previousStepId !== "")
 				{
 					//Rollback current step
-					var stepIndex = this.findStepInfoIndex(this._previousStepId);
-					var stepInfo = this._stepInfos[stepIndex];
-					this.setCurrentStep(stepInfo);
-
-					this.adjustSteps(
-						stepIndex,
-						BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[stepIndex])
-					);
+					this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
 				}
 			},
 			openTerminationDialog: function()
@@ -635,20 +673,14 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				BX.onCustomEvent(this, 'CrmProgressControlBeforeFailureDialogClose', [ this, this._failureDlg ]);
 				this.closeFailureDialog();
 				var bid = BX.type.isNotEmptyString(params["bid"]) ? params["bid"] : "";
-				if(bid !== "accept")
+				if(bid !== 'accept')
 				{
 					//Rollback current step
-					if(this._previousStepId !== "")
+					if(this._previousStepId !== '')
 					{
-						stepIndex = this.findStepInfoIndex(this._previousStepId);
-						stepInfo = this._stepInfos[stepIndex];
-						this.setCurrentStep(stepInfo);
-
-						this.adjustSteps(
-							stepIndex,
-							BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[stepIndex])
-						);
+						this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
 					}
+
 					return;
 				}
 
@@ -677,16 +709,9 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						if(verboseMode)
 						{
 							//Rollback current step
-							if(this._previousStepId !== "")
+							if(this._previousStepId !== '')
 							{
-								stepIndex = this.findStepInfoIndex(this._previousStepId);
-								stepInfo = this._stepInfos[stepIndex];
-								this.setCurrentStep(stepInfo);
-
-								this.adjustSteps(
-									stepIndex,
-									BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[stepIndex])
-								);
+								this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
 							}
 
 							//User have to make choice

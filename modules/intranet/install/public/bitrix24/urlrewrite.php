@@ -863,6 +863,12 @@ $arUrlRewrite = array(
 		'PATH' => '/page/index.php',
 	),
 	array(
+		"CONDITION" => "#^/sign/link/member/([0-9]+)#",
+		"RULE" => "memberId=\$1",
+		"ID" => "",
+		"PATH" => "/sign/link.php",
+	),
+	array(
 		"CONDITION" => "#^/sign/#",
 		"RULE" => "",
 		"ID" => "bitrix:sign.start",

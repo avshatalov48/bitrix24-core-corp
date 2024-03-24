@@ -52,6 +52,7 @@ $MESS["TASKS_PRIORITY_1"] = "Normal";
 $MESS["TASKS_PRIORITY_2"] = "High";
 $MESS["TASKS_SONET_LOG_ACCOMPLICES"] = "participants";
 $MESS["TASKS_SONET_LOG_ADD_IN_REPORT"] = "in report";
+$MESS["TASKS_SONET_LOG_ASSIGNEE"] = "Assignee";
 $MESS["TASKS_SONET_LOG_AUDITORS"] = "observers";
 $MESS["TASKS_SONET_LOG_DEADLINE"] = "deadline";
 $MESS["TASKS_SONET_LOG_DEPENDS_ON"] = "previous tasks";

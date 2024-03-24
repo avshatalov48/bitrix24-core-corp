@@ -73,12 +73,10 @@ class TemplateDependence
 			return;
 		}
 
-		$sql = "
-			INSERT IGNORE INTO ". TemplateDependenceTable::getTableName() ."
-			(`TEMPLATE_ID`, `DEPENDS_ON_ID`)
-			VALUES
-			". implode(", ", $insertRows) ."
-		";
+		$sql = $this->getInsertIgnore(
+			'(TEMPLATE_ID, DEPENDS_ON_ID)',
+			"VALUES " . implode(", ", $insertRows)
+		);
 
 		Application::getConnection()->query($sql);
 	}

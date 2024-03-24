@@ -13,10 +13,12 @@ return [
 	],
 	'js' => 'dist/terminal.bundle.js',
 	'rel' => [
+		'ui.dialogs.messagebox',
 		'ui.vue3',
 		'ui.switcher',
-		'main.core',
 		'main.popup',
+		'ui.label',
+		'main.core',
 		'ui.vue3.vuex',
 		'ui.notification',
 	],

@@ -25,6 +25,7 @@ use Bitrix\Tasks\Integration\Replica;
 
 final class User
 {
+	private static array $defaultUserStorage = [];
 	private static $accessLevels = array();
 	private static $accessOperations = array();
 	private static $accessLevel2Operation = null;
@@ -791,17 +792,63 @@ final class User
 		array $userIds,
 		$siteId = null,
 		$nameTemplate = null,
-		bool $allowEmpty = false
+		bool $allowEmpty = false,
+		array $select = ['default']
 	): array
 	{
-		$data = [];
-		$usersData = self::getData($userIds);
+		$usersData = in_array('default', $select)
+			? self::getDefaultData($userIds)
+			: self::getData($userIds, $select);
 
+		$data = [];
 		foreach ($userIds as $userId)
 		{
 			$data[$userId] = self::formatName($usersData[$userId] ?? null, $nameTemplate, null, $allowEmpty);
 		}
 
 		return $data;
+	}
+
+	private static function getDefaultData(array $userIds): array
+	{
+		$userIds = array_map('intval', $userIds);
+		$unCachedUserIds = self::extractUnCachedUserIds($userIds);
+		if (!empty($unCachedUserIds))
+		{
+			$unCachedUsers = self::getData($unCachedUserIds, self::getDefaultSelect());
+			self::cacheUsers($unCachedUsers);
+		}
+
+		return self::extractCachedUserIds($userIds);
+	}
+
+	private static function extractUnCachedUserIds(array $userIds): array
+	{
+		return array_filter($userIds, fn (int $userId): bool => !isset(self::$defaultUserStorage[$userId]));
+	}
+
+	private static function extractCachedUserIds(array $userIds): array
+	{
+		return array_filter(self::$defaultUserStorage, fn (array $user) : bool => in_array((int)$user['ID'], $userIds));
+	}
+
+	private static function cacheUsers(array $users): void
+	{
+		array_map(function(array $user): void {
+			self::$defaultUserStorage[(int)$user['ID']] = $user;
+		}, $users);
+	}
+
+	private static function getDefaultSelect(): array
+	{
+		return [
+			'ID',
+			'NAME',
+			'LAST_NAME',
+			'SECOND_NAME',
+			'TITLE',
+			'LOGIN',
+			'EMAIL',
+		];
 	}
 }

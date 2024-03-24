@@ -19,14 +19,14 @@ class RoleMap
 	{
 		return [
 			RoleDictionary::TASKS_ROLE_ADMIN => [
-				PermissionDictionary::TASK_RESPONSE_EDIT,
-				PermissionDictionary::TASK_RESPONSE_DELEGATE,
-				PermissionDictionary::TASK_RESPONSE_ASSIGN,
-				PermissionDictionary::TASK_RESPONSE_CHECKLIST_EDIT,
-				PermissionDictionary::TASK_RESPONSE_CHECKLIST_ADD,
+				PermissionDictionary::TASK_ASSIGNEE_EDIT,
+				PermissionDictionary::TASK_ASSIGNEE_DELEGATE,
+				PermissionDictionary::TASK_ASSIGNEE_ASSIGN,
+				PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_EDIT,
+				PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_ADD,
 				PermissionDictionary::TASK_CLOSED_DIRECTOR_EDIT,
 				PermissionDictionary::TASK_DIRECTOR_DELETE,
-				PermissionDictionary::TASK_RESPONSE_CHANGE_RESPONSIBLE,
+				PermissionDictionary::TASK_ASSIGNEE_CHANGE_RESPONSIBLE,
 
 				PermissionDictionary::TASK_DEPARTMENT_DIRECT,
 				PermissionDictionary::TASK_DEPARTMENT_MANAGER_DIRECT,
@@ -57,8 +57,8 @@ class RoleMap
 				PermissionDictionary::TASK_ROBOT_EDIT
 			],
 			RoleDictionary::TASKS_ROLE_CHIEF => [
-				PermissionDictionary::TASK_RESPONSE_DELEGATE,
-				PermissionDictionary::TASK_RESPONSE_CHECKLIST_ADD,
+				PermissionDictionary::TASK_ASSIGNEE_DELEGATE,
+				PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_ADD,
 				PermissionDictionary::TASK_CLOSED_DIRECTOR_EDIT,
 				PermissionDictionary::TASK_DIRECTOR_DELETE,
 
@@ -78,8 +78,8 @@ class RoleMap
 				PermissionDictionary::TASK_ROBOT_EDIT
 			],
 			RoleDictionary::TASKS_ROLE_MANAGER => [
-				PermissionDictionary::TASK_RESPONSE_DELEGATE,
-				PermissionDictionary::TASK_RESPONSE_CHECKLIST_ADD,
+				PermissionDictionary::TASK_ASSIGNEE_DELEGATE,
+				PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_ADD,
 				PermissionDictionary::TASK_CLOSED_DIRECTOR_EDIT,
 				PermissionDictionary::TASK_DIRECTOR_DELETE,
 

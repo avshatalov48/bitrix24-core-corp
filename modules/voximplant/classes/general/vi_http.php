@@ -1052,6 +1052,15 @@ class CVoxImplantHttp
 			}
 		}
 
+		if (
+			$decodedResponse instanceof \stdClass
+			&& $decodedResponse->error instanceof \stdClass
+			&& !isset($decodedResponse->error->code)
+		)
+		{
+			$decodedResponse->error->code = '';
+		}
+
 		return $decodedResponse;
 	}
 

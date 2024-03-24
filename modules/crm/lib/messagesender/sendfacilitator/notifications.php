@@ -11,6 +11,7 @@ use Bitrix\Main\ArgumentException;
 final class Notifications extends SendFacilitator
 {
 	private ?string $templateCode = null;
+	private ?string $messageTemplate = null;
 	/** @var Array<string, mixed>  */
 	private array $placeholders = [];
 	private $languageId;

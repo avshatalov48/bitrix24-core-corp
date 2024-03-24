@@ -461,9 +461,13 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				{
 					return BX.Crm.SmartInvoiceModel.create(id, settings);
 				}
-				else if(entityTypeId === BX.CrmEntityType.enumeration.smartdocument)
+				else if (entityTypeId === BX.CrmEntityType.enumeration.smartdocument)
 				{
 					return BX.Crm.SmartDocumentModel.create(id, settings);
+				}
+				else if (entityTypeId === BX.CrmEntityType.enumeration.smartb2edocument)
+				{
+					return BX.Crm.SmartB2eDocumentModel.create(id, settings);
 				}
 				else if (BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId))
 				{

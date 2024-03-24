@@ -460,7 +460,8 @@ BX.namespace('Tasks.Component');
 								networkUsers: networkEnabled,
 								extranetUsers: true,
 								inviteGuestLink: true,
-								myEmailUsers: true
+								myEmailUsers: true,
+								analyticsSource: 'task',
 							}
 						},
 						{

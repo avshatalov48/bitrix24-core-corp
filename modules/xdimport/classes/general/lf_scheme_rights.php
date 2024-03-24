@@ -6,6 +6,8 @@ IncludeModuleLangFile(__FILE__);
 
 class CXDILFSchemeRights
 {
+	public $LAST_ERROR = '';
+
 	function CheckFields($action, &$arFields)
 	{
 		global $APPLICATION;

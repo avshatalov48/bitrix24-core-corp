@@ -9,13 +9,13 @@ use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Timeline\SignDocument\DocumentData;
 use Bitrix\Crm\Timeline\SignDocument\MessageData;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sign\Document;
+use Bitrix\Sign\Service\Container;
 
 class SignDocument extends LogMessage
 {
 	protected ?DocumentData $documentData = null;
 	protected ?MessageData $messageData = null;
-	protected ?Document $signDocument = null;
+	protected ?\Bitrix\Sign\Item\Document $signDocument = null;
 
 	public function getType(): string
 	{
@@ -72,6 +72,7 @@ class SignDocument extends LogMessage
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_PIN_SEND_LIMIT_REACHED_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_ERROR => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_NOTIFICATION_ERROR'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_DELIVERED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_NOTIFICATION_DELIVERED'),
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGN_CONFIGURATION_ERROR => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_CONFIGURE_ERROR_TITLE'),
 		];
 		$messageData = $this->loadMessageData();
 
@@ -100,10 +101,9 @@ class SignDocument extends LogMessage
 				? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MAIL_SEND_TITLE')
 				: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SMS_SEND_TITLE');
 
-			$signDocument = $this->loadSignDocument();
-			$member = $signDocument->getMemberByHash($messageData->getRecipient()->getHash());
+			$member = Container::instance()->getMemberRepository()->getByUid($messageData->getRecipient()->getHash());
 
-			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED] = !$member->isInitiator()
+			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED] = $member->party !== 1
 				? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SIGNED_BY_SIDE_TITLE')
 				: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SIGNED_BY_INITIATOR_TITLE');
 		}
@@ -124,6 +124,11 @@ class SignDocument extends LogMessage
 		)
 		{
 			$blocks[] = $this->getChannelContentBlock();
+		}
+
+		if ($this->model->getTypeCategoryId() === Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGN_CONFIGURATION_ERROR)
+		{
+			$blocks[] = $this->getErrorContentBlock();
 		}
 
 		if ($this->loadMessageData())
@@ -158,14 +163,24 @@ class SignDocument extends LogMessage
 		;
 	}
 
-	private function getIntegrityCheckedBlock()
+	private function getErrorContentBlock(): ?Layout\Body\ContentBlock
 	{
+		$messageData = $this->loadMessageData();
+		if (!$messageData)
+		{
+			return null;
+		}
+
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
-			->setInline(true)
-			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MESSAGE_INTEGRITY_CHECKED'))
+			->setInline()
+			->setWordWrap()
+			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_CONFIGURE_ERROR'))
 			->setContentBlock((new Layout\Body\ContentBlock\Text())
-				->setValue(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MESSAGE_INTEGRITY_STATE_'
-					. $this->loadMessageData()->getIntegrityState())));
+				->setTitle($messageData->getError()?->getMessage())
+				->setValue($messageData->getError()?->getMessage())
+				->setIsMultiline()
+			)
+		;
 	}
 
 	private function getPinSendLimitContentBlock(): Layout\Body\ContentBlock\Text
@@ -199,7 +214,7 @@ class SignDocument extends LogMessage
 			->setInline()
 			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT'))
 			->setContentBlock((new Layout\Body\ContentBlock\Text())
-				->setValue(!empty($this->loadSignDocument()) ? $this->loadSignDocument()->getTitle() : ''));
+				->setValue(!empty($this->loadSignDocument()) ? $this->loadSignDocument()->title : ''));
 	}
 
 	protected function loadDocumentData(): DocumentData
@@ -216,7 +231,7 @@ class SignDocument extends LogMessage
 		return $this->documentData;
 	}
 
-	protected function loadSignDocument(): ?Document
+	protected function loadSignDocument(): ?\Bitrix\Sign\Item\Document
 	{
 		if (!$this->documentData)
 		{
@@ -225,7 +240,7 @@ class SignDocument extends LogMessage
 
 		if (!$this->signDocument)
 		{
-			$this->signDocument = Document::getById($this->documentData->getDocumentId());
+			$this->signDocument = Container::instance()->getDocumentRepository()->getById($this->documentData->getDocumentId());
 		}
 
 		return $this->signDocument;

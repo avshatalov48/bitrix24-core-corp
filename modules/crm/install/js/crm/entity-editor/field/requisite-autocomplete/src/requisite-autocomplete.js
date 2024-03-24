@@ -249,7 +249,7 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 		const data = this._schemeElement.getData();
 		if (
 			Type.isPlainObject(data)
-			&& data.hasOwnProperty("clientResolverPlacementParams")
+			&& Object.hasOwn(data, "clientResolverPlacementParams")
 			&& Type.isPlainObject(data["clientResolverPlacementParams"])
 		)
 		{
@@ -263,7 +263,7 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 					(data) => {
 						if (
 							Type.isPlainObject(data)
-							&& data.hasOwnProperty("data")
+							&& Object.hasOwn(data, "data")
 							&& Type.isPlainObject(data["data"])
 						)
 						{
@@ -295,10 +295,42 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 
 	getAutocompleteContext()
 	{
-		return {
+		const result = {
 			'typeId': 'ITIN',
-			'presetId': this._editor.getControlById('PRESET_ID').getValue()
+			'presetId': 0
 		};
+
+		const control = this._editor.getControlById('PRESET_ID');
+		if (control)
+		{
+			result.presetId = control.getValue();
+		}
+		else if (this._parent?._editor)
+		{
+			const schemeData = this._schemeElement.getData();
+			if (
+				Object.hasOwn(schemeData, "clientResolverProperty")
+				&& Type.isPlainObject(schemeData["clientResolverProperty"])
+			)
+			{
+				const property = schemeData["clientResolverProperty"];
+				if (
+					Object.hasOwn(property, "VALUE")
+					&& Type.isStringFilled(property["VALUE"])
+					&& Object.hasOwn(schemeData, "presetId")
+				)
+				{
+					const presetId = parseInt(schemeData["presetId"]);
+					if (!isNaN(presetId))
+					{
+						result.typeId = property["VALUE"];
+						result.presetId = presetId;
+					}
+				}
+			}
+		}
+
+		return result;
 	}
 
 	static create(id, settings)

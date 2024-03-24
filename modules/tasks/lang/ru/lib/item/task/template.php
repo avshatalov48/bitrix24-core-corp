@@ -15,4 +15,5 @@ $MESS["TASKS_ITEM_TASK_TEMPLATE_NO_TPARAM_TYPE_1_ALLOWED_ERROR_BECAUSE_REPLICATI
 $MESS["TASKS_ITEM_TASK_TEMPLATE_NO_TPARAM_TYPE_1_ALLOWED_ERROR_BASE_TEMPLATE_ID"] = "Невозможно создать шаблон для нового пользователя при установке базового шаблона";
 $MESS["TASKS_ITEM_TASK_TEMPLATE_NO_TPARAM_TYPE_1_ALLOWED_ERROR_BECAUSE_MULTITASK"] = "Невозможно создать шаблон для нового пользователя при включенных параметрах повторения";
 $MESS["TASKS_ITEM_TASK_TEMPLATE_BAD_RESPONSIBLE_ERROR"] = "Пользователь, указанный в поле \"Ответственный\" не найден";
+$MESS['TASKS_ITEM_TASK_TEMPLATE_BAD_ASSIGNEE_ERROR'] = 'Пользователь, указанный в поле "Исполнитель" не найден';
 ?>

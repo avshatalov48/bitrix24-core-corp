@@ -9,6 +9,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\Configuration\Action\Import;
 use Bitrix\Rest\Configuration\DataProvider;
@@ -33,15 +34,24 @@ class MarketAppInstaller
 	 *
 	 * @param string $code
 	 * @param int|null $version
+	 * @param string|null $checkHash
+	 * @param string|null $installHash
 	 * @return Result
 	 */
-	public function installApplication(string $code, ?int $version = null): Result
+	public function installApplication(
+		string $code,
+		?int $version = null,
+		?string $checkHash = null,
+		?string $installHash = null,
+	): Result
 	{
 		$result = new Result();
 		Application::setContextUserId($this->getAdminId());
 		$installResult = Application::install(
 			code: $code,
 			version: $version,
+			checkHash: $checkHash,
+			installHash: $installHash,
 		);
 
 		if (isset($installResult['errorDescription']))
@@ -169,7 +179,7 @@ class MarketAppInstaller
 	{
 		$result = new Result();
 
-		$fileInfo = \CFile::MakeFileArray($app['URL']);
+		$fileInfo = \CFile::MakeFileArray(Uri::urnEncode($app['URL']));
 		if (empty($fileInfo['tmp_name']))
 		{
 			$result->addError(new Error("prepareArchive: tmp_name of file at {$app['URL']} is not specified."));

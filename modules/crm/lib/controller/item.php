@@ -69,7 +69,18 @@ class Item extends Base
 		{
 			return null;
 		}
-		$item = $factory->getItem($id);
+		$select = ['*'];
+		if ($factory->isMultiFieldsEnabled())
+		{
+			$select = array_merge(
+				$select,
+				$this->getMultiFields(),
+			);
+		}
+		$item = $factory->getItems([
+			'select' => $select,
+			'filter' => ['=ID' => $id],
+		])[0] ?? null;
 		if (!$item)
 		{
 			$this->addError(new Error(
@@ -218,7 +229,7 @@ class Item extends Base
 				continue;
 			}
 
-			if (empty($fields[$fieldName]))
+			if ($field->isValueEmpty($fields[$fieldName]))
 			{
 				$item->set($fieldName, null);
 				continue;
@@ -755,7 +766,16 @@ class Item extends Base
 	{
 		if (in_array('*', $select, true))
 		{
-			return ['*'];
+			$result = ['*'];
+			if ($factory->isMultiFieldsEnabled())
+			{
+				$result = array_merge(
+					$result,
+					$this->getMultiFields(),
+				);
+			}
+
+			return $result;
 		}
 
 		$select = array_values($select);
@@ -990,6 +1010,21 @@ class Item extends Base
 			'item' => [
 				'id' => (int)$id,
 			]
+		];
+	}
+
+	private function getMultiFields(): array
+	{
+		return [
+			'EMAIL',
+			'EMAIL_HOME',
+			'EMAIL_WORK',
+			'EMAIL_MAILING',
+			'PHONE',
+			'PHONE_MOBILE',
+			'PHONE_WORK',
+			'PHONE_MAILING',
+			'IMOL',
 		];
 	}
 }

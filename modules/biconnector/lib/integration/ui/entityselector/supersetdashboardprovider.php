@@ -73,7 +73,10 @@ class SupersetDashboardProvider extends BaseProvider
 		$elements = $superset->getDashboardRepository()->getList($ormParams);
 		foreach ($elements as $element)
 		{
-			$result[] = $this->makeItem($element);
+			if ($element->isSupersetDashboardDataLoaded())
+			{
+				$result[] = $this->makeItem($element);
+			}
 		}
 
 		return $result;

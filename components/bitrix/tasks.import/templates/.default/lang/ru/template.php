@@ -17,6 +17,7 @@ $MESS['TASKS_IMPORT_FIELDS_IMPORT_FILE_CHOOSE'] = 'Выбрать';
 $MESS['TASKS_IMPORT_FIELDS_FILE_ENCODING'] = 'Кодировка файла данных';
 $MESS['TASKS_IMPORT_FIELDS_DEFAULT_ORIGINATOR'] = 'Постановщик по умолчанию';
 $MESS['TASKS_IMPORT_FIELDS_DEFAULT_RESPONSIBLE'] = 'Ответственный по умолчанию';
+$MESS['TASKS_IMPORT_FIELDS_DEFAULT_ASSIGNEE'] = 'Исполнитель по умолчанию';
 $MESS['TASKS_IMPORT_FIELDS_NAME_FORMAT'] = 'Формат имени';
 $MESS['TASKS_IMPORT_FIELDS_FILE_SEPARATOR'] = 'Разделитель колонок';
 $MESS['TASKS_IMPORT_FIELDS_HEADERS_IN_FIRST_ROW'] = 'Первая строка содержит заголовки';

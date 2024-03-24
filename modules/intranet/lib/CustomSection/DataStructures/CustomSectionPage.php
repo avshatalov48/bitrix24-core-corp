@@ -22,6 +22,7 @@ class CustomSectionPage
 	protected $counterId;
 	/** @var int|null */
 	protected $counterValue;
+	protected bool $isDisabledInCtrlPanel = false;
 
 	/**
 	 * Returns ID of the page
@@ -235,6 +236,29 @@ class CustomSectionPage
 	public function setCounterValue(int $counterValue): self
 	{
 		$this->counterValue = $counterValue;
+
+		return $this;
+	}
+
+	/**
+	 * Returns IS_DISABLE of this page to be displayed in the Control Panel
+	 *
+	 * @return bool
+	 */
+	public function getDisabledInCtrlPanel(): bool
+	{
+		return $this->isDisabledInCtrlPanel;
+	}
+
+	/**
+	 * Sets IS_DISABLE of this page to be displayed in the Control Panel
+	 *
+	 * @param bool $isDisabled
+	 * @return $this
+	 */
+	public function setDisabledInCtrlPanel(bool $isDisabled): self
+	{
+		$this->isDisabledInCtrlPanel = $isDisabled;
 
 		return $this;
 	}

@@ -67,10 +67,22 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 			return;
 		}
 
+		$this->arResult['documentResendEnabled'] = false;
+		$documentService = \Bitrix\Sign\Service\Container::instance()->getDocumentService();
+		$docItem = method_exists($documentService, 'getById') ? $documentService->getById($document->getId()) : null;
+			if ($docItem !== null && !\Bitrix\Sign\Type\DocumentScenario::isB2EScenario($docItem->scenario ?? ''))
+		{
+			$members = \Bitrix\Sign\Service\Container::instance()
+				->getMemberRepository()
+				->listByDocumentId($document->getId())
+			;
+			$this->arResult['documentResendEnabled'] = true;
+			$this->arResult['documentResendMembers'] = $members->getIds();
+		}
+
 		$documentHash = $document->getHash();
 		$memberHash = $this->arParams['memberHash'] ?? null;
 		$memberHash = $memberHash === 'undefined' ? null : $memberHash;
-
 
 		$currentMember = null;
 		if (!$this->arParams['memberHash'] && !$document->isAllMembersSigned())
@@ -93,11 +105,6 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_SIGNDOCUMENT_TRY_AGAIN_LATER'));
 			return;
-		}
-
-		if ($document->getEntityId() > 0)
-		{
-			$this->prepareChannelSelectorParameters($memberHash, $document);
 		}
 
 		$this->prepareRequisites($document);
@@ -188,58 +195,5 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 				: null
 			,
 		];
-	}
-
-	/**
-	 * @param $memberHash
-	 * @param \Bitrix\Sign\Document|null $document
-	 * @return void
-	 */
-	private function prepareChannelSelectorParameters($memberHash, ?\Bitrix\Sign\Document $document): void
-	{
-		$member = $memberHash ? $document->getMemberByHash($memberHash) : $document->getInitiatorMember();
-
-		if ($member->isInitiator() && $member->isSigned())
-		{
-			$members = $document->getMembers();
-
-			foreach ($members as $member)
-			{
-				if (!$member->isSigned())
-				{
-					break;
-				}
-			}
-		}
-		$this->arResult['channelSelectorParameters'] = [
-			'id' => 'document-channel-selector',
-			'entityTypeId' => CCrmOwnerType::SmartDocument,
-			'entityId' => $document->getEntityId(),
-			'body' => $document->getTitle(),
-			'configureContext' => 'crm.signdocument.view',
-			'link' => $member ? $member->getDownloadUrl() : '',
-			'isLinkObtainable' => true,
-			'isConfigurable' => true,
-		];
-
-		$channels = [];
-
-		$channels[] = $member->getCommunicationType() === \Bitrix\Sign\Document\Member::COMMUNICATION_TYPE_MAIL
-			? [
-				'id' => Email::ID,
-				'type' => Email::ID,
-				'title' => 'E-mail',
-				'canBeShown' => true,
-				'isAvailable' => true,
-			]
-			: [
-				'id' => Phone::ID,
-				'type' => Phone::ID,
-				'title' => 'Sms',
-				'canBeShown' => true,
-				'isAvailable' => true,
-			];
-
-		$this->arResult['channelSelectorParameters']['channels'] = $channels;
 	}
 }

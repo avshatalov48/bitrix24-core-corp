@@ -45,6 +45,7 @@ BX.namespace('Tasks.Component');
 					this.initProjectPlan();
 					this.initState();
 
+					this.clearNewAnalyticsParams();
 					this.doSomeTricks();
 				}
 
@@ -957,7 +958,7 @@ BX.namespace('Tasks.Component');
 					{
 						BX.Tasks.Util.hintManager.showDisposable(
 							ctrl.scope(),
-							BX.message('TASKS_TASK_COMPONENT_TEMPLATE_MULTIPLE_RESPONSIBLE_NOTICE'),
+							BX.message('TASKS_TASK_COMPONENT_TEMPLATE_MULTIPLE_ASSIGNEE_NOTICE'),
 							'TASK_EDIT_MULTIPLE_RESPONSIBLES'
 						);
 					}
@@ -1522,6 +1523,20 @@ BX.namespace('Tasks.Component');
 					}
 
 					container.innerHTML = html;
+				}
+			},
+
+			clearNewAnalyticsParams: function ()
+			{
+				const url = new URL(window.location.href);
+				const section = url.searchParams.get('ta_sec');
+
+				if (section)
+				{
+					url.searchParams.delete('ta_sec');
+					url.searchParams.delete('ta_sub');
+					url.searchParams.delete('ta_el');
+					window.history.replaceState(null, null, url.toString());
 				}
 			}
 		}

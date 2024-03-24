@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Component\EntityDetails\Config\Scope;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
@@ -1295,15 +1296,38 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$fields = [];
 
+		if (
+			$this->presetCountryId === 1    // ru
+			&& RestrictionManager::isDetailsSearchByInnPermitted()
+			&& \Bitrix\Crm\Integration\ClientResolver::isGetByBicAvailable()
+		)
+		{
+			$fields[] = [
+				'name' => 'AUTOCOMPLETE',
+				'title' => Loc::getMessage('CRM_BANK_DETAIL_FIELD_AUTOCOMPLETE'),
+				'type' => 'requisite_autocomplete',
+				'required' => false,
+				'formType' => 'requisite_autocomplete',
+				'isRQ' => false,
+				'isUF' => false,
+				'editable' => true,
+				'enabledMenu' => false,
+				'data' => array_merge(
+					['presetId' => $this->presetId],
+					CCrmComponentHelper::getBankDetailsAutocompleteFieldInfoData($this->presetCountryId)
+				),
+			];
+		}
+
 		$bankDetailFields = $this->getBankDetailFieldsInfo();
 		foreach ($bankDetailFields as $fieldName => $fieldInfo)
 		{
-			$fields[] = array(
+			$fields[] = [
 				'name' => $fieldName,
 				'title' => $fieldInfo['title'],
 				'type' => $fieldInfo['formType'],
 				'required' => $fieldInfo['required']
-			);
+			];
 		}
 
 		return $fields;
@@ -1745,6 +1769,55 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		return $data;
 	}
 
+	protected function prepareFormConfigurationUpdateParams(): array
+	{
+		$params = [];
+
+		$params['ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
+
+		//region CAN_UPDATE_PERSONAL_CONFIGURATION && CAN_UPDATE_COMMON_CONFIGURATION
+		$canUpdatePersonalConfiguration = true;
+		$canUpdateCommonConfiguration = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
+
+		if (!isset($this->arParams['~ENABLE_CONFIGURATION_UPDATE']))
+		{
+			if (isset($this->arParams['~ENABLE_PERSONAL_CONFIGURATION_UPDATE']))
+			{
+				$canUpdatePersonalConfiguration = $this->arParams['~ENABLE_PERSONAL_CONFIGURATION_UPDATE'];
+			}
+
+			if (
+				$canUpdateCommonConfiguration
+				&& isset($this->arParams['~ENABLE_COMMON_CONFIGURATION_UPDATE'])
+				&& !$this->arParams['~ENABLE_COMMON_CONFIGURATION_UPDATE']
+			)
+			{
+				$canUpdateCommonConfiguration = false;
+			}
+		}
+		elseif (!$this->arParams['~ENABLE_CONFIGURATION_UPDATE'])
+		{
+			$canUpdatePersonalConfiguration = false;
+			if ($canUpdateCommonConfiguration)
+			{
+				$canUpdateCommonConfiguration = false;
+			}
+		}
+		//endregion
+
+		if ($canUpdateCommonConfiguration && $canUpdatePersonalConfiguration)
+		{
+			$params['ENABLE_CONFIGURATION_UPDATE'] = true;
+		}
+		else
+		{
+			$params['ENABLE_COMMON_CONFIGURATION_UPDATE'] = $canUpdateCommonConfiguration;
+			$params['ENABLE_PERSONAL_CONFIGURATION_UPDATE'] = $canUpdatePersonalConfiguration;
+		}
+
+		return $params;
+	}
+
 	protected function prepareFormParams()
 	{
 		$params = [];
@@ -1784,7 +1857,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			$params['CONTEXT']['doSave'] = 'Y';
 		}
 
-		return $params;
+		return array_merge($params, $this->prepareFormConfigurationUpdateParams());
 	}
 
 	protected function getFormId()

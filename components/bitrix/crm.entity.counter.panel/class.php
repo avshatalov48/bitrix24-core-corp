@@ -5,14 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Counter\EntityCounter;
-use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\MessageHelper;
-use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -72,7 +70,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 	public function executeComponent()
 	{
 		$this->initialize();
-		
+
 		if ($this->isVisible)
 		{
 			foreach ($this->errors as $message)
@@ -88,12 +86,13 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 	{
 		if (!Bitrix\Main\Loader::includeModule('crm'))
 		{
-			$this->errors[] = GetMessage('CRM_MODULE_NOT_INSTALLED');
+			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED');
 
 			return;
 		}
 
-		$this->userID = $this->arResult['USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
+		$this->userID = Container::getInstance()->getContext()->getUserId();
+		$this->arResult['USER_ID'] = $this->userID;
 
 		$dbUsers = CUser::GetList(
 			'last_name',
@@ -103,7 +102,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		);
 
 		$userFields = $dbUsers->Fetch();
-		
+
 		$this->arResult['USER_NAME'] =  is_array($userFields)
 			? CUser::FormatName(CSite::GetNameFormat(false), $userFields)
 			: "[{$this->userID}]";
@@ -118,7 +117,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 
 		if (!CCrmOwnerType::IsDefined($this->entityTypeID))
 		{
-			$this->errors[] = GetMessage('CRM_COUNTER_ENTITY_TYPE_NOT_DEFINED');
+			$this->errors[] = Loc::getMessage('CRM_COUNTER_ENTITY_TYPE_NOT_DEFINED');
 
 			return;
 		}
@@ -138,10 +137,10 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 			$this->categoryId = (int)$this->arParams['EXTRAS']['CATEGORY_ID'];
 		}
 
-		if (!EntityAuthorization::checkReadPermission($this->entityTypeID, 0, null, $this->extras))
-		{
-			$this->isVisible = false;
-		}
+		$this->isVisible = Container::getInstance()
+			->getUserPermissions($this->userID)
+			->checkReadPermissions($this->entityTypeID, 0, $this->categoryId)
+		;
 
 		if (isset($this->arParams['PATH_TO_ENTITY_LIST']))
 		{
@@ -166,7 +165,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$otherCodes = [];
 		$otherTotal = 0;
 		$withExcludeUsers = false;
-		if (Crm::isUniversalActivityScenarioEnabled() && $this->isOtherCountersSupported())
+		if ($this->isOtherCountersSupported())
 		{
 			$withExcludeUsers = true;
 
@@ -227,20 +226,24 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$permissionEntityType = $uPermissions::getPermissionEntityType($this->entityTypeID, $this->categoryId);
 		$hasAllPermissions = $uPermissions->isAdmin() || $uPermissions->getCrmPermissions()->GetPermType($permissionEntityType) >= $uPermissions::PERMISSION_ALL;
 
-		$isAllowedEntity = Container::getInstance()->getFactory($this->entityTypeID)->isCountersEnabled();
+		$factory = Container::getInstance()->getFactory($this->entityTypeID);
+		$isAllowedEntity = $factory && $factory->isCountersEnabled();
 
 		return $isAllowedEntity && $hasAllPermissions;
 	}
 
 	private function filterResponsibleFiledName(): string
 	{
+		if ($this->entityTypeID === \CCrmOwnerType::Activity)
+		{
+			return 'RESPONSIBLE_ID';
+		}
+
 		if (CounterSettings::getInstance()->useActivityResponsible())
 		{
 			return 'ACTIVITY_RESPONSIBLE_IDS';
 		}
-		else
-		{
-			return $this->entityTypeID === \CCrmOwnerType::Order ? 'RESPONSIBLE_ID' : 'ASSIGNED_BY_ID';
-		}
+
+		return ($this->entityTypeID === \CCrmOwnerType::Order ? 'RESPONSIBLE_ID' : 'ASSIGNED_BY_ID');
 	}
 }

@@ -11,6 +11,7 @@ return [
 		'main.popup',
 		'main.core',
 		'main.core.events',
+		'ui.analytics',
 		'tasks.viewed',
 		'ui.fonts.opensans',
 	],

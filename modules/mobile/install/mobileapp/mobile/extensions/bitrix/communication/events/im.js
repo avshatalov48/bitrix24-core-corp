@@ -2,7 +2,6 @@
  * @module communication/events/im
  */
 jn.define('communication/events/im', (require, exports, module) => {
-
 	const { BaseEvent } = require('communication/events/base');
 	const { isOpenLine } = require('communication/connection');
 	const { NotifyManager } = require('notify-manager');
@@ -57,6 +56,7 @@ jn.define('communication/events/im', (require, exports, module) => {
 			if (isOpenLine(userCode))
 			{
 				this.showOpenLine(params, callback);
+
 				return;
 			}
 
@@ -67,7 +67,7 @@ jn.define('communication/events/im', (require, exports, module) => {
 		{
 			const imOpener = DialogOpener();
 
-			if (this.isApiVersionGreaterThan45 && imOpener)
+			if (imOpener)
 			{
 				NotifyManager.showLoadingIndicator();
 
@@ -98,6 +98,5 @@ jn.define('communication/events/im', (require, exports, module) => {
 	}
 
 	module.exports = { ImEvent };
-
 })
 ;

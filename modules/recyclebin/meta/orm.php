@@ -1,95 +1,95 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\Recyclebin\Internals\Models\RecyclebinTable:recyclebin/lib/internals/models/recyclebin.php:b55bbe7746dd88919439038f946458bc */
+/* ORMENTITYANNOTATION:Bitrix\Recyclebin\Internals\Models\RecyclebinTable:recyclebin/lib/internals/models/recyclebin.php */
 namespace Bitrix\Recyclebin\Internals\Models {
 	/**
-	 * EO_Recyclebin
+	 * RecyclebinEntity
 	 * @see \Bitrix\Recyclebin\Internals\Models\RecyclebinTable
 	 *
 	 * Custom methods:
 	 * ---------------
 	 *
 	 * @method \int getId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setId(\int|\Bitrix\Main\DB\SqlExpression $id)
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
 	 * @method \string getName()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setName(\string|\Bitrix\Main\DB\SqlExpression $name)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setName(\string|\Bitrix\Main\DB\SqlExpression $name)
 	 * @method bool hasName()
 	 * @method bool isNameFilled()
 	 * @method bool isNameChanged()
 	 * @method \string remindActualName()
 	 * @method \string requireName()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetName()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetName()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetName()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetName()
 	 * @method \string fillName()
 	 * @method \string getSiteId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setSiteId(\string|\Bitrix\Main\DB\SqlExpression $siteId)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setSiteId(\string|\Bitrix\Main\DB\SqlExpression $siteId)
 	 * @method bool hasSiteId()
 	 * @method bool isSiteIdFilled()
 	 * @method bool isSiteIdChanged()
 	 * @method \string remindActualSiteId()
 	 * @method \string requireSiteId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetSiteId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetSiteId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetSiteId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetSiteId()
 	 * @method \string fillSiteId()
 	 * @method \string getModuleId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setModuleId(\string|\Bitrix\Main\DB\SqlExpression $moduleId)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setModuleId(\string|\Bitrix\Main\DB\SqlExpression $moduleId)
 	 * @method bool hasModuleId()
 	 * @method bool isModuleIdFilled()
 	 * @method bool isModuleIdChanged()
 	 * @method \string remindActualModuleId()
 	 * @method \string requireModuleId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetModuleId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetModuleId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetModuleId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetModuleId()
 	 * @method \string fillModuleId()
 	 * @method \string getEntityId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setEntityId(\string|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setEntityId(\string|\Bitrix\Main\DB\SqlExpression $entityId)
 	 * @method bool hasEntityId()
 	 * @method bool isEntityIdFilled()
 	 * @method bool isEntityIdChanged()
 	 * @method \string remindActualEntityId()
 	 * @method \string requireEntityId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetEntityId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetEntityId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetEntityId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetEntityId()
 	 * @method \string fillEntityId()
 	 * @method \string getEntityType()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
 	 * @method bool hasEntityType()
 	 * @method bool isEntityTypeFilled()
 	 * @method bool isEntityTypeChanged()
 	 * @method \string remindActualEntityType()
 	 * @method \string requireEntityType()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetEntityType()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetEntityType()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetEntityType()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetEntityType()
 	 * @method \string fillEntityType()
 	 * @method \Bitrix\Main\Type\DateTime getTimestamp()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setTimestamp(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $timestamp)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setTimestamp(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $timestamp)
 	 * @method bool hasTimestamp()
 	 * @method bool isTimestampFilled()
 	 * @method bool isTimestampChanged()
 	 * @method \Bitrix\Main\Type\DateTime remindActualTimestamp()
 	 * @method \Bitrix\Main\Type\DateTime requireTimestamp()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetTimestamp()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetTimestamp()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetTimestamp()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetTimestamp()
 	 * @method \Bitrix\Main\Type\DateTime fillTimestamp()
 	 * @method \int getUserId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
 	 * @method bool hasUserId()
 	 * @method bool isUserIdFilled()
 	 * @method bool isUserIdChanged()
 	 * @method \int remindActualUserId()
 	 * @method \int requireUserId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetUserId()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetUserId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetUserId()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetUserId()
 	 * @method \int fillUserId()
 	 * @method \Bitrix\Main\EO_User getUser()
 	 * @method \Bitrix\Main\EO_User remindActualUser()
 	 * @method \Bitrix\Main\EO_User requireUser()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin setUser(\Bitrix\Main\EO_User $object)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin resetUser()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unsetUser()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity setUser(\Bitrix\Main\EO_User $object)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity resetUser()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unsetUser()
 	 * @method bool hasUser()
 	 * @method bool isUserFilled()
 	 * @method bool isUserChanged()
@@ -109,9 +109,9 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method bool has($fieldName)
 	 * @method bool isFilled($fieldName)
 	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin set($fieldName, $value)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin reset($fieldName)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin unset($fieldName)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity set($fieldName, $value)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity reset($fieldName)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity unset($fieldName)
 	 * @method void addTo($fieldName, $value)
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
@@ -119,7 +119,7 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin wakeUp($data)
+	 * @method static \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity wakeUp($data)
 	 */
 	class EO_Recyclebin {
 		/* @var \Bitrix\Recyclebin\Internals\Models\RecyclebinTable */
@@ -132,7 +132,7 @@ namespace Bitrix\Recyclebin\Internals\Models {
 }
 namespace Bitrix\Recyclebin\Internals\Models {
 	/**
-	 * EO_Recyclebin_Collection
+	 * RecyclebinEntityCollection
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -153,33 +153,35 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method \int[] getUserIdList()
 	 * @method \int[] fillUserId()
 	 * @method \Bitrix\Main\EO_User[] getUserList()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection getUserCollection()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection getUserCollection()
 	 * @method \Bitrix\Main\EO_User_Collection fillUser()
 	 *
 	 * Common methods:
 	 * ---------------
 	 *
 	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Recyclebin\Internals\Models\EO_Recyclebin $object)
-	 * @method bool has(\Bitrix\Recyclebin\Internals\Models\EO_Recyclebin $object)
+	 * @method void add(\Bitrix\Recyclebin\Internals\Models\RecyclebinEntity $object)
+	 * @method bool has(\Bitrix\Recyclebin\Internals\Models\RecyclebinEntity $object)
 	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin getByPrimary($primary)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin[] getAll()
-	 * @method bool remove(\Bitrix\Recyclebin\Internals\Models\EO_Recyclebin $object)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity getByPrimary($primary)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity[] getAll()
+	 * @method bool remove(\Bitrix\Recyclebin\Internals\Models\RecyclebinEntity $object)
 	 * @method void removeByPrimary($primary)
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection wakeUp($data)
+	 * @method static \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
 	 * @method void offsetExists() ArrayAccess
 	 * @method void offsetUnset() ArrayAccess
 	 * @method void offsetGet() ArrayAccess
 	 * @method void rewind() Iterator
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin current() Iterator
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity current() Iterator
 	 * @method mixed key() Iterator
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method RecyclebinEntityCollection merge(?RecyclebinEntityCollection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_Recyclebin_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Recyclebin\Internals\Models\RecyclebinTable */
@@ -192,8 +194,8 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * ---------------
 	 *
 	 * @method EO_Recyclebin_Result exec()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin fetchObject()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection fetchCollection()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity fetchObject()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection fetchCollection()
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -201,19 +203,19 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 */
 	class EO_Recyclebin_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin fetchObject()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection fetchCollection()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity fetchObject()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection fetchCollection()
 	 */
 	class EO_Recyclebin_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin createObject($setDefaultValues = true)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection createCollection()
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin wakeUpObject($row)
-	 * @method \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection wakeUpCollection($rows)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity createObject($setDefaultValues = true)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection createCollection()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity wakeUpObject($row)
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection wakeUpCollection($rows)
 	 */
 	class EO_Recyclebin_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable:recyclebin/lib/internals/models/recyclebindata.php:c33a409faf6e1415f19a32924a45eaf6 */
+/* ORMENTITYANNOTATION:Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable:recyclebin/lib/internals/models/recyclebindata.php */
 namespace Bitrix\Recyclebin\Internals\Models {
 	/**
 	 * EO_RecyclebinData
@@ -257,6 +259,16 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData resetData()
 	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData unsetData()
 	 * @method \string fillData()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity getRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity remindActualRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity requireRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData setRecyclebin(\Bitrix\Recyclebin\Internals\Models\RecyclebinEntity $object)
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData resetRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData unsetRecyclebin()
+	 * @method bool hasRecyclebin()
+	 * @method bool isRecyclebinFilled()
+	 * @method bool isRecyclebinChanged()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity fillRecyclebin()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -307,6 +319,9 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method \string[] fillAction()
 	 * @method \string[] getDataList()
 	 * @method \string[] fillData()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity[] getRecyclebinList()
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData_Collection getRecyclebinCollection()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection fillRecyclebin()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -332,6 +347,8 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_RecyclebinData_Collection merge(?EO_RecyclebinData_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_RecyclebinData_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable */
@@ -365,7 +382,7 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 */
 	class EO_RecyclebinData_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Recyclebin\Internals\Models\RecyclebinFileTable:recyclebin/lib/internals/models/recyclebinfile.php:fa5e27efcab8a0d759ff342833a50425 */
+/* ORMENTITYANNOTATION:Bitrix\Recyclebin\Internals\Models\RecyclebinFileTable:recyclebin/lib/internals/models/recyclebinfile.php */
 namespace Bitrix\Recyclebin\Internals\Models {
 	/**
 	 * EO_RecyclebinFile
@@ -409,6 +426,16 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile resetStorageType()
 	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile unsetStorageType()
 	 * @method \string fillStorageType()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity getRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity remindActualRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity requireRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile setRecyclebin(\Bitrix\Recyclebin\Internals\Models\RecyclebinEntity $object)
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile resetRecyclebin()
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile unsetRecyclebin()
+	 * @method bool hasRecyclebin()
+	 * @method bool isRecyclebinFilled()
+	 * @method bool isRecyclebinChanged()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity fillRecyclebin()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -459,6 +486,9 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method \int[] fillFileId()
 	 * @method \string[] getStorageTypeList()
 	 * @method \string[] fillStorageType()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntity[] getRecyclebinList()
+	 * @method \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile_Collection getRecyclebinCollection()
+	 * @method \Bitrix\Recyclebin\Internals\Models\RecyclebinEntityCollection fillRecyclebin()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -484,6 +514,8 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
+	 * @method EO_RecyclebinFile_Collection merge(?EO_RecyclebinFile_Collection $collection)
+	 * @method bool isEmpty()
 	 */
 	class EO_RecyclebinFile_Collection implements \ArrayAccess, \Iterator, \Countable {
 		/* @var \Bitrix\Recyclebin\Internals\Models\RecyclebinFileTable */

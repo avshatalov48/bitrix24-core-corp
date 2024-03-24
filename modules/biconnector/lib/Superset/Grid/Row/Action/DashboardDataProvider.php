@@ -2,10 +2,20 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Action;
 
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\Main\Grid\Row\Action\DataProvider;
 
+/**
+ * @method DashboardSettings getSettings()
+ */
 class DashboardDataProvider extends DataProvider
 {
+
+	public function __construct(?DashboardSettings $settings = null)
+	{
+		parent::__construct($settings);
+	}
 
 	public function prepareActions(): array
 	{
@@ -17,5 +27,38 @@ class DashboardDataProvider extends DataProvider
 			new SettingPeriodAction(),
 			new ExportAction(),
 		];
+	}
+
+	public function prepareControls(array $rawFields): array
+	{
+		$result = [];
+
+		$settings = $this->getSettings();
+		if (
+			($settings !== null && !$settings->isSupersetAvailable())
+			|| $rawFields["STATUS"] === SupersetDashboardTable::DASHBOARD_STATUS_LOAD
+		)
+		{
+			return [];
+		}
+
+		foreach ($this->prepareActions() as $actionsItem)
+		{
+			if (
+				$rawFields['EDIT_URL'] === '' &&
+				!($actionsItem instanceof DeleteAction)
+			)
+			{
+				continue;
+			}
+
+			$actionConfig = $actionsItem->getControl($rawFields);
+			if (isset($actionConfig))
+			{
+				$result[] = $actionConfig;
+			}
+		}
+
+		return $result;
 	}
 }

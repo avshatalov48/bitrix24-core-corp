@@ -6,7 +6,7 @@ use Bitrix\Main\Result;
 
 class LeadActivities extends Lead
 {
-	use Activity;
+	use ActivityTrait;
 
 	public function isExclusionSupported(): bool
 	{
@@ -32,5 +32,10 @@ class LeadActivities extends Lead
 	public function getRequiredFieldsByStages(array $stages): array
 	{
 		return [];
+	}
+
+	public function getAllowStages(array $filter = []): array
+	{
+		return array_column($this->getStagesList(), 'STATUS_ID');
 	}
 }

@@ -1,4 +1,4 @@
-import {Type, Loc, Dom} from 'main.core';
+import {Type, Loc, Dom, ajax as Ajax} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Loader} from 'main.loader';
 import {Menu} from 'main.popup';
@@ -50,6 +50,7 @@ import type {ResponsibleType} from '../../item/task/responsible';
 
 import type {ShowLinkedTasksResponse} from '../../response';
 import { PullTag } from '../../pull/pull.tag';
+import { sendData } from 'ui.analytics';
 
 type Params = {
 	pathToTask: string,
@@ -1395,6 +1396,14 @@ export class Plan extends View
 						);
 						this.destroyActionPanel();
 						entity.deactivateGroupMode();
+						sendData({
+							tool: 'tasks',
+							category: 'task_operations',
+							event: 'task_view',
+							type: 'task',
+							c_section: 'scrum',
+							c_element: 'context_menu',
+						});
 					},
 				},
 				attachment: {

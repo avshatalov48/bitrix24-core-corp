@@ -21,7 +21,7 @@ class CallDynamicsGrid extends Base implements IReportMultipleData
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}
@@ -100,10 +100,6 @@ class CallDynamicsGrid extends Base implements IReportMultipleData
 	 * Prepares report data.
 	 *
 	 * @return array|mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function prepare()
 	{
@@ -143,8 +139,6 @@ class CallDynamicsGrid extends Base implements IReportMultipleData
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getQueryForReport($startDate, $finishDate, $previousStartDate, $previousFinishDate, $filterParameters): Query
 	{
@@ -170,8 +164,6 @@ class CallDynamicsGrid extends Base implements IReportMultipleData
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function getBaseQuery($startDate, $finishDate, $filterParameters)
 	{

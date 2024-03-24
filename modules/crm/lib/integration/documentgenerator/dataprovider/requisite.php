@@ -88,10 +88,10 @@ class Requisite extends BaseRequisite
 			if($this->source > 0)
 			{
 				$resuisite = EntityRequisite::getSingleInstance();
-				$this->data = $resuisite->getList(
+				$this->data = $resuisite?->getList(
 					['select' => ['*', 'UF_*',], 'filter' => ['ID' => $this->source]]
 				)->fetch();
-				$this->data = array_merge($this->data, $resuisite->getRqListFieldValueTitles($this->data));
+				$this->data = array_merge($this->data, $resuisite?->getRqListFieldValueTitles($this->data));
 				$this->loadAddresses();
 				$this->nameData = [
 					'NAME' => $this->data['RQ_FIRST_NAME'],
@@ -101,9 +101,13 @@ class Requisite extends BaseRequisite
 				$this->rawNameValues['RQ_FIRST_NAME'] = $this->data['RQ_FIRST_NAME'];
 				$this->rawNameValues['RQ_SECOND_NAME'] = $this->data['RQ_SECOND_NAME'];
 				$this->rawNameValues['RQ_LAST_NAME'] = $this->data['RQ_LAST_NAME'];
-				unset($this->data['RQ_FIRST_NAME']);
-				unset($this->data['RQ_SECOND_NAME']);
-				unset($this->data['RQ_LAST_NAME']);
+
+				unset(
+					$this->data['RQ_FIRST_NAME'],
+					$this->data['RQ_SECOND_NAME'],
+					$this->data['RQ_LAST_NAME']
+				);
+
 				foreach($this->getSmartNameFields() as $placeholder)
 				{
 					$this->rawNameValues[$placeholder] = $this->data[$placeholder];
@@ -202,22 +206,22 @@ class Requisite extends BaseRequisite
 	 */
 	public function getNameValue($placeholder)
 	{
-		if($placeholder == 'RQ_FIRST_NAME')
+		if ($placeholder === 'RQ_FIRST_NAME')
 		{
 			return new Name($this->nameData, ['format' => '#NAME#']);
 		}
-		elseif($placeholder == 'RQ_SECOND_NAME')
+		elseif ($placeholder === 'RQ_SECOND_NAME')
 		{
 			return new Name($this->nameData, ['format' => '#SECOND_NAME#']);
 		}
-		elseif($placeholder == 'RQ_LAST_NAME')
+		elseif ($placeholder === 'RQ_LAST_NAME')
 		{
 			return new Name($this->nameData, ['format' => '#LAST_NAME#']);
 		}
-		elseif(in_array($placeholder, $this->getSmartNameFields()))
+		elseif (in_array($placeholder, $this->getSmartNameFields()))
 		{
 			$data = $this->getNameDataFromString($this->rawNameValues[$placeholder]);
-			if($data)
+			if ($data)
 			{
 				return new Name($data, ['format' => Contact::getNameFormat()]);
 			}

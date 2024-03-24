@@ -66,8 +66,8 @@ if($arResult['SHOW_STATISTICS'])
 		),
 		'group' => array('YEAR', 'MONTH'),
 		'runtime' => array(
-			new Bitrix\Main\Entity\ExpressionField('YEAR','YEAR(%s)', array('CALL_START_DATE')),
-			new Bitrix\Main\Entity\ExpressionField('MONTH','MONTH(%s)', array('CALL_START_DATE')),
+			new Bitrix\Main\Entity\ExpressionField('YEAR','extract(YEAR from %s)', array('CALL_START_DATE')),
+			new Bitrix\Main\Entity\ExpressionField('MONTH','extract(MONTH from %s)', array('CALL_START_DATE')),
 		)
 	));
 

@@ -2,8 +2,6 @@
 define("GW_DEBUG", false); // Debug
 define("DAV_EXCH_DEBUG", false); // Log
 
-global $DB;
-$db_type = mb_strtolower($DB->type);
 $arClasses = array(
 	"CDavRequest" => "classes/general/request.php",
 	"CDavResponse" => "classes/general/response.php",
@@ -26,7 +24,7 @@ $arClasses = array(
 	"CDavAddressbookCrmBase" => "classes/general/addressbookcrmbase.php",
 	"CDavAddressbookCrmBaseLimited" => "classes/general/addressbookcrmbaselimited.php",
 	"CDavAddressbookHandler" => "classes/general/addressbookhandler.php",
-	"CDavVirtualFileSystem" => "classes/".$db_type."/virtualfilesystem.php",
+	"CDavVirtualFileSystem" => "classes/mysql/virtualfilesystem.php",
 	"CDavPrincipalsHandler" => "classes/general/principalshandler.php",
 	"CDavXmlDocument" => "classes/general/xmldocument.php",
 	"CDavXMLParsingException" => "classes/general/xmldocument.php",
@@ -46,8 +44,8 @@ $arClasses = array(
 	"CDavExchangeContacts" => "classes/general/exchangecontacts.php",
 	"CDavExchangeTasks" => "classes/general/exchangetasks.php",
 	"CDavExchangeMail" => "classes/general/exchangemail.php",
-	"CDavConnection" => "classes/".$db_type."/connection.php",
-	"CDavConnectionResult" => "classes/".$db_type."/connection.php",
+	"CDavConnection" => "classes/mysql/connection.php",
+	"CDavConnectionResult" => "classes/mysql/connection.php",
 	"CDavArgumentException" => "classes/general/exception.php",
 	"CDavArgumentNullException" => "classes/general/exception.php",
 	"CDavArgumentOutOfRangeException" => "classes/general/exception.php",

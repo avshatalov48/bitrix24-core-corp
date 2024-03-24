@@ -30,16 +30,22 @@ export class RequestSender
 		});
 	}
 
-	sendRequestToComponent(data = {}, action, analyticsLabel = {}): Promise
+	sendRequestToComponent(data = {}, action, analytics = {}): Promise
 	{
 		data.debugMode = this.debugMode;
+		const config = {
+			mode: 'class',
+			signedParameters: this.signedParameters,
+			data: data,
+		};
+
+		if (analytics && analytics.event)
+		{
+			config.analytics = analytics;
+		}
+
 		return new Promise((resolve, reject) => {
-			ajax.runComponentAction('bitrix:tasks.scrum', action, {
-				mode: 'class',
-				signedParameters: this.signedParameters,
-				data: data,
-				analyticsLabel: analyticsLabel
-			}).then(resolve, reject);
+			ajax.runComponentAction('bitrix:tasks.scrum', action, config).then(resolve, reject);
 		});
 	}
 
@@ -89,9 +95,13 @@ export class RequestSender
 			data,
 			'createTask',
 			{
-				scrum: 'Y',
-				action: 'create_task',
-			}
+				tool: 'tasks',
+				category: 'task_operations',
+				event: 'task_create',
+				type: 'task',
+				c_section: 'scrum',
+				c_element: 'quick_button',
+			},
 		);
 	}
 

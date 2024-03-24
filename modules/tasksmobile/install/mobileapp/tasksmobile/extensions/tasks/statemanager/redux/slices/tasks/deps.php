@@ -12,7 +12,7 @@ return [
 		'tasks:statemanager/redux/slices/tasks/expiration-registry',
 		'tasks:statemanager/redux/slices/tasks/meta',
 		'tasks:statemanager/redux/slices/tasks/model/task',
-		'tasks:statemanager/redux/slices/tasks/model/task/status',
+		'tasks:enum',
 		'tasks:statemanager/redux/slices/tasks/selector',
 		'tasks:statemanager/redux/slices/tasks/thunk',
 		'utils/object',

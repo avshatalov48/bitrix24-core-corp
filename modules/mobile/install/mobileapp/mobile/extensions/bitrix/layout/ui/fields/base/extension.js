@@ -556,14 +556,19 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				return null;
 			}
 
+			this.styles = this.getStyles();
+
+			if (this.props.renderFunction)
+			{
+				return this.props.renderFunction(this);
+			}
+
 			let leftIcons = null;
 
 			if (this.showLeftIcon())
 			{
 				leftIcons = this.renderLeftIcons();
 			}
-
-			this.styles = this.getStyles();
 
 			const titleContent = this.isLeftTitlePosition()
 				? this.renderLeftTitleContent()
@@ -793,6 +798,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @private
+		 * @return {Promise}
+		 */
 		handleAdditionalFocusActions()
 		{
 			return Promise.resolve();

@@ -16,7 +16,6 @@ use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
-use Bitrix\Tasks\Replicator\Template\Repetition\RegularTemplateTaskProducer;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util;
@@ -28,7 +27,7 @@ Loc::loadMessages(__FILE__);
 
 /**
  * @deprecated
- * @see \Bitrix\Tasks\Replicator\Template\Replicators\RegularTemplateTaskReplicator
+ * @see \Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator
  */
 
 final class FromTemplate extends Util\Replicator\Task

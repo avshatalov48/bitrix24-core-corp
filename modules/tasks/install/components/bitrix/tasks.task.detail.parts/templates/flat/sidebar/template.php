@@ -5,7 +5,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
-use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
+use Bitrix\Tasks\Replication\Replicator\RegularTaskReplicator;
 
 Loc::loadMessages(__FILE__);
 
@@ -244,7 +244,7 @@ $canReadGroupTasks = (
 				'ENABLE_SYNC' => true,
 				'ENTITY_ID' => $taskData["ID"],
 				'ENTITY_ROUTE' => 'task',
-				'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE'),
+				'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ASSIGNEE'),
 				'PUBLIC_MODE' => $arParams["PUBLIC_MODE"],
 				'PATH_TO_USER_PROFILE' => $arParams["PATH_TO_USER_PROFILE"],
 				'PATH_TO_TASKS' => $arParams["PATH_TO_TASKS"],
@@ -307,7 +307,7 @@ $canReadGroupTasks = (
 				'DISABLE_JS_IF_READ_ONLY' => 'N',
 				'HEADER_BUTTON_LABEL_IF_READ_ONLY' => Loc::getMessage(
 					$arParams['TEMPLATE_DATA']['I_AM_AUDITOR'] ?
-					'TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR' :
+					'TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_MSGVER_1' :
 					'TASKS_TTDP_TEMPLATE_USER_VIEW_ENTER_AUDITOR'
 				),
 				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
@@ -330,7 +330,7 @@ $canReadGroupTasks = (
 						'view',
 						array(
 							'DATA' => $taskData["SE_TEMPLATE"]["REPLICATE_PARAMS"],
-							'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'],
+							'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'] ?? null,
 							'REPLICATE' => $taskData["REPLICATE"],
 							'ENABLE_SYNC' => true,
 							'ENTITY_ID' => $taskData["SE_TEMPLATE"]["ID"],

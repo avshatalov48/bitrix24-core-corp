@@ -1,6 +1,14 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CMain $APPLICATION */
+/** @global CDatabase $DB */
+/** @var CBitrixComponentTemplate $this */
+/** @var CBitrixComponent $component */
 
 use Bitrix\Main\UI;
 use Bitrix\Tasks\Internals\Task\Priority;
@@ -14,9 +22,13 @@ $bShowInPopup = false;
 if (COption::GetOptionString('tasks', 'use_task_view_popup_in_list') === 'Y')
 {
 	if (CTasksTools::IsIphoneOrIpad())
+	{
 		$bShowInPopup = false;
-	elseif($arParams['OPEN_TASK_IN_POPUP'] !== false)
+	}
+	elseif ($arParams['OPEN_TASK_IN_POPUP'] !== false)
+	{
 		$bShowInPopup = true;
+	}
 }
 
 $ufCrmUserTypeId = null;
@@ -30,21 +42,31 @@ foreach ($arResult['ITEMS'] as &$arItem)
 	$updatesCount    = $arItem['UPDATES_COUNT'];
 	$projectExpanded = $arItem['PROJECT_EXPANDED'];
 
-	$anchor_id = RandString(8);
+	$anchor_id = \Bitrix\Main\Security\Random::getString(8);
 	$viewUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => $task["ID"], "action" => "view"));
-	$editUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => $task["ID"], "action" => "edit"));
-	$createUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"));
-	$createUrl = $createUrl.(mb_strpos($createUrl, "?") === false ? "?" : "&")."PARENT_ID=".$task["ID"];
+//	$editUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => $task["ID"], "action" => "edit"));
+//	$createUrl = CComponentEngine::MakePathFromTemplate($arParams["PATHS"]["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"));
+//	$createUrl = $createUrl.(!str_contains($createUrl, "?") ? "?" : "&")."PARENT_ID=".$task["ID"];
 
+	$viewUrl = new \Bitrix\Main\Web\Uri($viewUrl);
+	$viewUrl->addParams([
+		'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
+		'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['task_card'],
+		'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['title_click'],
+	]);
 	if ($arResult['IFRAME'] === 'Y')
-		$viewUrl = $viewUrl.(mb_strpos($viewUrl, "?") === false ? "?" : "&")."IFRAME=Y";
+	{
+		$viewUrl->addParams([
+			'IFRAME' => 'Y'
+		]);
+	}
 
 	?>
 	<tr class="task-list-item task-depth-<?php echo $depth?> task-status-<?php echo tasksStatus2String($task["STATUS"])?>"
 		id="task-<?php echo $task["ID"]?>"
-		data-project-id="<?=intval($task["GROUP_ID"])?>"
+		data-project-id="<?= (int)$task["GROUP_ID"] ?>"
 		oncontextmenu="return ShowMenuPopupContext(<?php echo $task["ID"]?>, event);"
-		ondblclick="window.location = '<?php echo CUtil::JSEscape($viewUrl); ?>'; return (false);"
+		ondblclick="window.location = '<?php echo CUtil::JSEscape($viewUrl->getUri()); ?>'; return (false);"
 		title="<?php echo GetMessage("TASKS_DOUBLE_CLICK")?>"<?php if (!$projectExpanded):?> style="display: none;"<?php endif?>
 	>
 
@@ -89,14 +111,14 @@ foreach ($arResult['ITEMS'] as &$arItem)
 					<?php endif?>
 					<div id="task-title-div-<?php echo $task["ID"]?>" class="task-title-info<?php if (isset($task["COMMENTS_COUNT"]) || isset($updatesCount) || isset($task["FILES"]) && sizeof($task["FILES"])):?> task-indicators<?php if ($updatesCount):?>-updates<?php endif?><?php if(sizeof($task["FILES"])):?>-files<?php endif?><?php if (isset($task["COMMENTS_COUNT"])):?>-comments<?php endif?><?php endif?>">
 						<?php
-						if ($task["MULTITASK"] == "Y")
+						if ($task["MULTITASK"] === "Y")
 						{
 							?><span class="task-title-multiple"
 									title="<?php echo GetMessage("TASKS_MULTITASK"); ?>"
 							></span><?php
 						}
 
-						?><a href="<?php echo $viewUrl; ?>"
+						?><a href="<?php echo $viewUrl->getUri(); ?>"
 							class="task-title-link"
 
 							<?if(($arParams['SHOW_QUICK_INFORMERS'] ?? null) !== false):?>
@@ -114,7 +136,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 
 						if ($updatesCount)
 						{
-							?><a href="<?php echo $viewUrl?>#updates"
+							?><a href="<?php echo $viewUrl->getUri()?>#updates"
 								class="task-item-updates"
 							<?php
 						if ($bShowInPopup)
@@ -145,7 +167,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 
 							if ($task["COMMENTS_COUNT"])
 							{
-								?><a href="<?php echo $viewUrl?>#comments"
+								?><a href="<?php echo $viewUrl->getUri()?>#comments"
 									class="task-title-comments"
 								<?php
 							if ($bShowInPopup)

@@ -4,6 +4,7 @@ $MESS["TASKS_ADD_BACK_TO_TASKS_LIST"] = "Back to Tasks";
 $MESS["TASKS_ADD_BACK_TO_TEMPLATE_LIST"] = "Back to templates";
 $MESS["TASKS_ADD_SUB_TEMPLATE"] = "Add subtask";
 $MESS["TASKS_ADD_TEMPLATE"] = "Add Template";
+$MESS["TASKS_ASSIGNEE"] = "Assignee";
 $MESS["TASKS_AUDITOR"] = "Observer";
 $MESS["TASKS_CREATOR"] = "Creator";
 $MESS["TASKS_DEADLINE"] = "Deadline";

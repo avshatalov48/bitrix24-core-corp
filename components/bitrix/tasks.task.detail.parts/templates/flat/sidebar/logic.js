@@ -547,7 +547,7 @@ BX.namespace("Tasks.Component");
 				this.isAmAuditor = !this.isAmAuditor;
 				this.auditorCtrl.setHeaderButtonLabelText(
 					this.isAmAuditor ?
-						BX.message('TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR') :
+						BX.message('TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_MSGVER_1') :
 						BX.message('TASKS_TTDP_TEMPLATE_USER_VIEW_ENTER_AUDITOR')
 				);
 			}.bind(this)

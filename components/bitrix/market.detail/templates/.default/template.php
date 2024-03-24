@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Market\Content;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
@@ -47,7 +48,7 @@ Extension::load([
 	'market.detail',
 	'market.application',
 ]);
-
+Content::showAdditional($arResult);
 ?>
 
 <div id="market-wrapper-vue"></div>

@@ -47,6 +47,8 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			{
 				countryCode = GLOBAL_COUNTRY_CODE;
 			}
+			console.log('getCountryCodeByPhoneNumber');
+			console.log(countryCode);
 
 			return getCountryCode(phoneNumber, countryCode);
 		}
@@ -215,6 +217,7 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 		{
 			const { countryCode } = this.getValue();
 			this.fieldValue = { phoneNumber, countryCode };
+			console.log(countryCode);
 
 			this.handleChange({
 				VALUE: phoneNumber,

@@ -1,6 +1,6 @@
 import { CreationMenu } from '../creation-menu';
 import { Loc } from 'main.core';
-
+import { sendData } from 'ui.analytics';
 export class Task
 {
 	static create(link: string = ''): JSON

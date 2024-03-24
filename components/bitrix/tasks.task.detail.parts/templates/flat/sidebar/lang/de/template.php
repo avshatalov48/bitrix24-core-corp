@@ -1,7 +1,4 @@
 <?php
-$MESS["ERROR_TASKS_CHANGE_DEADLINE_COUNT_OVER"] = "Sie können die Frist nicht ändern";
-$MESS["ERROR_TASKS_CHANGE_DEADLINE_MAXTIME_OVER"] = "Die am weitesten liegende mögliche Frist ist #DEADLINE#";
-$MESS["ERROR_TASKS_CHANGE_DEADLINE_NULL"] = "Sie können die Frist nicht löschen";
 $MESS["TASKS_SIDEBAR_ACCOMPLICES"] = "Mitwirkende";
 $MESS["TASKS_SIDEBAR_ADD_ACCOMPLICES"] = "Mitwirkende hinzufügen";
 $MESS["TASKS_SIDEBAR_ADD_AUDITORS"] = "Beobachter hinzufügen";
@@ -34,10 +31,12 @@ $MESS["TASKS_SIDEBAR_TIME_SPENT_IN_LOGS"] = "Zeit aufgewendet";
 $MESS["TASKS_TASK_EPIC"] = "Epic";
 $MESS["TASKS_TTDP_TEMPLATE_COPY_CURRENT_URL"] = "Aufgabenlink in den Zwischenspeicher kopieren";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ACCOMPLICES"] = "Mitwirkende";
+$MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ASSIGNEE"] = "Verantwortliche Person";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_AUDITORS"] = "Beobachter";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ENTER_AUDITOR"] = "beobachten";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR"] = "nicht beobachten";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_CONFIRM"] = "Sie werden die Aufgabe nicht mehr anzeigen können, wenn Sie kein Beobachter mehr sind. Möchten Sie Ihre Beobachter-Rolle löschen?";
+$MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_MSGVER_1"] = "nicht verfolgen";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR"] = "Erstellt von";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE"] = "Verantwortlich";
 $MESS["TASK_RESULT_SIDEBAR_HINT"] = "Zusammenfassung des Aufgabenstatus ist erforderlich";

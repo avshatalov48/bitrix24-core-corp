@@ -65,7 +65,9 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 			{
 				return;
 			}
-			var presetControl = this.entityEditor.getControlById(BX.Crm.RequisiteDetailsManager.presetControlName);
+			var presetControl = this.entityEditor.getControlByCombinedIdRecursive(
+				BX.Crm.RequisiteDetailsManager.presetControlName
+			);
 			if (presetControl)
 			{
 				presetControl.markAsChanged();
@@ -77,7 +79,9 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 			{
 				return;
 			}
-			var bankDetailsControl = this.entityEditor.getControlById(BX.Crm.RequisiteDetailsManager.bankDetailsControlName);
+			var bankDetailsControl = this.entityEditor.getControlByCombinedIdRecursive(
+				BX.Crm.RequisiteDetailsManager.bankDetailsControlName
+			);
 			if (bankDetailsControl)
 			{
 				bankDetailsControl.addEmptyValue({scrollToTop: true});
@@ -110,6 +114,19 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 				}
 			}
 		},
+		isMatchedAutocompleteControlName: function(controlName, matchName)
+		{
+			if (
+				controlName === matchName
+				|| controlName.endsWith("." + matchName)
+				|| controlName.endsWith("[" + matchName + "]")
+			)
+			{
+				return true;
+			}
+
+			return false;
+		},
 		onControlChanged: function(event)
 		{
 			var control;
@@ -117,8 +134,13 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 			if (BX.Type.isArray(eventData))
 			{
 				control = (eventData.length > 0) ? eventData[0] : null;
-				if (control instanceof BX.UI.EntityEditorList
-					&& control.getId() === BX.Crm.RequisiteDetailsManager.presetControlName)
+				if (
+					control instanceof BX.UI.EntityEditorList
+					&& this.isMatchedAutocompleteControlName(
+						control.getId(),
+						BX.Crm.RequisiteDetailsManager.presetControlName
+					)
+				)
 				{
 					if (this.prevPresetId === null)
 					{
@@ -131,7 +153,11 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 					}
 				}
 				if (control instanceof BX.Crm.EntityEditorRequisiteAutocomplete
-					&& control.getId() === BX.Crm.RequisiteDetailsManager.autocompleteControlName)
+					&& this.isMatchedAutocompleteControlName(
+						control.getId(),
+						BX.Crm.RequisiteDetailsManager.autocompleteControlName
+					)
+				)
 				{
 					var autocompleteData = control.getAutocompleteData();
 					var newFieldsValues = BX.prop.getObject(autocompleteData, 'fields', {});
@@ -141,22 +167,33 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 					var presetField = null;
 					if (newFieldsValues.hasOwnProperty(BX.Crm.RequisiteDetailsManager.presetControlName))
 					{
-						presetField = this.getEntityEditor().getControlByIdRecursive(BX.Crm.RequisiteDetailsManager.presetControlName);
-						if (presetField && presetField.getRuntimeValue() != newFieldsValues[BX.Crm.RequisiteDetailsManager.presetControlName])
+						presetField = this.getEntityEditor().getControlByIdRecursive(
+							BX.Crm.RequisiteDetailsManager.presetControlName
+						);
+						if (presetField)
 						{
-							this.prevPresetId = presetField.getRuntimeValue();
-							needSaveHiddenFields = true;
+							const newPresetId = newFieldsValues[BX.Crm.RequisiteDetailsManager.presetControlName];
+							if (presetField.getRuntimeValue() != newPresetId)
+							{
+								this.prevPresetId = presetField.getRuntimeValue();
+								needSaveHiddenFields = true;
+							}
 						}
 					}
 					for (var i = 0; i < newFieldsNames.length; i++)
 					{
 						var controlName = newFieldsNames[i];
 						var newFieldValue = newFieldsValues[controlName];
-						var modifiedControl = this.getEntityEditor().getControlByIdRecursive(controlName);
+						var modifiedControl = this.getEntityEditor().getControlByCombinedIdRecursive(controlName);
 						if (modifiedControl)
 						{
 							// addresses should be merged:
-							if (controlName === BX.Crm.RequisiteDetailsManager.addressControlName)
+							if (
+								this.isMatchedAutocompleteControlName(
+									controlName,
+									BX.Crm.RequisiteDetailsManager.addressControlName
+								)
+							)
 							{
 								var oldFieldValue = this.getEntityEditor()._model.getField(controlName);
 								if (BX.Type.isPlainObject(oldFieldValue))
@@ -165,10 +202,15 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 								}
 							}
 
-							this.getEntityEditor()._model.setField(controlName, newFieldValue);
+							this.getEntityEditor()._model.setField(modifiedControl.getId(), newFieldValue);
 							modifiedControl.refreshLayout();
 
-							if (controlName !== BX.Crm.RequisiteDetailsManager.presetControlName)
+							if (
+								!this.isMatchedAutocompleteControlName(
+									controlName,
+									BX.Crm.RequisiteDetailsManager.presetControlName
+								)
+							)
 							{
 								modifiedControl.markAsChanged();
 							}
@@ -652,7 +694,7 @@ if(typeof BX.Crm.RequisiteDetailsCtrlField === "undefined")
 				throw "BX.Crm.RequisiteDetailsCtrlField. Invalid parameter 'field': not instance of BX.UI.EntityEditorField.";
 			}
 			this._field = field;
-			this._value = field._input.value;
+			this._value = (field._input) ? field._input.value : "";
 
 			BX.Event.EventEmitter.subscribe(this._field.getEditor(), "onControlChanged", this.onFieldChanged.bind(this));
 			this._initialized = true;

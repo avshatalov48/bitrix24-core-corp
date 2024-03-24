@@ -3,6 +3,8 @@
  */
 jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Random } = require('utils/random');
+	const { ChecklistController } = require('tasks/checklist');
 	const { PropTypes } = require('utils/validation');
 	const { checklistPreviewStub } = require('tasks/layout/checklist/preview/src/stub');
 
@@ -11,22 +13,46 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 	 */
 	class ChecklistPreview extends LayoutComponent
 	{
-		updateChecklistsView()
+		constructor(props)
 		{
-			this.setState({});
+			super(props);
+
+			this.controller = null;
+			this.handleOnChange = this.handleOnChange.bind(this);
+
+			this.initChecklistField(props);
+		}
+
+		componentWillReceiveProps(props)
+		{
+			this.initChecklistField(props);
+		}
+
+		initChecklistField(props)
+		{
+			this.controller = new ChecklistController({ ...props, onChange: this.handleOnChange });
+
+			this.state = {
+				reload: Random.getString(),
+			};
+		}
+
+		handleOnChange()
+		{
+			this.setState({ reload: Random.getString() });
 		}
 
 		openPageManager(checklist)
 		{
-			const { checklistController } = this.props;
+			const { parentWidget } = this.props;
 
-			checklistController.openChecklist(checklist);
+			this.controller.openChecklist({ checklist, parentWidget });
 		}
 
 		renderProgressView(rootItem)
 		{
 			const completedCount = rootItem.getCompleteCount();
-			const totalCount = rootItem.getTotalCount();
+			const totalCount = rootItem.getDescendantsCount();
 
 			let fontSize = (completedCount > 9 || totalCount > 9) ? 8 : 9;
 			fontSize = (completedCount > 9 && totalCount > 9) ? 7 : fontSize;
@@ -41,6 +67,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 						color: AppTheme.colors.accentExtraDarkblue,
 					},
 					style: {
+						borderRadius: 30,
 						width: 23,
 						height: 23,
 						justifyContent: 'center',
@@ -80,13 +107,24 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			);
 		}
 
-		renderCheckLists()
+		getSortedChecklists()
 		{
-			const { isLoading, checklistController } = this.props;
-			const checklists = checklistController.getChecklists();
+			const checklists = this.controller.getChecklists();
+
+			return [...checklists.values()].sort((a, b) => {
+				const itemA = a.getRootItem()?.getSortIndex();
+				const itemB = b.getRootItem()?.getSortIndex();
+
+				return itemB - itemA;
+			});
+		}
+
+		renderChecklists()
+		{
+			const { isLoading } = this.props;
 			const content = [];
 
-			checklists.forEach((checklist, i) => {
+			this.getSortedChecklists().forEach((checklist, i) => {
 				const needMargin = i !== 0;
 				const rootItem = checklist.getRootItem();
 
@@ -125,8 +163,8 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 
 		render()
 		{
-			const { checklistController } = this.props;
-			const { handleOnCreateChecklist } = checklistController;
+			const { parentWidget } = this.props;
+			const { handleOnCreateChecklist } = this.controller;
 
 			return View(
 				{
@@ -134,12 +172,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 						flexDirection: 'column',
 					},
 				},
-				...this.renderCheckLists(),
+				...this.renderChecklists(),
 				checklistPreviewStub({
 					margin: true,
-					onClick: () => {
-						handleOnCreateChecklist();
-					},
+					onClick: handleOnCreateChecklist(parentWidget),
 				}),
 			);
 		}

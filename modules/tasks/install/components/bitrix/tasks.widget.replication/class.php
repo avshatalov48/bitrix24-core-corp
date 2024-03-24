@@ -4,26 +4,27 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Errorable;
-use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Result;
+use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Model\TemplateModel;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Action\Filter\BooleanFilter;
 use Bitrix\Tasks\Item\Task\Template\Field\ReplicateParams;
 use Bitrix\Tasks\Internals\Task\Template\ReplicateParamsCorrector;
-use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Util;
-use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\User;
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksWidgetReplicationComponent extends TasksBaseComponent implements Errorable, Controllerable
 {
-	protected \Bitrix\Tasks\Util\Error\Collection $errorCollection;
+	protected Collection $errorCollection;
 
 	public function configureActions(): array
 	{
@@ -60,7 +61,7 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent implements Erro
 		}
 
 		$this->setUserId();
-		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+		$this->errorCollection = new Collection();
 	}
 
 	protected function setUserId()
@@ -157,19 +158,10 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent implements Erro
 
 		if($saveResult->isSuccess())
 		{
-			// update related task
-			if($taskId)
+			$result = $this->update($taskId, ['REPLICATE' => $isReplication ? 'Y' : 'N']);
+			if (!$result->isSuccess())
 			{
-				$task = new Task($taskId);
-				if($task->canUpdate())
-				{
-					$task['REPLICATE'] = $isReplication ? 'Y' : 'N';
-					$saveResult = $task->save(); // todo: DO NOT remove template in case of REPLICATE falls to N
-					$this->errorCollection->load($saveResult->getErrors()->transform(array(
-						'CODE' => 'TASK.#CODE#',
-						'TYPE' => Error::TYPE_WARNING
-					)));
-				}
+				$this->errorCollection->add($result->getErrors()[0]);
 			}
 		}
 	}
@@ -240,5 +232,32 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent implements Erro
 		$this->arParams['DATA']['TIME'] = ReplicateParamsCorrector::correctTime($serverTime, $currentTimeZoneOffset, 'user');
 		$this->arParams['DATA']['START_DATE'] = ReplicateParamsCorrector::correctStartDate($serverTime, $serverStartDate, $currentTimeZoneOffset, 'user');
 		$this->arParams['DATA']['END_DATE'] = ReplicateParamsCorrector::correctEndDate($serverTime, $serverEndDate, $currentTimeZoneOffset, 'user');
+	}
+
+	private function update(int $taskId, array $fields): Result
+	{
+		$result = new Result();
+		if ($taskId <= 0 || empty($fields))
+		{
+			return $result;
+		}
+
+		$model = TaskModel::createFromId($taskId);
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_SAVE, $taskId, $model))
+		{
+			$result->addError(new \Bitrix\Main\Error("Unable to update task {$taskId}"));
+		}
+
+		$handler = new \Bitrix\Tasks\Control\Task($this->userId);
+		try
+		{
+			$handler->update($taskId, $fields);
+		}
+		catch (Exception $exception)
+		{
+			$result->addError(\Bitrix\Main\Error::createFromThrowable($exception));
+		}
+
+		return $result;
 	}
 }

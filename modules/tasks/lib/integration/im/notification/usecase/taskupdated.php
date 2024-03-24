@@ -67,7 +67,7 @@ class TaskUpdated
 				continue;
 			}
 
-			$actionMessage = Loc::getMessage('TASKS_MESSAGE_' . $key, null, $recepient->getLang());
+			$actionMessage = Loc::getMessage('TASKS_MESSAGE_' . $this->mapKey($key), null, $recepient->getLang());
 			if(empty($actionMessage) && isset($trackedFields[$key]) && !empty($trackedFields[$key]['TITLE']))
 			{
 				$actionMessage = $trackedFields[$key]['TITLE'];
@@ -91,7 +91,8 @@ class TaskUpdated
 						break;
 
 					case 'RESPONSIBLE_ID':
-						$tmpStr .= $this->getCommaSeparatedUserNames($userRepository, [$value['FROM_VALUE']], $nameTemplate)
+						$changeMessage = "\r\n" . $changeMessage;
+						$tmpStr .= "\r\n" . $this->getCommaSeparatedUserNames($userRepository, [$value['FROM_VALUE']], $nameTemplate)
 							. ' -> '
 							.$this->getCommaSeparatedUserNames($userRepository, [$value['TO_VALUE']], $nameTemplate)
 						;
@@ -264,8 +265,9 @@ class TaskUpdated
 			$message
 		);
 
-		$assignedTo = $metadata->getParams()['assigned_to'] ?? null;
-		if ($assignedTo && $recepient->getId() === $assignedTo)
+		$responsibleId = $task->getResponsibleId();
+		$prevResponsibleId = (int)($metadata->getPreviousFields()['RESPONSIBLE_ID'] ?? null);
+		if ($responsibleId !== $prevResponsibleId && $recepient->getId() === $responsibleId)
 		{
 			$notification->setParams([
 				'NOTIFY_EVENT' => 'task_assigned',
@@ -400,5 +402,16 @@ class TaskUpdated
 		}
 
 		return $group;
+	}
+
+	private function mapKey(string $key): string
+	{
+		return match ($key)
+		{
+			'RESPONSIBLE_ID' => 'ASSIGNEE',
+			'END_DATE_PLAN' => 'END_DATE_PLAN_MSGVER_1',
+			'MARK' => 'MARK_MSGVER_1',
+			default => $key,
+		};
 	}
 }

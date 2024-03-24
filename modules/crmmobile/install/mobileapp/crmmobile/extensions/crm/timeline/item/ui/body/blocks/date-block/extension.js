@@ -35,4 +35,3 @@ jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, modu
 
 	module.exports = { TimelineItemBodyDateBlock };
 });
-

@@ -198,6 +198,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			return ScrollView(
 				{
 					style: styles.paymentMethodsContainer,
+					showsVerticalScrollIndicator: false,
 				},
 				this.renderPaymentMethods(),
 			);
@@ -277,6 +278,19 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		{
 			return View(
 				{},
+				this.state.paymentSystems.length === 0
+				&& !this.payment.isLinkPaymentEnabled
+				&& Text(
+					{
+						style: {
+							color: AppTheme.colors.base3,
+							fontSize: 15,
+							textAlign: 'center',
+							lineHeightMultiple: 1.2,
+						},
+						text: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_NO_PAY_METHODS'),
+					},
+				),
 				...this.state.paymentSystems.map((paymentSystem, index) => {
 					return View(
 						{
@@ -294,7 +308,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 						),
 					);
 				}),
-				View(
+				this.payment.isLinkPaymentEnabled && View(
 					{
 						style: styles.paymentMethodContainer(this.state.paymentSystems.length === 0),
 					},
@@ -835,7 +849,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			flex: 1,
 			marginTop: PAYMENT_METHODS_CONTAINER_MARGIN_TOP,
 			marginBottom: PAYMENT_METHODS_CONTAINER_MARGIN_BOTTOM,
-			marginHorizontal: 46,
+			marginHorizontal: 38,
 		},
 		paymentMethodContainer: (isFirst) => {
 			return {

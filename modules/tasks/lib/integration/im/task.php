@@ -69,7 +69,7 @@ final class Task extends IM
 			if($task['RESPONSIBLE_ID'])
 			{
 				$gridRows[] = array(
-					"NAME" => Loc::getMessage('TASKS_TASK_ENTITY_RESPONSIBLE_ID_FIELD').':',
+					"NAME" => Loc::getMessage('TASKS_TASK_ENTITY_ASSIGNEE_ID_FIELD').':',
 					// getFullName() returns escaped data, we want unescaped
 					"VALUE" => htmlspecialcharsback(\Bitrix\Im\User::getInstance($task['RESPONSIBLE_ID'])->getFullName()),
 					"USER_ID" => $task['RESPONSIBLE_ID'],

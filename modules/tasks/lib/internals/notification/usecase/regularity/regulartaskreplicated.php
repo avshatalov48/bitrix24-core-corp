@@ -6,29 +6,18 @@ use Bitrix\Tasks\Internals\Notification\EntityCode;
 use Bitrix\Tasks\Internals\Notification\EntityOperation;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\Metadata;
+use Bitrix\Tasks\Internals\Notification\UseCase\AbstractCase;
 
-class RegularTaskReplicated
+class RegularTaskReplicated extends AbstractCase
 {
-	use RecipientsTrait;
-
 	public function execute($params = []): bool
 	{
-		$sender = $this->userRepository->getSender($this->task, $params);
-		if (!$sender)
-		{
-			return false;
-		}
-
-		$recipients = $this->userRepository->getRecepients($this->task, $sender, $params);
-		$recipients = $this->addUserToRecipients($recipients, $sender);
-
-		if (empty($recipients))
-		{
-			return false;
-		}
+		$this->createDictionary(['options' => $params]);
 
 		foreach ($this->providers as $provider)
 		{
+			$sender = $this->getCurrentSender();
+			$recipients = $this->getCurrentRecipients();
 			foreach ($recipients as $recipient)
 			{
 				$metadata = new Metadata(
@@ -37,7 +26,7 @@ class RegularTaskReplicated
 					[
 						'task' => $this->task,
 						'user_repository' => $this->userRepository,
-						'user_params' => $params
+						'user_params' => $params,
 					]
 				);
 

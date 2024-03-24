@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Integration\Rest\EInvoiceAppInstallerSlider;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
@@ -21,6 +22,13 @@ if ($this->getComponent()->getErrors()):?>
 	<?php
 	return;
 endif;
+
+/** @see CrmSmartInvoiceDetailsComponent::isNewItem() */
+if (!$this->getComponent()->isNewItem())
+{
+	print (new EInvoiceAppInstallerSlider())->build();
+}
+
 /** @see \Bitrix\Crm\Component\Base::addTopPanel() */
 $this->getComponent()->addTopPanel($this);
 

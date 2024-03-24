@@ -52,6 +52,11 @@ export class RequestSender
 		return this.sendRequest('sprint', 'getBurnDownInfo', data);
 	}
 
+	getMarketPath(): Promise
+	{
+		return this.sendRequest('info', 'getMarketPath');
+	}
+
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)
 	{
 		if (Type.isUndefined(response.errors))

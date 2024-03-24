@@ -2,11 +2,10 @@ const showPopup = function ()
 {
 	const nodes = document.querySelectorAll('#kanban-popup');
 	const kanbanNode = Array.from(nodes).find(node => node.className === 'tasks-kanban-popup');
-	var ajaxPath = BX.data(kanbanNode, "ajax");
-	var kanbanType = BX.data(kanbanNode, "type");
+	const ajaxPath = BX.data(kanbanNode, 'ajax');
+	const kanbanType = BX.data(kanbanNode, 'type');
 
-	var closeHandler = BX.delegate(function()
-	{
+	const closeHandler = () => {
 		BX.PopupWindowManager.getCurrentPopup().close();
 		BX.ajax({
 			method: "POST",
@@ -16,9 +15,9 @@ const showPopup = function ()
 				type: kanbanType
 			}
 		});
-	}, this);
+	};
 
-	BX.PopupWindowManager.create("kanban-popup", null, {
+	BX.PopupWindowManager.create('kanban-popup', null, {
 		content: kanbanNode,
 		closeIcon: false,
 		lightShadow: true,
@@ -26,20 +25,19 @@ const showPopup = function ()
 		overlay: true,
 		buttons: [
 			new BX.PopupWindowButton({
-				text: BX.data(kanbanNode, "close"),
-				className: "webform-button webform-button-blue",
+				text: BX.data(kanbanNode, 'close'),
+				className: 'webform-button webform-button-blue',
 				events: {
 					click: closeHandler
-				}
+				},
 			})
 		]
 	}).show();
 
-	BX.bind(BX("kanban-readmore"), "click", BX.delegate(function(e)
-	{
-		var helpId = BX.data(BX.proxy_context, "helpId");
+	BX.bind(BX('kanban-readmore'), 'click', () => {
+		const helpId = BX.data(BX.proxy_context, "helpId");
 		BX.Helper.show("redirect=detail&HD_ID=" + helpId);
 		closeHandler();
 		BX.PreventDefault(e);
-	}, this));
+	})
 };

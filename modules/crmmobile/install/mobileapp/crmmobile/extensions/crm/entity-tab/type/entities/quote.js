@@ -40,7 +40,7 @@ jn.define('crm/entity-tab/type/entities/quote', (require, exports, module) => {
 				{
 					type: UI.Menu.Types.HELPDESK,
 					data: {
-						articleCode: '17614096',
+						articleCode: '17603632',
 					},
 				},
 			];

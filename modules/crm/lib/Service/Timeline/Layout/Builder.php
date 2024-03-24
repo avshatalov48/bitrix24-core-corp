@@ -48,8 +48,14 @@ class Builder
 		$changeStreamButton = $this->item->getChangeStreamButton();
 		$infoHelper = $this->item->getInfoHelper();
 
-		return ($title || $date || $tags || $userId || $changeStreamButton || $infoHelper)
-			? (new Layout\Header())
+		if ($title || $date || $tags || $userId || $changeStreamButton || $infoHelper)
+		{
+			$header = $this->isRestContext()
+				? (new Layout\RestHeader())
+				: (new Layout\Header())
+			;
+
+			return $header
 				->setChangeStreamButton($changeStreamButton)
 				->setTitle($title)
 				->setTitleAction($this->item->getTitleAction())
@@ -58,8 +64,10 @@ class Builder
 				->setTags($tags ?? [])
 				->setUser($this->createLayoutUser($userId))
 				->setInfoHelper($infoHelper)
-			: null
-		;
+			;
+		}
+
+		return null;
 	}
 
 	protected function buildBody(): Layout\Body
@@ -105,7 +113,7 @@ class Builder
 			$additionalButtons['extra'] = $this->item->getAdditionalIconButton();
 		}
 
-		if ($this->item->needShowNotes())
+		if ($this->item->needShowNotes() && !$this->isRestContext())
 		{
 			$additionalButtons['notes'] = (new Layout\Footer\IconButton(
 				'note', Loc::getMessage('CRM_TIMELINE_NOTES_TITLE')
@@ -123,7 +131,7 @@ class Builder
 		if (!empty($menuItems))
 		{
 			$extensionsMenu = $this->getExtensionsMenu();
-			if ($extensionsMenu)
+			if ($extensionsMenu && !$this->isRestContext())
 			{
 				$extensionsMenu
 					->setSort(8000)
@@ -160,6 +168,7 @@ class Builder
 		}
 
 		return new Layout\User(
+			(int)$userData['ID'],
 			$userData['FORMATTED_NAME'],
 			$userData['SHOW_URL'],
 			$userData['PHOTO_URL'] ?? null
@@ -207,5 +216,10 @@ class Builder
 				$footerNoteAdditionalButton->setColor(Layout\Footer\IconButton::COLOR_PRIMARY);
 			}
 		}
+	}
+
+	private function isRestContext(): bool
+	{
+		return $this->item->getContext()->getType() === \Bitrix\Crm\Service\Timeline\Context::REST;
 	}
 }

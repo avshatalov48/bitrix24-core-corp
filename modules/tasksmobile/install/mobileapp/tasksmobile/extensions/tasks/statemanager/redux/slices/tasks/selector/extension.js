@@ -5,7 +5,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 	const AppTheme = require('apptheme');
 	const { createDraftSafeSelector } = require('statemanager/redux/toolkit');
 	const { sliceName, tasksAdapter } = require('tasks/statemanager/redux/slices/tasks/meta');
-	const { TaskStatus } = require('tasks/statemanager/redux/slices/tasks/model/task/status');
+	const { TaskStatus } = require('tasks/enum');
 
 	const {
 		selectAll,

@@ -69,6 +69,7 @@ class ItemDataProvider extends EntityDataProvider
 		// todo temporary crutch for smart invoices
 		$isSmartInvoice = $this->factory instanceof Factory\SmartInvoice;
 		$isSmartDocument = $this->factory instanceof Factory\SmartDocument;
+		$isSmartB2eDocument = $this->factory instanceof Factory\SmartB2eDocument;
 
 		$fields = [
 			Item::FIELD_NAME_ID => [
@@ -99,6 +100,16 @@ class ItemDataProvider extends EntityDataProvider
 		elseif ($isSmartDocument)
 		{
 			$fields[Item\SmartDocument::FIELD_NAME_NUMBER] = [
+				'type' => static::TYPE_STRING,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => true,
+				'defaultFilter' => true,
+			];
+		}
+		elseif ($isSmartB2eDocument)
+		{
+			$fields[Item\SmartB2eDocument::FIELD_NAME_NUMBER] = [
 				'type' => static::TYPE_STRING,
 				'displayGrid' => true,
 				'displayFilter' => true,

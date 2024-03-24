@@ -12,3 +12,4 @@ $MESS["CRM_BANK_DETAIL_EXPORT_FIELD_SORT"] = "Порядок сортировк�
 $MESS["CRM_BANK_DETAIL_EXPORT_FIELD_COMMENTS"] = "Комментарий";
 $MESS["CRM_BANK_DETAIL_FIELD_VALIDATOR_LENGTH_MAX"] = "Для значения поля \"#FIELD_TITLE#\" превышена максимальная длина: #MAX_LENGTH#.";
 $MESS["CRM_BANK_DETAIL_FIELD_VALIDATOR_LENGTH_MIN"] = "Значение поля \"#FIELD_TITLE#\" недостаточно длинное. Минимальная длина: #MIN_LENGTH#.";
+$MESS["CRM_BANK_DETAIL_FIELD_AUTOCOMPLETE"] = "Поиск банковских реквизитов";

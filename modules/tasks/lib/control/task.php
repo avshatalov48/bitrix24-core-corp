@@ -24,6 +24,7 @@ use Bitrix\Tasks\Control\Exception\TaskNotFoundException;
 use Bitrix\Tasks\Control\Exception\TaskUpdateException;
 use Bitrix\Tasks\Control\Handler\TaskFieldHandler;
 use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\Bizproc\Listener;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Disk;
@@ -62,10 +63,10 @@ use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\Processor\Task\AutoCloser;
 use Bitrix\Tasks\Processor\Task\Scheduler;
-use Bitrix\Tasks\Replicator\Template\Regularity\Exception\RegularityException;
-use Bitrix\Tasks\Replicator\Template\Regularity\Time\Service\RegularityService;
-use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
-use Bitrix\Tasks\Replicator\Template\Repository\TaskRepository;
+use Bitrix\Tasks\Replication\Task\Regularity\Exception\RegularityException;
+use Bitrix\Tasks\Replication\Task\Regularity\Time\Service\RegularityService;
+use Bitrix\Tasks\Replication\Replicator\RegularTaskReplicator;
+use Bitrix\Tasks\Replication\Repository\TaskRepository;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
@@ -106,6 +107,7 @@ class Task
 	private $needCorrectDatePlan = false;
 	private $correctDatePlanDependent = false;
 	private $fromAgent = false;
+	private $fromWorkFlow = false;
 	private $checkFileRights = false;
 	private $cloneAttachments = false;
 	private $skipExchangeSync = false;
@@ -117,10 +119,10 @@ class Task
 	private $skipPush = false;
 	private $skipBP = false;
 	private bool $withImmediatelyCrmEvents = false;
+	private $isAddedComment = false;
 
 	private $eventGuid;
 	private $task;
-	private $isAddedComment = false;
 	private $shiftResult;
 	private $fullTaskData;
 	private $eventTaskData;
@@ -169,6 +171,12 @@ class Task
 	public function fromAgent(): self
 	{
 		$this->fromAgent = true;
+		return $this;
+	}
+
+	public function fromWorkFlow(): self
+	{
+		$this->fromWorkFlow = true;
 		return $this;
 	}
 
@@ -250,6 +258,8 @@ class Task
 	 */
 	public function add(array $fields): TaskObject
 	{
+		$this->reset();
+
 		try
 		{
 			$fields = $this->prepareFields($fields);
@@ -282,6 +292,8 @@ class Task
 		}
 		catch (Exception $exception)
 		{
+			$this->handleAnalytics($fields, false);
+
 			throw new TaskAddException($exception->getMessage());
 		}
 
@@ -312,6 +324,7 @@ class Task
 		$this->pinInStage(true);
 
 		$this->sendAddIntegrationEvent($fields);
+		$this->handleAnalytics($fields);
 
 		return $task;
 	}
@@ -330,6 +343,8 @@ class Task
 	 */
 	public function update(int $taskId, array $fields): TaskObject|bool
 	{
+		$this->reset();
+
 		if ($taskId < 1)
 		{
 			return false;
@@ -435,6 +450,8 @@ class Task
 	 */
 	public function delete(int $taskId): bool
 	{
+		$this->reset();
+
 		if ($taskId < 1)
 		{
 			return false;
@@ -485,7 +502,7 @@ class Task
 		}
 		else
 		{
-			$sql = "DELETE FROM `b_tasks` WHERE ID = " . $taskId;
+			$sql = "DELETE FROM b_tasks WHERE ID = " . $taskId;
 			Application::getConnection()->query($sql);
 		}
 
@@ -961,12 +978,14 @@ class Task
 			return;
 		}
 
+		$fullTaskData = $this->getFullTaskData();
+
 		$notificationFields = array_merge($fields, ['CHANGED_BY' => $this->getOccurUserId()]);
-		$statusChanged = $this->fullTaskData['STATUS_CHANGED'] ?? false;
+		$statusChanged = $fullTaskData['STATUS_CHANGED'] ?? false;
 
 		if ($statusChanged)
 		{
-			$status = (int)$this->fullTaskData['REAL_STATUS'] ?? null;
+			$status = (int)$fullTaskData['REAL_STATUS'] ?? null;
 			CTaskNotifications::SendStatusMessage(
 				$this->sourceTaskData,
 				$status,
@@ -980,6 +999,21 @@ class Task
 			false,
 			$this->byPassParams
 		);
+	}
+
+	/**
+	 * @return void
+	 */
+	private function reset(): void
+	{
+		$this->eventGuid = null;
+		$this->task = null;
+		$this->shiftResult = null;
+		$this->fullTaskData = null;
+		$this->eventTaskData = null;
+		$this->sourceTaskData = null;
+		$this->legacyOperationResultData = null;
+		$this->changes = null;
 	}
 
 	/**
@@ -1809,7 +1843,10 @@ class Task
 					'ID' => $this->taskId,
 				]
 			),
-			['SPAWNED_BY_AGENT' => $this->fromAgent]
+			[
+				'SPAWNED_BY_AGENT' => $this->fromAgent,
+				'SPAWNED_BY_WORKFLOW' => $this->fromWorkFlow,
+			]
 		);
 	}
 
@@ -2673,6 +2710,23 @@ class Task
 		if (!is_null($systemStage))
 		{
 			$task->setStageId($systemStage->getId())->save();
+		}
+	}
+
+	private function handleAnalytics(array $fields, bool $status = true): void
+	{
+		if (!empty($fields['TASKS_ANALYTICS_SECTION']))
+		{
+			$parentId = (int)($fields['PARENT_ID'] ?? null);
+			$event = $parentId ? Analytics::EVENT['subtask_add'] : Analytics::EVENT['task_create'];
+
+			Analytics::getInstance($this->userId)->onTaskCreate(
+				$event,
+				$fields['TASKS_ANALYTICS_SECTION'],
+				$fields['TASKS_ANALYTICS_ELEMENT'] ?? null,
+				$fields['TASKS_ANALYTICS_SUB_SECTION'] ?? null,
+				$status
+			);
 		}
 	}
 }

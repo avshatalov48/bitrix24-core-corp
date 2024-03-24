@@ -355,7 +355,7 @@ jn.define('crm/receive-payment/steps/send-message', (require, exports, module) =
 				onMoveToNextStep({
 					sendingMethod: this.sendingMethod,
 					sendingMethodDesc: this.sendingMethodDesc,
-				})
+				});
 			}
 
 			return Promise.resolve();

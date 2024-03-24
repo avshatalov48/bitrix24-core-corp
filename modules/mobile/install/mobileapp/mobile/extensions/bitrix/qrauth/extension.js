@@ -104,7 +104,7 @@
 						style: styles.guideTitle,
 						text: `${BX.message('QR_HOW_TO_AUTH_MSGVER_1')}↓`,
 					}),
-					(cloud && Application.getApiVersion() >= 41 ? this.demoVideo() : null),
+					(cloud ? this.demoVideo() : null),
 					this.guideSteps(guideStepsTitles),
 				),
 			);
@@ -215,11 +215,6 @@
 	{
 		static open(parentWidget, { redirectUrl, showHint, hintText, title, description })
 		{
-			if (Application.getApiVersion() < 41)
-			{
-				parentWidget = PageManager;
-			}
-
 			parentWidget.openWidget('layout', {
 				backdrop: {
 					bounceEnable: true,
@@ -253,7 +248,7 @@
 			this.redirectUrl = redirectUrl || '';
 			this.showHint = Boolean(showHint);
 			this.hintText = hintText || '';
-			this.parent = (Application.getApiVersion() < 41 ? PageManager : (parentWidget || PageManager));
+			this.parent = parentWidget || PageManager;
 		}
 
 		render()
@@ -352,8 +347,7 @@
 				redirectUrl = '',
 				external = false,
 				url = null,
-				onsuccess = function() {
-				},
+				onsuccess = function() {},
 			} = props;
 			super(props);
 

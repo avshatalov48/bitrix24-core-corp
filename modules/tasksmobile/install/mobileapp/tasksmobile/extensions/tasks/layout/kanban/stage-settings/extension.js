@@ -95,17 +95,13 @@ jn.define('tasks/layout/kanban/stage-settings', (require, exports, module) => {
 						if (deleteResult.status === 'error'
 							&& deleteResult.errors.length > 0)
 						{
-							switch (deleteResult.errors[0].code)
+							if (deleteResult.errors[0].customData?.public)
 							{
-								case 5:
-									NotifyManager.showError(BX.message('STAGE_DELETION_PROHIBITED'));
-									break;
-								case 6:
-									NotifyManager.showError(BX.message('STAGE_WITH_TASKS_DELETION_PROHIBITED'));
-									break;
-								default:
-									NotifyManager.showDefaultError();
-									break;
+								NotifyManager.showError(deleteResult.errors[0].message);
+							}
+							else
+							{
+								NotifyManager.showDefaultError();
 							}
 						}
 					});

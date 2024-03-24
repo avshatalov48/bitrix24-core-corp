@@ -134,7 +134,7 @@ class TaskTable extends TaskDataManager
 			'RESPONSIBLE_ID' => array(
 				'data_type' => 'integer',
 				'required' => true,
-				'title' => Loc::getMessage('TASKS_TASK_ENTITY_RESPONSIBLE_ID_FIELD'),
+				'title' => Loc::getMessage('TASKS_TASK_ENTITY_ASSIGNEE_ID_FIELD'),
 			),
 			'DATE_START' => array(
 				'data_type' => 'datetime',
@@ -417,6 +417,7 @@ class TaskTable extends TaskDataManager
 		$fields = self::getEntity()->getFields();
 
 		$id = 0;
+		$siteId = SITE_ID;
 		$insertData = [];
 		foreach ($data as $field => $value)
 		{
@@ -429,6 +430,10 @@ class TaskTable extends TaskDataManager
 			{
 				$id = (int)$value;
 				continue;
+			}
+			if ($field === 'SITE_ID')
+			{
+				$siteId = $value;
 			}
 
 			if (
@@ -449,8 +454,9 @@ class TaskTable extends TaskDataManager
 			return;
 		}
 
-		$sql = 'INSERT IGNORE INTO ' . self::getTableName() . ' (ID) VALUES (' . $id . ')';
 		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		$sql = $helper->getInsertIgnore(self::getTableName(), ' (ID, SITE_ID)', " VALUES ({$id}, '{$siteId}')");
 		$connection->queryExecute($sql);
 
 		$taskObject = self::getByPrimary($id)->fetchObject();

@@ -63,6 +63,7 @@ class Factory
 			if ((new Sign())->isEnabled())
 			{
 				static::$supportedEntityTypes[] = \CCrmOwnerType::SmartDocument;
+				static::$supportedEntityTypes[] = \CCrmOwnerType::SmartB2eDocument;
 			}
 		}
 
@@ -362,6 +363,10 @@ class Factory
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}
+		elseif ($entityTypeId === \CCrmOwnerType::SmartB2eDocument)
+		{
+			return new Target\ItemTarget($entityTypeId);
+		}
 		elseif ($entityTypeId === \CCrmOwnerType::Contact)
 		{
 			return new Target\ContactTarget($entityTypeId);
@@ -459,6 +464,12 @@ class Factory
 					Trigger\Sign\InitiatorSignedTrigger::className(),
 					Trigger\Sign\OtherMemberSignedTrigger::className(),
 					Trigger\Sign\AllMembersSignedTrigger::className(),
+					Trigger\Sign\B2e\SigningStartedTrigger::className(),
+					Trigger\Sign\B2e\SigningDoneTrigger::className(),
+					Trigger\Sign\B2e\SigningStoppedTrigger::className(),
+					Trigger\Sign\B2e\CoordinationAndFillingTrigger::className(),
+					Trigger\Sign\B2e\SigningTrigger::className(),
+					Trigger\Sign\B2e\CompletedTrigger::className(),
 					Trigger\AppTrigger::className(),
 			]
 				as $triggerClass

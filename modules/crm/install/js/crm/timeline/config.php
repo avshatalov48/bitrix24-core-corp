@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'ui.cnt',
 		'rest.client',
+		'ui.analytics',
 		'ui.label',
 		'main.date',
 		'main.popup',
@@ -19,7 +20,6 @@ return [
 		'main.loader',
 		'ui.vue3',
 		'ui.notification',
-		'crm.datetime',
 		'main.core',
 		'crm.timeline.item',
 		'crm.timeline.tools',

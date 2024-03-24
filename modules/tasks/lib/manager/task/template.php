@@ -437,7 +437,10 @@ final class Template extends \Bitrix\Tasks\Manager
 		$templateKey = static::getCode(true);
 		$replicateKey = 'REPLICATE';
 
-		if(!array_key_exists($templateKey, $taskData) && !array_key_exists($replicateKey, $taskData))
+		if(
+			($parameters['CREATE_TEMPLATE'] ?? true) === false
+			|| (!array_key_exists($templateKey, $taskData) && !array_key_exists($replicateKey, $taskData))
+		)
 		{
 			return $result; // nothing to do
 		}
@@ -555,6 +558,7 @@ final class Template extends \Bitrix\Tasks\Manager
 			$template['SE_CHECKLIST'] = new Item\Task\CheckList();
 			$template['REPLICATE_PARAMS'] = $data[static::getCode(true)]['REPLICATE_PARAMS'];
 
+			/** @var Item\Task\Template $template */
 			$saveResult = $template->save();
 
 			if ($saveResult->isSuccess())

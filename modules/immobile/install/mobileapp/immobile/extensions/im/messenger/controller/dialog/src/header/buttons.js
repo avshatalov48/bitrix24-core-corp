@@ -164,7 +164,7 @@ jn.define('im/messenger/controller/dialog/header/buttons', (require, exports, mo
 		onLongTap(buttonId)
 		{
 			const { bitrixCallsEnabled } = jnExtensionData.get('im:messenger/controller/dialog');
-			if (!Feature.isCallBetaAvailable() || bitrixCallsEnabled)
+			if (!Feature.isBitrixCallEnabled() || bitrixCallsEnabled)
 			{
 				return;
 			}

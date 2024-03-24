@@ -118,15 +118,6 @@ class Action
 	{
 		$result = null;
 
-		if (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
-		{
-			return [
-				'ERROR_EXCEPTION' => [
-					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_UNAVAILABLE_ERROR'),
-				],
-			];
-		}
-
 		if (
 			!Loader::includeModule('bitrix24')
 			|| !Feature::isFeatureEnabled('bi_constructor')
@@ -194,15 +185,6 @@ class Action
 	private static function importSupersetDataset($content, Event $event)
 	{
 		$result = null;
-
-		if (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
-		{
-			return [
-				'ERROR_EXCEPTION' => [
-					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_UNAVAILABLE_ERROR'),
-				],
-			];
-		}
 
 		if (
 			!Loader::includeModule('bitrix24')

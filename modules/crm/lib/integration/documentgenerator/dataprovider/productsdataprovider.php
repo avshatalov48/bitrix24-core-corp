@@ -528,7 +528,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 	{
 		if($this->isLoaded())
 		{
-			return $this->data['LOCATION_ID'];
+			return $this->data['LOCATION_ID'] ?? null;
 		}
 
 		return null;
@@ -579,12 +579,8 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		$crmStatus = new \CCrmStatus($this->getStatusEntityId());
 
 		$data = $crmStatus->GetStatusByStatusId($statusId);
-		if($data['NAME'])
-		{
-			return $data['NAME'];
-		}
 
-		return null;
+		return $data['NAME'] ?? null;
 	}
 
 	public function prepareTransactionData(): Barcode\Payment\TransactionData

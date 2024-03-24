@@ -8,12 +8,16 @@ export const marketUninstallState = defineStore('market-uninstall', {
 		uninstallNodes: {},
 		popupDelete: null,
 		refreshUri: '',
+		action: '',
 	}),
 	actions: {
 		setNodesInfo(appCode, node) {
 			this.uninstallNodes[appCode] = node;
 		},
-		deleteApp: function (event, appCode, refreshUri) {
+		setDeleteActionInfo(action) {
+			this.action = action;
+		},
+		deleteAction: function (appCode, refreshUri) {
 			this.refreshUri = refreshUri ?? '';
 
 			if (this.uninstallConfirmShown) {
@@ -112,6 +116,12 @@ export const marketUninstallState = defineStore('market-uninstall', {
 						);
 						this.popupDelete.adjustPosition();
 					} else {
+						if (this.action.length > 0) {
+							try {
+								eval(this.action);
+							} catch (e) {}
+						}
+
 						this.popupDelete.close();
 						this.uninstallConfirmShown = false;
 

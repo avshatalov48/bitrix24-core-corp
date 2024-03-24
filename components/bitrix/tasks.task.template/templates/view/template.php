@@ -583,7 +583,7 @@ endif?>
 						'ENABLE_SYNC' => true,
 						'ENTITY_ID' => $template->getId(),
 						'ENTITY_ROUTE' => 'task.template',
-						'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE'),
+						'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ASSIGNEE'),
 						'HIDE_IF_EMPTY' => 'N',
 						'CONTEXT' => 'template',
 					),

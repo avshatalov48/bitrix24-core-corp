@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Intranet\CustomSection\DataStructures\CustomSectionPage;
 use Bitrix\Main\Error;
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Main\Web\Uri;
 
 class IntranetCustomSectionComponent extends \CBitrixComponent implements \Bitrix\Main\Errorable
@@ -111,6 +112,7 @@ class IntranetCustomSectionComponent extends \CBitrixComponent implements \Bitri
 			'IS_ACTIVE' => $isActive,
 			'COUNTER_ID' => $page->getCounterId(),
 			'COUNTER' => $page->getCounterValue(),
+			'IS_DISABLED' => $page->getDisabledInCtrlPanel(),
 		];
 	}
 

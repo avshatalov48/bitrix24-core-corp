@@ -343,49 +343,38 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 				return false;
 			}
 
-			if (Application.getApiVersion() >= 25)
+			console.info('BX.MobileTools.openChat: open chat in JSNative component');
+
+			const dialogParams = {
+				dialogId,
+				dialogTitleParams: dialogTitleParams ? {
+					name: dialogTitleParams.name || '',
+					avatar: dialogTitleParams.avatar || '',
+					color: dialogTitleParams.color || '',
+					description: dialogTitleParams.description || '',
+				} : false,
+			};
+
+			let openDialog = () => {
+				BX.postComponentEvent('onOpenDialog', [dialogParams], 'im.recent');
+				BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [dialogParams], 'im.messenger');
+			};
+
+			if (this.isCrmEntityDetail())
 			{
-				console.info('BX.MobileTools.openChat: open chat in JSNative component');
-
-				const dialogParams = {
-					dialogId,
-					dialogTitleParams: dialogTitleParams ? {
-						name: dialogTitleParams.name || '',
-						avatar: dialogTitleParams.avatar || '',
-						color: dialogTitleParams.color || '',
-						description: dialogTitleParams.description || '',
-					} : false,
-				};
-
-				let openDialog = () => {
-					BX.postComponentEvent('onOpenDialog', [dialogParams], 'im.recent');
-					BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [dialogParams], 'im.messenger');
-				};
-
-				if (Application.getApiVersion() >= 45 && this.isCrmEntityDetail())
+				const imOpener = DialogOpener();
+				if (typeof imOpener === 'function')
 				{
-					const imOpener = DialogOpener();
-					if (typeof imOpener === 'function')
-					{
-						openDialog = () => imOpener.open(dialogParams);
-					}
+					openDialog = () => imOpener.open(dialogParams);
 				}
-
-				if (!this.isBackdrop)
-				{
-					return openDialog();
-				}
-
-				this.form.close(openDialog);
 			}
-			else
+
+			if (!this.isBackdrop)
 			{
-				PageManager.openPage({
-					url: `${BX.message('MobileSiteDir') || '/'}mobile/im/dialog.php?id=${dialogId}`,
-					bx24ModernStyle: true,
-					data: { dialogId },
-				});
+				return openDialog();
 			}
+
+			this.form.close(openDialog);
 
 			return true;
 		}
@@ -552,72 +541,68 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 
 		buildPopupMenu()
 		{
-			if (Application.getApiVersion() >= 28)
-			{
-				this.popupMenu.setData(
-					[
-						{ title: BX.message('PROFILE_USER_TASKS'), sectionCode: 'usermenu', id: 'tasks' },
-						{ title: BX.message('PROFILE_USER_FILES'), sectionCode: 'usermenu', id: 'files' },
-						{ title: BX.message('PROFILE_USER_MESSAGES'), sectionCode: 'usermenu', id: 'messages' },
-					],
-					[{ id: 'usermenu', title: '' }],
-					(event, item) => {
-						if (event === 'onItemSelected')
-						{
-							switch (item.id)
-							{
-								case 'files':
-								{
-									const opener = Application.getApiVersion() >= 41 ? this.form : PageManager;
-									opener.openWidget(
-										'list',
-										{
-											useSearch: true,
-											onReady: (list) => {
-												UserDisk.open({
-													userId: env.userId,
-													ownerId: this.userId,
-													title: item.title,
-													list,
-
-												});
-											},
-											title: BX.message('PROFILE_INFO'),
-										},
-									);
-
-									break;
-								}
-
-								case 'tasks':
-								{
-									BX.postComponentEvent(
-										'taskbackground::taskList::open',
-										[{ ownerId: this.userId }],
-										'background',
-									);
-
-									break;
-								}
-
-								case 'messages':
-								{
-									PageManager.openPage({ url: `${env.siteDir}mobile/index.php?blog=Y&created_by_id=${this.userId}` });
-
-									break;
-								}
-								// No default
-							}
-						}
-					},
-				);
-				this.form.setRightButtons([
+			this.popupMenu.setData(
+				[
+					{ title: BX.message('PROFILE_USER_TASKS'), sectionCode: 'usermenu', id: 'tasks' },
+					{ title: BX.message('PROFILE_USER_FILES'), sectionCode: 'usermenu', id: 'files' },
+					{ title: BX.message('PROFILE_USER_MESSAGES'), sectionCode: 'usermenu', id: 'messages' },
+				],
+				[{ id: 'usermenu', title: '' }],
+				(event, item) => {
+					if (event === 'onItemSelected')
 					{
-						type: 'more',
-						callback: () => this.popupMenu.show(),
-					},
-				]);
-			}
+						switch (item.id)
+						{
+							case 'files':
+							{
+								this.form.openWidget(
+									'list',
+									{
+										useSearch: true,
+										onReady: (list) => {
+											UserDisk.open({
+												userId: env.userId,
+												ownerId: this.userId,
+												title: item.title,
+												list,
+
+											});
+										},
+										title: BX.message('PROFILE_INFO'),
+									},
+								);
+
+								break;
+							}
+
+							case 'tasks':
+							{
+								BX.postComponentEvent(
+									'taskbackground::taskList::open',
+									[{ ownerId: this.userId }],
+									'background',
+								);
+
+								break;
+							}
+
+							case 'messages':
+							{
+								PageManager.openPage({ url: `${env.siteDir}mobile/index.php?blog=Y&created_by_id=${this.userId}` });
+
+								break;
+							}
+							// No default
+						}
+					}
+				},
+			);
+			this.form.setRightButtons([
+				{
+					type: 'more',
+					callback: () => this.popupMenu.show(),
+				},
+			]);
 		}
 
 		error(e)
@@ -651,7 +636,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 			}
 
 			params = Object.assign(params, userData);
-			if (Application.getApiVersion() >= 27 && params.userId !== null)
+			if (params.userId !== null)
 			{
 				const top = {
 					imageUrl: params.imageUrl,
@@ -721,33 +706,26 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 
 		static openComponent(userData = {})
 		{
-			if (Application.getApiVersion() >= 27)
+			let url = '';
+			if (availableComponents && availableComponents['user.profile'])
 			{
-				let url = '';
-				if (availableComponents && availableComponents['user.profile'])
-				{
-					url = availableComponents['user.profile'].publicUrl;
-				}
+				url = availableComponents['user.profile'].publicUrl;
+			}
 
-				PageManager.openComponent(
-					'JSStackComponent',
-					{
-						scriptPath: url,
-						params: { userId: userData.userId },
-						canOpenInDefault: true,
-						rootWidget: {
-							name: 'list',
-							title: userData.title,
-							description: true,
-							settings: { objectName: 'form', description: true },
-						},
+			PageManager.openComponent(
+				'JSStackComponent',
+				{
+					scriptPath: url,
+					params: { userId: userData.userId },
+					canOpenInDefault: true,
+					rootWidget: {
+						name: 'list',
+						title: userData.title,
+						description: true,
+						settings: { objectName: 'form', description: true },
 					},
-				);
-			}
-			else
-			{
-				PageManager.openPage({ url: `/mobile/users/?user_id=${userData.userId}` });
-			}
+				},
+			);
 		}
 	}
 

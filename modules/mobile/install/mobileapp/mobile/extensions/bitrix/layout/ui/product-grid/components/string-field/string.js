@@ -35,7 +35,12 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 
 			if (!isEqual(this.state, nextState))
 			{
-				this.setState(nextState);
+				this.setState(nextState, () => {
+					if (this.state.rawValue === 0)
+					{
+						this.forceCursorToTheEnd();
+					}
+				});
 			}
 		}
 

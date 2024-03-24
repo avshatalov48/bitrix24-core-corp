@@ -10,6 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 class Form
 {
+	private const ON_PROFILE_CONFIG = 'OnProfileConfig';
+
 	protected $userId = 0;
 	protected $userFieldEntityId = 'USER';
 	protected $userFields = null;
@@ -661,17 +663,15 @@ class Form
 			}
 		}
 
-		$formConfig = array(
-			array(
+		return [
+			[
 				'name' => 'contact',
 				'title' => Loc::getMessage("INTRANET_USER_PROFILE_SECTION_CONTACT_TITLE"),
 				'type' => 'section',
 				'elements' => $elements,
-				'data' => array('isChangeable' => true, 'isRemovable' => false)
-			)
-		);
-
-		return $formConfig;
+				'data' => ['isChangeable' => true, 'isRemovable' => false]
+			]
+		];
 	}
 
 	public function getData($result)

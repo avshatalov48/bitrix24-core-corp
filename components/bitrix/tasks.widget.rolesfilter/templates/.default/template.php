@@ -20,10 +20,14 @@ $this->SetViewTarget("sidebar", 200);
 			<a href="<?= $arParams['PATH_TO_TASKS'] ?>"><?= Loc::getMessage('TASKS_FILTER_TITLE') ?></a>
 		</div>
 		<?php
-			$path = Socialnetwork\UI\Task::getActionPath();
-			$url = Tasks\UI\Task::makeActionUrl($path);
+			$path = (new Tasks\Slider\Path\TaskPathMaker(0, Tasks\Slider\Path\PathMaker::EDIT_ACTION))->makeEntityPath();
+			$url = new \Bitrix\Main\Web\Uri($path);
+			$url->addParams([
+				'ta_sec' => Tasks\Helper\Analytics::SECTION['tasks'],
+				'ta_el' => Tasks\Helper\Analytics::ELEMENT['widget_menu']
+			]);
 		?>
-		<a class="plus-icon" href="<?= $url ?>"></a>
+		<a class="plus-icon" href="<?= $url->getUri() ?>"></a>
 	</div>
 	<?php if (is_array($arResult['ROLES'])): ?>
 		<div class="sidebar-widget-content">

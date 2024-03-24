@@ -58,7 +58,10 @@ if ($USER->CanDoOperation("controller_counters_manage") && $lAdmin->EditAction()
 			$lAdmin->AddUpdateError(GetMessage("CTRL_CNT_ADMIN_UPDATE_ERROR", array("#ID#" => $ID, "#ERROR#" => $e->GetString())), $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
+		else
+		{
+			$DB->Commit();
+		}
 	}
 }
 
@@ -89,7 +92,10 @@ if ($arID && $USER->CanDoOperation("controller_counters_manage"))
 				$DB->Rollback();
 				$lAdmin->AddGroupError(GetMessage("CTRL_CNT_ADMIN_DELETE_ERROR", array("#ID#" => $ID, "#ERROR#" => $e->GetString())), $ID);
 			}
-			$DB->Commit();
+			else
+			{
+				$DB->Commit();
+			}
 			break;
 		}
 	}

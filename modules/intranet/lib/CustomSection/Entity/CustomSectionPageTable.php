@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\CustomSection\Entity;
 
+use Bitrix\Intranet\CustomSection\DataStructures\CustomSectionPage;
 use Bitrix\Intranet\CustomSection\Manager;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -62,6 +63,7 @@ class CustomSectionPageTable extends DataManager
 			(new StringField('CODE'))
 				->configureSize(255)
 				->configureRequired()
+				->configureUnique()
 				->addValidator(new RegExpValidator(Manager::VALID_CODE_REGEX))
 			,
 			(new StringField('TITLE'))
@@ -111,9 +113,16 @@ class CustomSectionPageTable extends DataManager
 			return $result;
 		}
 
-		if (!static::getCodeGenerator()->isCodeValid((string)$code))
+		$id = $event->getParameter('primary')['ID'];
+		$customSectionId = isset($fields['CUSTOM_SECTION_ID'])
+			? (int)$fields['CUSTOM_SECTION_ID']
+			: static::getCustomSectionId($id)
+		;
+
+		$codeGenerator = static::getCodeGenerator($customSectionId);
+		if (!$codeGenerator->isCodeValid((string)$code))
 		{
-			$newCode = static::getCodeGenerator()->generate($fields['TITLE'] ?? null);
+			$newCode = $codeGenerator->generate($fields['TITLE'] ?? null);
 
 			if (empty($newCode))
 			{
@@ -130,19 +139,66 @@ class CustomSectionPageTable extends DataManager
 		return $result;
 	}
 
-	protected static function getCodeGenerator(): CodeGenerator
+	/**
+	 * Returns a CodeGenerator for the Page with generation relative to the code of other pages in the customSection.
+	 * If customSectionId === null, then generation will be relative to all pages
+	 *
+	 * @param int|null $customSectionId
+	 * @return CodeGenerator
+	 */
+	protected static function getCodeGenerator(?int $customSectionId = null): CodeGenerator
 	{
-		static $generator = null;
+		/** @var StringField $codeField */
+		$codeField = static::getEntity()->getField('CODE');
+		$generator = new CodeGenerator(static::class, $codeField);
 
-		if (is_null($generator))
+		if (is_null($customSectionId))
 		{
-			/** @var StringField $codeField */
-			$codeField = static::getEntity()->getField('CODE');
-
-			$generator = (new CodeGenerator(static::class, $codeField));
+			return $generator;
 		}
 
-		return $generator;
+		$customSectionCode = static::getCustomSectionCode($customSectionId);
+		if (is_null($customSectionCode))
+		{
+			return $generator;
+		}
+
+		$manager = ServiceLocator::getInstance()->get('intranet.customSection.manager');
+		$systemPagesCodes = $manager->getSystemPagesCodes($customSectionCode, true);
+
+		return $generator
+			->setUniqueCheckFilter(['=CUSTOM_SECTION_ID' => $customSectionId])
+			->setUniqueCheckCallback(static function ($code) use ($systemPagesCodes) {
+				return !in_array($code, $systemPagesCodes, true);
+			})
+		;
+	}
+
+	protected static function getCustomSectionId(int $customSectionPageId): ?int
+	{
+		$result = static::query()
+			->setSelect(['CUSTOM_SECTION_ID'])
+			->where('ID', $customSectionPageId)
+			->exec()
+			->fetch()
+		;
+
+		return isset($result['CUSTOM_SECTION_ID'])
+			? (int)$result['CUSTOM_SECTION_ID']
+			: null
+		;
+	}
+
+	protected static function getCustomSectionCode(int $customSectionId): ?string
+	{
+		$result = CustomSectionTable::query()
+			->setSelect(['CODE'])
+			->where('ID', $customSectionId)
+			->exec()
+			->fetch()
+		;
+
+		return $result['CODE'] ?? null;
 	}
 
 	public static function onAfterAdd(Event $event): void

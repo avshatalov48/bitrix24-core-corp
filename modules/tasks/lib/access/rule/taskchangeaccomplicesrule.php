@@ -70,7 +70,7 @@ class TaskChangeAccomplicesRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (
 			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
-			&& $this->user->getPermission(PermissionDictionary::TASK_RESPONSE_ASSIGN)
+			&& $this->user->getPermission(PermissionDictionary::TASK_ASSIGNEE_ASSIGN)
 		)
 		{
 			return true;

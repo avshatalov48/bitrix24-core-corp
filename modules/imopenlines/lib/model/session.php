@@ -363,6 +363,7 @@ class SessionTable extends DataManager
 			new IntegerField('PARENT_ID', [
 				'default_value' => '0',
 			]),
+			new StringField('USER_LANG'),
 			(new Reference(
 				'INDEX',
 				SessionIndexTable::class,

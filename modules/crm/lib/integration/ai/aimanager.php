@@ -48,6 +48,11 @@ final class AIManager
 	];
 	private const AI_APP_COLLECTION_MARKET_DEFAULT = 19021800;
 
+	private const AUDIO_FILE_MIN_SIZE = 5 * 1024;
+	private const AUDIO_FILE_MAX_SIZE = 25 * 1024 * 1024;
+	private const AUDIO_MIN_CALL_TIME = 10;
+	private const AUDIO_MAX_CALL_TIME = 60 * 60;
+
 	public static function isAvailable(): bool
 	{
 		static $regionBlacklist = [
@@ -489,26 +494,11 @@ final class AIManager
 			return $result;
 		}
 		$fileId = max($storageElementIds);
-		if ($fileId <= 0)
-		{
-			self::logger()->error(
-				'{date}: Error while check for suitable audios. Wrong fileId {fileId}' . PHP_EOL,
-				[
-					'fileId' => $fileId,
-				]
-			);
-			$result->addError(new Error('Wrong fileId', 'WRONG_FILE_ID'));
-
-			return $result;
-		}
 
 		$bFileId = null;
-		if ($storageTypeId === StorageType::Disk)
+		if ($storageTypeId === StorageType::Disk && \Bitrix\Main\Loader::includeModule('disk'))
 		{
-			if (\Bitrix\Main\Loader::includeModule('disk'))
-			{
-				$bFileId = \Bitrix\Disk\File::loadById($fileId)?->getFileId();
-			}
+			$bFileId = \Bitrix\Disk\File::loadById($fileId)?->getFileId();
 		}
 		elseif ($storageTypeId === StorageType::File)
 		{
@@ -529,10 +519,10 @@ final class AIManager
 		}
 
 		$file = \CFile::GetFileArray($bFileId);
-		$fileExt = (string)\GetFileExtension($file['ORIGINAL_NAME']);
+		$fileExt = (string)\GetFileExtension($file['ORIGINAL_NAME'] ?? '');
 
 		// check if wrong extension:
-		if (!in_array(mb_strtolower($fileExt), \Bitrix\Crm\Service\Timeline\Config::ALLOWED_AUDIO_EXTENSIONS))
+		if (!in_array(mb_strtolower($fileExt), \Bitrix\Crm\Service\Timeline\Config::ALLOWED_AUDIO_EXTENSIONS, true))
 		{
 			self::logger()->error(
 				'{date}: Error while check for suitable audios. Wrong file extension {ext}' . PHP_EOL,
@@ -545,9 +535,9 @@ final class AIManager
 			return $result;
 		}
 
-		$minFileSize = (int)Option::get('crm', 'ai_integration_audiofile_min_size', 5 * 1024);
-		$maxFileSize = (int)Option::get('crm', 'ai_integration_audiofile_max_size', 25 * 1024 * 1024);
-		$fileSize = (int)$file['FILE_SIZE'];
+		$minFileSize = (int)Option::get('crm', 'ai_integration_audiofile_min_size', self::AUDIO_FILE_MIN_SIZE);
+		$maxFileSize = (int)Option::get('crm', 'ai_integration_audiofile_max_size', self::AUDIO_FILE_MAX_SIZE);
+		$fileSize = (int)($file['FILE_SIZE'] ?? 0);
 		if ($fileSize < $minFileSize)
 		{
 			self::logger()->error(
@@ -581,8 +571,8 @@ final class AIManager
 			$callInfo = VoxImplantManager::getCallInfo($callId);
 			$callDuration = $callInfo['DURATION'] ?? 0;
 
-			$minCallDuration = (int)Option::get('crm', 'ai_integration_audio_min_call_time', 10);
-			$maxCallDuration = (int)Option::get('crm', 'ai_integration_audio_max_call_time', 60 * 60);
+			$minCallDuration = (int)Option::get('crm', 'ai_integration_audio_min_call_time', self::AUDIO_MIN_CALL_TIME);
+			$maxCallDuration = (int)Option::get('crm', 'ai_integration_audio_max_call_time', self::AUDIO_MAX_CALL_TIME);
 
 			if ($callDuration > 0 && $callDuration < $minCallDuration)
 			{

@@ -169,78 +169,84 @@ class Permissions
 	 */
 	public static function getMap()
 	{
-		return array(
-			self::ENTITY_LINES => array(
-				self::ACTION_VIEW => array(
+		$map = [
+			self::ENTITY_LINES => [
+				self::ACTION_VIEW => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				),
-				self::ACTION_MODIFY => array(
+				],
+				self::ACTION_MODIFY => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				),
-			),
-			self::ENTITY_CONNECTORS => array(
-				self::ACTION_MODIFY => array(
+				],
+			],
+			self::ENTITY_CONNECTORS => [
+				self::ACTION_MODIFY => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				),
-			),
-			self::ENTITY_SESSION => array(
-				self::ACTION_VIEW => array(
+				],
+			],
+			self::ENTITY_SESSION => [
+				self::ACTION_VIEW => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				)
-			),
-			self::ENTITY_HISTORY => array(
-				self::ACTION_VIEW => array(
+				]
+			],
+			self::ENTITY_HISTORY => [
+				self::ACTION_VIEW => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				)
-			),
-			self::ENTITY_JOIN => array(
-				self::ACTION_PERFORM => array(
+				]
+			],
+			self::ENTITY_JOIN => [
+				self::ACTION_PERFORM => [
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				),
-			),
-			self::ENTITY_VOTE_HEAD => array(
-				self::ACTION_PERFORM => array(
+				],
+			],
+			self::ENTITY_VOTE_HEAD => [
+				self::ACTION_PERFORM => [
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY,
 					self::PERMISSION_NONE
-				),
-			),
-			self::ENTITY_SETTINGS => array(
-				self::ACTION_MODIFY => array(
+				],
+			],
+			self::ENTITY_SETTINGS => [
+				self::ACTION_MODIFY => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_ALLOW
-				)
-			),
-			self::ENTITY_QUICK_ANSWERS => array(
-				self::ACTION_MODIFY => array(
+				]
+			],
+			self::ENTITY_QUICK_ANSWERS => [
+				self::ACTION_MODIFY => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_ANY
-				),
-			),
-			self::ENTITY_SOFT_PAUSE_LIST => array(
-				self::ACTION_VIEW => array(
+				],
+			],
+		];
+
+		if (\Bitrix\Imopenlines\Helpers\Filter::isFdcMode())
+		{
+			$map[self::ENTITY_SOFT_PAUSE_LIST] = [
+				self::ACTION_VIEW => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_ANY
-				),
-			),
-		);
+				],
+			];
+		}
+
+		return $map;
 	}
 
 	/**

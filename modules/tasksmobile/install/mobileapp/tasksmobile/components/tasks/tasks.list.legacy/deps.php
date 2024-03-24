@@ -16,6 +16,7 @@ return [
 		'tasks:layout/presetList',
 		'tasks:layout/task/create',
 		'tasks:task',
+		'tasks:enum',
 		'utils/function',
 		'utils/color',
 	],

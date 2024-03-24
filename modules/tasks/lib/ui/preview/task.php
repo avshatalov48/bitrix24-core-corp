@@ -4,6 +4,8 @@ namespace Bitrix\Tasks\Ui\Preview;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Util\User;
 
@@ -80,10 +82,17 @@ class Task
 			return false;
 		}
 
-		$taskData['LINK'] = \CTaskNotifications::getNotificationPath(
-			['ID' => $taskData['RESPONSIBLE_ID']],
-			$taskData['ID']
+		$link = new Uri(
+			\CTaskNotifications::getNotificationPath(
+				['ID' => $taskData['RESPONSIBLE_ID']],
+				$taskData['ID']
+			)
 		);
+		$link->addParams([
+			'ta_sec' => Analytics::SECTION['chat'],
+			'ta_el' => Analytics::ELEMENT['title_click'],
+		]);
+		$taskData['LINK'] = $link->getUri();
 
 		$attach = new \CIMMessageParamAttach(1, '#E30000');
 		$attach->AddUser([
@@ -143,12 +152,17 @@ class Task
 			['ID' => $taskData['RESPONSIBLE_ID']],
 			$taskData['ID']
 		);
+		$uri = new Uri($link);
+		$uri->addParams([
+			'ta_sec' => Analytics::SECTION['chat'],
+			'ta_el' => Analytics::ELEMENT['title_click'],
+		]);
 
 		$richData
 			->setType(\Bitrix\Im\V2\Entity\Url\RichData::TASKS_TYPE)
 			->setName(\CTextParser::clearAllTags($taskData['TITLE']))
 			->setDescription(\CTextParser::clearAllTags($taskData['DESCRIPTION']))
-			->setLink($link)
+			->setLink($uri->getUri())
 			->setAllowedUsers($membersIds)
 		;
 
@@ -180,7 +194,7 @@ class Task
 		];
 
 		$grid[] = [
-			'NAME' => Loc::getMessage('TASK_PREVIEW_FIELD_RESPONSIBLE') . ':',
+			'NAME' => Loc::getMessage('TASK_PREVIEW_FIELD_ASSIGNEE') . ':',
 			'VALUE' => \Bitrix\Im\User::getInstance($taskData['RESPONSIBLE_ID'])->getFullName(false),
 			'USER_ID' => $taskData['RESPONSIBLE_ID'],
 			'DISPLAY' => $display,

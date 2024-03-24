@@ -11,5 +11,5 @@ if (!\Bitrix\Main\Loader::includeModule('im'))
 }
 
 return [
-	'isCallBetaAvailable' => \Bitrix\Im\Settings::isCallBetaAvailable(),
+	'isBitrixCallEnabled' => \Bitrix\Im\Call\Call::isBitrixCallServerEnabled(),
 ];

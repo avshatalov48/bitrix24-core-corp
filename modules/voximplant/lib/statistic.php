@@ -87,7 +87,7 @@ class StatisticTable extends Base
 			new Entity\StringField('PORTAL_NUMBER', array(
 				'required' => false,
 				'validation' => function(){return array(new Entity\Validator\Length(null, 50));},
-				'title' => Loc::getMessage('STATISTIC_ENTITY_PORTAL_NUMBER_FIELD'),
+				'title' => Loc::getMessage('STATISTIC_ENTITY_PORTAL_NUMBER_FIELD_MSGVER_1'),
 			)),
 			new Entity\StringField('PHONE_NUMBER', array(
 				'validation' => function(){return array(new Entity\Validator\Length(null, 20));},
@@ -190,7 +190,7 @@ class StatisticTable extends Base
 
 			new \Bitrix\Main\Entity\ExpressionField(
 				'HAS_RECORD',
-				'CASE WHEN %s IS NULL THEN \'N\' ELSE \'Y\' END',
+				"CASE WHEN %s IS NULL THEN 'N' ELSE 'Y' END",
 				array('CALL_WEBDAV_ID')
 			),
 			new Entity\ExpressionField('TOTAL_DURATION','SUM(%s)', array('CALL_DURATION')),

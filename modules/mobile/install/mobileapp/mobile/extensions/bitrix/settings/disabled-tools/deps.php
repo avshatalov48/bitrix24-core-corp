@@ -6,5 +6,6 @@ return [
 		'type',
 		'rest/run-action-executor',
 		'utils/object',
+		'notify-manager',
 	],
 ];

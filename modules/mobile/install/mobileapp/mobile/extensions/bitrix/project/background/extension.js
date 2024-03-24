@@ -45,10 +45,7 @@
 
 		static openProject(item, params)
 		{
-			if (
-				Application.getApiVersion() < 41
-				|| params.projectId <= 0
-			)
+			if (params.projectId <= 0)
 			{
 				return;
 			}

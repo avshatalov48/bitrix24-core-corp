@@ -81,12 +81,12 @@ class Group
 		$sql = "
 			SELECT 
 			       GROUP_ID,
-			       `TYPE`,
-			       SUM(`VALUE`) as CNT
+			       TYPE,
+			       SUM(VALUE) as CNT
 			FROM ". CounterTable::getTableName() ." 
 			WHERE
 				GROUP_ID = {$this->getGroupId()}
-			GROUP BY GROUP_ID, `TYPE`
+			GROUP BY GROUP_ID, TYPE
 		";
 
 		$res = Application::getConnection()->query($sql);

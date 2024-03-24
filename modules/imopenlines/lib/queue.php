@@ -224,10 +224,10 @@ class Queue
 	public static function getList($params)
 	{
 		$lastActivityDate = self::getTimeLastActivityOperator();
-		$timeHelper = Application::getConnection()->getSqlHelper()->addSecondsToDateTime('(-'.$lastActivityDate.')');
+		$timeHelper = Application::getConnection()->getSqlHelper()->addSecondsToDateTime(-1 * $lastActivityDate);
 
 		$query = new Query(QueueTable::getEntity());
-		if(Loader::includeModule('im'))
+		if (Loader::includeModule('im'))
 		{
 			$query->registerRuntimeField('', new ReferenceField(
 				'IM_STATUS',
@@ -236,11 +236,19 @@ class Queue
 				['join_type'=>'left']
 			));
 
-			$query->registerRuntimeField('', new ExpressionField('IS_ONLINE_CUSTOM', 'CASE WHEN %1$s > '.$timeHelper.' && (%2$s IS NULL || %1$s > %2$s) THEN \'Y\' ELSE \'N\' END', ['USER.LAST_ACTIVITY_DATE', 'IM_STATUS.IDLE']));
+			$query->registerRuntimeField(new ExpressionField(
+				'IS_ONLINE_CUSTOM',
+				'CASE WHEN %1$s > '.$timeHelper.' AND (%2$s IS NULL OR %1$s > %2$s) THEN \'Y\' ELSE \'N\' END',
+				['USER.LAST_ACTIVITY_DATE', 'IM_STATUS.IDLE']
+			));
 		}
 		else
 		{
-			$query->registerRuntimeField('', new ExpressionField('IS_ONLINE_CUSTOM', 'CASE WHEN %s > '.$timeHelper.' THEN \'Y\' ELSE \'N\' END', ['USER.LAST_ACTIVITY_DATE']));
+			$query->registerRuntimeField(new ExpressionField(
+				'IS_ONLINE_CUSTOM',
+				'CASE WHEN %s > '.$timeHelper.' THEN \'Y\' ELSE \'N\' END',
+				['USER.LAST_ACTIVITY_DATE']
+			));
 		}
 
 		if(isset($params['select']))

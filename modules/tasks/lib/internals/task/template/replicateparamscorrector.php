@@ -2,9 +2,11 @@
 
 namespace Bitrix\Tasks\Internals\Task\Template;
 
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Replication\Repository\TemplateRepository;
+use Bitrix\Tasks\Replication\Template\Repetition\Time\Service\ExecutionService;
 use \Bitrix\Tasks\UI;
 use \Bitrix\Tasks\Util\User;
-use \Bitrix\Tasks\Util\Replicator\Task\FromTemplate;
 
 /**
  * Corrects replicate parameters
@@ -249,25 +251,27 @@ final class ReplicateParamsCorrector
 
 	/**
 	 * Returns next execution time in server timezone
-	 *
-	 * @param $templateData
-	 * @return int
 	 */
-	private static function getNextExecutionTime($templateData)
+	public static function getNextExecutionTime($templateData, string $baseTime = ''): string
 	{
-		$nextExecutionTimeResult = FromTemplate::getNextTime($templateData);
-		$nextExecutionTimeData = $nextExecutionTimeResult->getData();
-		$nextExecutionTime = $nextExecutionTimeData['TIME'];
+		$template = TemplateObject::wakeUpObject([
+			'ID' => $templateData['ID'] ?? 0,
+			'CREATED_BY' => $templateData['CREATED_BY'],
+			'REPLICATE_PARAMS' => is_array($templateData['REPLICATE_PARAMS'])
+				? serialize($templateData['REPLICATE_PARAMS'])
+				: $templateData['REPLICATE_PARAMS'],
+		]);
 
-		if (!$nextExecutionTime)
+		$repository = (new TemplateRepository($template->getId()))
+			->inject($template);
+		$service = new ExecutionService($repository);
+		$result = $service->getTemplateNextExecutionTime($baseTime);
+		if (!$result->isSuccess())
 		{
 			return '';
 		}
-
-		$currentUserTimezoneOffset = User::getTimeZoneOffsetCurrentUser();
-		$nextExecutionTime = MakeTimeStamp($nextExecutionTime) - $currentUserTimezoneOffset;
-
-		return UI::formatDateTime($nextExecutionTime);
+		$nextExecutionTime = $result->getData()['time'] -  User::getTimeZoneOffsetCurrentUser();
+		return DateTime::createFromTimestamp($nextExecutionTime)->disableUserTime()->toString();
 	}
 
 	/**

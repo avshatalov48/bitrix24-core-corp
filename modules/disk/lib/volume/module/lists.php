@@ -43,8 +43,9 @@ class Lists extends Volume\Module\Module
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
-		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
-		$indicatorIblockType = $connection->getSqlHelper()->forSql(Volume\Module\Iblock::className());
+		$sqlHelper = $connection->getSqlHelper();
+		$indicatorType = $sqlHelper->forSql(static::className());
+		$indicatorIblockType = $sqlHelper->forSql(Volume\Module\Iblock::className());
 		$ownerId = (string)$this->getOwner();
 
 		$includeIblockIds = [];
@@ -70,9 +71,9 @@ class Lists extends Volume\Module\Module
 			SELECT 
 				'{$indicatorType}' as INDICATOR_TYPE,
 				{$ownerId} as OWNER_ID,
-				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
-				SUM(FILE_SIZE),
-				SUM(FILE_COUNT)
+				". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
+				COALESCE(SUM(FILE_SIZE), 0),
+				COALESCE(SUM(FILE_COUNT), 0)
 			FROM 
 				b_disk_volume
 			WHERE 
@@ -91,7 +92,7 @@ class Lists extends Volume\Module\Module
 			$this->getSelect()
 		);
 
-		$tableName = VolumeTable::getTableName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

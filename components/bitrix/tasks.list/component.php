@@ -361,7 +361,7 @@ $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameF
 
 $arParams["TASK_ID"] = isset($arParams["TASK_ID"]) ? intval($arParams["TASK_ID"]) : 0;
 
-$arResult["CONTEXT"] = $arParams["CONTEXT"] ?? Context::DEFAULT;
+$arResult["CONTEXT"] = $arParams["CONTEXT"] ?? Context::getDefault();
 
 $arResult["ACTION"] = ($arParams["TASK_ID"] > 0 ? "edit" : "create");
 

@@ -103,3 +103,10 @@
 	this.UI = this.UI || {};
 	this.UI.BottomToolbar = BottomToolbar;
 })();
+
+/**
+ * @module layout/ui/bottom-toolbar
+ */
+jn.define('layout/ui/bottom-toolbar', (require, exports, module) => {
+	module.exports = { BottomToolbar: this.UI.BottomToolbar };
+});

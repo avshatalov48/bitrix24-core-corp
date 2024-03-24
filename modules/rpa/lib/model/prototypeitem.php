@@ -46,13 +46,17 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 				StageTable::class,
 				['=this.STAGE_ID' => 'ref.ID']
 			)),
-			(new ORM\Fields\IntegerField('PREVIOUS_STAGE_ID')),
+			(new ORM\Fields\IntegerField('PREVIOUS_STAGE_ID'))
+				->configureDefaultValue(0)
+			,
 			(new Reference(
 				'PREVIOUS_STAGE',
 				StageTable::class,
 				['=this.PREVIOUS_STAGE_ID' => 'ref.ID']
 			)),
-			(new ORM\Fields\StringField('XML_ID')),
+			(new ORM\Fields\StringField('XML_ID'))
+				->configureDefaultValue('')
+			,
 			(new ORM\Fields\IntegerField('CREATED_BY'))
 				->configureRequired()
 				->configureDefaultValue(static function()
@@ -61,9 +65,19 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 				})
 				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_CREATED_BY')),
 			(new ORM\Fields\IntegerField('UPDATED_BY'))
-				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_UPDATED_BY')),
+				->configureDefaultValue(static function()
+				{
+					return Driver::getInstance()->getUserId();
+				})
+				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_UPDATED_BY'))
+			,
 			(new ORM\Fields\IntegerField('MOVED_BY'))
-				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_MOVED_BY')),
+				->configureDefaultValue(static function()
+				{
+					return Driver::getInstance()->getUserId();
+				})
+				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_MOVED_BY'))
+			,
 			(new ORM\Fields\DatetimeField('CREATED_TIME'))
 				->configureRequired()
 				->configureDefaultValue(static function()
@@ -72,9 +86,19 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 				})
 				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_CREATED_TIME')),
 			(new ORM\Fields\DatetimeField('UPDATED_TIME'))
-				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_UPDATED_TIME')),
+				->configureDefaultValue(static function()
+				{
+					return new DateTime();
+				})
+				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_UPDATED_TIME'))
+			,
 			(new ORM\Fields\DatetimeField('MOVED_TIME'))
-				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_MOVED_TIME')),
+				->configureDefaultValue(static function()
+				{
+					return new DateTime();
+				})
+				->configureTitle(Main\Localization\Loc::getMessage('RPA_ITEM_MOVED_TIME'))
+			,
 		];
 	}
 

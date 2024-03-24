@@ -10,6 +10,7 @@ jn.define('alert', (require, exports, module) => {
 		makeCancelButton,
 		makeDestructiveButton,
 	} = require('alert/confirm');
+	const { confirmClosing } = require('alert/src/confirm-closing');
 
 	/**
 	 * @class Alert
@@ -32,6 +33,7 @@ jn.define('alert', (require, exports, module) => {
 	module.exports = {
 		Alert,
 		ButtonType,
+		confirmClosing,
 		makeButton,
 		makeCancelButton,
 		makeDestructiveButton,

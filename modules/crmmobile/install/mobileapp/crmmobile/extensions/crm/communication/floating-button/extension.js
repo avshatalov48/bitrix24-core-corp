@@ -4,7 +4,6 @@
 jn.define('crm/communication/floating-button', (require, exports, module) => {
 	const { HideOnScrollAnimator } = require('animation/hide-on-scroll');
 	const { CommunicationButton } = require('crm/communication/button');
-	const { Feature } = require('feature');
 	const { Type } = require('crm/type');
 	const { isEmpty, isEqual } = require('utils/object');
 
@@ -43,7 +42,7 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			if (isIOS && Feature.isKeyboardEventsSupported())
+			if (isIOS)
 			{
 				Keyboard.on(Keyboard.Event.WillShow, () => this.hide(true));
 				Keyboard.on(Keyboard.Event.WillHide, () => this.show(true));

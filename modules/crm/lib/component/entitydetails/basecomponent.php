@@ -466,7 +466,7 @@ abstract class BaseComponent extends Crm\Component\Base
 		if($this->entityDataScheme === null)
 		{
 			$this->entityDataScheme = $this->getEntityFieldsInfo();
-			$this->userType->PrepareFieldsInfo($this->entityDataScheme);
+			$this->userType?->PrepareFieldsInfo($this->entityDataScheme);
 		}
 		return $this->entityDataScheme;
 	}

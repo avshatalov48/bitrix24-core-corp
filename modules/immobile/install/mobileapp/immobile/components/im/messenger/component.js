@@ -151,6 +151,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.visibilityManager = VisibilityManager.getInstance();
 
 			this.onApplicationSetStatus = this.applicationSetStatusHandler.bind(this);
+			this.chestnoPererisuemShapku = false;
 
 			EntityReady.addCondition('chat', () => this.isReady);
 
@@ -178,7 +179,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				;
 
 				this.checkChatV2Support();
-				this.refresh();
+				this.refresh(false);
 			});
 		}
 
@@ -308,7 +309,35 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				this.refresh();
 			}
 
-			this.redrawHeader();
+			// this.redrawHeader();
+			// TODO delete please me start
+			if (this.chestnoPererisuemShapku)
+			{
+				this.redrawHeader();
+				this.appStatus = this.core.getAppStatus();
+
+				return;
+			}
+
+			if (this.core.getAppStatus() === AppStatus.running)
+			{
+				this.redrawHeader();
+				this.appStatus = this.core.getAppStatus();
+
+				return;
+			}
+
+			if (!this.redrawTimeout)
+			{
+				this.redrawTimeout = setTimeout(() => {
+					this.redrawHeader();
+
+					this.redrawTimeout = null;
+				}, 3000);
+
+			}
+			// TODO delete please me end
+
 			this.appStatus = this.core.getAppStatus();
 		}
 
@@ -434,8 +463,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			PushHandler.clearHistory();
 		}
 
-		async refresh()
+		async refresh(chestnoPererisuemShapku)
 		{
+			this.chestnoPererisuemShapku = chestnoPererisuemShapku ?? false;
+
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			SmileManager.init();

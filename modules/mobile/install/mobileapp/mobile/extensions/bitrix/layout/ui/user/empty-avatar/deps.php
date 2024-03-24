@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'selector/utils/word-separator',
+		'apptheme',
 		'utils/color',
+		'selector/utils/word-separator',
 	],
 ];

@@ -5,20 +5,25 @@ namespace Bitrix\Tasks\Internals\Counter\Queue;
 use Bitrix\Tasks\Internals\Counter\CounterController;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
+use Bitrix\Tasks\Update\AgentInterface;
+use Bitrix\Tasks\Update\AgentTrait;
+use CAgent;
 
-class Agent
+class Agent implements AgentInterface
 {
+	use AgentTrait;
+
 	private static $processing = false;
 
 	/**
 	 * @return string
 	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
-	public static function execute()
+	public static function execute(): string
 	{
 		if (self::$processing)
 		{
-			return self::getAgentName();
+			return static::getAgentName();
 		}
 
 		self::$processing = true;
@@ -42,7 +47,7 @@ class Agent
 
 		self::$processing = false;
 
-		return self::getAgentName();
+		return static::getAgentName();
 	}
 
 	public function __construct()
@@ -50,15 +55,12 @@ class Agent
 
 	}
 
-	/**
-	 *
-	 */
 	public function addAgent(): void
 	{
 		$res = \CAgent::GetList(
 			['ID' => 'DESC'],
 			[
-				'=NAME' => self::getAgentName()
+				'=NAME' => static::getAgentName()
 			]
 		);
 		if ($res->Fetch())
@@ -66,22 +68,6 @@ class Agent
 			return;
 		}
 
-		\CAgent::AddAgent(self::getAgentName(), "tasks", "N", 0, "", "Y", "");
-	}
-
-	/**
-	 *
-	 */
-	public function removeAgent(): void
-	{
-		\CAgent::RemoveAgent(self::getAgentName(), 'tasks');
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getAgentName(): string
-	{
-		return static::class . "::execute();";
+		CAgent::AddAgent(static::getAgentName(), "tasks", "N", 0);
 	}
 }

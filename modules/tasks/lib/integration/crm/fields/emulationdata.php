@@ -8,8 +8,8 @@ class EmulationData
 
 	private string $name;
 	private string $value;
-	private string $class;
-	private string $type;
+	private string $class = 'tasks-task-temporary-crm-input';
+	private string $type = 'hidden';
 
 	public function __construct(array $crmUf)
 	{
@@ -35,18 +35,6 @@ class EmulationData
 			isset($values[static::CRM_VALUE_KEY]) && is_string($values[static::CRM_VALUE_KEY])
 				? $values[static::CRM_VALUE_KEY]
 				: ''
-		;
-
-		$this->class =
-			isset($crmUf['EMULATION']['CLASS']) && is_string($crmUf['EMULATION']['CLASS'])
-				? $crmUf['EMULATION']['CLASS']
-				: 'tasks-task-temporary-crm-input'
-		;
-
-		$this->type =
-			isset($crmUf['EMULATION']['TYPE']) && is_string($crmUf['EMULATION']['TYPE'])
-				? $crmUf['EMULATION']['TYPE']
-				: 'hidden'
 		;
 	}
 

@@ -11,9 +11,9 @@ use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Grid\DashboardGrid;
+use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\BIConnector\Superset\UI\UIHelper;
-use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Buttons\SettingsButton;
@@ -24,7 +24,9 @@ use Bitrix\UI\Buttons\JsCode;
 class ApacheSupersetDashboardListComponent extends CBitrixComponent
 {
 	private const GRID_ID = 'biconnector_superset_dashboard_grid';
+
 	private DashboardGrid $grid;
+	private SupersetController $supersetController;
 
 	public function onPrepareComponentParams($arParams)
 	{
@@ -36,19 +38,24 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
-		if (!SupersetInitializer::isSupersetActive())
+		$superset = new SupersetController(ProxyIntegrator::getInstance());
+
+		if (!$superset->isSupersetEnabled())
 		{
-			SupersetInitializer::createSuperset();
-		}
-		else
-		{
-			$manager = \Bitrix\BIConnector\Superset\MarketDashboardManager::getInstance();
-			$manager->updateApplications();
+			$superset->initSuperset();
 		}
 
 		$this->init();
 		$this->grid->processRequest();
+		$this->grid->setSupersetAvailability($this->getSupersetController()->isExternalServiceAvailable());
+
+		if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_READY)
+		{
+			$manager = MarketDashboardManager::getInstance();
+			$manager->updateApplications();
+		}
 		$this->loadRows();
+
 		$this->arResult['GRID'] = $this->grid;
 
 		$this->initCreateButton();
@@ -58,7 +65,7 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 
 	private function init(): void
 	{
-		$settings = new Main\Grid\Settings([
+		$settings = new DashboardSettings([
 			'ID' => self::GRID_ID,
 			'SHOW_ROW_CHECKBOXES' => false,
 			'SHOW_SELECTED_COUNTER' => false,
@@ -133,7 +140,7 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 	 */
 	private function getSupersetRows(array $ormParams): array
 	{
-		$superset = new SupersetController(ProxyIntegrator::getInstance());
+		$superset = $this->getSupersetController();
 		$dashboardList = $superset->getDashboardRepository()->getList($ormParams);
 		if (!$dashboardList)
 		{
@@ -155,5 +162,15 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 		}
 
 		return $dashboardList;
+	}
+
+	private function getSupersetController(): SupersetController
+	{
+		if (!isset($this->supersetController))
+		{
+			$this->supersetController = new SupersetController(ProxyIntegrator::getInstance());
+		}
+
+		return $this->supersetController;
 	}
 }

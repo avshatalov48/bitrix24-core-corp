@@ -542,25 +542,6 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 			if($this->success)
 			{
-				$templates = Util::getOption('propagate_to_sub_templates');
-				if ($templates)
-				{
-					$templates = unserialize($templates, ['allowed_classes' => false]);
-					$templateId = $op->getResult()->getData()['ID'];
-					$propagateToSubTemplates = $op->getArguments()['data']['PROPAGATE_TO_SUB_TEMPLATES'];
-
-					if (in_array($propagateToSubTemplates, ['Y', '1']) && !in_array($templateId, $templates))
-					{
-						$templates[] = $templateId;
-					}
-					else if (!in_array($propagateToSubTemplates, ['Y', '1']) && in_array($templateId, $templates))
-					{
-						unset($templates[array_search($templateId, $templates)]);
-					}
-
-					Util::setOption('propagate_to_sub_templates', serialize($templates));
-				}
-
 				if($this->arParams['REDIRECT_ON_SUCCESS'])
 				{
 					LocalRedirect($this->makeRedirectUrl($op));

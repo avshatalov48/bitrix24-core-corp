@@ -1,11 +1,12 @@
 <?php
 namespace Bitrix\Tasks\Grid\Task\Row\Content;
 
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Grid\Task\Row\Content;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\User;
-use CComponentEngine;
-use CTasks;
 
 /**
  * Class Title
@@ -28,14 +29,18 @@ class Title extends Content
 		$taskPriority = (int)($row['PRIORITY'] ?? 0);
 		$groupId = (int)($parameters['GROUP_ID'] ?? 0);
 
-		$taskUrlTemplate = (
-			$groupId > 0 ? $parameters['PATH_TO_GROUP_TASKS_TASK'] : $parameters['PATH_TO_USER_TASKS_TASK']
+		$taskUrl = new Uri(
+			TaskPathMaker::getPath([
+				'user_id' => $userId,
+				'task_id' => $taskId,
+				'group_id' => $groupId,
+				'action' => 'view',
+			])
 		);
-		$taskUrl = CComponentEngine::MakePathFromTemplate($taskUrlTemplate, [
-			'user_id' => $userId,
-			'task_id' => $taskId,
-			'group_id' => $groupId,
-			'action' => 'view',
+		$taskUrl->addParams([
+			'ta_sec' => Analytics::SECTION['tasks'],
+			'ta_sub' => Analytics::SUB_SECTION['list'],
+			'ta_el' => Analytics::ELEMENT['title_click'],
 		]);
 
 		$priorityLayout = ($taskPriority === \Bitrix\Tasks\Internals\Task\Priority::HIGH ? '<span class="task-priority-high"></span> ' : '');
@@ -59,8 +64,7 @@ class Title extends Content
 			in_array($taskStatus, $statuses, true) ? tasksStatus2String($taskStatus) : 'in-progress'
 			);
 		$taskTitle = htmlspecialcharsbx($row['TITLE']);
-
-		$title = "<a href='{$taskUrl}' class='task-title {$cssClass}'>{$taskTitle}{$postfixIcons}</a>";
+		$title = "<a href='{$taskUrl->getUri()}' class='task-title {$cssClass}'>{$taskTitle}{$postfixIcons}</a>";
 		$title .= $timeTracker . $this->prepareTimeTracking();
 
 		if (isset($row['NAV_CHAIN']) && !empty($row['NAV_CHAIN']))
@@ -68,15 +72,22 @@ class Title extends Content
 			$title .= '<div>';
 			foreach ($row['NAV_CHAIN'] as $subTask)
 			{
-				$subTaskUrl = CComponentEngine::MakePathFromTemplate($taskUrlTemplate, [
-					'user_id' => $userId,
-					'task_id' => $subTask['ID'],
-					'group_id' => $groupId,
-					'action' => 'view',
+				$subTaskUrl = new Uri(
+					TaskPathMaker::getPath([
+						'user_id' => $userId,
+						'task_id' => $subTask['ID'],
+						'group_id' => $groupId,
+						'action' => 'view',
+					])
+				);
+				$subTaskUrl->addParams([
+					'ta_sec' => Analytics::SECTION['tasks'],
+					'ta_sub' => Analytics::SUB_SECTION['list'],
+					'ta_el' => Analytics::ELEMENT['title_click'],
 				]);
 
 				$subTaskTitle = htmlspecialcharsbx($subTask['TITLE']);
-				$title .= "&nbsp;&nbsp;&larr;&nbsp;&nbsp;<a href='{$subTaskUrl}'>{$subTaskTitle}</a>";
+				$title .= "&nbsp;&nbsp;&larr;&nbsp;&nbsp;<a href='{$subTaskUrl->getUri()}'>{$subTaskTitle}</a>";
 			}
 			$title .= '</div>';
 		}

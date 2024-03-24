@@ -59,6 +59,7 @@ class ProductManager extends Crm\Order\ProductManager
 				if (!$basketItem)
 				{
 					$basketItem = $basket->createItem('catalog', $productData['PRODUCT_ID']);
+					$basketItem->setField('XML_ID', $productData['XML_ID']);
 					$foundProducts[] = $basketItem->getBasketCode();
 				}
 

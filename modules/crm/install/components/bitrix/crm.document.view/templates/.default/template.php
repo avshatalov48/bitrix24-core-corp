@@ -136,9 +136,9 @@ $shouldDisplayTransformationError =
 			endif; ?></span>
 			<span class="ui-alert-close-btn" onclick="BX.hide(BX('crm-document-view-error'));"></span>
 		</div>
-		<?php if (!$arResult['ERRORS']):?>
+		<?php if (empty($arResult['ERRORS'])):?>
 			<div class="crm__document-view--img">
-				<div class="crm__document-view--error" id="crm__document-view--transform-error"<?php if ($arResult['isTransformationError'] && !$arResult['pdfUrl']): ?> style="display: block;"<?php endif;?>>
+				<div class="crm__document-view--error" id="crm__document-view--transform-error"<?php if ($arResult['isTransformationError'] && empty($arResult['pdfUrl'])): ?> style="display: block;"<?php endif;?>>
 					<div class="crm__document-view--error-message">
 						<span class="crm__document-view--error-message-text"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_TRANSFORM_ERROR');?></span>
 						<span class="crm__document-view--error-message-text"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_TRY_LATER');?></span>
@@ -146,7 +146,7 @@ $shouldDisplayTransformationError =
 					</div>
 					<div class="crm__document-view--error-img"></div>
 				</div>
-				<div class="crm__document-view--upload crm__document-view--upload-img" id="crm__document-view--node"<?php if (!$arResult['isTransformationError'] && !$arResult['pdfUrl']):?> style="display: block;"<?php endif;?>>
+				<div class="crm__document-view--upload crm__document-view--upload-img" id="crm__document-view--node"<?php if (!$arResult['isTransformationError'] && empty($arResult['pdfUrl'])):?> style="display: block;"<?php endif;?>>
 					<div class="crm__document-view--upload-message">
 						<span class="crm__document-view--upload-message-text" id="crm__document-view--node-message"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE');?></span>
 						<div class="crm__document-view--upload-progress" id="docs-progress-bar"></div>
@@ -168,7 +168,7 @@ $shouldDisplayTransformationError =
 			</script>
 		<?php endif;?>
 	</div>
-	<?php if (!$arResult['ERRORS']):?>
+	<?php if (empty($arResult['ERRORS'])):?>
 		<div class="crm__document-view--sidebar-wrapper">
 			<?php if (!empty($arResult['channelSelectorParameters'])):?>
 				<div class="crm__document-view--sidebar crm__document-view--sidebar-channels">
@@ -187,7 +187,7 @@ $shouldDisplayTransformationError =
 					<div
 						class="crm__document-view--sidebar-control
 							<?php
-							if (!$arResult['editTemplateUrl'] || !$arResult['changeQrCodeEnabled']):
+							if (empty($arResult['editTemplateUrl']) || empty($arResult['changeQrCodeEnabled'])):
 								?> --disabled<?php
 							endif;?>
 							">
@@ -196,7 +196,7 @@ $shouldDisplayTransformationError =
 						if ($arResult['qrCodeEnabled']):
 							?> checked<?php
 						endif;
-						if (!$arResult['editTemplateUrl'] || !$arResult['changeQrCodeEnabled']):
+						if (empty($arResult['editTemplateUrl']) || empty($arResult['changeQrCodeEnabled'])):
 							?> disabled<?php
 						endif;?>>
 					</div>
@@ -225,7 +225,7 @@ $shouldDisplayTransformationError =
 							if ($arResult['stampsEnabled'] && $arResult['changeStampsEnabled']):
 								?> checked<?php
 							endif;
-							if (!$arResult['editTemplateUrl'] || !$arResult['changeStampsEnabled']):
+							if (empty($arResult['editTemplateUrl']) || empty($arResult['changeStampsEnabled'])):
 								?> disabled<?php
 							endif;?>>
 						</div>
@@ -255,7 +255,7 @@ $shouldDisplayTransformationError =
 					</div>
 				<?php endif; ?>
 			</div>
-			<?php if ($arResult['editDocumentUrl']):?>
+			<?php if (!empty($arResult['editDocumentUrl'])):?>
 				<div class="crm__document-view--link-inner">
 					<div class="crm__document-view--link-block">
 						<span class="crm__document-view--link-text" id="crm-document-edit-document"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_EDIT_DOCUMENT');?></span>

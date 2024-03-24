@@ -548,6 +548,32 @@ if (
 		{
 			$showRuNotification = false;
 		}
+
+		if ($arResult['IS_ADDITIONAL_BLOCK'])
+		{
+			foreach ($arResult['ADDITIONAL_BLOCKS'] as $block):
+				ob_start();
+				$APPLICATION->IncludeComponent(
+					$block['COMPONENT_NAME'],
+					'',
+					$block['COMPONENT_PARAMS'] ?? []
+				);
+				$content = ob_get_clean();
+		?>
+			<div class="intranet-user-profile-container">
+				<div class="intranet-user-profile-container-header">
+					<div class="intranet-user-profile-container-title">
+						<?= htmlspecialcharsbx((string)$block['TITLE']) ?>
+					</div>
+				</div>
+				<div class="intranet-user-profile-container-body intranet-user-profile-about-wrapper">
+					<?= $content ?>
+				</div>
+			</div>
+		<?php
+			endforeach;
+		}
+
 		if (!empty($arResult["User"]["SUBORDINATE"]) || !empty($arResult["User"]["MANAGERS"]))
 		{
 			?>

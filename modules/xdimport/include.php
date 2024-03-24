@@ -1,7 +1,5 @@
 <?php
 
-global $DBType;
-
 IncludeModuleLangFile(__FILE__);
 
 if (!IsModuleInstalled("socialnetwork"))
@@ -21,7 +19,7 @@ CModule::AddAutoloadClasses(
 		"CXDImport" => "classes/general/xdimport.php",
 		"CXDIUser" => "classes/general/user.php",
 		"CXDILiveFeed" => "classes/general/livefeed.php",
-		"CXDILFScheme" => "classes/".$DBType."/lf_scheme.php",
+		"CXDILFScheme" => "classes/mysql/lf_scheme.php",
 		"CXDILFSchemeRights" => "classes/general/lf_scheme_rights.php",
 		"CXDILFSchemeXML" => "classes/general/lf_scheme_xml.php",
 		"CXDILFSchemeRSS" => "classes/general/lf_scheme_rss.php",
@@ -163,9 +161,19 @@ class CXDILFEventHandlers
 		}
 
 		$title = str_replace(
-			array("#TITLE#", "#ENTITY#"),
-			array($title_tmp, ($bMail ? $arResult["ENTITY"]["FORMATTED"] : $arResult["ENTITY"]["FORMATTED"]["NAME"])),
-			($bMail ? GetMessage("LFP_SOCNET_LOG_DATA_".$arFields["ENTITY_TYPE"]."_TITLE_MAIL") : GetMessage("LFP_SOCNET_LOG_DATA_TITLE"))
+			[
+				"#TITLE#",
+				"#ENTITY#"
+			],
+			[
+				$title_tmp,
+				($bMail ? $arResult["ENTITY"]["FORMATTED"] ?? '' : $arResult["ENTITY"]["FORMATTED"]["NAME"] ?? '')
+			],
+			(
+				$bMail
+					? GetMessage("LFP_SOCNET_LOG_DATA_" . $arFields["ENTITY_TYPE"] . "_TITLE_MAIL")
+					: GetMessage("LFP_SOCNET_LOG_DATA_TITLE")
+			)
 		);
 
 		$url = false;
@@ -198,7 +206,7 @@ class CXDILFEventHandlers
 
 		$arResult["EVENT_FORMATTED"] = array(
 			"TITLE" => $title,
-			"TITLE_24" => ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER ? (($arParams["MOBILE"] == "Y") ? GetMessage("LFP_SOCNET_LOG_DATA_TITLE_24") : GetMessage("LFP_SOCNET_LOG_DATA_TITLE_IMPORTANT_24")) : GetMessage("LFP_SOCNET_LOG_DATA_TITLE_24")),
+			"TITLE_24" => ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER ? ((($arParams['MOBILE'] ?? null) == 'Y') ? GetMessage("LFP_SOCNET_LOG_DATA_TITLE_24") : GetMessage("LFP_SOCNET_LOG_DATA_TITLE_IMPORTANT_24")) : GetMessage("LFP_SOCNET_LOG_DATA_TITLE_24")),
 			"MESSAGE" => ($bMail ? CSocNetTextParser::killAllTags($message) : $message),
 			"IS_IMPORTANT" => ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER ? true : false),
 			"STYLE" => ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER ? "imp-post feed-external-massage" : ""),
@@ -254,24 +262,24 @@ class CXDILFEventHandlers
 			$parserLog->pathToUser = (!empty($arParams["PATH_TO_USER"]) ? $arParams["PATH_TO_USER"] : '');
 
 			$arAllow = array(
-				"HTML" => "Y", "ANCHOR" => "Y", "BIU" => "Y", 
-				"IMG" => "Y", 
-				"QUOTE" => "Y", 
-				"CODE" => "Y", 
-				"FONT" => "Y", 
-				"LIST" => "Y", 
-				"SMILES" => "Y", 
-				"NL2BR" => "N", 
+				"HTML" => "Y", "ANCHOR" => "Y", "BIU" => "Y",
+				"IMG" => "Y",
+				"QUOTE" => "Y",
+				"CODE" => "Y",
+				"FONT" => "Y",
+				"LIST" => "Y",
+				"SMILES" => "Y",
+				"NL2BR" => "N",
 				"LOG_NL2BR" => ($arParams["IS_HTML"] == "Y" ? "N" : "Y"),
-				"MULTIPLE_BR" => "N", 
-				"VIDEO" => "Y", 
+				"MULTIPLE_BR" => "N",
+				"VIDEO" => "Y",
 				"LOG_VIDEO" => "N"
 			);
 
 			$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), array(), $arAllow));
 
 			if (
-				$arParams["MOBILE"] != "Y" 
+				$arParams["MOBILE"] != "Y"
 				&& $arParams["NEW_TEMPLATE"] != "Y"
 			)
 			{
@@ -279,7 +287,7 @@ class CXDILFEventHandlers
 					$parserLog->convert(htmlspecialcharsback(str_replace("#CUT#", "", $arResult["EVENT_FORMATTED"]["MESSAGE"])), array(), $arAllow),
 					500
 				);
-				$arResult["EVENT_FORMATTED"]["IS_MESSAGE_SHORT"] = CSocNetLogTools::FormatEvent_IsMessageShort($arResult["EVENT_FORMATTED"]["MESSAGE"], $arResult["EVENT_FORMATTED"]["SHORT_MESSAGE"]);			
+				$arResult["EVENT_FORMATTED"]["IS_MESSAGE_SHORT"] = CSocNetLogTools::FormatEvent_IsMessageShort($arResult["EVENT_FORMATTED"]["MESSAGE"], $arResult["EVENT_FORMATTED"]["SHORT_MESSAGE"]);
 			}
 		}
 		return $arResult;
@@ -369,7 +377,18 @@ class CXDILFEventHandlers
 
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
 				$parserLog->arUserfields = $arFields["UF"];
-				$parserLog->bMobile = ($arParams["MOBILE"] == "Y");
+				$parserLog->bMobile = ($arParams['MOBILE'] === 'Y');
+				if ($arParams['MOBILE'] !== 'Y')
+				{
+					if (!empty($arParams['IMAGE_MAX_WIDTH']))
+					{
+						$parserLog->imageWidth = (int)$arParams['IMAGE_MAX_WIDTH'];
+					}
+					if (!empty($arParams['IMAGE_MAX_HEIGHT']))
+					{
+						$parserLog->imageHeight = (int)$arParams['IMAGE_MAX_HEIGHT'];
+					}
+				}
 
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
@@ -398,11 +417,11 @@ class CXDILFEventHandlers
 			}
 
 			if (
-				$arParams["MOBILE"] != "Y" 
+				$arParams["MOBILE"] != "Y"
 				&& $arParams["NEW_TEMPLATE"] != "Y"
 			)
 			{
-				if (CModule::IncludeModule("forum"))			
+				if (CModule::IncludeModule("forum"))
 					$arResult["EVENT_FORMATTED"]["SHORT_MESSAGE"] = $parserLog->html_cut(
 						$parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow),
 						500

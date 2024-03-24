@@ -9,7 +9,7 @@ export const Loader = {
 	},
 	template: `
 		<div ref="root" class="bx-crm-ai-merge-fields-loading">
-	
+			<div class="bx-crm-ai-merge-fields-loading__image"></div>
 		</div>
 	`,
 };

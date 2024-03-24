@@ -66,7 +66,7 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 		$targetDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
 		$factory = Container::getInstance()->getFactory($this->DynamicTypeId);
-		$items = $factory->getItems([
+		$items = $factory?->getItems([
 			'select' => ['ID'],
 			'filter' => $this->getOrmFilter($conditionGroup, $targetDocumentType),
 			'limit' => 1,

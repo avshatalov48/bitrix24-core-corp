@@ -38,7 +38,7 @@ class OnTaskCommentAdded implements TimeLineEvent
 			'AUTHOR_ID' => $this->userId,
 			'TASK_FILE_IDS' => $this->getFiles($this->commentId, ForumMessageConnector::class),
 			'LAST_COMMENT_DATE' => $this->lastCommentDate->getTimestamp(),
-			'TASK_ID' => $this->task->getId(),
+			'TASK_ID' => $this->task?->getId(),
 			'FROM_USER' => $this->fromUser,
 			'REFRESH_TASK_ACTIVITY' => true,
 		];

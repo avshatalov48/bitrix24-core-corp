@@ -91,4 +91,3 @@ jn.define('crm/timeline/item/ui/market-banner', (require, exports, module) => {
 
 	module.exports = { MarketBanner };
 });
-

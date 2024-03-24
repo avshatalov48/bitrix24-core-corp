@@ -41,8 +41,8 @@ class Faceid extends Volume\Module\Module
 				'{$indicatorType}' as INDICATOR_TYPE,
 				{$ownerId} as OWNER_ID,
 				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME,
-				SUM(FILE_SIZE) as FILE_SIZE,
-				COUNT(*) as FILE_COUNT,
+				COALESCE(SUM(FILE_SIZE),0) as FILE_SIZE,
+				COALESCE(COUNT(*),0) as FILE_COUNT,
 				0 as DISK_SIZE,
 				0 as DISK_COUNT
 			FROM

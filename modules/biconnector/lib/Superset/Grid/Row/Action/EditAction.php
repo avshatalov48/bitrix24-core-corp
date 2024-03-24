@@ -2,6 +2,7 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Action;
 
+use Bitrix\BIConnector\LimitManager;
 use Bitrix\Main\Grid\Row\Action\BaseAction;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Localization\Loc;
@@ -27,6 +28,12 @@ final class EditAction extends BaseAction
 
 	public function getControl(array $rawFields): ?array
 	{
+		$manager = LimitManager::getInstance()->setIsSuperset();
+		if (!$manager->checkLimit())
+		{
+			return null;
+		}
+
 		$params = \CUtil::PhpToJSObject([
 			'dashboardId' => (int)$rawFields['ID'],
 			'type' => $rawFields['TYPE'],

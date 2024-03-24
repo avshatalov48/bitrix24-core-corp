@@ -86,6 +86,11 @@ final class Editor
 				"setFocusAfterShow" => (bool)$parameters['ENTITY_ID'], // when creating task, we should not
 				'isCopilotImageEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isImageAvailable(),
 				'isCopilotTextEnabledBySettings' => \Bitrix\Tasks\Integration\AI\Settings::isTextAvailable(),
+				'copilotParams' => [
+					'moduleId' => 'tasks',
+					'contextId' => 'tasks_' . $parameters['ID'],
+					'category' => 'tasks',
+				],
 			],
 			//"USE_CLIENT_DATABASE" => "Y",
 			//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')

@@ -87,7 +87,7 @@ class TasksImportComponent extends TasksBaseComponent
 			['id' => 'TITLE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_TITLE'), 'mandatory' => 'Y'],
 			['id' => 'DESCRIPTION', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_DESCRIPTION')],
 			['id' => 'PRIORITY', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_PRIORITY')],
-			['id' => 'RESPONSIBLE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_RESPONSIBLE')],
+			['id' => 'RESPONSIBLE', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ASSIGNEE')],
 			['id' => 'ORIGINATOR', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ORIGINATOR')],
 			['id' => 'ACCOMPLICES', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_ACCOMPLICES')],
 			['id' => 'AUDITORS', 'name' => Loc::getMessage('TASKS_IMPORT_HEADERS_AUDITORS')],

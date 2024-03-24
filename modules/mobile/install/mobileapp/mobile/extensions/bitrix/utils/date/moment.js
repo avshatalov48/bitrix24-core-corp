@@ -106,9 +106,17 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		/**
 		 * @return {boolean}
 		 */
-		get inThisYear()
+		get inThisMinute()
 		{
-			return this.date.getFullYear() === this.getNow().date.getFullYear();
+			return this.inThisHour && this.date.getMinutes() === this.getNow().date.getMinutes();
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get inThisHour()
+		{
+			return this.isToday && this.date.getHours() === this.getNow().date.getHours();
 		}
 
 		/**
@@ -138,17 +146,131 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		/**
 		 * @return {boolean}
 		 */
-		get inThisHour()
+		get inThisYear()
 		{
-			return this.isToday && this.date.getHours() === this.getNow().date.getHours();
+			return this.date.getFullYear() === this.getNow().date.getFullYear();
 		}
 
 		/**
+		 * Returns new moment instance containing start of current hour.
+		 * @return {Moment}
+		 */
+		get startOfHour()
+		{
+			const moment = this.clone();
+			moment.date.setMinutes(0, 0, 0);
+
+			return moment;
+		}
+
+		/**
+		 * @return {Moment}
+		 */
+		get endOfHour()
+		{
+			const moment = this.clone();
+			moment.date.setMinutes(59, 59, 999);
+
+			return moment;
+		}
+
+		/**
+		 * @return {Moment}
+		 */
+		get startOfWeek()
+		{
+			const currentWeekStart = this.clone();
+			const weekDay = this.date.getDay() === 0 ? 6 : this.date.getDay() - 1;
+
+			currentWeekStart.date.setDate(this.date.getDate() - weekDay);
+			currentWeekStart.date.setHours(0, 0, 0, 0);
+
+			return currentWeekStart;
+		}
+
+		/**
+		 * @return {Moment}
+		 */
+		get endOfWeek()
+		{
+			const currentWeekStart = this.startOfWeek;
+
+			const currentWeekEnd = new Moment(currentWeekStart.date);
+			currentWeekEnd.date.setDate(currentWeekStart.date.getDate() + 6);
+			currentWeekEnd.date.setHours(23, 59, 59, 999);
+
+			return currentWeekEnd;
+		}
+
+		/**
+		 * @return {Moment}
+		 */
+		get startOfMonth()
+		{
+			const currentMonthStart = this.clone();
+
+			currentMonthStart.date.setDate(1);
+			currentMonthStart.date.setHours(0, 0, 0, 0);
+
+			return currentMonthStart;
+		}
+
+		/**
+		 * @return {Moment}
+		 */
+		get endOfMonth()
+		{
+			const currentMonthEnd = new Moment(this.date);
+
+			currentMonthEnd.date.setMonth((this.date.getMonth() + 1) % 12, 1);
+			currentMonthEnd.date.setDate(0);
+			currentMonthEnd.date.setHours(23, 59, 59, 999);
+
+			return currentMonthEnd;
+		}
+
+		/**
+		 * @return {Moment}
+		 */
+		get startOfYear()
+		{
+			const currentYearStart = this.clone();
+
+			currentYearStart.date.setMonth(0);
+
+			return currentYearStart.startOfMonth;
+		}
+
+		/**
+		 * @return {Moment}
+		 */
+		get endOfYear()
+		{
+			const currentYearEnd = this.clone();
+
+			currentYearEnd.date.setMonth(11);
+
+			return currentYearEnd.endOfMonth;
+		}
+
+		/**
+		 * @returns {number}
+		 */
+		get daysInYear()
+		{
+			const year = this.date.getFullYear();
+
+			return ((year % 4 === 0 && year % 100 > 0) || year % 400 === 0) ? 366 : 365;
+		}
+
+		/**
+		 * We assume that "just now" is {delta} seconds before and after current moment.
+		 * @param {number} delta
 		 * @return {boolean}
 		 */
-		get inThisMinute()
+		isJustNow(delta = 60)
 		{
-			return this.inThisHour && this.date.getMinutes() === this.getNow().date.getMinutes();
+			return this.isWithinSeconds(delta);
 		}
 
 		/**
@@ -165,6 +287,18 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		get inFuture()
 		{
 			return this.timestamp > this.getNow().timestamp;
+		}
+
+		/**
+		 * Returns true if current moment is inside interval of {delta} seconds before/after now.
+		 * @param {number} delta
+		 * @return {boolean}
+		 */
+		isWithinSeconds(delta)
+		{
+			const interval = Math.abs(this.getNow().timestamp - this.timestamp);
+
+			return interval <= delta;
 		}
 
 		/**
@@ -215,28 +349,6 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		{
 			// 31.536.000 seconds = 365 days
 			return this.isWithinSeconds(31_536_000);
-		}
-
-		/**
-		 * We assume that "just now" is {delta} seconds before and after current moment.
-		 * @param {number} delta
-		 * @return {boolean}
-		 */
-		isJustNow(delta = 60)
-		{
-			return this.isWithinSeconds(delta);
-		}
-
-		/**
-		 * Returns true if current moment is inside interval of {delta} seconds before/after now.
-		 * @param {number} delta
-		 * @return {boolean}
-		 */
-		isWithinSeconds(delta)
-		{
-			const interval = Math.abs(this.getNow().timestamp - this.timestamp);
-
-			return interval <= delta;
 		}
 
 		/**
@@ -301,12 +413,11 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get weeksFromNow()
 		{
-			const delta = Math.abs(this.getNow().timestamp - this.timestamp);
-
-			return Math.floor(delta / (60 * 60 * 24 * 7));
+			return Math.floor(this.daysFromNow / 7);
 		}
 
 		/**
+		 * @deprecated due to controversial implementation
 		 * @return {number}
 		 */
 		get monthsFromNow()
@@ -319,6 +430,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		}
 
 		/**
+		 * @deprecated due to controversial implementation
 		 * @return {number}
 		 */
 		get yearsFromNow()
@@ -346,6 +458,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 				const formattedMMM = this.getMMMWithoutTrailingDot(languageId);
 				const dateWithoutMMM = formatStr.replace(MMMregex, '#');
 
+				// eslint-disable-next-line no-undef
 				return DateFormatter.getDateString(this.timestamp, dateWithoutMMM, languageId).replace('#', formattedMMM);
 			}
 
@@ -453,18 +566,6 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		addDays(days = 0)
 		{
 			return this.add(days * 24 * 60 * 60 * 1000);
-		}
-
-		/**
-		 * Returns new moment instance containing start of current hour.
-		 * @return {Moment}
-		 */
-		startOfHour()
-		{
-			const moment = this.clone();
-			moment.date.setMinutes(0, 0, 0);
-
-			return moment;
 		}
 	}
 

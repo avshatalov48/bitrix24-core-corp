@@ -125,7 +125,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			}
 
 			// eslint-disable-next-line es/no-optional-chaining
-			if (modelItem?.invitation?.isActive === true && user.lastActivityDate !== false)
+			if (modelItem?.invitation?.isActive === true && user.lastActivityDate === false)
 			{
 				return new InvitedUserItem(modelItem);
 			}

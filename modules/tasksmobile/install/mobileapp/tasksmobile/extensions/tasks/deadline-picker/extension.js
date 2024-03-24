@@ -16,6 +16,7 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		THIS_WEEK: 'THIS_WEEK',
 		NEXT_WEEK_START: 'NEXT_WEEK_START',
 		NEXT_WEEK_END: 'NEXT_WEEK_END',
+		NO_DEADLINE: 'NO_DEADLINE',
 		CUSTOM: 'CUSTOM',
 	};
 
@@ -26,6 +27,11 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 
 	class DeadlinePicker
 	{
+		constructor(params)
+		{
+			this.canSetNoDeadline = BX.prop.getBoolean(params, 'canSetNoDeadline', false);
+		}
+
 		/**
 		 * @public
 		 * @param {number} deadline
@@ -75,7 +81,7 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 								value: deadline,
 								items: [],
 							},
-							(eventName, ts) => onDeadlineSelect(ts),
+							(eventName, ts) => ts && onDeadlineSelect(ts),
 						);
 					},
 				},
@@ -136,15 +142,28 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_NEXT_WEEK_END'),
 					onClickCallback: () => onDeadlineSelect(predefinedItemValues.get(PickerItemType.NEXT_WEEK_END)),
 				},
+				{
+					id: PickerItemType.NO_DEADLINE,
+					sectionCode: PickerSectionCode.PREDEFINED,
+					title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_ITEM_NO_DEADLINE'),
+					onClickCallback: () => onDeadlineSelect(predefinedItemValues.get(PickerItemType.NO_DEADLINE)),
+				},
 			];
 
 			return Object.values(predefinedItems)
-				.filter((item) => predefinedItemValues.get(item.id))
-				.map((item) => ({
-					...item,
-					subtitle: this.formatDate(predefinedItemValues.get(item.id)),
-					isSelected: (deadline === predefinedItemValues.get(item.id)),
-				}))
+				.filter((item) => (
+					(this.canSetNoDeadline && item.id === PickerItemType.NO_DEADLINE)
+					|| predefinedItemValues.get(item.id)
+				))
+				.map((item) => {
+					const itemValue = predefinedItemValues.get(item.id);
+
+					return {
+						...item,
+						subtitle: (item.id !== PickerItemType.NO_DEADLINE && this.formatDate(itemValue)),
+						isSelected: (deadline === itemValue),
+					};
+				})
 			;
 		}
 
@@ -162,6 +181,7 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 				[PickerItemType.THIS_WEEK, null],
 				[PickerItemType.NEXT_WEEK_START, null],
 				[PickerItemType.NEXT_WEEK_END, null],
+				[PickerItemType.NO_DEADLINE, null],
 			]);
 
 			// today

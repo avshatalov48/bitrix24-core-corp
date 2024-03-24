@@ -3,8 +3,8 @@
 namespace Bitrix\Crm\Counter\CounterQueryBuilder;
 
 use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParams;
-use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Main\ORM\Query\Query;
 
 interface CounterQueryBuilder
 {

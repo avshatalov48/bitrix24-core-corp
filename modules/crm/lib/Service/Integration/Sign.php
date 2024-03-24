@@ -70,7 +70,7 @@ class Sign
 	/**
 	 * Converting deal to smart document end create sign document
 	 * @param int $documentId
-	 * @return array
+	 * @return Result
 	 */
 	public function convertDealDocumentToSmartDocument(int $documentId, bool $usePrevious = false): Result
 	{
@@ -97,7 +97,7 @@ class Sign
 
 		if (!$document)
 		{
-			return [];
+			return (new Result())->addError(new Error('Document not found'));
 		}
 		$fileId = $document->PDF_ID;
 		$fileId = $fileId ?: $document->FILE_ID;
@@ -157,8 +157,9 @@ class Sign
 			}
 		}
 
-		return [];
+		return (new Result())->addError(new Error('Failed to create document'));
 	}
+
 	private function checkSignInitiation(Document $document, int $dealId, int $fileId): Result
 	{
 		$linkedBlank = $this

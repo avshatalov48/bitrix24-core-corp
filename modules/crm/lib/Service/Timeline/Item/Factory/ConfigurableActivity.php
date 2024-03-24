@@ -2,23 +2,23 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Factory;
 
+use Bitrix\Crm\Activity\Provider\CalendarSharing;
 use Bitrix\Crm\Activity\Provider\ConfigurableRestApp;
 use Bitrix\Crm\Activity\Provider\Delivery;
 use Bitrix\Crm\Activity\Provider\Document;
-use Bitrix\Crm\Activity\Provider\CalendarSharing;
+use Bitrix\Crm\Activity\Provider\Notification;
 use Bitrix\Crm\Activity\Provider\Payment;
+use Bitrix\Crm\Activity\Provider\SignB2eDocument;
 use Bitrix\Crm\Activity\Provider\SignDocument;
 use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\Activity\Provider\StoreDocument;
 use Bitrix\Crm\Activity\Provider\Tasks;
 use Bitrix\Crm\Activity\Provider\ToDo;
-use Bitrix\Crm\Activity\Provider\Notification;
 use Bitrix\Crm\Activity\ProviderId;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
-use Bitrix\Crm\Service\Timeline\Item\Model;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Service\Timeline\Item\Activity\StoreDocument\NotEnoughGoodsInStock;
+use Bitrix\Crm\Service\Timeline\Item\Model;
 
 class ConfigurableActivity
 {
@@ -40,15 +40,14 @@ class ConfigurableActivity
 			return new Item\Activity\Email($context, $model);
 		}
 
-		// Configurable items for calls and openlines are temporary disabled
-		if ($typeId === \CCrmActivityType::Call && Crm::isUniversalActivityScenarioEnabled())
+		if ($typeId === \CCrmActivityType::Call)
 		{
 			return new Item\Activity\Call($context, $model);
 		}
 
 		if ($typeId === \CCrmActivityType::Provider)
 		{
-			if ($providerId === ProviderId::IMOPENLINES_SESSION && Crm::isUniversalActivityScenarioEnabled())
+			if ($providerId === ProviderId::IMOPENLINES_SESSION)
 			{
 				return new Item\Activity\OpenLine($context, $model);
 			}
@@ -68,6 +67,16 @@ class ConfigurableActivity
 				if (SignDocument::isActive())
 				{
 					return new Item\Activity\SignDocument($context, $model);
+				}
+
+				return new Item\NotAvailable($context, $model);
+			}
+
+			if ($providerId === SignB2eDocument::getId())
+			{
+				if (SignB2eDocument::isActive())
+				{
+					return new Item\Activity\SignB2eDocument($context, $model);
 				}
 
 				return new Item\NotAvailable($context, $model);

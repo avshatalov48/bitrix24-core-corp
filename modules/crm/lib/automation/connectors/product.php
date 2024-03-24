@@ -45,7 +45,7 @@ class Product
 	public function __construct(ProductRow $product)
 	{
 		$this->product = $product;
-		$this->product->fill();
+		$this->product->fill(\Bitrix\Main\ORM\Fields\FieldTypeMask::FLAT);
 	}
 
 	public function __call($name, $arguments)

@@ -20,8 +20,6 @@ trait ActivityTrait
 {
 	use FileListPreparer;
 
-	private string $analyticsHit = 'tasks.analytics.hit';
-
 	public function getFiles(): array
 	{
 		$storageFiles = $this->fetchStorageFiles();
@@ -29,16 +27,15 @@ trait ActivityTrait
 		return $this->prepareFiles($storageFiles);
 	}
 
-	private function getTaskAction(TaskObject $task, string $analyticsActionName = 'task_view'): JsEvent
+	private function getTaskAction(TaskObject $task, string $element = 'title_click'): JsEvent
 	{
-		$pathMaker = TaskPathMaker::getPathMaker($task->getId(), $this->getContext()->getUserId());
+		$uri = $this->getUri($task, $element);
 
 		$event = new JsEvent('Task:View');
 		$event
-			->addActionParamString('path', $pathMaker->makeEntityPath())
+			->addActionParamString('path', $uri->getUri())
 			->addActionParamInt('taskId', $task->getId())
 			->addActionParamString('taskTitle', $task->getTitle())
-			->setAnalytics(new Analytics(['scenario' => $analyticsActionName], $this->analyticsHit))
 		;
 
 		return $event;
@@ -46,11 +43,8 @@ trait ActivityTrait
 
 	private function getTaskTitleBlock(AssociatedEntityModel $model, TaskObject $task): ContentBlockWithTitle
 	{
-		$pathMaker = TaskPathMaker::getPathMaker($task->getId(), $this->getContext()->getUserId());
-		$uri = new Uri($pathMaker->makeEntityPath());
-		$uri->addParams(['analyticsLabel' => ['scenario' => 'task_view']]);
+		$uri = $this->getUri($task, 'title_click');
 		$redirect = new Redirect($uri);
-		$redirect->setAnalytics(new Analytics(['scenario' => 'task_view'], $this->analyticsHit));
 
 		$titleBlockObject = new ContentBlockWithTitle();
 		$titleBlockObject
@@ -127,5 +121,24 @@ trait ActivityTrait
 		}
 
 		return \Bitrix\Crm\Integration\Tasks\TaskObject::getObject($taskId, $withRelations);
+	}
+
+	/**
+	 * @param TaskObject $task
+	 * @param string $element
+	 * @return Uri
+	 */
+	private function getUri(TaskObject $task, string $element): Uri
+	{
+		$pathMaker = TaskPathMaker::getPathMaker($task->getId(), $this->getContext()->getUserId());
+		$uri = new Uri($pathMaker->makeEntityPath());
+		$ownerName = strtolower(\CCrmOwnerType::ResolveName($this->getContext()->getEntityTypeId()));
+		$uri->addParams([
+			'ta_sec' => 'crm',
+			'ta_sub' => $ownerName,
+			'ta_el' => $element,
+		]);
+
+		return $uri;
 	}
 }

@@ -3312,6 +3312,11 @@ class CCrmLiveFeed
 			return;
 		}
 
+		if (!\Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable())
+		{
+			return;
+		}
+
 		$srcEntityTypeID = (int)$srcEntityTypeID;
 		$srcEntityID = (int)$srcEntityID;
 		$dstEntityTypeID = (int)$dstEntityTypeID;

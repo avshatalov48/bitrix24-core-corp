@@ -298,7 +298,7 @@ class CrmDeals extends CrmBase
 	{
 		$filter = [
 			'SEARCH_CONTENT' => $search,
-			'%TITLE' => $search,
+			'?TITLE' => $search,
 			'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
 		];
 

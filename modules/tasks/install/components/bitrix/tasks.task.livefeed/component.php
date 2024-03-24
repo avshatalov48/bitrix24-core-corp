@@ -4,7 +4,8 @@ use Bitrix\Tasks\Internals\Task\Status;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-if (isset($arParams['TASK']['REAL_STATUS'])
+if (
+	isset($arParams['TASK']['REAL_STATUS'])
 	&& ((int)$arParams['TASK']['REAL_STATUS'] !== Status::DECLINED)
 	&& ((int)$arParams['TASK']['REAL_STATUS'] !== Status::SUPPOSEDLY_COMPLETED)
 	&& ($arParams['TASK']['REAL_STATUS'] > 0)
@@ -40,18 +41,25 @@ if (isset($arParams['TASK']['REAL_STATUS'])
 	//$arParams['~MESSAGE_24_1'] = $message_24;
 }
 
-if ( !array_key_exists("AVATAR_SIZE", $arParams)
-	||  (intval($arParams["AVATAR_SIZE"]) <= 0)
+if (
+	!array_key_exists("AVATAR_SIZE", $arParams)
+	||  ((int)$arParams["AVATAR_SIZE"] <= 0)
 )
 {
-	if ($arParams["MOBILE"] == "Y")
+	if ($arParams["MOBILE"] === "Y")
+	{
 		$arParams["AVATAR_SIZE"] = 58;
+	}
 	else
+	{
 		$arParams["AVATAR_SIZE"] = 30;
+	}
 }
 
-if ($arParams["NAME_TEMPLATE"] == '')
+if (empty($arParams["NAME_TEMPLATE"]))
+{
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
+}
 
 $arResult['PHOTO'] = false;
 
@@ -59,33 +67,36 @@ $rsUser = CUser::GetByID($arParams['TASK']["RESPONSIBLE_ID"]);
 if ($arResult['USER'] = $rsUser->Fetch())
 {
 	if(defined("BX_COMP_MANAGED_CACHE"))
-		$GLOBALS["CACHE_MANAGER"]->RegisterTag("USER_NAME_".intval($arResult["USER"]["ID"]));
+	{
+		$GLOBALS["CACHE_MANAGER"]->RegisterTag("USER_NAME_" . intval($arResult["USER"]["ID"]));
+	}
 
 	if (!$arResult['USER']['PERSONAL_PHOTO'])
 	{
-		switch ($arResult['USER']['PERSONAL_GENDER'])
+		$suffix = match ($arResult['USER']['PERSONAL_GENDER'])
 		{
-			case "M":
-				$suffix = "male";
-				break;
-			case "F":
-				$suffix = "female";
-				break;
-			default:
-				$suffix = "unknown";
-		}
+			"M" => "male",
+			"F" => "female",
+			default => "unknown",
+		};
 		$arResult['USER']['PERSONAL_PHOTO'] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, SITE_ID);
 	}
 
 	if ($arResult['USER']['PERSONAL_PHOTO'] > 0 && CModule::IncludeModule("intranet"))
+	{
 		$arResult['PHOTO'] = CIntranetUtils::InitImage($arResult['USER']['PERSONAL_PHOTO'], $arParams["AVATAR_SIZE"], 0, BX_RESIZE_IMAGE_EXACT);
+	}
 
 	$arResult['PATH_TO_USER'] = CComponentEngine::MakePathFromTemplate(($arParams["PATH_TO_USER"] <> '' ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/')), array("USER_ID" => $arResult['USER']["ID"], "user_id" => $arResult['USER']["ID"]));
 }
 
 if (isset($arParams['TASK']["DESCRIPTION"]) && $arParams['TASK']["DESCRIPTION"])
+{
 	if (isset($arParams['TASK']["~DESCRIPTION"]) && $arParams['TASK']["~DESCRIPTION"])
+	{
 		$arParams['TASK']["DESCRIPTION"] = $arParams['TASK']["~DESCRIPTION"];
+	}
+}
 
 $folderUsers = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
 $arResult["PATH_TO_LOG_TAG"] = $folderUsers."log/?TAG=#tag#";

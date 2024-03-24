@@ -37,10 +37,10 @@ interface SupersetIntegrator
 	 * If response code is not OK - returns empty data.
 	 *
 	 * @param int $dashboardId
-	 * @param string|null $name
+	 * @param string $name
 	 * @return IntegratorResponse
 	 */
-	public function copyDashboard(int $dashboardId, string $name = null): IntegratorResponse;
+	public function copyDashboard(int $dashboardId, string $name): IntegratorResponse;
 
 	/**
 	 * Returns stream with file of exported dashboard on success request.
@@ -52,10 +52,11 @@ interface SupersetIntegrator
 	public function exportDashboard(int $dashboardId): IntegratorResponse;
 
 	/**
+	 * Uses external ids of dashboards.
 	 * Returns response with result of deleting dashboards.
 	 * If response code is not OK - returns empty data.
 	 *
-	 * @param array $dashboardIds
+	 * @param array $dashboardIds External ids of dashboards.
 	 * @return IntegratorResponse<int>
 	 */
 	public function deleteDashboard(array $dashboardIds): IntegratorResponse;
@@ -70,12 +71,25 @@ interface SupersetIntegrator
 	public function startSuperset(string $biconnectorToken): IntegratorResponse;
 
 	/**
-	 * Returns response with result of stop superset.
-	 * If status code is OK/IN_PROGRESS - superset was stopped.
+	 * Returns response with result of freeze superset.
+	 * $params['reason'] - reason of freezing superset.
+	 * If the reason is "TARIFF" - instanse won't activate automatically.
+	 * Use unfreezeSuperset method with same reason to unfreeze instance.
 	 *
+	 * @param array $params
 	 * @return IntegratorResponse<null>
 	 */
-	public function stopSuperset(): IntegratorResponse;
+	public function freezeSuperset(array $params = []): IntegratorResponse;
+
+	/**
+	 * Returns response with result of unfreeze superset.
+	 * $params['reason'] - reason of previous freezing superset.
+	 * If the reason is "TARIFF" - instance will be activated if it was freezed only with TARIFF reason.
+	 *
+	 * @param array $params
+	 * @return IntegratorResponse<null>
+	 */
+	public function unfreezeSuperset(array $params = []): IntegratorResponse;
 
 	/**
 	 * Returns response with result of delete superset.
@@ -114,9 +128,10 @@ interface SupersetIntegrator
 	 * If response is OK - dashboard was imported successfully.
 	 *
 	 * @param string $filePath
+	 * @param string $appCode
 	 * @return IntegratorResponse<Dto\Dashboard>
 	 */
-	public function importDashboard(string $filePath): IntegratorResponse;
+	public function importDashboard(string $filePath, string $appCode): IntegratorResponse;
 
 	/**
 	 * Return response with result of embedding dashboard.
@@ -151,4 +166,21 @@ interface SupersetIntegrator
 	 * @return $this
 	 */
 	public function skipRequireFields(): static;
+
+	/**
+	 * Change bi token for getting data from apache superset
+	 * If response is OK - the token was changed successfully.
+	 *
+	 * @param string $biconnectorToken
+	 * @return IntegratorResponse<Dto\Dashboard>
+	 */
+	public function changeBiconnectorToken(string $biconnectorToken): IntegratorResponse;
+
+	/**
+	 * Returns status of superset service availability.
+	 * If service available - returns true, false otherwise
+	 *
+	 * @return bool
+	 */
+	public function ping(): bool;
 }

@@ -3,7 +3,7 @@
 namespace Bitrix\CrmMobile\Controller\Action;
 
 use Bitrix\CrmMobile\Controller\Action;
-use Bitrix\CrmMobile\Controller\PublicErrorsTrait;
+use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\CrmMobile\Kanban\Entity;
 use Bitrix\Main\Result;
 

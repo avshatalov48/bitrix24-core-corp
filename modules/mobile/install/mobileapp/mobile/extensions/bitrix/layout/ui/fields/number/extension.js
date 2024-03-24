@@ -2,7 +2,6 @@
  * @module layout/ui/fields/number
  */
 jn.define('layout/ui/fields/number', (require, exports, module) => {
-
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { stringify } = require('utils/string');
 
@@ -20,39 +19,30 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 	{
 		renderReadOnlyContent()
 		{
-			if (this.isMoneyFieldEnabledView())
-			{
-				return View(
-					{
-						style: {
-							flex: 1,
-							flexDirection: 'row',
-						},
+			return View(
+				{
+					style: {
+						flex: 1,
+						flexDirection: 'row',
 					},
-					MoneyField(this.getFieldInputProps()),
-					// for workability of copying by long click
-					View({
-						style: {
-							width: '100%',
-							height: '100%',
-							position: 'absolute',
-						},
-						onLongClick: this.getContentLongClickHandler(),
-						onClick: this.getContentClickHandler(),
-					}),
-				);
-			}
-
-			return super.renderReadOnlyContent();
+				},
+				MoneyField(this.getFieldInputProps()),
+				// for workability of copying by long click
+				View({
+					style: {
+						width: '100%',
+						height: '100%',
+						position: 'absolute',
+					},
+					onLongClick: this.getContentLongClickHandler(),
+					onClick: this.getContentClickHandler(),
+				}),
+			);
 		}
 
 		renderEditableContent()
 		{
-			return (
-				this.isMoneyFieldEnabledView()
-					? MoneyField(this.getFieldInputProps())
-					: super.renderEditableContent()
-			);
+			return MoneyField(this.getFieldInputProps());
 		}
 
 		getFieldInputProps()
@@ -103,34 +93,13 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 		getPrecision()
 		{
 			const config = super.getConfig();
+
 			return BX.prop.getInteger(config, 'precision', 0);
 		}
 
 		prepareSingleValue(value)
 		{
-			const preparedValue = super.prepareSingleValue(value);
-			if (preparedValue === '' || this.isMoneyFieldEnabledView())
-			{
-				return preparedValue;
-			}
-
-			const previousValue = stringify(this.props.value);
-			const hasComma = preparedValue.includes(',');
-			const formattedValue = hasComma ? preparedValue.replace(',', '.') : preparedValue;
-
-			if (formattedValue !== '' && this.isInteger(formattedValue))
-			{
-				let result = this.formatValue(formattedValue, previousValue);
-
-				if (hasComma)
-				{
-					result = result.replace('.', ',');
-				}
-
-				return result;
-			}
-
-			return super.prepareSingleValue(previousValue);
+			return super.prepareSingleValue(value);
 		}
 
 		isNumber(text)
@@ -191,21 +160,14 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 
 					return text;
 				}
-				else
-				{
-					const pow = Math.pow(10, precision);
-					const result = (Math.trunc(Number(text) * pow) / pow).toFixed(precision);
 
-					return String(result);
-				}
+				const pow = 10 ** precision;
+				const result = (Math.trunc(Number(text) * pow) / pow).toFixed(precision);
+
+				return String(result);
 			}
 
 			return text;
-		}
-
-		isMoneyFieldEnabledView()
-		{
-			return Application.getApiVersion() >= 42;
 		}
 	}
 

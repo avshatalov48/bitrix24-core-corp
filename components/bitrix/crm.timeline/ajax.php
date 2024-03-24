@@ -467,7 +467,7 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 	]);
 
 	$messagePlaceholders = $_REQUEST['MESSAGE_PLACEHOLDERS'] ?? [];
-	if (!empty($messagePlaceholders))
+	if (is_array($messagePlaceholders) && !empty($messagePlaceholders))
 	{
 		$placeholders = [];
 		foreach ($messagePlaceholders as $key => $value)

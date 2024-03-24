@@ -59,10 +59,10 @@ class TemplateTagProvider extends BaseProvider
 	{
 		$query = TemplateTagTable::query();
 		$query
-			->setSelect(['NAME'])
-			->setOrder(['ID' => 'DESC'])
+			->setSelect(['MAX_ID', 'NAME'])
+			->setOrder(['MAX_ID' => 'DESC'])
+			->setGroup(['NAME'])
 			->setLimit(self::LIMIT)
-			->setDistinct()
 		;
 
 		return $this->getTitles($query->exec()->fetchAll());
@@ -93,11 +93,11 @@ class TemplateTagProvider extends BaseProvider
 		$titleColumn = 'ITEM_ID';
 		$query = EntityUsageTable::query();
 		$query
-			->setSelect([$titleColumn])
+			->setSelect(['MAX_LAST_USE_DATE', $titleColumn])
 			->where('ENTITY_ID', self::TASK_ENTITY_ID)
-			->setOrder(['LAST_USE_DATE' => 'DESC'])
+			->setOrder(['MAX_LAST_USE_DATE' => 'DESC'])
 			->setLimit($diff)
-			->setDistinct()
+			->setGroup([$titleColumn])
 		;
 
 		$additionalTags = $this->getTitles($query->exec()->fetchAll(), $titleColumn);

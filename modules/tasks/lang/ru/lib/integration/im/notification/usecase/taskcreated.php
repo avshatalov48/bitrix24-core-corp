@@ -1,5 +1,6 @@
 <?php
 $MESS["TASKS_MESSAGE_RESPONSIBLE_ID"] = "Ответственный";
+$MESS['TASKS_MESSAGE_ASSIGNEE_ID'] = 'Исполнитель';
 $MESS["TASKS_MESSAGE_ACCOMPLICES"] = "Соисполнители";
 $MESS["TASKS_MESSAGE_ACCOMPLICES_ADDED"] = "Добавлены соисполнители: ";
 $MESS["TASKS_MESSAGE_ACCOMPLICES_REMOVED"] = "Исключены соисполнители: ";

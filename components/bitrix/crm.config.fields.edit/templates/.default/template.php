@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Types\EnumType;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -195,13 +196,14 @@ if(isset($arResult["LIST"]) && is_array($arResult["LIST"]))
 		';
 		foreach($arResult["LIST"] as $arEnum)
 		{
+			$value = $arEnum['VALUE'] ?? null;
 			$html .= '
 				<tr>
 				<td align="center"><div class="sort-arrow sort-up" onclick="sort_up(this);" title="'.GetMessage("CRM_FE_SORT_UP_TITLE").'"></div></td>
 				<td align="center"><div class="sort-arrow sort-down" onclick="sort_down(this);" title="'.GetMessage("CRM_FE_SORT_DOWN_TITLE").'"></div></td>
 				<td>
 					<input type="hidden" name="LIST['.$arEnum["ID"].'][SORT]" value="'.$sort.'" class="sort-input">
-					<input type="text" size="35" name="LIST['.$arEnum["ID"].'][VALUE]" value="'.$arEnum["VALUE"].'" class="value-input">
+					<input type="text" size="35" name="LIST['.$arEnum["ID"].'][VALUE]" value="'. $value .'" class="value-input">
 				</td>
 				<td align="center"><div class="delete-action" onclick="delete_item(this);" title="'.GetMessage("CRM_FE_DELETE_TITLE").'"></div></td>
 				</tr>
@@ -212,19 +214,23 @@ if(isset($arResult["LIST"]) && is_array($arResult["LIST"]))
 		$html .= '</table>';
 		$html .= '<input type="button" value="'.GetMessage("CRM_FE_LIST_ITEM_ADD").'" onClick="addNewTableRow(\'tblLIST\')">';
 
+		$listTextValues = ($arResult['FORM_DATA']['LIST_TEXT_VALUES'] ?? '');
+		$displayStyle = empty($listTextValues) ? 'display:none; ' : '';
+		$blockStyles = 'style="' . $displayStyle . 'width:100%"';
+
 		$html .= '
 			<br><br>
 			<a class="href-action" href="javascript:void(0)" onclick="toggle_input(\'import\'); return false;">'.GetMessage("CRM_FE_ENUM_IMPORT").'</a>
-			<div id="import" style="'.($arResult["FORM_DATA"]["LIST_TEXT_VALUES"] <> ''? '': 'display:none; ').'width:100%">
+			<div id="import" ' . $displayStyle . '>
 				<p>'.GetMessage("CRM_FE_ENUM_IMPORT_HINT").'</p>
-				<textarea name="LIST_TEXT_VALUES" id="LIST_TEXT_VALUES" style="width:100%" rows="20">'.($arResult["FORM_DATA"]["LIST_TEXT_VALUES"]).'</textarea>
+				<textarea name="LIST_TEXT_VALUES" id="LIST_TEXT_VALUES" style="width:100%" rows="20">' . $listTextValues . '</textarea>
 			</div>
 		';
 
 		$html .= '
 			<br><br>
 			<a class="href-action" href="javascript:void(0)" onclick="toggle_input(\'defaults\'); return false;">'.($arResult["FORM_DATA"]["MULTIPLE"] == "Y"? GetMessage("CRM_FE_ENUM_DEFAULTS"): GetMessage("CRM_FE_ENUM_DEFAULT")).'</a>
-			<div id="defaults" style="'.($arResult["FORM_DATA"]["LIST_TEXT_VALUES"] <> ''? '': 'display:none; ').'width:100%">
+			<div id="defaults" ' . $blockStyles . '>
 			<br>
 		';
 
@@ -233,11 +239,21 @@ if(isset($arResult["LIST"]) && is_array($arResult["LIST"]))
 		else
 			$html .= '<select name="LIST_DEF[]" id="LIST_DEF" size="1">';
 
-		if($arResult["FORM_DATA"]["IS_REQIRED"] != "Y")
-			$html .= '<option value=""'.(count($arResult["LIST_DEF"])==0? ' selected': '').'>'.GetMessage("CRM_FE_ENUM_NO_DEFAULT").'</option>';
+		if (($arResult['FORM_DATA']['IS_REQIRED'] ?? 'N') !== 'Y')
+		{
+			$html .= '<option value=""' . (count($arResult["LIST_DEF"]) == 0 ? ' selected' : '') . '>' . Loc::getMessage('CRM_FE_ENUM_NO_DEFAULT') . '</option>';
+		}
 
-		foreach($arResult["LIST"] as $arEnum)
-			$html .= '<option value="'.$arEnum["ID"].'"'.(isset($arResult["LIST_DEF"][$arEnum["ID"]])? ' selected': '').'>'.$arEnum["VALUE"].'</option>';
+		foreach ($arResult['LIST'] as $arEnum)
+		{
+			$selected = (isset($arResult['LIST_DEF'][$arEnum['ID']]) ? ' selected' : '');
+			$value = $arEnum['VALUE'] ?? null;
+			if ($value === null)
+			{
+				continue;
+			}
+			$html .= '<option value="' . $arEnum["ID"] . '"' . $selected . '>' . $value . '</option>';
+		}
 
 		$html .= '
 				</select>

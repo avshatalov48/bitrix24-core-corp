@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\UI;
 use \Bitrix\Tasks\Util\Type;
 
@@ -18,7 +19,16 @@ use \Bitrix\Tasks\Util\Type;
 
 Loc::loadMessages(__DIR__.'/template.php');
 
-\Bitrix\Main\UI\Extension::load(["ui.notification", "ui.design-tokens"]);
+/*
+The 'tasks.external' extension does not exist by default.
+It's current connection is necessary to provide the ability to additional logic into the task card,
+without affecting current code.
+*/
+Extension::load([
+	'ui.notification',
+	'ui.design-tokens',
+	'tasks.external',
+]);
 
 if (!intval($arParams['ID']))
 {

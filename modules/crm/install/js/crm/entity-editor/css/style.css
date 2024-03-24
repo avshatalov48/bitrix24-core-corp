@@ -328,7 +328,7 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 /*region Widget content*/
 .crm-entity-widget-content {
 	position: relative;
-	padding: 18px 0 15px;
+	margin-bottom: 15px;
 }
 
 .crm-entity-widget-content .crm-entity-widget-btn-settings {
@@ -337,6 +337,9 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	right: 3px;
 	z-index: 1;
 }
+
+.crm-entity-widget-content:hover .ui-entity-editor-block-context-menu { opacity: .35; }
+.crm-entity-widget-content:hover .ui-entity-editor-block-context-menu:hover { opacity: 1; }
 
 .crm-entity-widget-content-search-row .crm-entity-widget-btn-close {
 	position: absolute;
@@ -789,9 +792,9 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 .crm-entity-widget-content-block-draggable-btn-container {
 	position: absolute;
 	top: -4px;
-	left: -3px;
-	width: 21px;
-	height: 22px;
+	left: -15px;
+	width: 15px;
+	height: 20px;
 }
 
 .crm-entity-card-widget-edit .crm-entity-widget-content-block-field-radiobox .crm-entity-widget-content-block-draggable-btn-container,
@@ -844,6 +847,7 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	color: #a3a9b1;
 	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-pack: justify;
+	cursor: default;
 	/*justify-content: space-between;*/
 }
 

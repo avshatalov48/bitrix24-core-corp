@@ -115,6 +115,21 @@ class Call
 						return '[' . $value . ']' . (array_key_exists($messageId, $viHistoryMessages) ? ' ' . $viHistoryMessages[$messageId] : '');
 					}
 				],
+				'CALL_STATUS_CODE_ID' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'S.CALL_FAILED_CODE',
+					'FIELD_TYPE' => 'string',
+				],
+				'CALL_STATUS_CODE_NAME' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'S.CALL_FAILED_CODE',
+					'FIELD_TYPE' => 'string',
+					'CALLBACK' => function($value, $dateFormats) use ($viHistoryMessages)
+					{
+						$messageId = 'VI_STATUS_' . $value;
+						return $viHistoryMessages[$messageId] ?? '';
+					}
+				],
 				//CALL_FAILED_REASON varchar(255) NULL,
 				'CALL_STATUS_REASON' => [
 					'IS_METRIC' => 'N',
@@ -206,7 +221,7 @@ class Call
 
 		if (\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
 		{
-			$result['crm_deal']['DICTIONARY'] = [
+			$result['telephony_call']['DICTIONARY'] = [
 				\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT,
 			];
 		}

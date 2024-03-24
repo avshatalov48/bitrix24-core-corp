@@ -64,6 +64,7 @@ jn.define('layout/ui/kanban/toolbar/stage-dropdown', (require, exports, module) 
 			if (counter)
 			{
 				return Text({
+					testId: 'stageToolbarStageCounter',
 					style: Styles.stageCount,
 					text: ` (${counter.count}) `,
 					numberOfLines: 1,

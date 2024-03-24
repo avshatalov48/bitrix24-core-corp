@@ -10,7 +10,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Manager\Task;
-use Bitrix\Tasks\Replicator\Template\Replicators\RegularTaskReplicator;
+use Bitrix\Tasks\Replication\Replicator\RegularTaskReplicator;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use CTasksTools;

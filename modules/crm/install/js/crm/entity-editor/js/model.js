@@ -598,6 +598,32 @@ if(typeof BX.Crm.SmartDocumentModel === "undefined")
 	};
 }
 
+if (typeof BX.Crm.SmartB2eDocumentModel === "undefined")
+{
+	/**
+	 * @extends BX.Crm.FactoryBasedModel
+	 * @memberOf BX.Crm
+	 * @constructor
+	 */
+	BX.Crm.SmartB2eDocumentModel = function ()
+	{
+		BX.Crm.SmartB2eDocumentModel.superclass.constructor.apply(this);
+	};
+
+	BX.extend(BX.Crm.SmartB2eDocumentModel, BX.Crm.FactoryBasedModel);
+	/**
+	 * @param {string} id
+	 * @param {Object} settings
+	 * @return {BX.Crm.SmartB2eDocumentModel}
+	 */
+	BX.Crm.SmartB2eDocumentModel.create = function (id, settings)
+	{
+		var self = new BX.Crm.SmartB2eDocumentModel();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
 if (typeof BX.Crm.AgentContractModel === "undefined")
 {
 	BX.Crm.AgentContractModel = function()

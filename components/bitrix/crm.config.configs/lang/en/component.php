@@ -92,5 +92,7 @@ $MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE"] = "Counter mode";
 $MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_ACTIVITY"] = "Activity responsible person";
 $MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_ENTITY"] = "Item responsible person";
 $MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_HINT"] = "If the option \"Activity responsible person\" is selected, the counter will light up for employees that are responsible for the item's activity (here the item can be a deal, a lead or an invoice), rather than for the item as a whole.<br><br>If the option \"Item responsible person\" is selected, the counter will light up for employees that are responsible for the item even if the item's activities are assigned to other persons.";
+$MESS["CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_HINT_MSGVER_1"] = "<b>Item responsible person</b>: use it to track all activities. The user will see the counters for all activities that belong to the user's items (deals, leads, contacts etc.), even if an activity is managed by someone else.<br><br>
+<b>Activity responsible person</b>: use it to track your activities only. The user will see the counters for their activities, including those whose parent items are managed by other responsible persons.";
 $MESS["CRM_SM_LIST"] = "Settings";
 $MESS["SUBSCRIBE_MODULE_NOT_INSTALLED"] = "The Subscription module is not installed.";

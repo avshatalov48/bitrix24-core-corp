@@ -112,14 +112,6 @@ class Template implements Recyclebinable
 		return $result;
 	}
 
-	/**
-	 * @throws NotImplementedException
-	 */
-	public static function previewFromRecyclebin(Entity $entity): void
-	{
-		throw new NotImplementedException("Coming soon...");
-	}
-
 	public static function getNotifyMessages(): array
 	{
 		return [
@@ -155,5 +147,14 @@ class Template implements Recyclebinable
 		return Loc::getMessage('TASKS_RECYCLEBIN_TEMPLATE_MOVED_TO_RECYCLEBIN', [
 			'#RECYCLEBIN_URL#' => str_replace('#user_id#', $userId, RouteDictionary::PATH_TO_RECYCLEBIN),
 		]);
+	}
+
+	/**
+	 * @deprecated and will be removed since recyclebin 23.0.0
+	 * @throws NotImplementedException
+	 */
+	public static function previewFromRecyclebin(Entity $entity): void
+	{
+		throw new NotImplementedException("Coming soon...");
 	}
 }

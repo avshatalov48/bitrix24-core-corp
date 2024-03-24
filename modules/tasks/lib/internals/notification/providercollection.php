@@ -2,8 +2,14 @@
 
 namespace Bitrix\Tasks\Internals\Notification;
 
-class ProviderCollection implements \IteratorAggregate, \Countable
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
+
+class ProviderCollection implements IteratorAggregate, Countable
 {
+	private ?ArrayIterator $iterator = null;
+
 	/** @var ProviderInterface[]  */
 	private array $providers;
 
@@ -12,12 +18,14 @@ class ProviderCollection implements \IteratorAggregate, \Countable
 		$this->providers = $providers;
 	}
 
-	/**
-	 * @return ProviderInterface[]
-	 */
-	public function getIterator(): \ArrayIterator
+	public function getIterator(): ArrayIterator
 	{
-		return new \ArrayIterator($this->providers);
+		if (is_null($this->iterator))
+		{
+			$this->iterator = new ArrayIterator($this->providers);
+		}
+
+		return $this->iterator;
 	}
 
 	public function add(ProviderInterface $provider): void
@@ -33,5 +41,10 @@ class ProviderCollection implements \IteratorAggregate, \Countable
 	public function count(): int
 	{
 		return count($this->providers);
+	}
+
+	public function current(): ProviderInterface
+	{
+		return $this->getIterator()->current();
 	}
 }

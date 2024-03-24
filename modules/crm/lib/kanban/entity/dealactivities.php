@@ -10,7 +10,7 @@ use Bitrix\Main\Result;
 
 class DealActivities extends Deal
 {
-	use Activity;
+	use ActivityTrait;
 
 	public function isTotalPriceSupported(): bool
 	{
@@ -63,5 +63,10 @@ class DealActivities extends Deal
 			parent::getItemsSelectPreset(),
 			[Item::FIELD_NAME_CATEGORY_ID]
 		);
+	}
+
+	public function getAllowStages(array $filter = []): array
+	{
+		return array_column($this->getStagesList(), 'STATUS_ID');
 	}
 }

@@ -7,6 +7,7 @@ $MESS["M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_TITLE"] = "Cannot complete action";
 $MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_CHOOSE_OTHER_PAYMENT_METHOD"] = "Select a different payment method";
 $MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_ERROR_TEXT"] = "Cannot process payment";
 $MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_GET_NEW_QR_GET_NEW_QR"] = "Get a new QR code";
+$MESS["M_CRM_TL_PAYMENT_PAY_NO_PAY_METHODS"] = "The Terminal is presently unable to receive payments. Enable at least one payment method in the Terminal settings, or contact your supervisor";
 $MESS["M_CRM_TL_PAYMENT_PAY_PAYMENT_SYSTEM_CREATION_ERROR_MESSAGE"] = "Error creating payment system";
 $MESS["M_CRM_TL_PAYMENT_PAY_PLEASE_WAIT"] = "Please wait";
 $MESS["M_CRM_TL_PAYMENT_PAY_PRODUCTS_CNT"] = "Products: #CNT#";

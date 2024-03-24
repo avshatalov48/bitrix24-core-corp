@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
 
@@ -7,6 +7,10 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CMain $APPLICATION */
+
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
 \CJSCore::init(["loader", "popup", "sidepanel", "date"]);
@@ -14,20 +18,20 @@ $this->IncludeLangFile();
 
 function displayField($placeholder, array $field, $required = false)
 {
-	$title = $field['TITLE'];
+	$title = $field['TITLE'] ?? null;
 	if(!$title)
 	{
 		$title = $placeholder;
 	}
 	?><div class="crm-document-edit-item">
 		<label class="crm-document-edit-label" for="field-<?=\CUtil::JSEscape($placeholder);?>"><?echo htmlspecialcharsbx($title)?></label><?
-	if(is_array($field['VALUE']))
+	if(isset($field['VALUE']) && is_array($field['VALUE']))
 	{
 		?>
 			<select class="crm-document-edit-select" name="values[<?=htmlspecialcharsbx($placeholder);?>]" id="field-<?=\CUtil::JSEscape($placeholder);?>">
 				<?foreach($field['VALUE'] as $value)
 				{
-					$title = $value['TITLE'];
+					$title = $value['TITLE'] ?? null;
 					if(!$title)
 					{
 						$title = $value['VALUE'];
@@ -38,7 +42,7 @@ function displayField($placeholder, array $field, $required = false)
 			</select>
 		<?
 	}
-	elseif($field['TYPE'] && $field['TYPE'] === \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_TEXT)
+	elseif(!empty($field['TYPE']) && $field['TYPE'] === \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_TEXT)
 	{
 		?>
 		<textarea class="crm-document-edit-input crm-document-edit-input-textarea" name="values[<?=htmlspecialcharsbx($placeholder);?>]" id="field-<?=\CUtil::JSEscape($placeholder);?>"<?if($required){?> required<?}
@@ -49,7 +53,7 @@ function displayField($placeholder, array $field, $required = false)
 		?>><?=htmlspecialcharsbx($field['VALUE']);?></textarea>
 		<?
 	}
-	elseif($field['TYPE'] && $field['TYPE'] === \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_DATE || $field['VALUE'] instanceof \Bitrix\DocumentGenerator\Value\DateTime)
+	elseif(!empty($field['TYPE']) && $field['TYPE'] === \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_DATE || $field['VALUE'] instanceof \Bitrix\DocumentGenerator\Value\DateTime)
 	{
 		?>
 		<input onclick="BX.calendar({node: this, field: this, bTime: true, bSetFocus: false, bUseSecond: true})" class="crm-document-edit-input crm-document-edit-date" name="values[<?=htmlspecialcharsbx($placeholder);?>]" value="<?=htmlspecialcharsbx($field['VALUE']);?>"<?if($required){?> required<?}?> id="field-<?=\CUtil::JSEscape($placeholder);?>"<?
@@ -111,7 +115,7 @@ function displayGroup(array &$allGroups, $name, $groups, array &$placeholders, a
 	<h3 class="crm-document-edit-<?=$classSuffix;?>-title"><?=htmlspecialcharsbx($title);?></h3><?
 	// first show selects
 	?><div class="crm-document-edit-fields"><?
-	if(is_array($placeholders[$name]))
+	if(isset($placeholders[$name]) && is_array($placeholders[$name]))
 	{
 		foreach($placeholders[$name] as $key => $placeholder)
 		{
@@ -123,7 +127,7 @@ function displayGroup(array &$allGroups, $name, $groups, array &$placeholders, a
 			}
 		}
 	}
-	if(is_array($placeholders[$name]))
+	if(isset($placeholders[$name]) && is_array($placeholders[$name]))
 	{
 		foreach($placeholders[$name] as $key => $placeholder)
 		{
@@ -146,7 +150,7 @@ function displayGroup(array &$allGroups, $name, $groups, array &$placeholders, a
 	?></div><?
 }
 
-if($arParams['IS_SLIDER'])
+if(isset($arParams['IS_SLIDER']) && $arParams['IS_SLIDER'])
 {
 	$APPLICATION->RestartBuffer();
 	?>
@@ -160,7 +164,7 @@ if($arParams['IS_SLIDER'])
 			window.location = "<?=CUtil::JSEscape((new \Bitrix\Main\Web\Uri(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
 		}
 	</script>
-	<?$APPLICATION->ShowHead(); ?>
+	<?php $APPLICATION->ShowHead(); ?>
 </head>
 <body class="crm__document-view--slider-wrap">
 <div class="crm__document-view--title">
@@ -173,35 +177,35 @@ if($arParams['IS_SLIDER'])
 		</div>
 	</div>
 </div>
-<?}?>
+<?php } ?>
 <div class="crm-document-edit-wrap">
 	<div id="crm-document-edit-error"></div>
 	<div>
 		<form id="crm-document-edit-form" method="post" enctype="multipart/form-data">
 			<?=bitrix_sessid_post()?>
 			<input type="hidden" name="mode" value="change" />
-			<?if($arParams['DOCUMENT_ID'] > 0)
+			<?php if (isset($arParams['DOCUMENT_ID']) && $arParams['DOCUMENT_ID'] > 0)
 			{?>
 				<input type="hidden" name="documentId" value="<?=intval($arParams['DOCUMENT_ID']);?>" />
-			<?}
+			<?php }
 			else
 			{?>
 				<input type="hidden" name="templateId" value="<?=intval($arParams['TEMPLATE_ID']);?>" />
 				<input type="hidden" name="value" value="<?=intval($arParams['VALUE']);?>" />
 				<input type="hidden" name="providerClassName" value="<?=htmlspecialcharsbx($arParams['PROVIDER']);?>" />
-			<?}
-			if($arParams['IS_SLIDER'])
+			<?php }
+			if(isset($arParams['IS_SLIDER']) && $arParams['IS_SLIDER'])
 			{
 				?><input type="hidden" name="IFRAME" value="Y" />
-				<input type="hidden" name="IFRAME_TYPE" value="SIDE_SLIDER" /><?
+				<input type="hidden" name="IFRAME_TYPE" value="SIDE_SLIDER" /><?php
 			}
-			if($arParams['SITE_ID'])
+			if(!empty($arParams['SITE_ID']))
 			{
-				?><input type="hidden" name="site_id" value="<?=htmlspecialcharsbx($arParams['SITE_ID']);?>" /><?
+				?><input type="hidden" name="site_id" value="<?=htmlspecialcharsbx($arParams['SITE_ID']);?>" /><?php
 			}
 			?>
 			<div class="crm-document-edit-block">
-		<?
+		<?php
 		$foundPlaceholders = [];
 		$groups = [
 			Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_EDIT_UNKNOWN_GROUP_NAME') => [],
@@ -209,7 +213,7 @@ if($arParams['IS_SLIDER'])
 		];
 		foreach($arResult['FIELDS'] as $placeholder => $field)
 		{
-			if(!$field['GROUP'] || empty($field['GROUP']))
+			if (empty($field['GROUP']))
 			{
 				$foundPlaceholders[Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_EDIT_UNKNOWN_GROUP_NAME')][] = $placeholder;
 			}
@@ -229,7 +233,7 @@ if($arParams['IS_SLIDER'])
 					}
 				}
 
-				if(isset($field['TYPE']) && $field['TYPE'] == \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_IMAGE || $field['TYPE'] == \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_STAMP)
+				if (isset($field['TYPE']) && ($field['TYPE'] == \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_IMAGE || $field['TYPE'] == \Bitrix\DocumentGenerator\DataProvider::FIELD_TYPE_STAMP))
 				{
 					continue;
 				}
@@ -255,10 +259,10 @@ if($arParams['IS_SLIDER'])
 		<?='BX.message('.\CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)).');'?>
 	});
 </script>
-<?
-if($arParams['IS_SLIDER'])
+<?php
+if(isset($arParams['IS_SLIDER']) && $arParams['IS_SLIDER'])
 {
 	?></body>
-	</html><?
+	</html><?php
 	\CMain::FinalActions();
 }

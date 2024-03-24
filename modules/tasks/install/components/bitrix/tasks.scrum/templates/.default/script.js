@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events) {
+(function (exports,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,ui_analytics,main_core,main_core_events) {
 	'use strict';
 
 	var SidePanel = /*#__PURE__*/function (_EventEmitter) {
@@ -125,18 +125,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "sendRequestToComponent",
 	    value: function sendRequestToComponent() {
-	      var _this2 = this;
 	      var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var action = arguments.length > 1 ? arguments[1] : undefined;
-	      var analyticsLabel = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	      var analytics = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      data.debugMode = this.debugMode;
+	      var config = {
+	        mode: 'class',
+	        signedParameters: this.signedParameters,
+	        data: data
+	      };
+	      if (analytics && analytics.event) {
+	        config.analytics = analytics;
+	      }
 	      return new Promise(function (resolve, reject) {
-	        main_core.ajax.runComponentAction('bitrix:tasks.scrum', action, {
-	          mode: 'class',
-	          signedParameters: _this2.signedParameters,
-	          data: data,
-	          analyticsLabel: analyticsLabel
-	        }).then(resolve, reject);
+	        main_core.ajax.runComponentAction('bitrix:tasks.scrum', action, config).then(resolve, reject);
 	      });
 	    }
 	  }, {
@@ -183,8 +185,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createTask",
 	    value: function createTask(data) {
 	      return this.sendRequestToComponent(data, 'createTask', {
-	        scrum: 'Y',
-	        action: 'create_task'
+	        tool: 'tasks',
+	        category: 'task_operations',
+	        event: 'task_create',
+	        type: 'task',
+	        c_section: 'scrum',
+	        c_element: 'quick_button'
 	      });
 	    }
 	  }, {
@@ -1557,10 +1563,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	      this.name = name;
 	      this.name.subscribe('click', function () {
-	        return _this2.emit('showTask');
+	        _this2.emit('showTask');
+	        _this2.sendAnalytics('task_view', 'title_click');
 	      });
 	      this.name.subscribe('urlClick', function () {
-	        return _this2.emit('destroyActionPanel');
+	        _this2.emit('destroyActionPanel');
+	        _this2.sendAnalytics('task_view', 'title_click');
 	      });
 	    }
 	  }, {
@@ -2405,6 +2413,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      setTimeout(function () {
 	        main_core.Dom.removeClass(_this14.getNode(), '--blink');
 	      }, 300);
+	    }
+	  }, {
+	    key: "sendAnalytics",
+	    value: function sendAnalytics(event, element) {
+	      var analyticsData = {
+	        tool: 'tasks',
+	        category: 'task_operations',
+	        event: event,
+	        type: 'task',
+	        c_section: 'scrum',
+	        c_element: element
+	      };
+	      ui_analytics.sendData(analyticsData);
 	    }
 	  }], [{
 	    key: "buildItem",
@@ -10676,6 +10697,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              }));
 	              _this19.destroyActionPanel();
 	              entity.deactivateGroupMode();
+	              ui_analytics.sendData({
+	                tool: 'tasks',
+	                category: 'task_operations',
+	                event: 'task_view',
+	                type: 'task',
+	                c_section: 'scrum',
+	                c_element: 'context_menu'
+	              });
 	            }
 	          },
 	          attachment: {
@@ -11570,5 +11599,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Entry = Entry;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX,BX.Event));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX.UI.Analytics,BX,BX.Event));
 //# sourceMappingURL=script.js.map

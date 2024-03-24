@@ -96,7 +96,7 @@ class Comment extends Activity
 			Button::TYPE_PRIMARY
 		);
 
-		$openButtonObject->setAction($this->getTaskAction($task, 'comm_view'));
+		$openButtonObject->setAction($this->getTaskAction($task, 'view_button'));
 
 		return $openButtonObject;
 	}
@@ -192,8 +192,7 @@ class Comment extends Activity
 			->addActionParamInt('activityId', $this->getActivityId())
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-			->setAnalytics(new Layout\Action\Analytics(['scenario' => 'comm_close'], $this->analyticsHit))
 			->setAnimation(Layout\Action\Animation::disableItem()->setForever())
-			;
+		;
 	}
 }

@@ -105,7 +105,12 @@ class DocumentHandlersManager
 		return $list;
 	}
 
-	private function shouldHideGoogle(DocumentHandler $handler)
+	private function shouldHideGoogle(DocumentHandler $handler): bool
+	{
+		return false;
+	}
+
+	private function shouldHideGoogleFromImport(DocumentHandler $handler): bool
 	{
 		return false;
 	}
@@ -122,6 +127,10 @@ class DocumentHandlersManager
 			if ($handler instanceof CloudImportInterface)
 			{
 				if ($this->shouldHideByZone($handler))
+				{
+					continue;
+				}
+				if ($this->shouldHideGoogleFromImport($handler))
 				{
 					continue;
 				}

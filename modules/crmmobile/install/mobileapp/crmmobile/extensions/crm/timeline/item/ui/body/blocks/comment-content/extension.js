@@ -12,13 +12,6 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 	 */
 	class TimelineItemBodyCommentContentBlock extends TimelineItemBodyBaseEditableBlock
 	{
-		constructor(...props)
-		{
-			super(...props);
-
-			this.state.expanded = true;
-		}
-
 		getPreparedActionParams()
 		{
 			const { actionParams } = this.props.saveAction;
@@ -43,14 +36,6 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 			return Loc.getMessage('M_CRM_TIMELINE_BLOCK_COMMENT_EDITABLE_TEXT_PLACEHOLDER');
 		}
 
-		renderText()
-		{
-			const props = this.getTextParams();
-			props.value = this.prepareTextToRender(this.state.text);
-
-			return BBCodeText(props);
-		}
-
 		openUserProfile(userId)
 		{
 			const widgetParams = { groupStyle: true };
@@ -64,7 +49,7 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 			};
 
 			PageManager.openWidget('list', widgetParams)
-				.then(list => ProfileView.open({ userId, backdrop: true }, list))
+				.then((list) => ProfileView.open({ userId, backdrop: true }, list))
 			;
 		}
 
@@ -75,11 +60,6 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 			params.onUserClick = ({ userId }) => this.openUserProfile(userId);
 
 			return params;
-		}
-
-		toggleExpanded()
-		{
-			// Temporarily disabled, ticket #174855
 		}
 	}
 

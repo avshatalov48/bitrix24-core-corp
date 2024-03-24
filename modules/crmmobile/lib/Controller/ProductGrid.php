@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 use Bitrix\Crm\Item;
 use Bitrix\CrmMobile\ProductGrid\ProductGridQuery;

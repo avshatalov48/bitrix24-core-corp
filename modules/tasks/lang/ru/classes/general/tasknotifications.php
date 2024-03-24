@@ -178,6 +178,7 @@ $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_4_24_2"] = "Причина";
 $MESS["TASKS_SONET_LOG_TITLE"] = "название";
 $MESS["TASKS_SONET_LOG_DESCRIPTION"] = "описание";
 $MESS["TASKS_SONET_LOG_RESPONSIBLE_ID"] = "Ответственный";
+$MESS['TASKS_SONET_LOG_ASSIGNEE'] = 'Исполнитель';
 $MESS["TASKS_SONET_LOG_DEADLINE"] = "крайний срок";
 $MESS["TASKS_SONET_LOG_ACCOMPLICES"] = "соисполнители";
 $MESS["TASKS_SONET_LOG_AUDITORS"] = "наблюдатели";

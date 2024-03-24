@@ -1,4 +1,5 @@
 <?php
+$MESS["TASKS_ASSIGNEE"] = "Assignee";
 $MESS["TASKS_DATE_COMPLETED"] = "Completed on";
 $MESS["TASKS_DATE_CREATED"] = "Created on";
 $MESS["TASKS_DATE_DEADLINE"] = "Deadline";

@@ -32,14 +32,21 @@ class Mark extends Content
 			$markClass = 'task-grade-'.($mark === 'N' ? 'minus' : 'plus');
 		}
 
+		$mark = ($mark === 'N' || $mark === 'P' ? $mark : 'NULL');
+		$markText = match($mark)
+		{
+			'N' => 'TASKS_GRID_TASK_ROW_CONTENT_MARK_N_MSGVER_1',
+			'P' => 'TASKS_GRID_TASK_ROW_CONTENT_MARK_P_MSGVER_1',
+			default => 'TASKS_GRID_TASK_ROW_CONTENT_MARK_NONE_MSGVER_1'
+		};
+
 		if ($row['ACTION']['EDIT'])
 		{
-			$mark = ($mark === 'N' || $mark === 'P' ? $mark : 'NULL');
 			$encodedValue = Json::encode(['listValue' => $mark]);
 			?>
 			<a class="task-grade-and-report <?=$markClass?> <?=$addInReportClass?>" href="javascript: void(0)"
 			   onclick='event.stopPropagation(); return BX.Tasks.GridActions.onMarkChangeClick(<?=$row["ID"]?>, this, <?=$encodedValue?>);'
-			   title="<?=Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_MARK')?>: <?=Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_MARK_'.($mark === "N" || $mark === "P" ? $mark : "NONE"))?>">
+			   title="<?=Loc::getMessage($markText)?>">
 				<span class="task-grade-and-report-inner">
 					<i class="task-grade-and-report-icon"></i>
 				</span>
@@ -50,7 +57,7 @@ class Mark extends Content
 		{
 			?>
 			<span class="<?=$markClass?> <?=$addInReportClass?>" href="javascript: void(0)"
-				  title="<?=Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_MARK')?>: <?=Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_MARK_'.($mark ?: 'NONE'))?>">
+				  title="<?=Loc::getMessage($markText)?>">
 				<span class="task-grade-and-report-inner task-grade-and-report-default-cursor">
 					<i class="task-grade-and-report-icon task-grade-and-report-default-cursor"></i>
 				</span>

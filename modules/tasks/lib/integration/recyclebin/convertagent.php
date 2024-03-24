@@ -12,9 +12,13 @@ use Bitrix\Main\Loader;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\Update\AgentInterface;
+use Bitrix\Tasks\Update\AgentTrait;
 
-class ConvertAgent
+class ConvertAgent implements AgentInterface
 {
+	use AgentTrait;
+
 	public const LIMIT = 500;
 
 	private static $processing = false;
@@ -27,11 +31,11 @@ class ConvertAgent
 		return (int) \COption::GetOptionString('tasks', 'task_zombie_convert', 0) === 1;
 	}
 
-	public static function execute()
+	public static function execute(): string
 	{
 		if (self::$processing)
 		{
-			return self::getAgentName();
+			return static::getAgentName();
 		}
 
 		self::$processing = true;
@@ -42,14 +46,6 @@ class ConvertAgent
 		self::$processing = false;
 
 		return $res;
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getAgentName(): string
-	{
-		return self::class . "::execute();";
 	}
 
 	public function __construct()
@@ -94,7 +90,7 @@ class ConvertAgent
 
 		$this->deleteFromTasks($taskIds);
 
-		return self::getAgentName();
+		return static::getAgentName();
 	}
 
 	/**

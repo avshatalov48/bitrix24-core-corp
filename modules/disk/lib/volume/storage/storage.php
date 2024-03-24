@@ -59,8 +59,16 @@ class Storage
 	{
 		$collectData[] = 'recalculatePercent';
 
+		/** @global \CDatabase $DB */
+		global $DB;
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
+
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
+		}
 
 		/**
 		 * @param string $selectSql
@@ -71,7 +79,7 @@ class Storage
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$build0Sql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '')
+		$build0Sql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($prefSql, $DB)
 		{
 			$query = VolumeTable::query();
 			$query
@@ -132,7 +140,7 @@ class Storage
 			$fromSql .= "
 				(
 					{$querySql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FILES
 			";
 		};
@@ -146,7 +154,7 @@ class Storage
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildDiskSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '')
+		$buildDiskSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '') use ($prefSql, $DB, $connection)
 		{
 			$selectSql .= "
 				, CNT_FILES.FILE_SIZE
@@ -180,6 +188,14 @@ class Storage
 						$selectSql .= ', CNT_FILES.'. $parts[2];
 						$columns[] = $parts[2];
 						$subGroupSql .= ', '. $parts[1];
+						if (
+							$connection instanceof DB\PgsqlConnection
+							&& $parts[1] == 'storage.ENTITY_ID'
+						)
+						{
+							$fieldSql = '('. $DB->ToNumber($parts[1]).')';
+							$subSelectSql = str_replace($parts[1], $fieldSql, $subSelectSql);
+						}
 					}
 				}
 			}
@@ -220,7 +236,7 @@ class Storage
 						storage.ENTITY_TYPE,
 						storage.NAME
 						{$subGroupSql}
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FILES
 			";
 		};
@@ -234,7 +250,7 @@ class Storage
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildPreviewSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
+		$buildPreviewSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '') use ($prefSql)
 		{
 			$selectSql .= "
 				, CNT_PREVIEW.PREVIEW_SIZE AS PREVIEW_SIZE
@@ -250,7 +266,7 @@ class Storage
 				INNER JOIN
 				(
 					SELECT
-						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
+						SUM(COALESCE(preview_file.FILE_SIZE, 0)) + SUM(COALESCE(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
 						storage.ID AS STORAGE_ID,
 						storage.ENTITY_TYPE AS ENTITY_TYPE,
@@ -268,7 +284,7 @@ class Storage
 						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_PREVIEW
 					ON CNT_FILES.STORAGE_ID = CNT_PREVIEW.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_PREVIEW.ENTITY_ID
@@ -285,10 +301,10 @@ class Storage
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildAttachedSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
+		$buildAttachedSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '') use ($prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
+				, COALESCE(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
 			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
@@ -315,7 +331,7 @@ class Storage
 						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_ATTACH
 					ON CNT_FILES.STORAGE_ID = CNT_ATTACH.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_ATTACH.ENTITY_ID
@@ -332,10 +348,10 @@ class Storage
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildExternalSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
+		$buildExternalSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '') use ($prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
+				, COALESCE(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
 			$columns = array_merge($columns, [
 				'LINK_COUNT',
@@ -363,7 +379,7 @@ class Storage
 						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_LINK
 					ON CNT_FILES.STORAGE_ID = CNT_LINK.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_LINK.ENTITY_ID
@@ -380,10 +396,10 @@ class Storage
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildSharingSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
+		$buildSharingSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '') use ($prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
+				, COALESCE(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
 			$columns = array_merge($columns, [
 				'SHARING_COUNT',
@@ -411,7 +427,7 @@ class Storage
 						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_SHARING
 					ON CNT_FILES.STORAGE_ID = CNT_SHARING.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_SHARING.ENTITY_ID
@@ -428,11 +444,11 @@ class Storage
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
+		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '') use ($prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
 			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
@@ -467,7 +483,7 @@ class Storage
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
-								ORDER BY NULL
+								{$prefSql}
 							) head ON head.OBJECT_ID = files.ID
 							LEFT JOIN b_disk_attached_object  attached
 								ON attached.OBJECT_ID  = ver.OBJECT_ID
@@ -477,7 +493,7 @@ class Storage
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND COALESCE(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
@@ -489,13 +505,13 @@ class Storage
 							storage.ID, 
 							storage.ENTITY_ID, 
 							storage.ENTITY_TYPE
-						ORDER BY NULL
+						{$prefSql}
 					) src
 					GROUP BY
 						src.STORAGE_ID,
 						src.ENTITY_ID,
 						src.ENTITY_TYPE
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FREE
 					ON CNT_FILES.STORAGE_ID = CNT_FREE.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_FREE.ENTITY_ID
@@ -532,12 +548,12 @@ class Storage
 		}
 
 		VolumeTable::createTemporally();
-		$temporallyTableName = VolumeTable::getTemporallyName();
+		$temporallyTableName = $sqlHelper->quote(VolumeTable::getTemporallyName());
 
 		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
-		$createTime = $connection->getSqlHelper()->getCurrentDateTimeFunction();
-		$tableName = VolumeTable::getTableName();
+		$createTime = $sqlHelper->getCurrentDateTimeFunction();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 		foreach ($executeTests as $testTypeId)
 		{
@@ -640,29 +656,28 @@ class Storage
 			{
 				$filterId = $this->getFilterId();
 				$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-				$querySql = "
-					UPDATE 
-						{$tableName} destinationTbl, 
-						({$temporallyDataSource}) sourceQuery 
-					SET {$columnList} 
-					WHERE destinationTbl.ID = {$filterId}
-				";
+				$querySql = $sqlHelper->prepareCorrelatedUpdate(
+					$tableName, 'destinationTbl',
+					$columnList,
+					"({$temporallyDataSource}) sourceQuery",
+					"destinationTbl.ID = {$filterId}"
+				);
 			}
 			elseif ($testTypeId != self::DISK_FILE)
 			{
 				$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-				$querySql = "
-					UPDATE 
-						{$tableName} destinationTbl, 
-						({$temporallyDataSource}) sourceQuery 
-					SET {$columnList} 
-					WHERE 
+				$querySql = $sqlHelper->prepareCorrelatedUpdate(
+					$tableName, 'destinationTbl',
+					$columnList,
+					"({$temporallyDataSource}) sourceQuery",
+					"
 						destinationTbl.INDICATOR_TYPE = '{$indicatorType}'
 						AND destinationTbl.OWNER_ID = {$ownerId} 
 						AND destinationTbl.STORAGE_ID  = sourceQuery.STORAGE_ID  
 						AND destinationTbl.ENTITY_ID  = sourceQuery.ENTITY_ID  
-						AND destinationTbl.ENTITY_TYPE  = sourceQuery.ENTITY_TYPE 
-				";
+						AND destinationTbl.ENTITY_TYPE  = sourceQuery.ENTITY_TYPE
+						"
+				);
 			}
 			else
 			{
@@ -722,47 +737,45 @@ class Storage
 
 		if ($total > 0)
 		{
-			$tableName = VolumeTable::getTableName();
 			$connection = Application::getConnection();
+			$sqlHelper = $connection->getSqlHelper();
+			$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 			$ownerId = $this->getOwner();
-			$classStorage = $connection->getSqlHelper()->forSql(static::className());
-			$classTrashcan = $connection->getSqlHelper()->forSql(Volume\Storage\TrashCan::className());
+			$classStorage = $sqlHelper->forSql(static::className());
+			$classTrashcan = $sqlHelper->forSql(Volume\Storage\TrashCan::className());
 
-			$sql = "
-				UPDATE 
-					{$tableName} destinationTbl, 
-					(
-						SELECT 
-							Storage.ID,
-							Storage.STORAGE_ID,
-							ifnull(Storage.FILE_SIZE, 0) + ifnull(Trashcan.FILE_SIZE, 0) as FILE_SIZE 
-						FROM
-						(
-							SELECT ID, STORAGE_ID, FILE_SIZE + ifnull(PREVIEW_SIZE, 0) as FILE_SIZE
-							FROM 
-								{$tableName} 
-							WHERE 
-								OWNER_ID = {$ownerId}
-								AND INDICATOR_TYPE = '{$classStorage}'
-						) Storage
-						LEFT JOIN
-						(
-							SELECT STORAGE_ID, FILE_SIZE + ifnull(PREVIEW_SIZE, 0) as FILE_SIZE
-							FROM 
-								{$tableName} 
-							WHERE 
-								OWNER_ID = {$ownerId}
-								AND INDICATOR_TYPE = '{$classTrashcan}'
-						) Trashcan
-						ON Storage.STORAGE_ID = Trashcan.STORAGE_ID
-					) sourceQuery 
-				SET 
-					destinationTbl.PERCENT = ROUND(sourceQuery.FILE_SIZE * 100 / {$total}, 4)  
-				WHERE 
-					destinationTbl.ID = sourceQuery.ID
-					AND destinationTbl.storage_id = sourceQuery.storage_id
+			$sqlDataSource = "
+				SELECT 
+					Storage.ID,
+					Storage.STORAGE_ID,
+					COALESCE(Storage.FILE_SIZE, 0) + COALESCE(Trashcan.FILE_SIZE, 0) as FILE_SIZE 
+				FROM
+				(
+					SELECT ID, STORAGE_ID, FILE_SIZE + COALESCE(PREVIEW_SIZE, 0) as FILE_SIZE
+					FROM 
+						{$tableName} 
+					WHERE 
+						OWNER_ID = {$ownerId}
+						AND INDICATOR_TYPE = '{$classStorage}'
+				) Storage
+				LEFT JOIN
+				(
+					SELECT STORAGE_ID, FILE_SIZE + COALESCE(PREVIEW_SIZE, 0) as FILE_SIZE
+					FROM 
+						{$tableName} 
+					WHERE 
+						OWNER_ID = {$ownerId}
+						AND INDICATOR_TYPE = '{$classTrashcan}'
+				) Trashcan
+				ON Storage.STORAGE_ID = Trashcan.STORAGE_ID
 			";
+			$sql = $sqlHelper->prepareCorrelatedUpdate(
+				$tableName, 'destinationTbl',
+				['PERCENT' => "ROUND(sourceQuery.FILE_SIZE * 100 / {$total}, 4)"],
+				"({$sqlDataSource}) sourceQuery",
+				"destinationTbl.ID = sourceQuery.ID AND destinationTbl.storage_id = sourceQuery.storage_id"
+			);
 
 			if ($connection->lock(self::$lockName, self::$lockTimeout))
 			{

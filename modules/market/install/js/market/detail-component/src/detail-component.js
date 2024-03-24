@@ -59,8 +59,13 @@ export const DetailComponent = {
 		showNoAccessInstallButton: function () {
 			return this.result.APP.BUTTONS.hasOwnProperty('NO_ACCESS_INSTALL') && this.result.APP.BUTTONS.NO_ACCESS_INSTALL === 'Y';
 		},
-		showConfigButton: function () {
-			return this.result.APP.BUTTONS.hasOwnProperty('CONFIGURATION_IMPORT') && this.result.APP.BUTTONS.CONFIGURATION_IMPORT === 'Y';
+		showConfigButton: function() {
+			return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'CONFIGURATION_IMPORT')
+				&& this.result.APP.BUTTONS.CONFIGURATION_IMPORT === 'Y';
+		},
+		showReimportButton: function() {
+			return Object.prototype.hasOwnProperty.call(this.result.APP.BUTTONS, 'REIMPORT')
+				&& this.result.APP.BUTTONS.REIMPORT === 'Y';
 		},
 		showUpdateButton: function () {
 			return this.result.APP.BUTTONS.hasOwnProperty('UPDATE') && this.result.APP.BUTTONS.UPDATE === 'Y';
@@ -254,6 +259,10 @@ export const DetailComponent = {
 
 			this.showInstallPopup(true);
 		},
+		deleteApp: function () {
+			this.setDeleteActionInfo(this.result.APP.ADDITIONAL_ACTION_DEL);
+			this.deleteAction(this.result.APP.CODE)
+		},
 		configApp: function () {
 			BX.SidePanel.Instance.open(this.result.IMPORT_PAGE);
 		},
@@ -261,7 +270,6 @@ export const DetailComponent = {
 			if (BX.Type.isArray(this.result.APP.REVIEWS.ITEMS)) {
 				this.result.APP.REVIEWS.ITEMS.unshift(userReview);
 			}
-
 		},
 		createPopupMenu: function() {
 			if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
@@ -360,12 +368,18 @@ export const DetailComponent = {
 				return;
 			}
 
+			if (this.result.ADDITIONAL_MARKET_ACTION) {
+				try {
+					eval(this.result.ADDITIONAL_MARKET_ACTION);
+				} catch (e) {}
+			}
+
 			BX.UI.InfoHelper.show(this.pricePolicySlider);
 		},
 		...mapActions(marketInstallState, [
 			'showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy'
 		]),
-		...mapActions(marketUninstallState, ['deleteApp',]),
+		...mapActions(marketUninstallState, ['deleteAction', 'setDeleteActionInfo']),
 	},
 	template: `
 		<div class="market-detail">
@@ -408,9 +422,15 @@ export const DetailComponent = {
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG') }}
 							</button>
+							<button class="ui-btn ui-btn-success ui-btn-xs"
+									v-if="showReimportButton"
+									@click="configApp"
+							>
+								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_REIMPORT') }}
+							</button>
 							<button class="ui-btn ui-btn-light-border ui-btn-xs"
 									v-if="showDeleteButton"
-									@click="deleteApp($event, result.APP.CODE)"
+									@click="deleteApp"
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_DELETE') }}
 							</button>
@@ -526,9 +546,15 @@ export const DetailComponent = {
 						>
 							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG') }}
 						</button>
+						<button class="ui-btn ui-btn-success ui-btn-md"
+								v-if="showReimportButton"
+								@click="configApp"
+						>
+							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_REIMPORT') }}
+						</button>
 						<button class="ui-btn ui-btn-light-border ui-btn-md"
 								v-if="showDeleteButton"
-								@click="deleteApp($event, result.APP.CODE)"
+								@click="deleteApp"
 						>
 							{{ $Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_DELETE') }}
 						</button>

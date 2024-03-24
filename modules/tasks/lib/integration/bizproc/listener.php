@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Integration\Bizproc;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Internals\Task\EO_Member_Collection;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -10,9 +11,44 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 class Listener
 {
-	public static function onTaskAdd($id, array $fields)
+	private const USE_BACKGROUND_KEY = 'tasks_bizproc_background';
+
+	public function __construct()
 	{
-		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
+
+	}
+
+	/**
+	 * @param string $name
+	 * @param array $args
+	 * @return false|mixed|void
+	 */
+	public static function __callStatic(string $name, array $args = [])
+	{
+		$listener = new self();
+
+		$methodName = $name.'Execute';
+
+		if (!is_callable([$listener, $methodName]))
+		{
+			return false;
+		}
+
+		if (!$listener->useBackground())
+		{
+			return call_user_func_array([$listener, $methodName], $args);
+		}
+
+		$application = Application::getInstance();
+		$application && $application->addBackgroundJob(
+			[$listener, $methodName],
+			$args
+		);
+	}
+
+	public function onTaskAddExecute($id, array $fields)
+	{
+		if (TaskLimit::isLimitExceeded() || !$this->loadBizproc())
 		{
 			return false;
 		}
@@ -50,7 +86,7 @@ class Listener
 
 		//Run plan & personal automation
 
-		$members = self::extractTaskMembers($fields);
+		$members = $this->extractTaskMembers($fields);
 
 		foreach ($members as $memberId)
 		{
@@ -62,16 +98,16 @@ class Listener
 		}
 	}
 
-	public static function onTaskUpdate($id, array $fields, array $previousFields)
+	public function onTaskUpdateExecute($id, array $fields, array $previousFields)
 	{
-		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
+		if (TaskLimit::isLimitExceeded() || !$this->loadBizproc())
 		{
 			return false;
 		}
 
 		$projectId = $fields['GROUP_ID'] ?? $previousFields['GROUP_ID'];
 		$statusChanged = (isset($fields['STATUS']) && (string)$fields['STATUS'] !== (string)$previousFields['STATUS']);
-		$changedFields = self::compareFields($fields, $previousFields);
+		$changedFields = $this->compareFields($fields, $previousFields);
 
 		//Stop automation on previous project if project was changed
 		if (
@@ -80,12 +116,12 @@ class Listener
 			&& $previousFields['GROUP_ID'] > 0
 		)
 		{
-			$projectTaskType = self::resolveProjectTaskType($previousFields['GROUP_ID']);
+			$projectTaskType = $this->resolveProjectTaskType($previousFields['GROUP_ID']);
 			Automation\Factory::stopAutomation($projectTaskType, $id);
 		}
 
 		//Check triggers for project tasks
-		$projectTriggerApplied = ($statusChanged && static::fireStatusTriggerOnProject($id, $projectId, $fields));
+		$projectTriggerApplied = ($statusChanged && $this->fireStatusTriggerOnProject($id, $projectId, $fields));
 		if ($projectTriggerApplied === false)
 		{
 			$projectTriggerApplied = (
@@ -104,12 +140,12 @@ class Listener
 		);
 		if ($projectTriggerApplied !== true && $stageChanged)
 		{
-			$projectDocumentType = self::resolveProjectTaskType($projectId);
+			$projectDocumentType = $this->resolveProjectTaskType($projectId);
 			Automation\Factory::runOnStatusChanged($projectDocumentType, $id, $fields);
 		}
 
 		//Run plan & personal automation
-		$membersDiff = self::getMembersDiff($fields, $previousFields);
+		$membersDiff = $this->getMembersDiff($fields, $previousFields);
 
 		//Stop automation for users who left the task
 		foreach ($membersDiff->minus as $memberId)
@@ -126,12 +162,12 @@ class Listener
 			//Run plan
 			$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
 
-			$runAutomation = !($statusChanged && self::fireStatusTrigger($planDocumentType, $id, $fields));
+			$runAutomation = !($statusChanged && $this->fireStatusTrigger($planDocumentType, $id, $fields));
 			if ($runAutomation)
 			{
 				$runAutomation = !(
 					$changedFields
-					&& self::fireFieldChangedTrigger($planDocumentType, $id, $changedFields)
+					&& $this->fireFieldChangedTrigger($planDocumentType, $id, $changedFields)
 				);
 			}
 
@@ -153,7 +189,7 @@ class Listener
 				$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
 				if ($statusChanged)
 				{
-					self::fireStatusTrigger($planDocumentType, $id, $fields);
+					$this->fireStatusTrigger($planDocumentType, $id, $fields);
 
 					//Run personal
 					$personalDocumentType = Document\Task::resolvePersonalTaskType($memberId);
@@ -161,15 +197,15 @@ class Listener
 				}
 				if ($changedFields)
 				{
-					self::fireFieldChangedTrigger($planDocumentType, $id, $changedFields);
+					$this->fireFieldChangedTrigger($planDocumentType, $id, $changedFields);
 				}
 			}
 		}
 	}
 
-	public static function onPlanTaskStageUpdate($memberId, $taskId, $stageId)
+	public function onPlanTaskStageUpdateExecute($memberId, $taskId, $stageId)
 	{
-		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
+		if (TaskLimit::isLimitExceeded() || !$this->loadBizproc())
 		{
 			return false;
 		}
@@ -179,9 +215,9 @@ class Listener
 		Automation\Factory::runOnStatusChanged($planDocumentType, $taskId);
 	}
 
-	public static function onTaskDelete($id)
+	public function onTaskDeleteExecute($id)
 	{
-		if (!self::loadBizproc())
+		if (!$this->loadBizproc())
 		{
 			return false;
 		}
@@ -193,9 +229,9 @@ class Listener
 		return true;
 	}
 
-	public static function onTaskExpired($id, array $fields)
+	public function onTaskExpiredExecute($id, array $fields)
 	{
-		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
+		if (TaskLimit::isLimitExceeded() || !$this->loadBizproc())
 		{
 			return false;
 		}
@@ -219,7 +255,7 @@ class Listener
 		}
 
 		//Run plan trigger
-		$members = self::extractTaskMembers($fields);
+		$members = $this->extractTaskMembers($fields);
 		foreach ($members as $memberId)
 		{
 			$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
@@ -227,9 +263,9 @@ class Listener
 		}
 	}
 
-	public static function onTaskExpiredSoon($id, array $fields)
+	public function onTaskExpiredSoonExecute($id, array $fields)
 	{
-		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
+		if (TaskLimit::isLimitExceeded() || !$this->loadBizproc())
 		{
 			return false;
 		}
@@ -253,7 +289,7 @@ class Listener
 		}
 
 		//Run plan trigger
-		$members = self::extractTaskMembers($fields);
+		$members = $this->extractTaskMembers($fields);
 		foreach ($members as $memberId)
 		{
 			$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
@@ -261,11 +297,11 @@ class Listener
 		}
 	}
 
-	public static function onTaskFieldChanged($id, array $fields, array $previousFields): Main\Result
+	public function onTaskFieldChangedExecute($id, array $fields, array $previousFields): Main\Result
 	{
 		$result = new Main\Result();
 
-		if (!self::loadBizproc())
+		if (!$this->loadBizproc())
 		{
 			return $result->addError(new Main\Error('Unable to load bizproc module'));
 		}
@@ -273,25 +309,25 @@ class Listener
 		if (TaskLimit::isLimitExceeded())
 		{
 			return (
-				$result
-					->addError(new Main\Error(
-						Main\Localization\Loc::getMessage('TASKS_BP_LISTENER_RESUME_RESTRICTED')
-					))
+			$result
+				->addError(new Main\Error(
+					Main\Localization\Loc::getMessage('TASKS_BP_LISTENER_RESUME_RESTRICTED')
+				))
 			);
 		}
 
 		$projectId = $fields['GROUP_ID'] ?? $previousFields['GROUP_ID'];
-		$changedFields = self::compareFields($fields, $previousFields);
+		$changedFields = $this->compareFields($fields, $previousFields);
 
 		//Run project trigger
 		if ($projectId > 0)
 		{
-			$documentType = self::resolveProjectTaskType($projectId);
+			$documentType = $this->resolveProjectTaskType($projectId);
 			Automation\Trigger\TasksFieldChangedTrigger::execute($documentType, $id, ['CHANGED_FIELDS' => $changedFields]);
 		}
 
 		//Run plan trigger
-		$members = self::extractTaskMembers(array_merge($previousFields, $fields));
+		$members = $this->extractTaskMembers(array_merge($previousFields, $fields));
 		foreach ($members as $memberId)
 		{
 			$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
@@ -301,19 +337,32 @@ class Listener
 		return $result;
 	}
 
-	private static function fireStatusTriggerOnProject($taskId, $projectId, $fields): bool
+	/**
+	 * @return bool
+	 */
+	private function useBackground(): bool
 	{
-		$documentType = self::resolveProjectTaskType($projectId);
-
-		if ($documentType)
+		if (Main\Config\Option::get('tasks', self::USE_BACKGROUND_KEY, 'null', '-') !== 'null')
 		{
-			return self::fireStatusTrigger($documentType, $taskId, $fields);
+			return true;
 		}
 
 		return false;
 	}
 
-	private static function fireStatusTrigger($documentType, $taskId, $fields): bool
+	private function fireStatusTriggerOnProject($taskId, $projectId, $fields): bool
+	{
+		$documentType = $this->resolveProjectTaskType($projectId);
+
+		if ($documentType)
+		{
+			return $this->fireStatusTrigger($documentType, $taskId, $fields);
+		}
+
+		return false;
+	}
+
+	private function fireStatusTrigger($documentType, $taskId, $fields): bool
 	{
 		$result = Automation\Trigger\Status::execute($documentType, $taskId, $fields);
 		if ($result->isSuccess())
@@ -328,14 +377,14 @@ class Listener
 		return false;
 	}
 
-	private static function fireFieldChangedTriggerOnProject($taskId, $projectId, $fields): bool
+	private function fireFieldChangedTriggerOnProject($taskId, $projectId, $fields): bool
 	{
-		$documentType = self::resolveProjectTaskType($projectId);
+		$documentType = $this->resolveProjectTaskType($projectId);
 
-		return self::fireFieldChangedTrigger($documentType, $taskId, $fields);
+		return $this->fireFieldChangedTrigger($documentType, $taskId, $fields);
 	}
 
-	private static function fireFieldChangedTrigger($documentType, $taskId, $fields): bool
+	private function fireFieldChangedTrigger($documentType, $taskId, $fields): bool
 	{
 		$result = Automation\Trigger\TasksFieldChangedTrigger::execute(
 			$documentType,
@@ -354,7 +403,7 @@ class Listener
 		return false;
 	}
 
-	private static function resolveProjectTaskType($projectId): string
+	private function resolveProjectTaskType($projectId): string
 	{
 		$documentType = Document\Task::resolveProjectTaskType($projectId);
 		if ($projectId && Main\Loader::includeModule('socialnetwork'))
@@ -369,12 +418,12 @@ class Listener
 		return $documentType;
 	}
 
-	private static function loadBizproc()
+	private function loadBizproc()
 	{
 		return Main\Loader::includeModule('bizproc');
 	}
 
-	private static function extractTaskMembers(array $fields)
+	private function extractTaskMembers(array $fields)
 	{
 		$users = [];
 
@@ -418,10 +467,10 @@ class Listener
 		return array_map('intval', array_unique($users));
 	}
 
-	private static function getMembersDiff(array $fields, array $previousFields)
+	private function getMembersDiff(array $fields, array $previousFields)
 	{
-		$previousMembers = self::extractTaskMembers($previousFields);
-		$currentMembers = self::extractTaskMembers(array_merge($previousFields, $fields));
+		$previousMembers = $this->extractTaskMembers($previousFields);
+		$currentMembers = $this->extractTaskMembers(array_merge($previousFields, $fields));
 
 		$plus = array_diff($currentMembers, $previousMembers);
 		$minus = array_diff($previousMembers, $currentMembers);
@@ -429,7 +478,7 @@ class Listener
 		return (object)['plus' => $plus, 'minus' => $minus, 'current' => $currentMembers];
 	}
 
-	private static function compareFields(array $actual, array $previous): array
+	private function compareFields(array $actual, array $previous): array
 	{
 		$diff = [];
 		foreach ($actual as $key => $field)

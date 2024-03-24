@@ -219,6 +219,30 @@ if (
 	));
 }
 
+if(
+	is_array($arResult['CanView'])
+	&& isset($arResult['CanView']['sign'])
+	&& !!$arResult['CanView']['sign']
+)
+{
+	$uri = new Uri($arResult['Urls']['sign']);
+	$uri->addParams(['IFRAME' => 'Y']);
+	$redirect = $uri->getUri();
+
+	$items = array_merge($items, [
+		'sign' => [
+			'ID' => 'sign',
+			'TEXT' => $arResult['Title']['sign'],
+			'ON_CLICK' => "BX.SidePanel.Instance.open('". $redirect ."', {
+				loader: 'intranet:slider-livefeed', 
+				width: 1000 
+			})",
+			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult['Urls']['sign']) === 0),
+			'URL' => $redirect
+			]
+	]);
+}
+
 if (
 	is_array($arResult['CanView'])
 	&& $arResult['CanView']['tasks']

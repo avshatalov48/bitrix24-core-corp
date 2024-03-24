@@ -845,7 +845,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 		hasAccess(permission)
 		{
-			return !!this.props.permissions[permission];
+			return Boolean(this.props.permissions[permission]);
 		}
 
 		/**
@@ -922,4 +922,3 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 	module.exports = { ProductDetails };
 });
-

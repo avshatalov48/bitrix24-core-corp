@@ -2,12 +2,10 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\EmployeesWorkload;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Base;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\SystemException;
 use Bitrix\Report\VisualConstructor\IReportMultipleGroupedData;
 use CVoxImplantMain;
 
@@ -20,7 +18,7 @@ class EmployeesWorkloadGraph extends EmployeesWorkload implements IReportMultipl
 	public function getMultipleGroupedData(): array
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}
@@ -77,8 +75,6 @@ class EmployeesWorkloadGraph extends EmployeesWorkload implements IReportMultipl
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function getQueryForReport($startDate, $finishDate, $previousStartDate, $previousFinishDate, $filterParameters): Query
 	{

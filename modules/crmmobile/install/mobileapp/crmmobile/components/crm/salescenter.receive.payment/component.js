@@ -177,7 +177,7 @@
 					props.onMoveToNextStep = (data) => {
 						const {
 							sendingMethod,
-							sendingMethodDesc
+							sendingMethodDesc,
 						} = data;
 
 						this.dataForSending.sendingMethod = sendingMethod;

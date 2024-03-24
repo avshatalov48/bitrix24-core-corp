@@ -428,7 +428,7 @@ BX.mergeEx(BX.Tasks.Util, {
 		}
 
 		return true;
-	}
+	},
 });
 
 BX.Tasks.Util.hintManager = {

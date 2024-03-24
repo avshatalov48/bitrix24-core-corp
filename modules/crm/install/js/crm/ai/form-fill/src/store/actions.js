@@ -1,8 +1,8 @@
 import { Loc, onCustomEvent } from 'main.core';
 import { sendData } from 'ui.analytics';
 import { UI } from 'ui.notification';
+import { copilotSliderInstance, sliderButtonsAdapter } from '../ai-form-fill-app';
 import { sendFeedback, wasFeedbackSent } from 'crm.ai.feedback';
-import { sliderButtonsAdapter } from '../ai-form-fill-app';
 import { entityEditorProxy } from '../app';
 import { ControlValue } from '../services/entity-editor-proxy';
 import { EntityEditorRender } from '../services/entity-editor-render';
@@ -104,7 +104,9 @@ export default {
 
 		if (!isSetAiValue)
 		{
-			commit('showFeedbackMessageIfNeeded', FEEDBACK_TRIGGER_CONTROL);
+			setTimeout(() => {
+				commit('showFeedbackMessageIfNeeded', FEEDBACK_TRIGGER_CONTROL);
+			}, 300);
 		}
 
 		const controlValue: ControlValue = { value, model };
@@ -246,9 +248,11 @@ export default {
 	showEntityEditorControlOutline(store, { fieldName, isShow }) {
 		entityEditorProxy.setControlOutline(fieldName, isShow);
 	},
-	updateSaveButtonStatus({ getters }) {
-		const disable = getters.aiValuesAppliedCount === 0;
+	updateSliderFooter({ getters }) {
+		const disable = getters.isFooterHiddenAndSaveDisabled;
 		sliderButtonsAdapter.saveButton.setDisabled(disable);
+
+		copilotSliderInstance?.footerDisplay(!disable);
 	},
 	async sendFeedBack({ commit, getters }) {
 		const mergeUuid = getters.mergeUuid;

@@ -18,6 +18,7 @@ use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Internals\Task\ScenarioTable;
+use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Item;
@@ -111,6 +112,9 @@ abstract class Task
 	}
 
 	/**
+	 * @deprecated
+	 * @see RegularTemplateTaskReplicator::replicate()
+	 *
 	 * @param int|\Bitrix\Tasks\Item $source
 	 * @param int $userId
 	 * @param array $parameters

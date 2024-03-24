@@ -1,6 +1,7 @@
 <?php
 $MESS["TASKSMOBILE_LAYOUT_ACTION_MENU_APPROVE"] = "Approve";
 $MESS["TASKSMOBILE_LAYOUT_ACTION_MENU_COMPLETE"] = "Complete";
+$MESS["TASKSMOBILE_LAYOUT_ACTION_MENU_COMPLETE_RESULT_REQUIRED"] = "To mark the task as completed, leave a comment and set it as task status summary";
 $MESS["TASKSMOBILE_LAYOUT_ACTION_MENU_DISAPPROVE"] = "Return for revision";
 $MESS["TASKSMOBILE_LAYOUT_ACTION_MENU_MUTE"] = "Disable notifications";
 $MESS["TASKSMOBILE_LAYOUT_ACTION_MENU_PAUSE"] = "Pause";

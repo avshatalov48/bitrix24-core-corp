@@ -18,8 +18,13 @@ final class MessageData implements \JsonSerializable, Arrayable
 	protected Channel $channel;
 	protected ?string $description = null;
 	protected ?string $subject = null;
+	protected ?\Bitrix\Main\Error $error = null;
 	protected ?string $author = null;
 	protected ?string $integrityState = null;
+	protected ?string $goskeyOrderId = null;
+	protected ?string $provider = null;
+	protected ?string $sesUsername = null;
+	protected ?string $sesSign = null;
 
 	protected function __construct(Signer $recipient, Channel $channel)
 	{
@@ -60,6 +65,31 @@ final class MessageData implements \JsonSerializable, Arrayable
 			$messageData->setIntegrityState($data['integrityState']);
 		}
 
+		if ($data['provider']['goskey']['orderId'] ?? null)
+		{
+			$messageData->setGoskeyOrderId($data['provider']['goskey']['orderId']);
+		}
+		if (!empty($data['provider']['ses']['username']))
+		{
+			$messageData->setSesUsername($data['provider']['ses']['username']);
+		}
+		if (!empty($data['provider']['ses']['sign']))
+		{
+			$messageData->setSesSign($data['provider']['ses']['sign']);
+		}
+		if (isset($data['error']) && $data['error'])
+		{
+			$messageData->setError(
+				$data['error'] instanceof \Bitrix\Main\Error
+					? $data['error']
+					: new \Bitrix\Main\Error(
+					$data['error']['message'] ?? '',
+					$data['error']['code'] ?? 0,
+					$data['error']['customData'] ?? [],
+					)
+			);
+		}
+
 		return $messageData->setStatus($data['status'] ?? self::STATUS_SENT);
 	}
 
@@ -80,6 +110,18 @@ final class MessageData implements \JsonSerializable, Arrayable
 	{
 		$this->validateStatus($status);
 		$this->status = $status;
+
+		return $this;
+	}
+
+	public function getGoskeyOrderId(): ?string
+	{
+		return $this->goskeyOrderId;
+	}
+
+	public function setGoskeyOrderId(?string $id): static
+	{
+		$this->goskeyOrderId = $id;
 
 		return $this;
 	}
@@ -142,6 +184,20 @@ final class MessageData implements \JsonSerializable, Arrayable
 			'description' => $this->description,
 			'subject' => $this->subject,
 			'author' => $this->author,
+			'error' => [
+				'code' => $this->error?->getCode(),
+				'message' => $this->error?->getMessage(),
+				'customData' => $this->error?->getCustomData() ?? [],
+			],
+			'provider' => [
+				'goskey' => [
+					'orderId' => $this->getGoskeyOrderId(),
+				],
+				'ses' => [
+					'username' => $this->getSesUsername(),
+					'sign' => $this->getSesSign(),
+				],
+			],
 		];
 	}
 
@@ -161,6 +217,17 @@ final class MessageData implements \JsonSerializable, Arrayable
 	{
 		$this->subject = $subject;
 		return $this;
+	}
+
+	public function setError(?\Bitrix\Main\Error $error): MessageData
+	{
+		$this->error = $error;
+		return $this;
+	}
+
+	public function getError(): ?\Bitrix\Main\Error
+	{
+		return $this->error;
 	}
 
 	/**
@@ -199,8 +266,29 @@ final class MessageData implements \JsonSerializable, Arrayable
 		return $this;
 	}
 
+	public function setSesUsername(?string $sesUsername): MessageData
+	{
+		$this->sesUsername = $sesUsername;
 
+		return $this;
+	}
 
+	public function getSesUsername(): ?string
+	{
+		return $this->sesUsername;
+	}
+
+	public function setSesSign(?string $sesSign): MessageData
+	{
+		$this->sesSign = $sesSign;
+
+		return $this;
+	}
+
+	public function getSesSign(): ?string
+	{
+		return $this->sesSign;
+	}
 
 	public function jsonSerialize(): array
 	{

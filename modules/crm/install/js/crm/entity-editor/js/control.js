@@ -973,7 +973,11 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 			? "30px" : "";
 
 		this._nameElement.innerHTML = this._selectedData["formattedNameHtml"];
-		this._positionElement.innerHTML = this._selectedData["positionHtml"];
+		this._positionElement.innerHTML = this._selectedData["positionHtml"] !== '&nbsp;'
+			? this._selectedData["positionHtml"]
+			: ''
+		;
+
 		this._userSelector.close();
 
 		if(!isViewMode)
@@ -3102,7 +3106,7 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 			this._contentContainer.classList.add("crm-entity-widget-content");
 		}
 
-		var isViewMode = this._mode === BX.UI.EntityEditorMode.view ;
+		const isViewMode = this._mode === BX.UI.EntityEditorMode.view;
 		this.ensureWrapperCreated();
 		this.layoutTitle();
 
@@ -3110,7 +3114,7 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 
 		if (isViewMode)
 		{
-			var viewNode = BX.create("div", {
+			const viewNode = BX.create("div", {
 				props:{
 					className: "crm-entity-widget-content-block crm-entity-widget-content-block-click-editable"
 				},
@@ -3118,8 +3122,10 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 			});
 			this._contentContainer.appendChild(viewNode);
 
-			var textNode = BX.create("div");
-			var layoutData = this._schemeElement.getData();
+			const textNode = BX.create("div");
+			viewNode.appendChild(textNode);
+
+			const layoutData = this._schemeElement.getData();
 			if (this._schemeElement._promise instanceof BX.Promise)
 			{
 				this.loadViewText();
@@ -3127,8 +3133,6 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 					BX.proxy(function() {
 						textNode.classList = "crm-entity-widget-content-block-inner";
 						textNode.innerHTML = BX.util.htmlspecialchars(layoutData.view.text);
-						viewNode.innerHTML = '';
-						viewNode.appendChild(textNode);
 						this._schemeElement._promise = null;
 					}, this)
 				);
@@ -3137,33 +3141,34 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 			{
 				textNode.classList = "crm-entity-widget-content-block-inner";
 				textNode.innerHTML = layoutData.view.text;
-				viewNode.appendChild(textNode)
 			}
+
 			if (this._enableRecurring)
 			{
 				BX.bind(textNode, "click", BX.delegate(this.toggle, this));
 			}
 
-			if(this.isContextMenuEnabled())
+			if (this.isContextMenuEnabled())
 			{
 				viewNode.appendChild(this.createContextMenuButton());
 			}
-			if(this.isDragEnabled())
+
+			if (this.isDragEnabled())
 			{
 				viewNode.appendChild(this.createDragButton());
 				this.initializeDragDropAbilities();
 			}
 		}
-		else if(!this._enableRecurring)
+		else if (!this._enableRecurring)
 		{
-			var viewNode = BX.create("div", {
+			const viewNode = BX.create("div", {
 				props:{
 					className: "crm-entity-widget-content-block"
 				},
 				children: [this.createTitleNode(this.getMessage('modeTitle'))]
 			});
 
-			var disabledField = BX.create("div",{
+			const disabledField = BX.create("div",{
 				props: {
 					className:'crm-entity-widget-content-block-inner'
 				},
@@ -3183,7 +3188,7 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 
 			});
 			viewNode.appendChild(disabledField);
-			var lock = BX.create("button",{
+			const lock = BX.create("button",{
 				props: {
 					className:'crm-entity-widget-content-block-locked-icon'
 				},
@@ -3191,16 +3196,18 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 					click: BX.delegate(this.showLicencePopup,this)
 				}
 			});
+
 			viewNode.appendChild(lock);
 			this._contentContainer.appendChild(viewNode);
 		}
 		else
 		{
-			for(var i = 0, l = this._fields.length; i < l; i++)
+			for (let i = 0, l = this._fields.length; i < l; i++)
 			{
 				this._fields[i].isDragEnabled = function(){
 					return false;
 				};
+
 				this.layoutChild(this._fields[i]);
 			}
 		}

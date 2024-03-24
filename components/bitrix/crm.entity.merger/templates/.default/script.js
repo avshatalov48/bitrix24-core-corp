@@ -2248,8 +2248,8 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 			const isCurrentYear = (date.getFullYear() === (new Date()).getFullYear());
 			const defaultFormat = (
 				isCurrentYear
-					? BX.Crm.DateTime.Dictionary.Format.DAY_MONTH_FORMAT
-					: BX.Crm.DateTime.Dictionary.Format.LONG_DATE_FORMAT
+					? BX.Main.DateTimeFormat.getFormat('DAY_MONTH_FORMAT')
+					: BX.Main.DateTimeFormat.getFormat('LONG_DATE_FORMAT')
 			);
 			const formats = [
 				['today', 'today'],
@@ -2258,7 +2258,7 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 				['', defaultFormat],
 			];
 
-			const dateText = BX.date.format(formats, date);
+			const dateText = BX.Main.DateTimeFormat.format(formats, date);
 
 			const formattedDate = BX.prop
 				.getString(this._settings, 'titleTemplate', '')

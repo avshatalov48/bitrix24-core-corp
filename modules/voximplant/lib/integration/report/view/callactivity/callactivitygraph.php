@@ -29,7 +29,7 @@ class CallActivityGraph extends ActivityGraphBase
 
 	public function handlerFinallyBeforePassToView($dataFromReport)
 	{
-		if (!$dataFromReport['items'])
+		if (empty($dataFromReport['items']))
 		{
 			return parent::handlerFinallyBeforePassToView($dataFromReport);
 		}

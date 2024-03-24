@@ -74,23 +74,11 @@ class Im
 	 * @param int $timeLimitVote
 	 * @return bool|int
 	 */
-	public static function addCloseVoteMessage($chatId, $timeLimitVote = 0)
+	public static function addCloseVoteMessage($chatId, $timeLimitVote = 0, $userLang = null)
 	{
-		$timeLimitVote = (int)$timeLimitVote;
-
-		$message = Loc::getMessage('IMOL_IM_CLOSE_VOTE_MESSAGE_NO_DAY');
-
-		if(
-			!empty($timeLimitVote) &&
-			$timeLimitVote > 0
-		)
-		{
-			$message = Loc::getMessage('IMOL_IM_CLOSE_VOTE_MESSAGE', ['#DAYS#' => \FormatDate('ddiff', time() - $timeLimitVote)]);
-		}
-
 		return self::addMessage([
 			'TO_CHAT_ID' => $chatId,
-			'MESSAGE' => $message,
+			'MESSAGE' => Loc::getMessage('IMOL_IM_CLOSE_VOTE_MESSAGE_NO_TIME_LEFT', null, $userLang),
 			'SYSTEM' => 'Y',
 			'IMPORTANT_CONNECTOR' => 'Y',
 			'NO_SESSION_OL' => 'Y',
@@ -216,7 +204,7 @@ class Im
 	 * @param $id
 	 * @return bool
 	 */
-	public static function userIsOnline($id)
+	public static function userIsOnline($id): bool
 	{
 		$result = false;
 
@@ -250,7 +238,7 @@ class Im
 					$query->registerRuntimeField('',
 						new ExpressionField(
 							'IS_ONLINE_CUSTOM',
-							'CASE WHEN %1$s > '.$timeHelper.' && (%2$s IS NULL || %1$s > %2$s) THEN \'Y\' ELSE \'N\' END',
+							'CASE WHEN %1$s > '.$timeHelper.' AND (%2$s IS NULL OR %1$s > %2$s) THEN \'Y\' ELSE \'N\' END',
 							['LAST_ACTIVITY_DATE', 'IM_STATUS.IDLE'])
 					);
 

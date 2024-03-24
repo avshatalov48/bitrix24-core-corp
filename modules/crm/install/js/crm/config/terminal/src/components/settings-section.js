@@ -1,9 +1,11 @@
-//@flow
+// @flow
 
-import "ui.switcher";
+import 'ui.switcher';
+
 export const SettingsSection = {
 
-	data() {
+	data(): Object
+	{
 		return {
 			isEnabled: this.active,
 			switcher: null,
@@ -14,6 +16,7 @@ export const SettingsSection = {
 	{
 		(new BX.UI.Switcher({
 			node: this.$refs.switcher,
+			size: 'small',
 			checked: this.isEnabled,
 			handlers: {
 				toggled: this.onSwitcherToggle.bind(this),
@@ -29,48 +32,55 @@ export const SettingsSection = {
 			this.isEnabled = !this.isEnabled;
 			this.$emit('toggle', this.isEnabled);
 		},
+		onTitleClick()
+		{
+			this.$emit('titleClick');
+		},
 	},
 
 	props: {
 		title: String,
 		switchable: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		active: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		hint: {
 			type: String,
 			default: '',
-		}
+		},
+		leftIconClass: {
+			type: String,
+			default: '',
+		},
 	},
 
 	// language=Vue
 	template: `
 		<div>
 			<div class="ui-slider-heading-4 settings-section-header">
-				<div v-if="switchable">
+				<div v-if="switchable" class="settings-setction-switcher-container">
 					<span ref="switcher" class="ui-switcher"></span>
 				</div>
-				<div ref="title">
+				<div v-if="leftIconClass" :class="leftIconClass"></div>
+				<div
+					style="font-size: 16px; margin-right: 0px;"
+				>
 					{{ title }}
-					<span
-						v-if="hint !== ''"
-						class="ui-hint"
-						data-hint-html
-						data-hint-interactivity
-						:data-hint="hint"
-					>
-						<span class="ui-hint-icon"></span>
-					</span>
 				</div>
-				
-			</div>
-			<div v-if="isEnabled">
-				<slot></slot>
+				<span
+					v-if="hint !== ''"
+					class="ui-hint"
+					data-hint-html
+					data-hint-interactivity
+					:data-hint="hint"
+				>
+					<span class="ui-hint-icon"></span>
+				</span>
 			</div>
 		</div>
-	`
+	`,
 };

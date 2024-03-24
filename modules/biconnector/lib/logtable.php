@@ -6,6 +6,7 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\BooleanField;
@@ -162,6 +163,12 @@ class LogTable extends DataManager
 					'default' => 'N',
 					'title' => Loc::getMessage('LOG_ENTITY_IS_OVER_LIMIT_FIELD')
 				]
+			),
+			new Reference(
+				'KEY',
+				'\Bitrix\BiConnector\KeyTable',
+				['=this.KEY_ID' => 'ref.ID'],
+				['join_type' => 'LEFT']
 			),
 		];
 	}

@@ -9,6 +9,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\MobileApp\Janative\Manager;
+use Bitrix\Main\EventManager;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -155,34 +156,18 @@ if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
 		"attrs" => [
 			"onclick" => <<<JS
 
-				if(Application.getApiVersion() >= 28)
-				{
-					ComponentHelper.openList({
-						name:"user.disk",
-						object:"list",
-						version:"{$diskComponentVersion}",
-						componentParams:{userId: env.userId},
-						widgetParams:{
-							title:"{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}",
-							useSearch: true,
-							doNotHideSearchResult: true
-						}
-					});
-				}
-				else
-				{
-					PageManager.openList(
-					{
-						url:"/mobile/?mobile_action=disk_folder_list&type=user&path=/&entityId="+$userId,
-						table_settings:
-						{
-							showTitle:"YES",
-							name: "{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}",
-							useTagsInSearch:"NO",
-							type:"files",
-						}
-					});
-				}
+				ComponentHelper.openList({
+					name:"user.disk",
+					object:"list",
+					version:"{$diskComponentVersion}",
+					componentParams:{userId: env.userId},
+					widgetParams:{
+						title:"{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}",
+						useSearch: true,
+						doNotHideSearchResult: true
+					}
+				});
+
 JS
 			,
 			"id" => "doc_user",
@@ -256,30 +241,13 @@ $favoriteItems[] = [
 	"attrs" => [
 		"onclick" => <<<JS
 
-			if(Application.getApiVersion() >= 28)
-				{
-					ComponentHelper.openList({
-							name:"user.disk",
-							object:"list",
-							version:"{$diskComponentVersion}",
-							componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
-							widgetParams:{title:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", useSearch: true}
-					});
-				}
-				else
-				{
-					PageManager.openList(
-					{
-						url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
-						table_settings:
-						{
-							name:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}",
-							showTitle:"YES",
-							useTagsInSearch:"NO",
-							type:"files",
-						}
-					});
-				}
+			ComponentHelper.openList({
+				name:"user.disk",
+				object:"list",
+				version:"{$diskComponentVersion}",
+				componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
+				widgetParams:{title:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", useSearch: true}
+			});
 
 JS
 		,
@@ -454,9 +422,10 @@ if (
 		'items' => [],
 	];
 
-	$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
-
-	if (IntranetManager::isCustomSectionsAvailable() && $toolsManager->checkExternalDynamicAvailability())
+	if (
+		IntranetManager::isCustomSectionsAvailable()
+		&& \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager()->checkExternalDynamicAvailability()
+	)
 	{
 		$customSections = IntranetManager::getCustomSections();
 		foreach ($customSections as $customSection)
@@ -588,28 +557,25 @@ if (!$isExtranetUser && $projectsEnabled)
 		"title" => $menuName,
 		"attrs" => [
 			"onclick" => <<<JS
-				if (Application.getApiVersion() >= 28)
-				{
-					ComponentHelper.openList({
-						name: 'workgroups',
-						object: 'list',
-						version: "{$workgroupsComponentVersion}",
-						componentParams: {
-							siteId: "{$siteId}",
-							siteDir: "{$siteDir}",
-							pathTemplate: "{$workgroupUrlTemplate}",
-							calendarWebPathTemplate: "{$workgroupCalendarWebPathTemplate}",
-							features: "{$features}",
-							mandatoryFeatures: "{$mandatoryFeatures}",
-							currentUserId: "{$userId}"
-						},
-						widgetParams: {
-							title: "{$menuName}",
-							useSearch: false,
-							doNotHideSearchResult: true
-						}
-					});	
-				}
+				ComponentHelper.openList({
+					name: 'workgroups',
+					object: 'list',
+					version: "{$workgroupsComponentVersion}",
+					componentParams: {
+						siteId: "{$siteId}",
+						siteDir: "{$siteDir}",
+						pathTemplate: "{$workgroupUrlTemplate}",
+						calendarWebPathTemplate: "{$workgroupCalendarWebPathTemplate}",
+						features: "{$features}",
+						mandatoryFeatures: "{$mandatoryFeatures}",
+						currentUserId: "{$userId}"
+					},
+					widgetParams: {
+						title: "{$menuName}",
+						useSearch: false,
+						doNotHideSearchResult: true
+					}
+				});
 JS
 			,
 		],
@@ -801,6 +767,35 @@ if (Loader::includeModule("intranet") && !$isExtranetUser)
 if (Option::get('mobile', 'developers_menu_section', 'N') === 'Y')
 {
 	$developerMenuItems = [];
+	$isEnableStoryBook = false;
+	foreach (EventManager::getInstance()->findEventHandlers("mobileapp", "onJNComponentWorkspaceGet", ['mobile']) as $event)
+	{
+		if ($event['TO_METHOD'] === 'getJNDevWorkspace')
+		{
+			$isEnableStoryBook = true;
+		}
+	}
+
+	if ($isEnableStoryBook)
+	{
+		$developerMenuItems[] = [
+			"title" => "StoryBook",
+			"imageUrl" => $imageDir . "favorite/storybook.png",
+			"hidden" => false,
+			"attrs" => [
+				"id" => "StoryBook",
+				"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'dev:storybook',
+					object: 'layout',
+					widgetParams: {
+						title: 'StoryBook'
+					}
+				});
+JS,
+			],
+		];
+	}
 
 	$developerMenuItems[] = [
 		"title" => "Frontend Unit Tests",
@@ -858,6 +853,25 @@ JS,
 						}
 				});
 JS,
+		],
+	];
+
+	$developerMenuItems[] = [
+		"title" => "ListView benchmark",
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "listview.benchmark",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'dev:list-view-benchmark',
+					object: 'layout',
+					widgetParams: {
+						title: 'ListView benchmark'
+					}
+				});
+			JS,
 		],
 	];
 

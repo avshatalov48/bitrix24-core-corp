@@ -102,7 +102,9 @@ jn.define('layout/ui/detail-card/tabs/timeline', (require, exports, module) => {
 				},
 				new Timeline({
 					...this.state.result,
-					ref: (ref) => this.timelineRef = ref,
+					ref: (ref) => {
+						this.timelineRef = ref;
+					},
 					uid: this.uid,
 					tabId: this.getId(),
 					reloadFromProps: true,
@@ -146,4 +148,3 @@ jn.define('layout/ui/detail-card/tabs/timeline', (require, exports, module) => {
 
 	module.exports = { TimelineTab };
 });
-

@@ -170,7 +170,7 @@ class UserSettings
 	{
 		return new ItemField(
 			'DATE_STARTED',
-			Loc::getMessage('TASK_KANBAN_USER_SETTINGS_FIELD_DATE_STARTED'),
+			Loc::getMessage('TASK_KANBAN_USER_SETTINGS_FIELD_DATE_STARTED_MSGVER_1'),
 			'task',
 			$this->isFieldSelected('DATE_STARTED'),
 			$this->isFieldDefault('DATE_STARTED'),

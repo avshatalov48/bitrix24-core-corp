@@ -1,6 +1,6 @@
 {
   "name": "avshatalov48/bitrix24-core-corp",
-  "version": "23.900.550",
+  "version": "23.900.900",
   "description": "1C-Bitrix24 Core. Corporate Portal",
   "license": "MIT",
   "keywords": [
@@ -23,6 +23,6 @@
     }
   ],
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.1"
   }
 }

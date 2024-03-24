@@ -438,14 +438,20 @@ export class Methodology
 			</div>
 		`;
 
-		Event.bind(node, 'click', () => {
-			const uri = new Uri('/marketplace/');
-			uri.setQueryParam('tag', ['migrator', 'tasks']);
+		this.requestSender.getMarketPath()
+		.then((response) => {
+			const marketUri = response.data;
 
-			this.sidePanel.openSidePanelByUrl(uri.toString());
+			Event.bind(node, 'click', () => {
+				const uri = new Uri(marketUri);
+				uri.setQueryParam('tag', ['migrator', 'tasks']);
 
-			this.menu.close();
-		});
+				this.sidePanel.openSidePanelByUrl(uri.toString());
+
+				this.menu.close();
+			});
+		})
+
 
 		return node;
 	}

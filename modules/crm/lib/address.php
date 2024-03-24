@@ -140,7 +140,7 @@ class AddressTable extends Entity\DataManager
 
 		if ($entityTypeID > 0 && $entityID > 0)
 		{
-			Application::getConnection()->queryExecute(
+			\Bitrix\Crm\DbHelper::queryByDbType(
 			/** @lang MySQL */
 				"UPDATE b_crm_addr A ".PHP_EOL.
 				"  INNER JOIN (".PHP_EOL.
@@ -152,7 +152,18 @@ class AddressTable extends Entity\DataManager
 				"      ) AN ON R2.ENTITY_TYPE_ID = AN.ENTITY_TYPE_ID AND R2.ENTITY_ID = AN.ENTITY_ID ".PHP_EOL.
 				"	) R ON A.ENTITY_TYPE_ID = {$entityTypeID} AND A.ENTITY_ID = R.ID ".PHP_EOL.
 				"SET A.IS_DEF = IF(A.ENTITY_ID = {$entityID}, 1, 0) ".PHP_EOL.
-				"WHERE ".($typeID > 0 ? "A.TYPE_ID = {$typeID}" : "(1=1)")
+				"WHERE ".($typeID > 0 ? "A.TYPE_ID = {$typeID}" : "(1=1)"),
+				"UPDATE b_crm_addr A".PHP_EOL.
+				"SET IS_DEF = CASE WHEN A.ENTITY_ID = {$entityID} THEN 1 ELSE 0 END".PHP_EOL.
+				"FROM (".PHP_EOL.
+				"    SELECT R2.ID FROM b_crm_requisite R2".PHP_EOL.
+				"    INNER JOIN (".PHP_EOL.
+				"        SELECT R1.ENTITY_TYPE_ID, R1.ENTITY_ID".PHP_EOL.
+				"        FROM b_crm_requisite R1".PHP_EOL.
+				"        WHERE R1.ID = {$entityID}".PHP_EOL.
+				"    ) AN ON R2.ENTITY_TYPE_ID = AN.ENTITY_TYPE_ID AND R2.ENTITY_ID = AN.ENTITY_ID".PHP_EOL.
+				") R".PHP_EOL.
+				"WHERE A.ENTITY_TYPE_ID = {$entityTypeID} AND A.ENTITY_ID = R.ID AND ".($typeID > 0 ? "A.TYPE_ID = {$typeID}" : "(1=1)")
 			);
 		}
 	}

@@ -86,6 +86,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		if (!Loader::includeModule('crm'))
 		{
 			ShowError(Loc::getMessage('CRM_KANBAN_CRM_NOT_INSTALLED'));
+
 			return false;
 		}
 
@@ -97,23 +98,35 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'ONLY_ITEMS' => ($this->arParams['ONLY_ITEMS'] ?? 'N'),
 			'VIEW_MODE' => $this->arParams['VIEW_MODE'],
 			'CATEGORY_ID' => (int)($this->arParams['EXTRA']['CATEGORY_ID'] ?? 0),
+			'USE_ITEM_PLANNER' => ($this->arParams['USE_ITEM_PLANNER'] ?? 'N'),
+			'SKIP_COLUMN_COUNT_CHECK' => ($this->componentParams['SKIP_COLUMN_COUNT_CHECK'] ?? 'N'),
+			'CUSTOM_SECTION_CODE' => ($this->arParams['EXTRA']['CUSTOM_SECTION_CODE'] ?? null),
 		];
 		$this->kanban = Kanban\Desktop::getInstance($type, $params);
 
 		if(!$this->getKanban()->isSupported())
 		{
 			ShowError(Loc::getMessage('CRM_KANBAN_NOT_SUPPORTED'));
+
 			return false;
 		}
 
-		$categoryId = $this->getKanban()->getEntity()->getCategoryId();
-		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions(
-			$this->getKanban()->getEntity()->getTypeId(),
-			0,
-			$categoryId >= 0 ? $categoryId : null
-		))
+		$entityTypeId = $this->getEntityTypeId();
+		$skipCheckPermissions = $entityTypeId === \CCrmOwnerType::Activity;
+		$categoryId = $this->getEntity()->getCategoryId();
+
+		if (!$skipCheckPermissions)
 		{
-			return false;
+			$isReadPermissions = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+				$entityTypeId,
+				0,
+				$categoryId >= 0 ? $categoryId : null
+			);
+
+			if (!$isReadPermissions)
+			{
+				return false;
+			}
 		}
 
 		$this->componentParams =  $this->getKanban()->getComponentParams();
@@ -140,13 +153,14 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$this->prepareHeaderSections();
 		}
 
-		$this->currentUserID = \CCrmSecurityHelper::GetCurrentUserID();
+		$userId = Container::getInstance()->getContext()->getUserId();
+		$this->currentUserID = $userId;
 		$this->statusKey = $this->componentParams['STATUS_KEY'];
 
-		$this->arParams['USER_ID'] = $this->currentUserID;
+		$this->arParams['USER_ID'] = $userId;
 		$this->arParams['LAYOUT_CURRENT_USER'] = Timeline\Layout\User::current()->toArray();
 		$this->arParams['PING_SETTINGS'] = (new TodoPingSettingsProvider(
-			$this->getEntityTypeId(),
+			$entityTypeId,
 			$categoryId
 		))->fetchForJsComponent();
 		$this->arParams['CURRENCY'] = $this->componentParams['CURRENCY'];
@@ -206,6 +220,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 			$this->arResult['RESTRICTED_VALUE_CLICK_CALLBACK'] = $params['RESTRICTED_VALUE_CLICK_CALLBACK'];
 		}
 		return $params['ITEMS'];
+	}
+
+	protected function isSkipColumnCountCheck(): bool
+	{
+		return ($this->arParams['SKIP_COLUMN_COUNT_CHECK'] ?? 'N') === 'Y';
 	}
 
 	/**
@@ -325,7 +344,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 					else
 					{
 						$viewMode = $this->arParams['VIEW_MODE'] ?? '';
-						$this->arResult['ITEMS']['IS_SHOULD_UPDATE_CARD'] = $viewMode === Kanban\ViewMode::MODE_DEADLINES;
+						$this->arResult['ITEMS']['isShouldUpdateCard'] = $viewMode === Kanban\ViewMode::MODE_DEADLINES;
 					}
 				}
 			}
@@ -364,6 +383,9 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['FIELDS_SECTIONS'] = $this->componentParams['FIELDS_SECTIONS'] ?? null;
 		//$this->arResult['STUB'] = $this->getStub(); TODO: исправить, когда по€в€тс€ актуальные тексты
 		$this->arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] = $this->showErrorCounterByActivityResponsible();
+		$this->arResult['SKIP_COLUMN_COUNT_CHECK'] = $this->isSkipColumnCountCheck();
+		$this->arResult['USE_ITEM_PLANNER'] = ($this->arParams['USE_ITEM_PLANNER'] ?? 'N') === 'Y';
+		$this->arResult['USE_PUSH_CRM'] = ($this->arParams['USE_PUSH_CRM'] ?? 'Y') === 'Y';
 
 		$context = Application::getInstance()->getContext();
 		$request = $context->getRequest();
@@ -417,11 +439,24 @@ class CrmKanbanComponent extends \CBitrixComponent
 				{
 					foreach ($columns as $k => $column)
 					{
-						if (!$column['dropzone'] && $column['count'])
+						if ($column['dropzone'])
+						{
+							continue;
+						}
+
+						if (
+							$column['count'] > 0
+							|| ($this->isSkipColumnCountCheck() && $column['count'] !== -1)
+						)
 						{
 							$filter = [];
 							$filter[$this->statusKey] = $column['id'];
 							$items += $this->getItems($filter);
+						}
+
+						if ($column['count'] < 0)
+						{
+							$column['count'] = 0;
 						}
 					}
 				}
@@ -436,21 +471,21 @@ class CrmKanbanComponent extends \CBitrixComponent
 				//get activity
 				if (!empty($this->arResult['ITEMS']['items']))
 				{
+					$itemIds = array_keys($this->arResult['ITEMS']['items']);
+
 					if ($this->getEntity()->isActivityCountersSupported())
 					{
 						$errors ??= [];
 						$entityActivityCounter = new EntityActivityCounter(
 							$this->getEntityTypeId(),
-							array_keys($this->arResult['ITEMS']['items']),
+							$itemIds,
 							$errors,
 						);
 						$entityActivityCounter->appendToEntityItems($this->arResult['ITEMS']['items']);
+						$this->arResult['ITEMS']['activityLimitIsExceeded'] = $entityActivityCounter->isLimitIsExceeded();
 					}
 
-					$entityBadges = new Kanban\EntityBadge(
-						$this->getEntityTypeId(),
-						array_keys($this->arResult['ITEMS']['items'])
-					);
+					$entityBadges = new Kanban\EntityBadge($this->getEntityTypeId(), $itemIds);
 					$entityBadges->appendToEntityItems($this->arResult['ITEMS']['items']);
 
 					$this->arResult['ITEMS']['items'] = array_values($this->arResult['ITEMS']['items']);

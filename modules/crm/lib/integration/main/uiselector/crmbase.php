@@ -201,7 +201,14 @@ class CrmBase extends \Bitrix\Main\UI\Selector\EntityBase
 		{
 			$userId = Container::getInstance()->getContext()->getUserId();
 			$cache = Application::getInstance()->getManagedCache();
-			$cacheId = "crm_uiselector_data_{$userId}_" . md5(serialize($filter));
+			$cacheId = "crm_uiselector_data_{$userId}_" . md5(serialize([
+				$dataClass,
+				$order,
+				$filter,
+				$select,
+				$groupBy,
+				$navParams,
+			]));
 
 			if ($cache->read(self::CACHE_TIME, $cacheId, static::CACHE_DIR))
 			{

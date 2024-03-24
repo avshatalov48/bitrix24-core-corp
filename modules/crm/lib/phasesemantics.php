@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
 class PhaseSemantics
 {
 	public const UNDEFINED = '';
@@ -101,14 +103,14 @@ class PhaseSemantics
 
 	public static function getListFilterInfo($entityTypeID, array $params = null, $useCommonNames = false)
 	{
-		if($params === null)
+		if ($params === null)
 		{
 			$params = array();
 		}
 
 		self::includeModuleFile();
 
-		if($useCommonNames)
+		if ($useCommonNames)
 		{
 			return array_merge(
 				array(
@@ -123,7 +125,7 @@ class PhaseSemantics
 			);
 		}
 
-		if($entityTypeID === \CCrmOwnerType::Deal)
+		if ($entityTypeID === \CCrmOwnerType::Deal)
 		{
 			return array_merge(
 				array(
@@ -137,7 +139,22 @@ class PhaseSemantics
 				$params
 			);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Lead)
+
+		if ($entityTypeID === \CCrmOwnerType::Activity)
+		{
+			return array_merge(
+				[
+					'type' => 'list',
+					'items' => [
+						self::PROCESS => Loc::getMessage('CRM_PHASE_SEMANTICS_ACTIVITY_PROCESS_MSGVER_1'),
+						self::SUCCESS => Loc::getMessage('CRM_PHASE_SEMANTICS_ACTIVITY_SUCCESS_MSGVER_1'),
+					],
+				],
+				$params
+			);
+		}
+
+		if ($entityTypeID === \CCrmOwnerType::Lead)
 		{
 			return array_merge(
 				array(
@@ -151,7 +168,8 @@ class PhaseSemantics
 				$params
 			);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Quote)
+
+		if ($entityTypeID === \CCrmOwnerType::Quote)
 		{
 			return array_merge(
 				array(
@@ -165,7 +183,8 @@ class PhaseSemantics
 				$params
 			);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Order)
+
+		if ($entityTypeID === \CCrmOwnerType::Order)
 		{
 			return array_merge(
 				array(
@@ -179,11 +198,9 @@ class PhaseSemantics
 				$params
 			);
 		}
-		else
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
-		}
+
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+		throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 	}
 
 	public static function getEntityDetailInfos(array $entityTypeNames)

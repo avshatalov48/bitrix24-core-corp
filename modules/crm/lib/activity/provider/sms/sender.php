@@ -155,7 +155,14 @@ final class Sender
 
 		if ($senderCode === SmsManager::getSenderCode())
 		{
-			return (new Sms($channel))->setMessageBody($message->body);
+			$facilitator = (new Sms($channel))->setMessageBody($message->body);
+
+			if (!empty($message->template))
+			{
+				$facilitator->setMessageTemplate($message->template);
+			}
+
+			return $facilitator;
 		}
 
 		if ($senderCode === NotificationsManager::getSenderCode())

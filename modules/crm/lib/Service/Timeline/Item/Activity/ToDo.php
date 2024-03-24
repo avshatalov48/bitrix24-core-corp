@@ -205,7 +205,7 @@ class ToDo extends Activity
 			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_COMPLETE_TO'))
 			->setContentBlock(
 				(new EditableDate())
-					->setReadonly(!$this->isScheduled())
+					->setReadonly(!$this->isScheduled() || !$this->hasUpdatePermission())
 					->setStyle(EditableDate::STYLE_PILL)
 					->setDate($deadline)
 					->setAction($updateDeadlineAction)

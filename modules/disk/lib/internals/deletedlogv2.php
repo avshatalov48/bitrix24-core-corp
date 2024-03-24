@@ -71,10 +71,18 @@ final class DeletedLogV2Table extends DataManager
 
 	public static function upsertBatch(array $items)
 	{
-		SqlHelper::upsertBatch(static::getTableName(), $items, [
-			'USER_ID' => new SqlExpression('VALUES(?#)', 'USER_ID'),
-			'CREATE_TIME' => new SqlExpression('VALUES(?#)', 'CREATE_TIME'),
-		]);
+		SqlHelper::upsertBatch(
+			static::getTableName(),
+			[
+				'STORAGE_ID',
+				'OBJECT_ID',
+			],
+			$items,
+			[
+				'USER_ID' => new SqlExpression('?v', 'USER_ID'),
+				'CREATE_TIME' => new SqlExpression('?v', 'CREATE_TIME'),
+			]
+		);
 	}
 
 	public static function deleteOldEntries()

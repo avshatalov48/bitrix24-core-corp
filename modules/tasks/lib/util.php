@@ -57,24 +57,9 @@ class Util
 		}
 	}
 
-	// see BX.util.hashCode()
-	public static function hashCode($str)
+	public static function hashCode($str): string
 	{
 		return base_convert(crc32($str), 16, 10);
-		if($str == '')
-		{
-			return 0;
-		}
-
-		$hash = 0;
-		for ($i = 0; $i < mb_strlen($str); $i++)
-		{
-			$c = ord($str[$i]);
-			$hash = (($hash << 5) - $hash) + $c;
-			$hash = (int)$hash;
-			$hash &= $hash;
-		}
-		return $hash;
 	}
 
 	public static function secureBackUrl($url)

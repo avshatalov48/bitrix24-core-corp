@@ -13,8 +13,6 @@ Loc::loadMessages(__FILE__);
  */
 class FirstTimelineTaskCreation extends TourGuide
 {
-	public static $instance;
-
 	protected const OPTION_NAME = 'firstTimelineTaskCreation';
 
 	public function proceed(): bool
@@ -41,6 +39,11 @@ class FirstTimelineTaskCreation extends TourGuide
 		}
 
 		return false;
+	}
+
+	public function isFirstExperience(): bool
+	{
+		return true;
 	}
 
 	protected function getDefaultSteps(): array

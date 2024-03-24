@@ -358,7 +358,11 @@ class CBPTask2Activity extends CBPActivity implements
 			}
 
 			// todo: use \Bitrix\Tasks\Item\Task here
-			$task = CTaskItem::add($arFieldsChecked, \Bitrix\Tasks\Util\User::getAdminId());
+			$task = CTaskItem::add(
+				$arFieldsChecked,
+				\Bitrix\Tasks\Util\User::getAdminId(),
+				['SPAWNED_BY_WORKFLOW' => true]
+			);
 			$result = $task->getId();
 		}
 		catch(TasksException $e)
@@ -1172,7 +1176,7 @@ class CBPTask2Activity extends CBPActivity implements
 				],
 			],
 			'RESPONSIBLE_ID' => [
-				'Name' => Loc::getMessage('BPTA1A_TASKASSIGNEDTO'),
+				'Name' => Loc::getMessage('BPTA1A_TASKASSIGNEDTO_V2'),
 				'FieldName' => 'RESPONSIBLE_ID',
 				'Type' => FieldType::USER,
 				'Editable' => true,

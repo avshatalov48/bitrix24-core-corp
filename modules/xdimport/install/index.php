@@ -27,11 +27,6 @@ Class xdimport extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = XDI_VERSION;
-			$this->MODULE_VERSION_DATE = XDI_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = GetMessage("XDI_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = GetMessage("XDI_MODULE_DESCRIPTION");
@@ -47,10 +42,11 @@ Class xdimport extends CModule
 	function InstallDB()
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 	
 		$this->errors = false;
 		if(!$DB->Query("SELECT 'x' FROM b_xdi_lf_scheme", true))
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/".$connection->getType()."/install.sql");
 
 		if($this->errors !== false)
 		{
@@ -110,11 +106,12 @@ Class xdimport extends CModule
 	function UnInstallDB($arParams = Array())
 	{
 		global $APPLICATION, $DB, $errors;
+		$connection = \Bitrix\Main\Application::getConnection();
 		
 		$this->errors = false;
 		
 		if (!$arParams['savedata'])
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/".$connection->getType()."/uninstall.sql");
 
 		if(is_array($this->errors))
 			$arSQLErrors = array_merge($arSQLErrors, $this->errors);

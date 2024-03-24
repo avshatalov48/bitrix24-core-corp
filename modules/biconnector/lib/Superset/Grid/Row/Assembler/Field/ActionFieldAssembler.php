@@ -2,6 +2,7 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field;
 
+use Bitrix\BIConnector\LimitManager;
 use Bitrix\Main\Grid\Row\FieldAssembler;
 use Bitrix\Main\Localization\Loc;
 
@@ -9,6 +10,12 @@ class ActionFieldAssembler extends FieldAssembler
 {
 	protected function prepareColumn($value): string
 	{
+		$manager = LimitManager::getInstance()->setIsSuperset();
+		if ($value['EDIT_URL'] === '' || !$manager->checkLimit())
+		{
+			return '';
+		}
+
 		$params = \CUtil::PhpToJSObject([
 			'dashboardId' => (int)$value['ID'],
 			'type' => $value['TYPE'],
@@ -30,19 +37,12 @@ class ActionFieldAssembler extends FieldAssembler
 
 		foreach ($this->getColumnIds() as $columnId)
 		{
-			if ($row['data'][$columnId])
-			{
-				$value = [
-					'EDIT_URL' => $row['data']['EDIT_URL'],
-					'ID' => $row['data']['ID'],
-					'TYPE' => $row['data']['TYPE'],
-					'APP_ID' => $row['data']['APP_ID'],
-				];
-			}
-			else
-			{
-				$value = [];
-			}
+			$value = [
+				'EDIT_URL' => $row['data']['EDIT_URL'] ?? '',
+				'ID' => $row['data']['ID'],
+				'TYPE' => $row['data']['TYPE'],
+				'APP_ID' => $row['data']['APP_ID'],
+			];
 			$row['columns'][$columnId] = $this->prepareColumn($value);
 		}
 

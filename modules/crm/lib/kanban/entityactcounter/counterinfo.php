@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Kanban\EntityActCounter;
 
 class CounterInfo
 {
+	private bool $isLimitIsExceeded = false;
+
 	public function __construct(
 		private array $deadlines,
 		private array $incoming,
@@ -38,4 +40,15 @@ class CounterInfo
 		return new self([], [], [], []);
 	}
 
+	public function setLimitIsExceeded(bool $state = true): self
+	{
+		$this->isLimitIsExceeded = $state;
+
+		return $this;
+	}
+
+	public function isLimitIsExceeded(): bool
+	{
+		return $this->isLimitIsExceeded;
+	}
 }

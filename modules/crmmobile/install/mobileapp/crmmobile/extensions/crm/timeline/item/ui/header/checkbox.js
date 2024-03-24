@@ -38,6 +38,11 @@ jn.define('crm/timeline/item/ui/header/checkbox', (require, exports, module) => 
 						alignItems: 'center',
 					},
 					onClick: () => {
+						if (this.props.isReadonly)
+						{
+							return;
+						}
+
 						this.setState({ checked: !this.state.checked });
 						if (this.props.onClick)
 						{

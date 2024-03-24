@@ -5,6 +5,7 @@ namespace Bitrix\Crm;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
 use Bitrix\Crm\Format\PersonNameFormatter;
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Kanban\EntityNotFoundException;
 use Bitrix\Crm\Kanban\Sort;
@@ -132,6 +133,12 @@ abstract class Kanban
 		$categoryId = (isset($this->params['CATEGORY_ID']) ? (int)$this->params['CATEGORY_ID'] : null);
 		$this->setCategoryId($categoryId);
 		$this->setNameTemplate($this->params['NAME_TEMPLATE'] ?? null);
+
+		$customSectionCode = $this->params['CUSTOM_SECTION_CODE'] ?? null;
+		if (!is_null($customSectionCode) && $this->entity->isCustomSectionSupported())
+		{
+			$this->entity->setCustomSectionCode($customSectionCode);
+		}
 
 		$this->entity->setCanEditCommonSettings($this->canEditSettings());
 
@@ -444,9 +451,9 @@ abstract class Kanban
 
 			$filter = array_merge($filterCommon, $filter);
 
+			$viewMode = ($params['VIEW_MODE'] ?? ViewMode::MODE_STAGES);
 			if (
-				isset($params['VIEW_MODE'])
-				&& $params['VIEW_MODE'] === ViewMode::MODE_ACTIVITIES
+				$viewMode === ViewMode::MODE_ACTIVITIES
 				&& isset($filter['CATEGORY_ID'])
 				&& $filter['CATEGORY_ID'] === -1
 			)
@@ -473,7 +480,7 @@ abstract class Kanban
 				{
 					$isFirstDropZone = false;
 					$columns[static::COLUMN_NAME_DELETED] = $this->getDeleteColumn([
-						'real_sort' => $status['SORT'],
+						'real_sort' => $status['SORT'] ?? null,
 						'sort' => $sort
 					]);
 				}
@@ -951,8 +958,8 @@ abstract class Kanban
 			}
 		}
 
+		$entity->prepareFilter($filter, $this->viewMode);
 		$entity->applySubQueryBasedFilters($filter, $this->viewMode);
-
 
 		$filter = Deal\OrderFilter::prepareFilter($filter);
 		$filter = \Bitrix\Crm\Automation\Debugger\DebuggerFilter::prepareFilter($filter, $entity->getTypeId());
@@ -964,6 +971,24 @@ abstract class Kanban
 		{
 			$filter['CATEGORY_ID'] = $this->entity->getCategoryId();
 		}
+
+		if ($entity->isCustomSectionSupported())
+		{
+			$customSectionCode = $entity->getCustomSectionCode();
+			if (IntranetManager::isCustomSectionExists($customSectionCode))
+			{
+				$filter['@OWNER_TYPE_ID'] = IntranetManager::getEntityTypesInCustomSection($customSectionCode);
+			}
+			else
+			{
+				$allEntityTypesInSections = IntranetManager::getEntityTypesInCustomSections();
+				if (!empty($allEntityTypesInSections))
+				{
+					$filter['!@OWNER_TYPE_ID'] = $allEntityTypesInSections;
+				}
+			}
+		}
+
 		//invoice
 		if($entity->isRecurringSupported())
 		{
@@ -1300,6 +1325,7 @@ abstract class Kanban
 		) {
 			$parameters['filter']['STAGE_SEMANTIC_ID'] = $this->allowSemantics;
 		}
+
 		$res = $this->entity->getItems($parameters);
 
 		$rows = [];
@@ -1459,11 +1485,11 @@ abstract class Kanban
 				'price' => $row['PRICE'],
 				'price_formatted' => $row['PRICE_FORMATTED'],
 				'entity_price' => $row['OPPORTUNITY_VALUE'],
-				'currency' => $row['CURRENCY_ID'],
+				'currency' => $row['CURRENCY_ID'] ?? null,
 				'entity_currency' => $row['ENTITY_CURRENCY_ID'],
 				'date' => $row['DATE_FORMATTED'],
 				'dateCreate' => $row['DATE_CREATE'] ?? '',
-				'contactId' => (int)$row['CONTACT_ID'],
+				'contactId' => (!empty($row['CONTACT_ID']) ? (int)$row['CONTACT_ID'] : null),
 				'companyId' => (!empty($row['COMPANY_ID']) ? (int)$row['COMPANY_ID'] : null),
 				'contactType' => $row['CONTACT_TYPE'],
 				'modifyById' => ($row['MODIFY_BY_ID'] ?? 0),
@@ -1486,6 +1512,7 @@ abstract class Kanban
 				'sort' => $this->getEntity()->prepareItemSort($rows[$rowId]),
 				'lastActivity' => $lastActivityInfo[$row['ID']] ?? null,
 				'pingSettings' => isset($row['CATEGORY_ID']) ? $pingSettingsInfo[$row['CATEGORY_ID']] : null,
+				'draggable' => (bool)($row['DRAGGABLE'] ?? true),
 			];
 			$result[$rowId] = array_merge($result[$rowId], $this->prepareAdditionalFields($row));
 			$isRestricted = (!empty($restrictedItemIds) && in_array($row['ID'], $restrictedItemIds));

@@ -256,15 +256,15 @@ class CrmQuotes extends CrmBase
 			$searchString = trim($matches[1]);
 			if ($searchString !== '')
 			{
-				$filter['%TITLE'] = $searchString;
+				$filter['?TITLE'] = $searchString;
 				$filter['LOGIC'] = 'OR';
 			}
 			unset($searchString);
 		}
 		else
 		{
-			$filter['%QUOTE_NUMBER'] = $search;
-			$filter['%TITLE'] = $search;
+			$filter['?QUOTE_NUMBER'] = $search;
+			$filter['?TITLE'] = $search;
 			$filter['LOGIC'] = 'OR';
 		}
 

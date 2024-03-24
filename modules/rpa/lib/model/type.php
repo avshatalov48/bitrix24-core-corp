@@ -214,7 +214,7 @@ class Type extends UserField\Internal\Type implements Permission\Containable
 			&& array_key_exists('*FULL_TEXT.SEARCH_CONTENT', $parameters['filter'])
 		)
 		{
-			if(!is_array($parameters['runtime']))
+			if(!is_array($parameters['runtime'] ?? null))
 			{
 				$parameters['runtime'] = [];
 			}

@@ -91,13 +91,18 @@ final class DeletedLogMover extends Stepper
 		];
 
 		$connection = Application::getConnection();
-		$connection->queryExecute("
-			INSERT IGNORE INTO b_disk_deleted_log_v2 (ID, USER_ID, STORAGE_ID, OBJECT_ID, TYPE, CREATE_TIME)
-			SELECT ID, USER_ID, STORAGE_ID, OBJECT_ID, TYPE, CREATE_TIME FROM b_disk_deleted_log
-			WHERE ID < {$lastId} 
-			ORDER BY ID DESC
-			LIMIT {$this->portionSize}
-		");
+		$helper = $connection->getSqlHelper();
+
+		$sql = $helper->getInsertIgnore(
+			'b_disk_deleted_log_v2',
+			' (ID, USER_ID, STORAGE_ID, OBJECT_ID, TYPE, CREATE_TIME) ',
+			"SELECT ID, USER_ID, STORAGE_ID, OBJECT_ID, TYPE, CREATE_TIME 
+				FROM b_disk_deleted_log
+				WHERE ID < {$lastId} 
+				ORDER BY ID DESC
+				LIMIT {$this->portionSize}"
+		);
+		$connection->queryExecute($sql);
 
 		$newStatus['lasId'] = $connection->queryScalar("
 			SELECT MIN(t.ID)

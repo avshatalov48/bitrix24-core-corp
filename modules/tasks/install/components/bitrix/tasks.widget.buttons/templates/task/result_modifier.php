@@ -28,10 +28,10 @@ if ((int)$data['STATUS'] === Status::SUPPOSEDLY_COMPLETED)
 	$can['COMPLETE'] = false;
 }
 
-$taskId = intval($arParams["TASK"]["ID"]);
+$taskId = (int)$arParams["TASK"]["ID"];
 
-$data["TIME_ESTIMATE"] = intval($data["TIME_ESTIMATE"]);
-$data["TIME_ELAPSED"] = intval($data["TIME_ELAPSED"]);
+$data["TIME_ESTIMATE"] = (int)$data["TIME_ESTIMATE"];
+$data["TIME_ELAPSED"] = (int)$data["TIME_ELAPSED"];
 
 $this->__component->tryParseBooleanParameter($arParams["REDIRECT_TO_LIST_ON_DELETE"], true);
 
@@ -53,6 +53,18 @@ $arResult['CREATE_SUBTASK_URL'] = Util::replaceUrlParameters($arResult['CREATE_S
 	//'BACKURL' => $arResult['VIEW_URL'],
 	'SOURCE' => 'view',
 ), array(), array('encode' => true));
+
+$analyticsParams = [
+	'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
+	'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['task_card'],
+	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['context_menu']
+];
+
+$copyUrl = (new \Bitrix\Main\Web\Uri($arResult['COPY_URL']))->addParams($analyticsParams);
+$arResult['COPY_URL'] = $copyUrl->getUri();
+
+$createSubTaskUrl = (new \Bitrix\Main\Web\Uri($arResult['CREATE_SUBTASK_URL']))->addParams($analyticsParams);
+$arResult['CREATE_SUBTASK_URL'] = $createSubTaskUrl->getUri();
 
 $classes = array();
 if($can["DAYPLAN.TIMER.TOGGLE"])

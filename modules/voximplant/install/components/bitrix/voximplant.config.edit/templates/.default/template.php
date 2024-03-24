@@ -650,7 +650,7 @@ $arResult["ERROR"] ??= '';
 										); ?>
 										<div id="<?= $id ?>span" class="voximplant-melody">
 											<span class="voximplant-link"><?= Loc::getMessage("VI_CONFIG_EDIT_DOWNLOAD_TUNE") ?></span>
-											<span id="<?= $id ?>notice" class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_EDIT_DOWNLOAD_TUNE_TIP") ?></span>
+											<span id="<?= $id ?>notice" class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_EDIT_DOWNLOAD_TUNE_TIP_MSGVER_1") ?></span>
 										</div>
 										<span id="<?=$id?>default" class="voximplant-melody" <?if ($dayOffMelody["MELODY_ID"] <= 0) { ?> style="display:none;" <? } ?>>
 											<span class="voximplant-link"><?=GetMessage("VI_CONFIG_EDIT_SET_DEFAULT_TUNE")?></span>
@@ -845,7 +845,7 @@ $arResult["ERROR"] ??= '';
 				<div class="voximplant-title-dark"><?= Loc::getMessage("VI_CONFIG_EDIT_TUNES") ?></div>
 				<div class="voximplant-number-settings-row">
 					<div class="voximplant-control-row">
-						<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TUNES_LANGUAGE2") ?></div>
+						<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TUNES_LANGUAGE2_MSGVER_1") ?></div>
 						<select class="voximplant-control-select" name="MELODY_LANG">
 							<?foreach (CVoxImplantConfig::GetMelodyLanguages() as $k):?>
 								<option value="<?=$k?>"<?=($k == $arResult["ITEM"]["MELODY_LANG"] ? " selected" : "")?>><?=GetMessage("VI_CONFIG_EDIT_TUNES_LANGUAGE_".$k)?></option>
@@ -913,7 +913,7 @@ $arResult["ERROR"] ??= '';
 										); ?>
 										<div id="<?= $id ?>span" class="voximplant-melody">
 											<span class="voximplant-link"><?= Loc::getMessage("VI_CONFIG_EDIT_DOWNLOAD_TUNE") ?></span>
-											<span id="<?= $id ?>notice" class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_EDIT_DOWNLOAD_TUNE_TIP") ?></span>
+											<span id="<?= $id ?>notice" class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_EDIT_DOWNLOAD_TUNE_TIP_MSGVER_1") ?></span>
 										</div>
 										<span id="<?=$id?>default" class="voximplant-melody" <?if ($melody["MELODY_ID"] <= 0) { ?> style="display:none;" <? } ?>>
 										<span class="voximplant-link"><?=GetMessage("VI_CONFIG_EDIT_SET_DEFAULT_TUNE")?></span>

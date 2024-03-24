@@ -6,8 +6,8 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 	const { inAppUrl } = require('in-app-url');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineTextEditor } = require('crm/timeline/ui/text-editor');
+	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const AppTheme = require('apptheme');
-	const { Loc } = require('loc');
 
 	/**
 	 * @abstract
@@ -21,7 +21,6 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 
 			this.state = {
 				text: this.props.text,
-				expanded: false,
 				editable: this.props.hasOwnProperty('editable') && this.props.editable,
 			};
 
@@ -50,7 +49,6 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 							borderColor: AppTheme.colors.bgSeparatorPrimary,
 							borderRadius: 12,
 						},
-						onClick: () => this.toggleExpanded(),
 						onLongClick: () => this.openEditor(),
 					},
 					this.renderEditIcon(),
@@ -123,21 +121,9 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 		renderText()
 		{
 			const props = this.getTextParams();
-			props.value = this.prepareTextToRender(this.state.text);
+			props.value = this.state.text;
 
-			return BBCodeText(props);
-		}
-
-		prepareTextToRender(text)
-		{
-			const maxLettersCount = this.getMaxLettersCount();
-			if (this.state.expanded || text.length <= maxLettersCount)
-			{
-				return text;
-			}
-
-			return `${text.slice(0, maxLettersCount).trim()}... [color=${AppTheme.colors.base3}]${Loc.getMessage(
-				'M_CRM_TIMELINE_VIEW_MORE')}[/color]`;
+			return new CollapsibleText(props);
 		}
 
 		getTextParams()
@@ -149,15 +135,10 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 					fontWeight: '400',
 					color: AppTheme.colors.base1,
 				},
+				maxLettersCount: this.getMaxLettersCount(),
+				maxEntersCount: this.getMaxEntersCount(),
+				bbCodeMode: true,
 			};
-		}
-
-		toggleExpanded()
-		{
-			if (this.state.text.length > this.getMaxLettersCount())
-			{
-				this.setState({ expanded: !this.state.expanded });
-			}
 		}
 
 		onLinkClick(url)
@@ -194,10 +175,20 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 		{
 			if (this.model.hasLowPriority)
 			{
-				return 35;
+				return 30;
 			}
 
 			return 330;
+		}
+
+		getMaxEntersCount()
+		{
+			if (this.model.hasLowPriority)
+			{
+				return 1;
+			}
+
+			return 4;
 		}
 	}
 

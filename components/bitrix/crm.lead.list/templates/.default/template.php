@@ -444,7 +444,7 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 			{
 				if ($isQuoteAvailable)
 				{
-					$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arContact['PATH_TO_QUOTE_ADD']) . "');";
+					$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arLead['PATH_TO_QUOTE_ADD']) . "');";
 				}
 				else
 				{
@@ -478,7 +478,7 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 			if ($arResult['IS_BIZPROC_AVAILABLE'])
 			{
 				$arActions[] = ['SEPARATOR' => true];
-				if (isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
+				if (isset($arLead['PATH_TO_BIZPROC_LIST']) && $arLead['PATH_TO_BIZPROC_LIST'] !== '')
 				{
 					$arActions[] = [
 						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_TITLE'),

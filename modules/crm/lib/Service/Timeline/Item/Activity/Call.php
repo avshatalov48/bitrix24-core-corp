@@ -619,7 +619,7 @@ class Call extends Activity
 			->setMark($clientMark)
 			->setText(
 				Loc::getMessage(
-					'CRM_TIMELINE_BLOCK_CLIENT_MARK_TEXT',
+					'CRM_TIMELINE_BLOCK_CLIENT_MARK_TEXT_MSGVER_1',
 					['#MARK#' => (int)$callInfo['CALL_VOTE']]
 				)
 			)
@@ -731,6 +731,15 @@ class Call extends Activity
 		}
 
 		$isErrorOccurred = AIManager::isLaunchOperationsErrorsLimitExceeded($ownerTypeId, $ownerId, $activityId);
+		if (!$isErrorOccurred)
+		{
+			$checkForSuitableAudiosResult = AIManager::checkForSuitableAudios(
+				(string)$this->getAssociatedEntityModel()?->get('ORIGIN_ID'),
+				(int)$this->getAssociatedEntityModel()?->get('STORAGE_TYPE_ID'),
+				(string)$this->getAssociatedEntityModel()?->get('STORAGE_ELEMENT_IDS')
+			);
+			$isErrorOccurred = !$checkForSuitableAudiosResult->isSuccess();
+		}
 		if (
 			$isErrorOccurred
 			|| AIManager::isLaunchOperationsSuccess($ownerTypeId, $ownerId, $activityId)
@@ -745,19 +754,6 @@ class Call extends Activity
 						: 'CRM_TIMELINE_BUTTON_TIP_COPILOT',
 				)
 			);
-		}
-
-		$checkForSuitableAudiosResult = AIManager::checkForSuitableAudios(
-			(string)$this->getAssociatedEntityModel()->get('ORIGIN_ID'),
-			(int)$this->getAssociatedEntityModel()->get('STORAGE_TYPE_ID'),
-			(string)$this->getAssociatedEntityModel()->get('STORAGE_ELEMENT_IDS')
-		);
-
-		if (!$checkForSuitableAudiosResult->isSuccess())
-		{
-			$button->setAction(null);
-			$button->setState(Layout\Button::STATE_DISABLED);
-			$button->setTooltip(Loc::getMessage('CRM_TIMELINE_ITEM_COPILOT_ERROR_TOOLTIP'));
 		}
 
 		return $button;

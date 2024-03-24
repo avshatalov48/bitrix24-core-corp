@@ -62,12 +62,12 @@ class ConfigPermissions
 	{
 		return [
 			self::SECTION_TASKS => [
-				PermissionDictionary::TASK_RESPONSE_EDIT,
-				PermissionDictionary::TASK_RESPONSE_DELEGATE,
-				PermissionDictionary::TASK_RESPONSE_ASSIGN,
-				PermissionDictionary::TASK_RESPONSE_CHANGE_RESPONSIBLE,
-				PermissionDictionary::TASK_RESPONSE_CHECKLIST_EDIT,
-				PermissionDictionary::TASK_RESPONSE_CHECKLIST_ADD,
+				PermissionDictionary::TASK_ASSIGNEE_EDIT,
+				PermissionDictionary::TASK_ASSIGNEE_DELEGATE,
+				PermissionDictionary::TASK_ASSIGNEE_ASSIGN,
+				PermissionDictionary::TASK_ASSIGNEE_CHANGE_RESPONSIBLE,
+				PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_EDIT,
+				PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_ADD,
 				PermissionDictionary::TASK_CLOSED_DIRECTOR_EDIT,
 				PermissionDictionary::TASK_DIRECTOR_DELETE,
 

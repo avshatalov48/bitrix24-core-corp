@@ -402,7 +402,6 @@
 .b24-form-control-alert-message {
 	display: none;
 	position: absolute;
-	top: calc(100% - 3px);
 	left: 12px;
 	background: #f25830;
 	z-index: 10;

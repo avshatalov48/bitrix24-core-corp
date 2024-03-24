@@ -25,6 +25,7 @@ $MESS["CRM_ACTIVITY_FILTER_START"] = "Start";
 $MESS["CRM_ACTIVITY_FILTER_TYPE_ID"] = "Type";
 $MESS["CRM_ACTIVITY_INCOMING_CALL"] = "Phone call (incoming)";
 $MESS["CRM_ACTIVITY_INCOMING_EMAIL"] = "E-mail (incoming)";
+$MESS["CRM_ACTIVITY_MAIN_TITLE"] = "My activities";
 $MESS["CRM_ACTIVITY_OUTGOING_CALL"] = "Phone call (outgoing)";
 $MESS["CRM_ACTIVITY_OUTGOING_EMAIL"] = "E-mail (outgoing)";
 $MESS["CRM_ACTIVITY_STATUS_COMPLETED"] = "Completed";

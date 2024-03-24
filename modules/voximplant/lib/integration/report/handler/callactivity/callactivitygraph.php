@@ -2,13 +2,11 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\CallActivity;
 
-use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Report\VisualConstructor\IReportMultipleBiGroupedData;
 use Bitrix\Voximplant\ConfigTable;
@@ -77,9 +75,6 @@ class CallActivityGraph extends CallActivity implements IReportMultipleBiGrouped
 
 	/**
 	 * @return array|mixed
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
 	 */
 	public function prepare()
 	{
@@ -108,8 +103,6 @@ class CallActivityGraph extends CallActivity implements IReportMultipleBiGrouped
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	public function getQueryForReport($startDate, $finishDate, $filterParameters): Query
 	{
@@ -119,16 +112,17 @@ class CallActivityGraph extends CallActivity implements IReportMultipleBiGrouped
 		$query->addSelect('DAY_OF_WEEK');
 		$query->addSelect('HOUR');
 
+		$helper = Application::getConnection()->getSqlHelper();
 		$dateWithShift = $this->getDateExpressionWithTimeShiftForQuery();
 		$query->registerRuntimeField(new ExpressionField(
 			'DAY_OF_WEEK',
-			"dayofweek($dateWithShift) - 1",
+			$helper->formatDate('%W', $dateWithShift), // % is needed for escaping
 			['CALL_START_DATE']
 		));
 
 		$query->registerRuntimeField(new ExpressionField(
 			'HOUR',
-			"hour($dateWithShift)",
+			"extract(hour from $dateWithShift)",
 			['CALL_START_DATE']
 		));
 
@@ -146,9 +140,6 @@ class CallActivityGraph extends CallActivity implements IReportMultipleBiGrouped
 	 * If possible, displays the combined working hours of several numbers.
 	 *
 	 * @return array
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
 	 */
 	private function getWorkingHoursForGraph(): array
 	{
@@ -195,9 +186,6 @@ class CallActivityGraph extends CallActivity implements IReportMultipleBiGrouped
 	 * Returns the total working time if no filter is specified.
 	 *
 	 * @return array
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
 	 */
 	private function getWorkTimesOfNumbers(): array
 	{
@@ -224,7 +212,7 @@ class CallActivityGraph extends CallActivity implements IReportMultipleBiGrouped
 
 		$query->where('WORKTIME_ENABLE', '=', 'Y');
 
-		$portalNumbers = $this->getFilterParameters()['PORTAL_NUMBER'];
+		$portalNumbers = $this->getFilterParameters()['PORTAL_NUMBER'] ?? null;
 		if ($portalNumbers)
 		{
 			$query->where(Query::filter()

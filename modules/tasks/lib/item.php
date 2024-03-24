@@ -687,7 +687,7 @@ abstract class Item extends LazyAccess
 		}
 		else
 		{
-			if($this->dataContexts[$this->currentDataContext] === null)
+			if(($this->dataContexts[$this->currentDataContext] ?? null) === null)
 			{
 				$this->dataContexts[$this->currentDataContext] = array();
 			}

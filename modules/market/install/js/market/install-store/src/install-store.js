@@ -58,6 +58,9 @@ export const marketInstallState = defineStore('market-install', {
 		isHiddenBuy() {
 			return this.appInfo.HIDDEN_BUY === 'Y';
 		},
+		resetInstallStep() {
+			this.installStep = 1;
+		},
 
 		showInstallPopup(isUpdate = false) {
 			if (!this.popupNodes[this.appInfo.CODE]) {
@@ -176,6 +179,12 @@ export const marketInstallState = defineStore('market-install', {
 			const result = !!response.data ? response.data : response;
 			this.installResult = result;
 
+			if (!result.error && this.appInfo.hasOwnProperty('ADDITIONAL_ACTION') && this.appInfo.ADDITIONAL_ACTION) {
+				try {
+					eval(this.appInfo.ADDITIONAL_ACTION);
+				} catch (e) {}
+			}
+
 			if (!!result.error) {
 				if (!!result.helperCode && result.helperCode !== '') {
 					top.BX.UI.InfoHelper.show(result.helperCode);
@@ -190,6 +199,13 @@ export const marketInstallState = defineStore('market-install', {
 				if (!!result.installed) {
 					let eventResult = {};
 					top.BX.onCustomEvent(top, 'Rest:AppLayout:ApplicationInstall', [true, eventResult], false);
+				}
+
+				if (this.appInfo.TYPE === 'B')
+				{
+					this.openApplication();
+
+					return;
 				}
 
 				if (this.isConfigurationAppInstall()) {

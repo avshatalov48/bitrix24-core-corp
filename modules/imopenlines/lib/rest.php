@@ -18,6 +18,7 @@ use Bitrix\Im;
 
 use Bitrix\Rest\AccessException;
 use Bitrix\Rest\Exceptions\ArgumentNullException;
+use Bitrix\Rest\Exceptions\ArgumentTypeException;
 use Bitrix\Rest\SessionAuth;
 use Bitrix\Rest\RestException;
 
@@ -1720,7 +1721,7 @@ class Rest extends \IRestService
 	}
 
 	/**
-	 * @param $arParams
+	 * @param array $arParams
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return array|bool|int
@@ -1734,7 +1735,7 @@ class Rest extends \IRestService
 	}
 
 	/**
-	 * @param $arParams
+	 * @param array $arParams
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return bool
@@ -1762,12 +1763,13 @@ class Rest extends \IRestService
 	/**
 	 * Add user to chat by connected crm entity data
 	 *
-	 * @param $arParams
+	 * @param array $arParams
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return int
 	 * @throws AccessException
 	 * @throws ArgumentNullException
+	 * @throws ArgumentTypeException
 	 * @throws RestException
 	 */
 	public static function crmChatUserAdd($arParams, $n, \CRestServer $server)
@@ -1781,6 +1783,11 @@ class Rest extends \IRestService
 		{
 			throw new ArgumentNullException('CRM_ENTITY');
 		}
+		if (!is_numeric($arParams['CRM_ENTITY']) || (int)$arParams['CRM_ENTITY'] <= 0)
+		{
+			throw new ArgumentTypeException('CRM_ENTITY');
+		}
+		$arParams['CRM_ENTITY'] = (int)$arParams['CRM_ENTITY'];
 
 		if (!Loader::includeModule('im'))
 		{
@@ -1854,6 +1861,11 @@ class Rest extends \IRestService
 
 	/**
 	 * Remove user from chat by connected crm entity data
+	 *
+	 * @throws RestException
+	 * @throws ArgumentTypeException
+	 * @throws AccessException
+	 * @return int
 	 */
 	public static function crmChatUserDelete($arParams, $n, \CRestServer $server)
 	{
@@ -1867,6 +1879,11 @@ class Rest extends \IRestService
 		{
 			throw new RestException('Empty CRM data', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
 		}
+		if (!is_numeric($arParams['CRM_ENTITY']) || (int)$arParams['CRM_ENTITY'] <= 0)
+		{
+			throw new ArgumentTypeException('CRM_ENTITY');
+		}
+		$arParams['CRM_ENTITY'] = (int)$arParams['CRM_ENTITY'];
 
 		if (!Loader::includeModule('im'))
 		{
@@ -1923,7 +1940,12 @@ class Rest extends \IRestService
 	}
 
 	/**
-	 * Get last chat id from crm entity data
+	 * Get last chat id from crm entity data.
+	 *
+	 * @param array $arParams
+	 * @throws ArgumentTypeException
+	 * @throws RestException
+	 * @return int
 	 */
 	public static function crmLastChatIdGet($arParams, $n, \CRestServer $server): int
 	{
@@ -1931,6 +1953,11 @@ class Rest extends \IRestService
 		{
 			throw new RestException('Empty CRM data', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
 		}
+		if (!is_numeric($arParams['CRM_ENTITY']) || (int)$arParams['CRM_ENTITY'] <= 0)
+		{
+			throw new ArgumentTypeException('CRM_ENTITY');
+		}
+		$arParams['CRM_ENTITY'] = (int)$arParams['CRM_ENTITY'];
 
 		$chatId = Crm\Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
 
@@ -1945,12 +1972,13 @@ class Rest extends \IRestService
 	/**
 	 * Get active chats for CRM entity
 	 *
-	 * @param $arParams
+	 * @param array $arParams
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return array
 	 * @throws AccessException
 	 * @throws ArgumentNullException
+	 * @throws ArgumentTypeException
 	 */
 	public static function getCrmChats($arParams, $n, \CRestServer $server)
 	{
@@ -1963,6 +1991,11 @@ class Rest extends \IRestService
 		{
 			throw new ArgumentNullException('CRM_ENTITY');
 		}
+		if (!is_numeric($arParams['CRM_ENTITY']) || (int)$arParams['CRM_ENTITY'] <= 0)
+		{
+			throw new ArgumentTypeException('CRM_ENTITY');
+		}
+		$arParams['CRM_ENTITY'] = (int)$arParams['CRM_ENTITY'];
 
 		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
 		{
@@ -1975,11 +2008,12 @@ class Rest extends \IRestService
 	/**
 	 * Send a message to the CRM chat from a user who has access to this chat
 	 *
-	 * @param $arParams
+	 * @param array $arParams
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return int
 	 * @throws ArgumentNullException
+	 * @throws ArgumentTypeException
 	 * @throws AccessException
 	 * @throws RestException
 	 */
@@ -1994,16 +2028,31 @@ class Rest extends \IRestService
 		{
 			throw new ArgumentNullException('CRM_ENTITY');
 		}
+		if (!is_numeric($arParams['CRM_ENTITY']) || (int)$arParams['CRM_ENTITY'] <= 0)
+		{
+			throw new ArgumentTypeException('CRM_ENTITY');
+		}
+		$arParams['CRM_ENTITY'] = (int)$arParams['CRM_ENTITY'];
 
 		if (empty($arParams['USER_ID']))
 		{
 			throw new ArgumentNullException('USER_ID');
 		}
+		if (!is_numeric($arParams['USER_ID']) || (int)$arParams['USER_ID'] <= 0)
+		{
+			throw new ArgumentTypeException('USER_ID');
+		}
+		$arParams['USER_ID'] = (int)$arParams['USER_ID'];
 
 		if (empty($arParams['CHAT_ID']))
 		{
 			throw new ArgumentNullException('CHAT_ID');
 		}
+		if (!is_numeric($arParams['CHAT_ID']) || (int)$arParams['CHAT_ID'] <= 0)
+		{
+			throw new ArgumentTypeException('CHAT_ID');
+		}
+		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
 
 		if (empty($arParams['MESSAGE']))
 		{
@@ -2015,17 +2064,17 @@ class Rest extends \IRestService
 			throw new AccessException('You dont have access to this action');
 		}
 
-		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], (int)$arParams['USER_ID']))
+		if (!Crm\Common::hasAccessToEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], $arParams['USER_ID']))
 		{
 			throw new AccessException('User dont have access to this entity');
 		}
 
-		if (!Crm\Common::checkChatOfCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], (int)$arParams['CHAT_ID']))
+		if (!Crm\Common::checkChatOfCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY'], $arParams['CHAT_ID']))
 		{
 			throw new RestException('Chat does not belong to the CRM entity being checked', 'CHAT_NOT_IN_CRM', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$messageId = Chat::sendMessageFromUser($arParams['MESSAGE'], (int)$arParams['CHAT_ID'], (int)$arParams['USER_ID']);
+		$messageId = Chat::sendMessageFromUser($arParams['MESSAGE'], $arParams['CHAT_ID'], $arParams['USER_ID']);
 		if (!$messageId)
 		{
 			throw new RestException('Message isn\'t added', 'MESSAGE_ADD_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
@@ -2034,6 +2083,13 @@ class Rest extends \IRestService
 		return $messageId;
 	}
 
+	/**
+	 * @param array $arParams
+	 * @param $n
+	 * @param \CRestServer $server
+	 * @return bool
+	 * @throws RestException
+	 */
 	public static function crmCreateLead($arParams, $n, \CRestServer $server): bool
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
@@ -2070,7 +2126,9 @@ class Rest extends \IRestService
 	public static function getAllSoftPause($arParams, $n, \CRestServer $server): array
 	{
 		$permission = Permissions::createWithCurrentUser();
-		if(!$permission->canPerform(Permissions::ENTITY_SOFT_PAUSE_LIST, Permissions::ACTION_VIEW))
+		if(
+			!isset(Permissions::getMap()[Permissions::ENTITY_SOFT_PAUSE_LIST])
+			|| !$permission->canPerform(Permissions::ENTITY_SOFT_PAUSE_LIST, Permissions::ACTION_VIEW))
 		{
 			throw new RestException('You dont have access to this action', 'ACCESS_DENIED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
@@ -2081,7 +2139,9 @@ class Rest extends \IRestService
 	public static function getSoftPauseHistory($arParams, $n, \CRestServer $server): array
 	{
 		$permission = Permissions::createWithCurrentUser();
-		if(!$permission->canPerform(Permissions::ENTITY_SOFT_PAUSE_LIST, Permissions::ACTION_VIEW))
+		if(
+			!isset(Permissions::getMap()[Permissions::ENTITY_SOFT_PAUSE_LIST])
+			|| !$permission->canPerform(Permissions::ENTITY_SOFT_PAUSE_LIST, Permissions::ACTION_VIEW))
 		{
 			throw new RestException('You dont have access to this action', 'ACCESS_DENIED', \CRestServer::STATUS_WRONG_REQUEST);
 		}

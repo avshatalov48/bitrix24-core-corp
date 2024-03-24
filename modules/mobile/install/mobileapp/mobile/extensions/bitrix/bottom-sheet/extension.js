@@ -51,7 +51,12 @@ jn.define('bottom-sheet', (require, exports, module) => {
 			this.widget = null;
 
 			/** @type {BottomSheetWidgetOptions} */
-			this.widgetOptions = DEFAULT_WIDGET_PARAMS;
+			this.widgetOptions = {
+				...DEFAULT_WIDGET_PARAMS,
+				backdrop: {
+					...DEFAULT_WIDGET_PARAMS.backdrop,
+				},
+			};
 
 			if (Type.isStringFilled(title))
 			{
@@ -511,7 +516,8 @@ jn.define('bottom-sheet', (require, exports, module) => {
 						this.widget.showComponent(component);
 
 						resolve(this.widget);
-					});
+					})
+					.catch(console.error);
 			});
 		}
 

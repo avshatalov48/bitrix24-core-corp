@@ -20,15 +20,25 @@ jn.define('tasks/entry', (require, exports, module) => {
 			return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
 		}
 
-		static async openEfficiency(data)
+		static async checkToolAvailable(toolId, infoCode)
 		{
-			const effectiveDisabled = await checkDisabledToolById('effective');
-
-			if (effectiveDisabled)
+			const toolDisabled = await checkDisabledToolById(toolId);
+			if (toolDisabled)
 			{
-				const sliderUrl = await InfoHelper.getUrlByCode('limit_tasks_off');
+				const sliderUrl = await InfoHelper.getUrlByCode(infoCode);
 				helpdesk.openHelp(sliderUrl);
 
+				return false;
+			}
+
+			return true;
+		}
+
+		static async openEfficiency(data)
+		{
+			const efficiencyAvailable = await Entry.checkToolAvailable('effective', 'limit_tasks_off');
+			if (!efficiencyAvailable)
+			{
 				return;
 			}
 
@@ -50,13 +60,9 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 		static async openTask(data, params = {})
 		{
-			const tasksDisabled = await checkDisabledToolById('tasks');
-
-			if (tasksDisabled)
+			const taskAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
+			if (!taskAvailable)
 			{
-				const sliderUrl = await InfoHelper.getUrlByCode('limit_tasks_off');
-				helpdesk.openHelp(sliderUrl);
-
 				return;
 			}
 
@@ -217,13 +223,9 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 		static async openTaskList(data)
 		{
-			const tasksDisabled = await checkDisabledToolById('tasks');
-
-			if (tasksDisabled)
+			const tasksAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
+			if (!tasksAvailable)
 			{
-				const sliderUrl = await InfoHelper.getUrlByCode('limit_tasks_off');
-				helpdesk.openHelp(sliderUrl);
-
 				return;
 			}
 

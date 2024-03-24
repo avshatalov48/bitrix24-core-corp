@@ -6,8 +6,8 @@ use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\ActivityBindingTable;
 use Bitrix\Crm\Pseudoactivity\WaitEntry;
-use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Crm\Traits;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 
@@ -77,12 +77,13 @@ class QueryEntityActivityCounter
 	/**
 	 * @param int $entityTypeId
 	 * @param array $entityIds
+	 * @param int|null $limit
 	 * @return array{
 	 *     ACTIVITY_ID: int,
 	 *     OWNER_ID: int
 	 * }
 	 */
-	public function queryBindings(int $entityTypeId, array $entityIds): array
+	public function queryBindings(int $entityTypeId, array $entityIds, ?int $limit = null): array
 	{
 		return ActivityBindingTable::getList([
 			'select' => [
@@ -93,6 +94,7 @@ class QueryEntityActivityCounter
 				'OWNER_ID' => $entityIds,
 				'OWNER_TYPE_ID' => $entityTypeId,
 			],
+			'limit' => $limit,
 		])->fetchAll();
 	}
 

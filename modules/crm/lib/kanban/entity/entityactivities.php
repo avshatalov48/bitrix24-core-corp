@@ -7,6 +7,7 @@ use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Entity\EntityManager;
 use Bitrix\Crm\Filter\Activity\ExtractUsersFromFilter;
 use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\Application;
@@ -14,6 +15,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use CCrmDateTimeHelper;
 
 class EntityActivities
 {
@@ -25,6 +27,7 @@ class EntityActivities
 	public const STAGE_NEXT_WEEK = 'NEXT_WEEK';
 	public const STAGE_IDLE = 'IDLE';
 	public const STAGE_LATER = 'LATER';
+	public const STAGE_COMPLETED = 'COMPLETED';
 
 	protected int $entityTypeId;
 	protected ?int $categoryId = null;
@@ -43,38 +46,58 @@ class EntityActivities
 				'NAME' => Loc::getMessage('KANBAN_ACTIVITY_STAGE_OVERDUE'),
 				'COLOR' => '#ff5752',
 				'BLOCKED_INCOMING_MOVING' => true,
+				'SEMANTICS' => PhaseSemantics::PROCESS,
 			],
 			[
 				'STATUS_ID' => self::STAGE_PENDING,
 				'NAME' => Loc::getMessage('KANBAN_ACTIVITY_STAGE_PENDING'),
 				'COLOR' => '#7bd500',
+				'SEMANTICS' => PhaseSemantics::PROCESS,
 			],
 			[
 				'STATUS_ID' => self::STAGE_THIS_WEEK,
 				'NAME' => Loc::getMessage('KANBAN_ACTIVITY_STAGE_THIS_WEEK'),
 				'COLOR' => '#2fc6f6',
+				'SEMANTICS' => PhaseSemantics::PROCESS,
 			],
 			[
 				'STATUS_ID' => self::STAGE_NEXT_WEEK,
 				'NAME' => Loc::getMessage('KANBAN_ACTIVITY_STAGE_NEXT_WEEK'),
 				'COLOR' => '#55d0e0',
+				'SEMANTICS' => PhaseSemantics::PROCESS,
 			],
 			[
 				'STATUS_ID' => self::STAGE_IDLE,
 				'NAME' => Loc::getMessage('KANBAN_ACTIVITY_STAGE_IDLE'),
 				'COLOR' => '#9eacc2',
 				'BLOCKED_INCOMING_MOVING' => true,
+				'SEMANTICS' => PhaseSemantics::PROCESS,
 			],
 			[
 				'STATUS_ID' =>self::STAGE_LATER,
 				'NAME' => Loc::getMessage('KANBAN_ACTIVITY_STAGE_LATER'),
 				'COLOR' => '#3373bb',
+				'SEMANTICS' => PhaseSemantics::PROCESS,
 			],
 		];
 
+		$this->appendStagesForActivityType($stageList);
 		$this->prepareStagesList($stageList, $categoryId);
 
 		return $stageList;
+	}
+
+	protected function appendStagesForActivityType(array &$stageList): void
+	{
+		if ($this->entityTypeId === \CCrmOwnerType::Activity)
+		{
+			$stageList[] = [
+				'STATUS_ID' => self::STAGE_COMPLETED,
+				'NAME' => Loc::getMessage('KANBAN_ACTIVITY_STAGE_COMPLETED'),
+				'COLOR' => '#73bb33',
+				'SEMANTICS' => PhaseSemantics::SUCCESS,
+			];
+		}
 	}
 
 	protected function prepareStagesList(array &$items, ?int $categoryId = 0): void
@@ -120,6 +143,11 @@ class EntityActivities
 		$params['columnId'] = $stageId;
 		$params['filter'] = $this->prepareCounterFilter($stageId, $filter);
 
+		if ($this->entityTypeId === \CCrmOwnerType::Activity)
+		{
+			$params['order'] = ['CREATED' => 'DESC'];
+		}
+
 		return $params;
 	}
 
@@ -128,12 +156,12 @@ class EntityActivities
 		$entityManager = EntityManager::resolveByTypeID($this->entityTypeId);
 		if (!$entityManager)
 		{
-			return 0;
+			return -1;
 		}
 		$stagesIds = array_column($this->getStagesList($this->categoryId), 'STATUS_ID');
 		if (!in_array($stageId, $stagesIds, true))
 		{
-			return 0;
+			return -1;
 		}
 
 		// if today is last week day, STAGE_THIS_WEEK cannot contain items:
@@ -142,13 +170,13 @@ class EntityActivities
 			$lastWeekDay = $this->getLastWeekDay(new DateTime());
 			if ($lastWeekDay->getTimestamp() === (new Date())->getTimestamp())
 			{
-				return 0;
+				return -1;
 			}
 		}
 
 		if ($this->isStageSkippedByActivitiesFilter($stageId, $this->getActivityCounterFilterValue($filter)))
 		{
-			return 0;
+			return -1;
 		}
 
 		$stageFilter = $this->prepareCounterFilter($stageId, $filter);
@@ -158,10 +186,40 @@ class EntityActivities
 		]);
 	}
 
+	// @todo prototype. we do not make requests for certain stages if we filter by counters
+	public function calculateTotalForActivityStage(string $stageId, array $filter): int
+	{
+		$stages = [
+			self::STAGE_OVERDUE,
+			self::STAGE_THIS_WEEK,
+			self::STAGE_NEXT_WEEK,
+			self::STAGE_LATER,
+			self::STAGE_IDLE,
+		];
+		if (in_array($stageId, $stages, true))
+		{
+			$activityCounters = $filter['ACTIVITY_COUNTER'] ?? null;
+
+			if (
+				$stageId === self::STAGE_OVERDUE
+				&& is_array($activityCounters)
+				&& in_array(EntityCounterType::OVERDUE, $activityCounters)
+			)
+			{
+				return 0;
+			}
+
+			return $activityCounters ? -1 : 0;
+		}
+
+		return 0;
+	}
+
 	public function prepareItemsResult(string $columnId, \CDBResult $rawResult, array $filter = []): \CDBResult
 	{
 		$items = [];
 
+		$maxDate = CCrmDateTimeHelper::GetMaxDatabaseDate(false);
 		while ($item = $rawResult->Fetch())
 		{
 			$item[self::ACTIVITY_STAGE_ID] = (
@@ -169,6 +227,16 @@ class EntityActivities
 					? $this->getStatusIdByCategoryId(self::STAGE_IDLE, $this->categoryId)
 					: $columnId
 			);
+			if (!empty($item['DEADLINE']))
+			{
+				$deadline = DateTime::createFromUserTime($item['DEADLINE'])->disableUserTime()->toString();
+				if ($maxDate === $deadline)
+				{
+					$item['DRAGGABLE'] = false;
+					unset($item['DEADLINE']);
+				}
+			}
+
 			$items[$item['ID']] = $item;
 		}
 
@@ -247,12 +315,19 @@ class EntityActivities
 
 		$entity = EntityManager::resolveByTypeID($this->entityTypeId);
 
+		if ($entity->getEntityTypeID() === \CCrmOwnerType::Activity)
+		{
+			$responsibleFiledName = 'RESPONSIBLE_ID';
+		}
+		else
+		{
+			$responsibleFiledName = CounterSettings::getInstance()->useActivityResponsible()
+				? 'ACTIVITY_RESPONSIBLE_IDS'
+				: 'ASSIGNED_BY_ID';
+		}
+
 		$counterUserIds = [];
 		$excludeUsers = false;
-
-		$responsibleFiledName = CounterSettings::getInstance()->useActivityResponsible()
-			? 'ACTIVITY_RESPONSIBLE_IDS'
-			: 'ASSIGNED_BY_ID';
 
 		$currentUserId = Container::getInstance()->getContext()->getUserId();
 		if (isset($filter[$responsibleFiledName]) || isset($filter['!'.$responsibleFiledName]))
@@ -417,6 +492,17 @@ class EntityActivities
 				$counterExtras['ONLY_MIN_DEADLINE'] = true;
 
 				$counterExtras['ACT_VIEW_RESTRICT_DEADLINE_FROM'] = $lastWeekDay;
+
+				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
+					$this->entityTypeId,
+					$counterType,
+					0,
+					$counterExtras
+				);
+			case $this->getStatusIdByCategoryId(self::STAGE_COMPLETED, $this->categoryId):
+				$counterType = EntityCounterType::ALL;
+
+				$counterExtras['COMPLETED'] = true;
 
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,

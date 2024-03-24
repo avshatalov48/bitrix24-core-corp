@@ -11,5 +11,6 @@ $MESS["TASKS_QUICK_DEADLINE"] = "Крайний срок";
 $MESS["TASKS_QUICK_SAVE"] = "Сохранить";
 $MESS["TASKS_QUICK_CANCEL"] = "Отменить";
 $MESS["TASKS_QUICK_RESPONSIBLE"] = "Ответственный";
+$MESS["TASKS_QUICK_ASSIGNEE"] = "Исполнитель";
 $MESS["TASKS_QUICK_IN_GROUP"] = "задача в проекте";
 $MESS["TASKS_QUICK_DESCRIPTION"] = "описание";

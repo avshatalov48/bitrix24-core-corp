@@ -4,6 +4,7 @@ use Bitrix\Crm\Category\Entity\ItemCategory;
 use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\ClientResolver;
@@ -486,6 +487,51 @@ class CCrmComponentHelper
 			'placeholder' => ClientResolver::getClientResolverPlaceholderText($countryId),
 			'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams(),
 			'clientResolverPlacementParams' => $placementParams
+		];
+	}
+
+	public static function getBankDetailsAutocompleteFieldInfoData(int $countryId): array
+	{
+		$enabled = false;
+		$title = '';
+
+		if (
+			$countryId === 1    // ru
+			&& RestrictionManager::isDetailsSearchByInnPermitted()
+		)
+		{
+			$enabled = true;
+			$bankDetailsEntity = new EntityBankDetail();
+			$titles = $bankDetailsEntity->getFieldsTitles($countryId);
+			$title = $titles['RQ_BIK'];
+		}
+
+		/*$featureRestriction = ClientResolver::getRestriction($countryId);*/
+
+		return [
+			'enabled' => $enabled,
+			'featureRestrictionCallback' =>/*
+				$featureRestriction ? $featureRestriction->prepareInfoHelperScript() :*/ ''
+			,
+			'placeholder' => ClientResolver::getClientResolverPlaceholderTextByTitle($title),
+			/*'feedback_form' => EntityRequisite::getBankDetailsFeedbackFormParams(),*/
+			'clientResolverProperty' => [
+				'VALUE' => ClientResolver::PROP_BIC,
+				'TITLE' => $title,
+				'IS_PLACEMENT' => 'N',
+				'COUNTRY_ID' => $countryId,
+			],
+			'clientResolverPlacementParams' => [
+				'isPlacement' => false,
+				'numberOfPlacements' => 0,
+				'countryId' => $countryId,
+				'defaultAppInfo' => [
+					'code' => '',
+					'title' => '',
+					'isAvailable' => 'N',
+					'isInstalled' => 'N',
+				],
+			],
 		];
 	}
 

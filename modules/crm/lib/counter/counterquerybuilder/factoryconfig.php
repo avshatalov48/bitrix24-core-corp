@@ -16,6 +16,8 @@ final class FactoryConfig
 
 	private ?bool $onlyMinIncomingChannel;
 
+	private ?int $entityTypeId = null;
+
 	public function __construct(
 		bool $readyUncompletedActivity,
 		bool $readyCountableActivity,
@@ -111,4 +113,15 @@ final class FactoryConfig
 		);
 	}
 
+	public function setEntityTypeId(int $entityTypeId): self
+	{
+		$this->entityTypeId = $entityTypeId;
+
+		return $this;
+	}
+
+	public function getEntityTypeId(): ?int
+	{
+		return $this->entityTypeId;
+	}
 }

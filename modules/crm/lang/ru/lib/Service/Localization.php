@@ -83,6 +83,7 @@ $MESS["CRM_COMMON_ACTIVITY"] = "Дела";
 $MESS["CRM_COMMON_CALENDAR"] = "Календарь";
 $MESS["CRM_COMMON_CATEGORY"] = "Воронка";
 $MESS["CRM_COMMON_DEADLINES"] = "Сроки";
+$MESS["CRM_COMMON_REPORTS"] = "Отчёты";
 $MESS["CRM_COMMON_CLIENT_CATEGORY"] = "Категория";
 $MESS["CRM_COMMON_CREATED_TIME"] = "Дата создания";
 $MESS["CRM_COMMON_MODIFY_DATE"] = "Дата изменения";
@@ -182,6 +183,7 @@ $MESS["CRM_TYPE_ITEM_FIELD_HAS_EMAIL"] = "Задан e-mail";
 $MESS["CRM_TYPE_ITEM_FIELD_HAS_IMOL"] = "Задана открытая линия";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER"] = "Номер счёта";
 $MESS["CRM_TYPE_SMART_DOCUMENT_FIELD_NUMBER"] = "Номер документа";
+$MESS["CRM_TYPE_SMART_B2E_DOC_FIELD_NUMBER"] = "Номер документа";
 
 $MESS["CRM_TYPE_QUOTE_FIELD_FILES"] = "Файлы";
 $MESS["CRM_TYPE_QUOTE_FIELD_STATUS_MSGVER_2"] = "Стадия предложения";

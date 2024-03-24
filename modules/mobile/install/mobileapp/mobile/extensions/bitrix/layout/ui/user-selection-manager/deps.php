@@ -2,20 +2,26 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'assets/icons',
-
-		'utils/url',
+		'bottom-sheet',
+		'haptics',
+		'layout/ui/bottom-toolbar',
+		'layout/ui/safe-image',
+		'layout/ui/scroll-view',
+		'layout/ui/user/empty-avatar',
+		'loc',
+		'selector/widget/factory',
+		'toast',
+		'user/profile',
+		'user/profile/profile-viewer',
 		'utils/color',
 		'utils/object',
+		'utils/url',
 		'utils/validation',
-
-		'layout/ui/safe-image',
-		'selector/widget/factory',
-		'user/profile/view-profile-backdrop',
 	],
 	'bundle' => [
-		'./src/user-selected-list',
 		'./src/selection-manager',
-		'./src/backdrop',
+		'./src/user-selected-list',
 	],
 ];

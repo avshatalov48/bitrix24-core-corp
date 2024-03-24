@@ -823,9 +823,9 @@ class FormHandler
 	 * @param string $formName
 	 * @return string
 	 */
-	public static function buildSentFormMessageForOperator(string $formName): string
+	public static function buildSentFormMessageForOperator(string $formName, ?string $lang = null): string
 	{
-		return '[B]' . Loc::getMessage('IMOL_LCC_FORM_SENT') . ' "' . $formName . '"[/B]';
+		return '[B]' . Loc::getMessage('IMOL_LCC_FORM_SENT', null, $lang) . ' "' . $formName . '"[/B]';
 	}
 
 	/**

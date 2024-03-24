@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,main_date,crm_datetime) {
+(function (exports,main_date) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -13,11 +13,15 @@ this.BX.Crm = this.BX.Crm || {};
 	let DatetimeConverter = /*#__PURE__*/function () {
 	  babelHelpers.createClass(DatetimeConverter, null, [{
 	    key: "createFromServerTimestamp",
+	    // date object which absolute time will be the same as if it was in server timezone
 	    /**
-	     * @param timestamp Timestamp in server timezone
+	     * @param timestamp Normal UTC timestamp, as it should be
 	     */
 	    value: function createFromServerTimestamp(timestamp) {
-	      const date = crm_datetime.Factory.createFromTimestampInServerTimezone(timestamp);
+	      const offset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
+
+	      // make a date object which absolute time will match time of server (even though it has different timezone)
+	      const date = new Date((timestamp + offset) * 1000);
 	      return new DatetimeConverter(date);
 	    }
 	  }]);
@@ -39,9 +43,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _timeFormat, main_core.Loc.getMessage('CRM_TIMELINE_TIME_FORMAT'));
-	    babelHelpers.classPrivateFieldSet(this, _shortDateFormat, main_core.Loc.getMessage('CRM_TIMELINE_SHORT_DATE_FORMAT'));
-	    babelHelpers.classPrivateFieldSet(this, _fullDateFormat, main_core.Loc.getMessage('CRM_TIMELINE_FULL_DATE_FORMAT'));
+	    babelHelpers.classPrivateFieldSet(this, _timeFormat, main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT'));
+	    babelHelpers.classPrivateFieldSet(this, _shortDateFormat, main_date.DateTimeFormat.getFormat('DAY_SHORT_MONTH_FORMAT'));
+	    babelHelpers.classPrivateFieldSet(this, _fullDateFormat, main_date.DateTimeFormat.getFormat('MEDIUM_DATE_FORMAT'));
 	    babelHelpers.classPrivateFieldSet(this, _datetime, datetime);
 	  }
 	  babelHelpers.createClass(DatetimeConverter, [{
@@ -52,8 +56,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "toUserTime",
 	    value: function toUserTime() {
-	      const serverTimestamp = Math.floor(babelHelpers.classPrivateFieldGet(this, _datetime).getTime() / 1000);
-	      babelHelpers.classPrivateFieldSet(this, _datetime, new Date(crm_datetime.TimestampConverter.serverToUser(serverTimestamp) * 1000));
+	      const timestampServer = Math.floor(babelHelpers.classPrivateFieldGet(this, _datetime).getTime() / 1000);
+
+	      // make a date object which absolute time will match time of user (even though it has different timezone)
+	      babelHelpers.classPrivateFieldSet(this, _datetime, new Date((timestampServer + main_date.Timezone.Offset.USER_TO_SERVER) * 1000));
 	      return this;
 	    }
 	  }, {
@@ -73,7 +79,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "toDateString",
 	    value: function toDateString() {
-	      return main_date.DateTimeFormat.format([['today', 'today'], ['tommorow', 'tommorow'], ['yesterday', 'yesterday'], ['', babelHelpers.classPrivateFieldGet(this, _datetime).getFullYear() === crm_datetime.Factory.getUserNow().getFullYear() ? babelHelpers.classPrivateFieldGet(this, _shortDateFormat) : babelHelpers.classPrivateFieldGet(this, _fullDateFormat)]], babelHelpers.classPrivateFieldGet(this, _datetime)).replaceAll('\\', '');
+	      return main_date.DateTimeFormat.format([['today', 'today'], ['tommorow', 'tommorow'], ['yesterday', 'yesterday'], ['', babelHelpers.classPrivateFieldGet(this, _datetime).getFullYear() === main_date.Timezone.UserTime.getDate().getFullYear() ? babelHelpers.classPrivateFieldGet(this, _shortDateFormat) : babelHelpers.classPrivateFieldGet(this, _fullDateFormat)]], babelHelpers.classPrivateFieldGet(this, _datetime)).replaceAll('\\', '');
 	    }
 	  }, {
 	    key: "toFormatString",
@@ -83,12 +89,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "getSiteDateFormat",
 	    value: function getSiteDateFormat() {
-	      return main_date.DateTimeFormat.convertBitrixFormat(main_core.Loc.getMessage('FORMAT_DATE'));
+	      return main_date.DateTimeFormat.getFormat('FORMAT_DATE');
 	    }
 	  }, {
 	    key: "getSiteDateTimeFormat",
 	    value: function getSiteDateTimeFormat() {
-	      return main_date.DateTimeFormat.convertBitrixFormat(main_core.Loc.getMessage('FORMAT_DATETIME'));
+	      return main_date.DateTimeFormat.getFormat('FORMAT_DATETIME');
 	    }
 	  }]);
 	  return DatetimeConverter;
@@ -96,5 +102,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.DatetimeConverter = DatetimeConverter;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.Main,BX.Crm.DateTime));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Main));
 //# sourceMappingURL=tools.bundle.js.map

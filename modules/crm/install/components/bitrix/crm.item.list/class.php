@@ -216,8 +216,6 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			foreach ($items as $item)
 			{
 				$operation = $this->factory->getDeleteOperation($item);
-				// permissions have been checked above
-				$operation->disableCheckAccess();
 				$operation->launch();
 			}
 		}
@@ -308,7 +306,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$canDelete = Container::getInstance()->getUserPermissions()->checkDeletePermissions(
 			$this->factory->getEntityTypeId(),
 			0,
-			(int)$this->getCategoryId()
+			$this->getCategoryId()
 		);
 		$grid['SHOW_ROW_CHECKBOXES'] = $canDelete;
 		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = $canDelete;

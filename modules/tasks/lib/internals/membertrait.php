@@ -2,54 +2,44 @@
 
 namespace Bitrix\Tasks\Internals;
 
-use Bitrix\Tasks\Access\Role\RoleDictionary;
-use Bitrix\Tasks\Member\Config\BaseConfig;
-use Bitrix\Tasks\Member\Type\Member;
+use Bitrix\Tasks\Internals\Member\MemberFacade;
 
 trait MemberTrait
 {
+	protected ?MemberFacade $memberFacade = null;
+
 	public function getResponsibleMemberId(): ?int
 	{
-		return $this->getMemberId(RoleDictionary::ROLE_RESPONSIBLE);
+		return $this->getFacade()->getResponsibleMemberId();
 	}
 
 	public function getCreatedByMemberId(): ?int
 	{
-		return $this->getMemberId(RoleDictionary::ROLE_DIRECTOR);
-	}
-
-	private function getMemberId(string $role): ?int
-	{
-		$result = $this->getMemberService()->get([$role], new BaseConfig());
-		if (!$result->isSuccess() || empty($result->getData()[$role]))
-		{
-			return null;
-		}
-
-		/** @var Member $member */
-		$member = array_pop($result->getData()[$role]);
-
-		return $member->getUserId();
+		return $this->getFacade()->getCreatedByMemberId();
 	}
 
 	public function getAccompliceMembersIds(): array
 	{
-		return $this->getMembersIdsByRole(RoleDictionary::ROLE_ACCOMPLICE);
+		return $this->getFacade()->getAccompliceMembersIds();
 	}
 
 	public function getAuditorMembersIds(): array
 	{
-		return $this->getMembersIdsByRole(RoleDictionary::ROLE_AUDITOR);
+		return $this->getFacade()->getAuditorMembersIds();
 	}
 
-	private function getMembersIdsByRole(string $role): array
+	public function getMembersIdsByRole(string $role): array
 	{
-		$result = $this->getMemberService()->get([$role], new BaseConfig());
-		if (!$result->isSuccess() || empty($result->getData()[$role]))
+		return $this->getFacade()->getMemberIds($role);
+	}
+
+	protected function getFacade(): MemberFacade
+	{
+		if (is_null($this->memberFacade))
 		{
-			return [];
+			$this->memberFacade = new MemberFacade($this->getMemberService());
 		}
 
-		return array_map(static fn(Member $member): int => $member->getUserId(), $result->getData()[$role]);
+		return $this->memberFacade;
 	}
 }

@@ -54,28 +54,28 @@ jn.define('utils/phone', (require, exports, module) => {
 	 * Getting the default country code from the server to format the phone number
 	 * @returns {Promise}
 	 */
-	const fetchDefaultCountryCode = () =>
-		new Promise((resolve, reject) => {
-				const defaultCountryCode = storage.get(storageKey);
+	const fetchDefaultCountryCode = () => {
+		return new Promise((resolve, reject) => {
+			const defaultCountryCode = storage.get(storageKey);
 
-				if (defaultCountryCode)
-				{
-					resolve(defaultCountryCode);
-					return;
-				}
+			if (defaultCountryCode)
+			{
+				resolve(defaultCountryCode);
 
-				BX.ajax.runAction('mobile.main.phone.getDefaultCountry', {})
-					.then(({ data }) => {
-						const countryCode = data || Application.getLang().toUpperCase();
-						storage.set(storageKey, countryCode);
-						resolve(countryCode);
-					})
-					.catch((response) => {
-						reject(response.errors);
-					});
+				return;
+			}
 
-			},
-		);
+			BX.ajax.runAction('mobile.main.phone.getDefaultCountry', {})
+				.then(({ data }) => {
+					const countryCode = data || Application.getLang().toUpperCase();
+					storage.set(storageKey, countryCode);
+					resolve(countryCode);
+				})
+				.catch((response) => {
+					reject(response.errors);
+				});
+		});
+	};
 
 	fetchDefaultCountryCode();
 

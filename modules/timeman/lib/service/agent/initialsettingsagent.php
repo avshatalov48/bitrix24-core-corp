@@ -47,12 +47,16 @@ class InitialSettingsAgent
 
 		if ($taskId)
 		{
-			Application::getConnection()
-				->query("
-					INSERT IGNORE INTO `b_timeman_task_access_code` (`TASK_ID`, `ACCESS_CODE`) 
-					VALUES ('" . $taskId . "', 'G2');"
+			$connection = \Bitrix\Main\Application::getConnection();
+			$helper = $connection->getSqlHelper();
+
+			$connection->query(
+				$helper->getInsertIgnore(
+					'b_timeman_task_access_code',
+					'(TASK_ID, ACCESS_CODE)',
+					"VALUES ('" . $taskId . "', 'G2')"
 				)
-			;
+			);
 		}
 
 		return '';
@@ -178,7 +182,7 @@ class InitialSettingsAgent
 			}
 			else
 			{
-				Application::getConnection()->query("INSERT INTO `b_timeman_work_calendar` (`NAME`, `SYSTEM_CODE`) 
+				Application::getConnection()->query("INSERT INTO b_timeman_work_calendar (NAME, SYSTEM_CODE) 
 					VALUES ('" . $calendarsData['NAME'] . "', '" . $calendarsData['SYSTEM_CODE'] . "');");
 				$calendarId = Application::getConnection()->getInsertedId();
 			}
@@ -195,8 +199,15 @@ class InitialSettingsAgent
 							continue;
 						}
 					}
-					Application::getConnection()->query("INSERT IGNORE INTO `b_timeman_work_calendar_exclusion` (`CALENDAR_ID`, `YEAR`, `DATES`)
-						 VALUES ($calendarId, $year, '$datesJson');");
+					$connection = \Bitrix\Main\Application::getConnection();
+					$helper = $connection->getSqlHelper();
+					$connection->query(
+						$helper->getInsertIgnore(
+							'b_timeman_work_calendar_exclusion',
+							'(CALENDAR_ID, YEAR, DATES)',
+						 	"VALUES ($calendarId, $year, '$datesJson')"
+						)
+					);
 				}
 			}
 		}

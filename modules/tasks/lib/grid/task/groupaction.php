@@ -416,7 +416,7 @@ class GroupAction
 	{
 		return [
 			[
-				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE'),
+				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_CHANGE_ASSIGNEE'),
 				'VALUE' => self::ACTION_SET_RESPONSIBLE,
 				'KEY' => 'responsible',
 			],

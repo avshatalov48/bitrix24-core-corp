@@ -3,14 +3,24 @@
 namespace Bitrix\BIConnector\Superset\Grid;
 
 use Bitrix\BIConnector\Superset\Grid\Row\Assembler\DashboardRowAssembler;
+use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\Main\Filter\Filter;
 use Bitrix\Main\Filter\Settings;
 use Bitrix\Main\Grid\Column\Columns;
 use Bitrix\Main\Grid\Grid;
 use Bitrix\Main\Grid\Row\Rows;
 
+/**
+ * @method DashboardSettings getSettings()
+ */
 final class DashboardGrid extends Grid
 {
+
+	public function setSupersetAvailability(bool $isSupersetAvailable): void
+	{
+		$this->getSettings()->setSupersetAvailability($isSupersetAvailable);
+	}
+
 	protected function createColumns(): Columns
 	{
 		return new Columns(
@@ -20,8 +30,8 @@ final class DashboardGrid extends Grid
 
 	protected function createRows(): Rows
 	{
-		return new Rows(
-			new DashboardRowAssembler([
+		$rowAssembler = new DashboardRowAssembler(
+			[
 				'TITLE',
 				'STATUS',
 				'CREATED_BY_ID',
@@ -30,7 +40,12 @@ final class DashboardGrid extends Grid
 				'EDIT_URL',
 				'FILTER_PERIOD',
 				'ID',
-			]),
+			],
+			$this->getSettings()
+		);
+		
+		return new Rows(
+			$rowAssembler,
 			new \Bitrix\BIConnector\Superset\Grid\Row\Action\DashboardDataProvider($this->getSettings())
 		);
 	}

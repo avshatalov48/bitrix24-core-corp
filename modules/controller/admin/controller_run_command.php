@@ -408,8 +408,7 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 		}
 		function compareMaps(map1, map2)
 		{
-			var testVal;
-			if (map1.size !== map2.size)
+			if (Object.getOwnPropertyNames(map1).length !== Object.getOwnPropertyNames(map2).length)
 			{
 				return false;
 			}
@@ -417,8 +416,8 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 			{
 				if (map1.hasOwnProperty(key))
 				{
-					val = map1[key];
-					testVal = map2[key];
+					var val = map1[key];
+					var testVal = map2[key];
 					// in cases of an undefined value, make sure the key
 					// actually exists on the object so there are no false positives
 					if (testVal !== val || (testVal === undefined && !map2.hasOwnProperty(key)))

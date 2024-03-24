@@ -8,7 +8,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 	const { ContentStub, UserStub, Counter, StepWrapper, StepContent, StepsListCollapsed } = require('bizproc/workflow/timeline/components');
 	const { PureComponent } = require('layout/pure-component');
 	const { SafeImage } = require('layout/ui/safe-image');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { ReduxAvatar } = require('layout/ui/user/avatar');
 	const { Loc } = require('loc');
 	const { dispatch } = require('statemanager/redux/store');
 	const { usersAdded } = require('statemanager/redux/slices/users');
@@ -1140,7 +1140,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 						},
 						onClick: () => this.openUserProfile(user.id),
 					},
-					Avatar({
+					ReduxAvatar({
 						id: user.id,
 					}),
 					View(

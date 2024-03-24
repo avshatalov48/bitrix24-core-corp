@@ -12,8 +12,10 @@ use Bitrix\Tasks\Internals\Task\EO_Template_Collection;
 use Bitrix\Tasks\Internals\Task\Template\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 
-class SyncTemplateScenario
+class SyncTemplateScenario implements AgentInterface
 {
+	use AgentTrait;
+
 	public const CURSOR_KEY = 'sync_templates_scenario_cursor';
 	public const LIMIT = 500;
 	private static bool $processing = false;
@@ -27,7 +29,7 @@ class SyncTemplateScenario
 	{
 		if (self::$processing)
 		{
-			return self::getAgentName();
+			return static::getAgentName();
 		}
 
 		self::$processing = true;
@@ -78,7 +80,7 @@ class SyncTemplateScenario
 			return '';
 		}
 
-		return self::getAgentName();
+		return static::getAgentName();
 	}
 
 	/**
@@ -134,13 +136,5 @@ class SyncTemplateScenario
 	private function setCursor(int $cursor): void
 	{
 		Option::set('tasks', self::CURSOR_KEY, $cursor);
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getAgentName(): string
-	{
-		return self::class . "::execute();";
 	}
 }

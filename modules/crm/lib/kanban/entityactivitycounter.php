@@ -4,8 +4,6 @@
 namespace Bitrix\Crm\Kanban;
 
 
-use Bitrix\Crm\Kanban\EntityActCounter;
-
 class EntityActivityCounter
 {
 	private EntityActCounter\CounterInfo $counterInfo;
@@ -104,6 +102,11 @@ class EntityActivityCounter
 	public function getCounters(): array
 	{
 		return $this->counterInfo->counters();
+	}
+
+	public function isLimitIsExceeded(): bool
+	{
+		return $this->counterInfo->isLimitIsExceeded();
 	}
 
 	private function getPreparedActivitiesByUser(array $activityCounters, string $activityId): array

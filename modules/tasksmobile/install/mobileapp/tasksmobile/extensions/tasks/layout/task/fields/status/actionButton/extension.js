@@ -4,6 +4,7 @@
 jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
+	const { TaskStatus } = require('tasks/enum');
 
 	const ICONS = {
 		play: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.6778 11.872L8.14943 5.13493C7.92478 4.97385 7.63206 4.95562 7.39033 5.08763C7.1486 5.21965 6.9981 5.47994 7.00004 5.76265V19.2362C6.99719 19.5193 7.14755 19.7803 7.38964 19.9125C7.63173 20.0447 7.92496 20.026 8.14943 19.8639L17.6778 13.1268C17.8793 12.986 18 12.7509 18 12.4994C18 12.2479 17.8793 12.0128 17.6778 11.872Z" fill="${AppTheme.colors.accentMainSuccess}"/></svg>`,
@@ -179,7 +180,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 						canPause: true,
 						canRenew: false,
 					});
-					this.props.task.updateData({ status: Task.statusList.inprogress });
+					this.props.task.updateData({ status: TaskStatus.IN_PROGRESS });
 					this.props.task.startTimer()
 						.then(
 							() => this.setState({ isTimerRunning: this.props.task.isTimerRunningForCurrentUser }),
@@ -208,7 +209,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 			};
 
 			return {
-				[Task.statusList.pending]: {
+				[TaskStatus.PENDING]: {
 					icon: (
 						this.props.isTimerExisting && this.state.isTimerRunning ? ICONS.pause : ICONS.play
 					),
@@ -229,7 +230,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 						}
 					},
 				},
-				[Task.statusList.inprogress]: {
+				[TaskStatus.IN_PROGRESS]: {
 					icon: (
 						this.props.isTimerExisting && !this.state.isTimerRunning ? ICONS.play : ICONS.pause
 					),
@@ -250,15 +251,15 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 						}
 					},
 				},
-				[Task.statusList.waitCtrl]: {
+				[TaskStatus.SUPPOSEDLY_COMPLETED]: {
 					icon: ICONS.renew,
 					onClick: renewHandler,
 				},
-				[Task.statusList.completed]: {
+				[TaskStatus.COMPLETED]: {
 					icon: ICONS.renew,
 					onClick: renewHandler,
 				},
-				[Task.statusList.deferred]: {
+				[TaskStatus.DEFERRED]: {
 					icon: ICONS.renew,
 					onClick: renewHandler,
 				},

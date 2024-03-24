@@ -20,7 +20,7 @@ jn.define('haptics', (require, exports, module) => {
 	const ImpactFeedbackStyleValues = Object.values(ImpactFeedbackStyle);
 
 	const vibrate = (arg) => {
-		if (Application.getApiVersion() >= 42 && typeof haptic !== 'undefined')
+		if (typeof haptic !== 'undefined')
 		{
 			haptic.vibrate(arg);
 		}
@@ -50,7 +50,7 @@ jn.define('haptics', (require, exports, module) => {
 		{
 			if (!Array.isArray(melody))
 			{
-				throw new Error('Melody must be an array of vibrations/pauses sequence in ms.');
+				throw new TypeError('Melody must be an array of vibrations/pauses sequence in ms.');
 			}
 
 			vibrate(melody);

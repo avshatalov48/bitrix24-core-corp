@@ -384,6 +384,16 @@ final class Company extends Service\Factory
 			;
 		}
 
+		if ($operation->getItem()->getIsMyCompany())
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\ClearDefaultMyCompanyCache(),
+				)
+			;
+		}
+
 		$operation
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
@@ -436,6 +446,16 @@ final class Company extends Service\Factory
 			;
 		}
 
+		if ($operation->getItem()->isChanged(Item\Company::FIELD_NAME_IS_MY_COMPANY))
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\ClearDefaultMyCompanyCache(),
+				)
+			;
+		}
+
 		$operation
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
@@ -466,6 +486,19 @@ final class Company extends Service\Factory
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SocialNetwork\ProcessDelete(),
 			)
+		;
+
+		if ($operation->getItem()->getIsMyCompany())
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\ClearDefaultMyCompanyCache(),
+				)
+			;
+		}
+
+		$operation
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmCompanyDelete')

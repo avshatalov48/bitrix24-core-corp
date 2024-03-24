@@ -1071,6 +1071,7 @@
 				this.ui.updateMiddle({}, middleButtons);*/
 			}
 
+
 			if (this.crmData.LEAD_URL && this.crmData.CAN_CREATE_LEAD)
 			{
 				crmData.createLeadEventName = 'create_by_phone_lead_' + this.phoneNumber;

@@ -109,6 +109,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			store.dispatch(fetchCrmKanbanSettings({
 				categoryId,
 				entityTypeId: this.props.entityTypeId,
+				forceFetch: true,
 			}));
 		}
 
@@ -126,6 +127,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			store.dispatch(fetchCrmKanbanSettings({
 				entityTypeId: this.props.entityTypeId,
 				categoryId: this.getCurrentCategoryId(),
+				forceFetch: true,
 			}));
 
 			super.componentDidMount();

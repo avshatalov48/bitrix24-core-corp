@@ -593,8 +593,7 @@ class Update
 						(int)$this->newData['STATUS'] === Session::STATUS_CLIENT
 						|| (int)$this->newData['STATUS'] === Session::STATUS_CLIENT_AFTER_OPERATOR
 					)
-					&& (int)$this->session->getSessionField('STATUS') !== Session::STATUS_CLIENT
-					&& (int)$this->session->getSessionField('STATUS') !== Session::STATUS_CLIENT_AFTER_OPERATOR
+					&& (int)$this->session->getSessionField('STATUS') > Session::STATUS_CLIENT_AFTER_OPERATOR
 				)
 			)
 		)

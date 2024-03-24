@@ -14,7 +14,6 @@ use Bitrix\Im\Bot\Keyboard;
 use Bitrix\ImBot;
 use Bitrix\ImBot\Log;
 use Bitrix\ImBot\DialogSession;
-use Bitrix\Imopenlines;
 use Bitrix\Imopenlines\MessageParameter;
 
 class Network extends Base implements NetworkBot
@@ -1569,7 +1568,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function operatorMessageAdd($messageId, $messageFields)
 	{
-		if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -1610,7 +1609,7 @@ class Network extends Base implements NetworkBot
 
 		if ($messageId > 0)
 		{
-			$message['PARAMS'][MessageParameter::CONNECTOR_MID] = [$messageId];
+			$message['PARAMS']['CONNECTOR_MID'] = [$messageId]; /** @see MessageParameter::CONNECTOR_MID */
 		}
 
 		if (!empty($messageFields['KEYBOARD']))
@@ -1669,9 +1668,9 @@ class Network extends Base implements NetworkBot
 		// convert vote params into component
 		if (
 			isset($message['PARAMS'])
-			&& isset($message['PARAMS'][MessageParameter::IMOL_VOTE_SID])
-			&& isset($message['PARAMS'][MessageParameter::IMOL_VOTE_LIKE])
-			&& isset($message['PARAMS'][MessageParameter::IMOL_VOTE_DISLIKE])
+			&& isset($message['PARAMS']['IMOL_VOTE_SID']) /** @see MessageParameter::IMOL_VOTE_SID */
+			&& isset($message['PARAMS']['IMOL_VOTE_LIKE']) /** @see MessageParameter::IMOL_VOTE_LIKE */
+			&& isset($message['PARAMS']['IMOL_VOTE_DISLIKE']) /** @see MessageParameter::IMOL_VOTE_DISLIKE */
 		)
 		{
 			$message['PARAMS'][Im\V2\Message\Params::COMPONENT_ID] = 'SupportVoteMessage';
@@ -1680,20 +1679,20 @@ class Network extends Base implements NetworkBot
 				$message['PARAMS'][Im\V2\Message\Params::COMPONENT_PARAMS] = [];
 			}
 			$voteParams = [
-				MessageParameter::IMOL_VOTE,
-				MessageParameter::IMOL_VOTE_SID,
-				MessageParameter::IMOL_VOTE_TEXT,
-				MessageParameter::IMOL_VOTE_LIKE,
-				MessageParameter::IMOL_VOTE_DISLIKE,
-				MessageParameter::IMOL_DATE_CLOSE_VOTE,
-				MessageParameter::IMOL_TIME_LIMIT_VOTE,
+				'IMOL_VOTE', /** @see MessageParameter::IMOL_VOTE */
+				'IMOL_VOTE_SID', /** @see MessageParameter::IMOL_VOTE_SID */
+				'IMOL_VOTE_TEXT', /** @see MessageParameter::IMOL_VOTE_TEXT */
+				'IMOL_VOTE_LIKE', /** @see MessageParameter::IMOL_VOTE_LIKE */
+				'IMOL_VOTE_DISLIKE', /** @see MessageParameter::IMOL_VOTE_DISLIKE */
+				'IMOL_DATE_CLOSE_VOTE', /** @see MessageParameter::IMOL_DATE_CLOSE_VOTE */
+				'IMOL_TIME_LIMIT_VOTE', /** @see MessageParameter::IMOL_TIME_LIMIT_VOTE */
 			];
 			foreach ($voteParams as $paramName)
 			{
 				if (isset($message['PARAMS'][$paramName]))
 				{
 					if (
-						$paramName == MessageParameter::IMOL_VOTE
+						$paramName == 'IMOL_VOTE' /** @see MessageParameter::IMOL_VOTE */
 						&& is_numeric($message['PARAMS'][$paramName])
 					)
 					{
@@ -1807,6 +1806,16 @@ class Network extends Base implements NetworkBot
 		}
 
 		$connectorMid = Im\Bot::addMessage(['BOT_ID' => $messageFields['BOT_ID']], $message);
+
+		if ($connectorMid)
+		{
+			$connectorMessage = new Im\V2\Message($connectorMid);
+			$chat = \Bitrix\Im\V2\Chat::getInstance($connectorMessage->getChatId());
+			$chat
+				->withContextUser(static::getBotId())
+				->readTo($connectorMessage, true)
+			;
+		}
 
 		if ($messageId > 0)
 		{
@@ -2056,7 +2065,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function operatorMessageReceived($params)
 	{
-		if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines'))
+		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
@@ -2119,14 +2128,6 @@ class Network extends Base implements NetworkBot
 		$chat = Im\V2\Chat::getInstance($chatId);
 
 
-		// set read message
-		$messages = new Im\V2\MessageCollection();
-		$messages->add($message);
-		$chat
-			->withContextUser(static::getBotId())
-			->readMessages($messages, true)
-		;
-
 		$messageParams = $message->getParams();
 		if (!isset($firstMessage) && !$messageParams->get(Im\V2\Message\Params::SENDING)->getValue())
 		{
@@ -2143,21 +2144,21 @@ class Network extends Base implements NetworkBot
 		]);
 		if (!isset($firstMessage) && !empty($params['CONNECTOR_MID']))
 		{
-			$pullParams[] = Imopenlines\MessageParameter::CONNECTOR_MID;
-			$messageParams->get(Imopenlines\MessageParameter::CONNECTOR_MID)->setValue($params['CONNECTOR_MID']);
+			$pullParams[] = 'CONNECTOR_MID'; /** @see MessageParameter::CONNECTOR_MID */
+			$messageParams->get('CONNECTOR_MID')->setValue($params['CONNECTOR_MID']);
 		}
 		if (!empty($params['SESSION_ID']) && (int)$params['SESSION_ID'] > 0)
 		{
 			$pullParams = array_merge($pullParams, [
-				Imopenlines\MessageParameter::IMOL_SID,
+				'IMOL_SID', /** @see MessageParameter::IMOL_SID */
 				Im\V2\Message\Params::COMPONENT_ID,
 				Im\V2\Message\Params::COMPONENT_PARAMS,
 			]);
 			$messageParams->fill([
-				Imopenlines\MessageParameter::IMOL_SID => (int)$params['SESSION_ID'],
+				'IMOL_SID' => (int)$params['SESSION_ID'],
 				Im\V2\Message\Params::COMPONENT_ID => 'SupportSessionNumberMessage',
 				Im\V2\Message\Params::COMPONENT_PARAMS => [
-					Imopenlines\MessageParameter::IMOL_SID => (int)$params['SESSION_ID']
+					'IMOL_SID' => (int)$params['SESSION_ID']
 				]
 			]);
 		}
@@ -2248,8 +2249,6 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function onMessageAdd($messageId, $messageFields)
 	{
-		Loader::includeModule('imopenlines');
-
 		if (isset($messageFields['SYSTEM']) && $messageFields['SYSTEM'] === 'Y')
 		{
 			return false;
@@ -2540,10 +2539,10 @@ class Network extends Base implements NetworkBot
 			{
 				if (
 					isset($message['params'])
-					&& isset($message['params'][MessageParameter::IMOL_VOTE_SID])
-					&& isset($message['params'][MessageParameter::IMOL_VOTE_LIKE])
-					&& isset($message['params'][MessageParameter::IMOL_VOTE_DISLIKE])
-					&& (int)$message['params'][MessageParameter::IMOL_VOTE_SID] > 0 //SESSION_ID
+					&& isset($message['params']['IMOL_VOTE_SID']) /** @see MessageParameter::IMOL_VOTE_SID */
+					&& isset($message['params']['IMOL_VOTE_LIKE']) /** @see MessageParameter::IMOL_VOTE_LIKE */
+					&& isset($message['params']['IMOL_VOTE_DISLIKE']) /** @see MessageParameter::IMOL_VOTE_DISLIKE */
+					&& (int)$message['params']['IMOL_VOTE_SID'] > 0 /** @see MessageParameter::IMOL_VOTE_SID - SESSION_ID */
 				)
 				{
 					$voteMessage = $message;
@@ -2558,16 +2557,16 @@ class Network extends Base implements NetworkBot
 			if ($voteMessage)
 			{
 				$isActionLike = $messageFields['MESSAGE'] === '1';
-				$sessionId = (int)$voteMessage['params'][MessageParameter::IMOL_VOTE_SID];
+				$sessionId = (int)$voteMessage['params']['IMOL_VOTE_SID']; /** @see MessageParameter::IMOL_VOTE_SID */
 
-				\CIMMessageParam::set($voteMessage['id'], [MessageParameter::IMOL_VOTE => ($isActionLike ? 'like' : 'dislike')]);
-				\CIMMessageParam::sendPull($voteMessage['id'], [MessageParameter::IMOL_VOTE]);
+				\CIMMessageParam::set($voteMessage['id'], ['IMOL_VOTE' => ($isActionLike ? 'like' : 'dislike')]); /** @see MessageParameter::IMOL_VOTE */
+				\CIMMessageParam::sendPull($voteMessage['id'], ['IMOL_VOTE']); /** @see MessageParameter::IMOL_VOTE */
 
 				self::sendMessage([
 					'DIALOG_ID' => $dialogId,
 					'MESSAGE' => $isActionLike
-						? $voteMessage['params'][MessageParameter::IMOL_VOTE_LIKE]
-						: $voteMessage['params'][MessageParameter::IMOL_VOTE_DISLIKE],
+						? $voteMessage['params']['IMOL_VOTE_LIKE'] /** @see MessageParameter::IMOL_VOTE_LIKE */
+						: $voteMessage['params']['IMOL_VOTE_DISLIKE'], /** @see MessageParameter::IMOL_VOTE_DISLIKE */
 					'SYSTEM' => 'N',
 					'URL_PREVIEW' => 'N',
 				]);

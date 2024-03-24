@@ -96,7 +96,8 @@ class EntityCounterManager
 		}
 
 		$factory = Container::getInstance()->getFactory($entityTypeID);
-		if (!$factory || !$factory->isCountersEnabled())
+		$isEntityIsActivity = ($entityTypeID === \CCrmOwnerType::Activity);
+		if (!$isEntityIsActivity && (!$factory || !$factory->isCountersEnabled()))
 		{
 			return [];
 		}
@@ -106,7 +107,7 @@ class EntityCounterManager
 		$results = [];
 
 		$categoryId = null;
-		if ($factory->isCategoriesSupported())
+		if (!$isEntityIsActivity && $factory->isCategoriesSupported())
 		{
 			$categoryId = $extras['CATEGORY_ID'] ?? $extras['DEAL_CATEGORY_ID'] ?? null;
 			if (!is_null($categoryId))

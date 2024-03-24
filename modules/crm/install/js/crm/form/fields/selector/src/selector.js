@@ -34,7 +34,7 @@ export class Selector extends EventEmitter
 	};
 
 	static #defaultFieldsFactoryFilter = {
-		'-types': ['employee'],
+		'-types': ['employee', 'datetime'],
 	};
 
 	constructor(options: SelectorOptions = {})
@@ -666,7 +666,7 @@ export class Selector extends EventEmitter
 			{
 				factory.types = this.#applyFieldsFactoryTypesFilter(
 					factory.types,
-					Selector.defaultFieldsFactoryFilter,
+					Selector.#defaultFieldsFactoryFilter,
 				);
 				factory.types = filter(factory.types);
 			}

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,rest_client,ui_label,main_popup,ui_hint,crm_audioPlayer,ui_alerts,ui_textcrop,crm_datetime,currency_currencyCore,ui_icons_generator,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,main_loader,ui_vue3,crm_timeline_editors_commentEditor,crm_field_itemSelector,main_date,crm_timeline_tools,ui_infoHelper,ui_analytics,ui_buttons,ui_feedback_form,ui_entitySelector,crm_activity_fileUploaderPopup,crm_activity_settingsPopup,crm_activity_todoEditor,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,ui_notification,ui_dialogs_messagebox,crm_ai_call,main_core) {
+(function (exports,ui_cnt,rest_client,ui_label,main_popup,ui_hint,crm_audioPlayer,ui_alerts,ui_textcrop,currency_currencyCore,ui_icons_generator,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,main_loader,ui_vue3,crm_timeline_editors_commentEditor,crm_field_itemSelector,main_date,crm_timeline_tools,ui_infoHelper,ui_analytics,ui_buttons,ui_feedback_form,ui_entitySelector,crm_activity_fileUploaderPopup,crm_activity_settingsPopup,crm_activity_todoEditor,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,ui_notification,ui_dialogs_messagebox,crm_ai_call,main_core) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -400,10 +400,13 @@ this.BX.Crm = this.BX.Crm || {};
 	            actionType: ActionType.AJAX_ACTION.STARTED,
 	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
 	          });
-	          main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _value), {
-	            data: _classPrivateMethodGet(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams)),
-	            analyticsLabel: babelHelpers.classPrivateFieldGet(this, _analytics)
-	          }).then(response => {
+	          const ajaxConfig = {
+	            data: _classPrivateMethodGet(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
+	          };
+	          if (babelHelpers.classPrivateFieldGet(this, _analytics)) {
+	            ajaxConfig.analytics = babelHelpers.classPrivateFieldGet(this, _analytics);
+	          }
+	          main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _value), ajaxConfig).then(response => {
 	            _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
 	            vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	              action: babelHelpers.classPrivateFieldGet(this, _value),
@@ -640,17 +643,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (!AnimationTarget.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).target)) {
 	    return false;
 	  }
-	  if (!AnimationType.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).type)) {
-	    return false;
-	  }
-	  return true;
+	  return AnimationType.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).type);
 	}
 	function _sendAnalytics2() {
 	  if (babelHelpers.classPrivateFieldGet(this, _analytics) && babelHelpers.classPrivateFieldGet(this, _analytics).hit) {
-	    main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _analytics).hit, {
-	      data: {},
-	      analyticsLabel: babelHelpers.classPrivateFieldGet(this, _analytics)
-	    });
+	    const clonedAnalytics = {
+	      ...babelHelpers.classPrivateFieldGet(this, _analytics)
+	    };
+	    delete clonedAnalytics.hit;
+	    ui_analytics.sendData(clonedAnalytics);
 	  }
 	}
 
@@ -4197,7 +4198,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  inject: ['isReadOnly'],
 	  data() {
 	    return {
+	      // in server timezone
 	      currentTimestamp: this.value,
+	      // in server timezone
 	      initialTimestamp: this.value,
 	      actionTimeoutId: null
 	    };
@@ -4230,6 +4233,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    isPillReadonly() {
 	      return this.isReadOnly || !this.action;
+	    },
+	    // todo remove after fixing main
+	    browserToUserOffset() {
+	      const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
+	      return userToUTCOffset + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
 	    }
 	  },
 	  watch: {
@@ -4247,11 +4255,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      this.cancelScheduledActionExecution();
 
-	      // eslint-disable-next-line bitrix-rules/no-bx
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 	      BX.calendar({
 	        node: event.target,
 	        callback_after: newDate => {
-	          this.currentTimestamp = crm_datetime.TimestampConverter.userToBrowser(newDate.getTime() / 1000);
+	          // we assume that user selected time in his timezone
+	          this.currentTimestamp = Math.floor(newDate.getTime() / 1000) - this.browserToUserOffset;
 	          this.executeAction();
 	        },
 	        ...this.calendarParams
@@ -5229,25 +5238,170 @@ this.BX.Crm = this.BX.Crm || {};
 	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _deleteEntry = /*#__PURE__*/new WeakSet();
-	var _openDocument = /*#__PURE__*/new WeakSet();
+	var _showSigningProcess = /*#__PURE__*/new WeakSet();
 	var _modifyDocument = /*#__PURE__*/new WeakSet();
-	var _updateActivityDeadline = /*#__PURE__*/new WeakSet();
 	var _resendDocument = /*#__PURE__*/new WeakSet();
 	var _touchSigner = /*#__PURE__*/new WeakSet();
 	var _download = /*#__PURE__*/new WeakSet();
+	let SignB2eDocument = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(SignB2eDocument, _Base);
+	  function SignB2eDocument(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, SignB2eDocument);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SignB2eDocument).call(this, ...args));
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _download);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _touchSigner);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _resendDocument);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _modifyDocument);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _showSigningProcess);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _deleteEntry);
+	    return _this;
+	  }
+	  babelHelpers.createClass(SignB2eDocument, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData,
+	        animationCallbacks
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      const documentId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.documentId);
+	      const processUri = actionData === null || actionData === void 0 ? void 0 : actionData.processUri;
+	      const documentHash = (actionData === null || actionData === void 0 ? void 0 : actionData.documentHash) || '';
+	      if ((action === 'SignB2eDocument:ShowSigningProcess' || action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0) {
+	        _classPrivateMethodGet$5(this, _showSigningProcess, _showSigningProcess2).call(this, processUri);
+	      } else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0) {
+	        _classPrivateMethodGet$5(this, _modifyDocument, _modifyDocument2).call(this, actionData);
+	      } else if (action === 'SignB2eDocument:Resend' && documentId > 0 && actionData !== null && actionData !== void 0 && actionData.recipientHash) {
+	        // eslint-disable-next-line promise/catch-or-return
+	        _classPrivateMethodGet$5(this, _resendDocument, _resendDocument2).call(this, actionData, animationCallbacks).then(() => {
+	          if (actionData.buttonId) {
+	            const btn = item.getLayoutFooterButtonById(actionData.buttonId);
+	            btn.disableWithTimer(60);
+	          }
+	        });
+	      } else if (action === 'SignB2eDocument:TouchSigner' && documentId > 0) {
+	        _classPrivateMethodGet$5(this, _touchSigner, _touchSigner2).call(this, actionData);
+	      } else if (action === 'SignB2eDocument:Download' && documentHash) {
+	        _classPrivateMethodGet$5(this, _download, _download2).call(this, actionData, animationCallbacks);
+	      } else if (action === 'SignB2eDocumentEntry:Delete' && actionData !== null && actionData !== void 0 && actionData.entryId) {
+	        ui_dialogs_messagebox.MessageBox.show({
+	          message: (actionData === null || actionData === void 0 ? void 0 : actionData.confirmationText) || '',
+	          modal: true,
+	          buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
+	          onYes: () => {
+	            return _classPrivateMethodGet$5(this, _deleteEntry, _deleteEntry2).call(this, actionData.entryId);
+	          },
+	          onNo: messageBox => {
+	            messageBox.close();
+	          }
+	        });
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'SignB2eDocument' || item.getType() === 'Activity:SignB2eDocument';
+	    }
+	  }]);
+	  return SignB2eDocument;
+	}(Base);
+	function _deleteEntry2(entryId) {
+	  console.log(`delete entry${entryId}`);
+	}
+	function _showSigningProcess2(processUri) {
+	  return crm_router.Router.openSlider(processUri);
+	}
+	function _modifyDocument2({
+	  documentId
+	}) {
+	  return crm_router.Router.openSlider(`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`);
+	}
+	function _resendDocument2({
+	  documentId,
+	  recipientHash
+	}, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+	  return new Promise((resolve, reject) => {
+	    main_core.ajax.runAction('sign.internal.document.resendFile', {
+	      data: {
+	        memberHash: recipientHash,
+	        documentId
+	      }
+	    }).then(() => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
+	        autoHideDelay: 5000
+	      });
+	      if (animationCallbacks.onStop) {
+	        animationCallbacks.onStop();
+	      }
+	      resolve();
+	    }, response => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: response.errors[0].message,
+	        autoHideDelay: 5000
+	      });
+	      if (animationCallbacks.onStop) {
+	        animationCallbacks.onStop();
+	      }
+	      reject();
+	    });
+	    console.log(`resend document ${documentId} for ${recipientHash}`);
+	  });
+	}
+	function _touchSigner2({
+	  documentId
+	}) {
+	  console.log(`touch signer document ${documentId}`);
+	}
+	function _download2({
+	  filename,
+	  downloadLink
+	}, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+	  const link = document.createElement('a');
+	  link.href = downloadLink;
+	  link.setAttribute('download', filename || '');
+	  main_core.Dom.document.body.appendChild(link);
+	  link.click();
+	  document.body.removeChild(link);
+	  if (animationCallbacks.onStop) {
+	    animationCallbacks.onStop();
+	  }
+	}
+
+	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _deleteEntry$1 = /*#__PURE__*/new WeakSet();
+	var _openDocument = /*#__PURE__*/new WeakSet();
+	var _modifyDocument$1 = /*#__PURE__*/new WeakSet();
+	var _updateActivityDeadline = /*#__PURE__*/new WeakSet();
+	var _resendDocument$1 = /*#__PURE__*/new WeakSet();
+	var _touchSigner$1 = /*#__PURE__*/new WeakSet();
+	var _download$1 = /*#__PURE__*/new WeakSet();
 	let SignDocument = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(SignDocument, _Base);
 	  function SignDocument(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, SignDocument);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SignDocument).call(this, ...args));
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _download);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _touchSigner);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _resendDocument);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _updateActivityDeadline);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _modifyDocument);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _openDocument);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _deleteEntry);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _download$1);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _touchSigner$1);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _resendDocument$1);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _updateActivityDeadline);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _modifyDocument$1);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _openDocument);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _deleteEntry$1);
 	    return _this;
 	  }
 	  babelHelpers.createClass(SignDocument, [{
@@ -5266,29 +5420,29 @@ this.BX.Crm = this.BX.Crm || {};
 	      const documentHash = (actionData === null || actionData === void 0 ? void 0 : actionData.documentHash) || '';
 	      const activityId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.activityId);
 	      if ((action === 'SignDocument:Open' || action === 'Activity:SignDocument:Open') && documentId > 0) {
-	        _classPrivateMethodGet$5(this, _openDocument, _openDocument2).call(this, actionData);
+	        _classPrivateMethodGet$6(this, _openDocument, _openDocument2).call(this, actionData);
 	      } else if ((action === 'SignDocument:Modify' || action === 'Activity:SignDocument:Modify') && documentId > 0) {
-	        _classPrivateMethodGet$5(this, _modifyDocument, _modifyDocument2).call(this, actionData);
+	        _classPrivateMethodGet$6(this, _modifyDocument$1, _modifyDocument2$1).call(this, actionData);
 	      } else if ((action === 'SignDocument:UpdateActivityDeadline' || action === 'Activity:SignDocument:UpdateActivityDeadline') && activityId > 0) {
-	        _classPrivateMethodGet$5(this, _updateActivityDeadline, _updateActivityDeadline2).call(this, activityId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
+	        _classPrivateMethodGet$6(this, _updateActivityDeadline, _updateActivityDeadline2).call(this, activityId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
 	      } else if (action === 'SignDocument:Resend' && documentId > 0 && actionData !== null && actionData !== void 0 && actionData.recipientHash) {
-	        _classPrivateMethodGet$5(this, _resendDocument, _resendDocument2).call(this, actionData, animationCallbacks).then(() => {
+	        _classPrivateMethodGet$6(this, _resendDocument$1, _resendDocument2$1).call(this, actionData, animationCallbacks).then(() => {
 	          if (actionData.buttonId) {
 	            const btn = item.getLayoutFooterButtonById(actionData.buttonId);
 	            btn.disableWithTimer(60);
 	          }
 	        });
 	      } else if (action === 'SignDocument:TouchSigner' && documentId > 0) {
-	        _classPrivateMethodGet$5(this, _touchSigner, _touchSigner2).call(this, actionData);
+	        _classPrivateMethodGet$6(this, _touchSigner$1, _touchSigner2$1).call(this, actionData);
 	      } else if (action === 'SignDocument:Download' && documentHash) {
-	        _classPrivateMethodGet$5(this, _download, _download2).call(this, actionData, animationCallbacks);
+	        _classPrivateMethodGet$6(this, _download$1, _download2$1).call(this, actionData, animationCallbacks);
 	      } else if (action === 'SignDocumentEntry:Delete' && actionData !== null && actionData !== void 0 && actionData.entryId) {
 	        ui_dialogs_messagebox.MessageBox.show({
 	          message: (actionData === null || actionData === void 0 ? void 0 : actionData.confirmationText) || '',
 	          modal: true,
 	          buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
 	          onYes: () => {
-	            return _classPrivateMethodGet$5(this, _deleteEntry, _deleteEntry2).call(this, actionData.entryId);
+	            return _classPrivateMethodGet$6(this, _deleteEntry$1, _deleteEntry2$1).call(this, actionData.entryId);
 	          },
 	          onNo: messageBox => {
 	            messageBox.close();
@@ -5304,7 +5458,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return SignDocument;
 	}(Base);
-	function _deleteEntry2(entryId) {
+	function _deleteEntry2$1(entryId) {
 	  console.log('delete entry' + entryId);
 	}
 	function _openDocument2({
@@ -5313,7 +5467,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}) {
 	  return crm_router.Router.Instance.openSignDocumentSlider(documentId, memberHash);
 	}
-	function _modifyDocument2({
+	function _modifyDocument2$1({
 	  documentId
 	}) {
 	  return crm_router.Router.Instance.openSignDocumentModifySlider(documentId);
@@ -5338,7 +5492,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    console.error("Updated document create date without errors, but for some reason date from the backend doesn't match sent value");
 	  }
 	}
-	function _resendDocument2({
+	function _resendDocument2$1({
 	  documentId,
 	  recipientHash
 	}, animationCallbacks) {
@@ -5373,12 +5527,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    console.log('resend document ' + documentId + ' for ' + recipientHash);
 	  });
 	}
-	function _touchSigner2({
+	function _touchSigner2$1({
 	  documentId
 	}) {
 	  console.log('touch signer document ' + documentId);
 	}
-	function _download2({
+	function _download2$1({
 	  filename,
 	  downloadLink
 	}, animationCallbacks) {
@@ -5401,16 +5555,16 @@ this.BX.Crm = this.BX.Crm || {};
 
 	let _ = t => t,
 	  _t;
-	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
 	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "get"); return _classApplyDescriptorGet$1(receiver, descriptor); }
 	function _classCheckPrivateStaticFieldDescriptor$1(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
 	function _classCheckPrivateStaticAccess$1(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 	function _classApplyDescriptorGet$1(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const ACTION_NAMESPACE = 'Document:';
 	var _popupConfirm = /*#__PURE__*/new WeakMap();
 	var _onJsEvent = /*#__PURE__*/new WeakSet();
@@ -5433,20 +5587,20 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Document);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Document).call(this, ...args));
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _showMessage);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _showInfoHelperSlider);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _convertDeal);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onAjaxAction);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _deleteDocument);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _updateCreateDate);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _updateTitle);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _downloadDocx);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _downloadPdf);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _printDocument);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _createPublicUrl);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _copyPublicLink);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _openDocument$1);
-	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onJsEvent);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _showMessage);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _showInfoHelperSlider);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _convertDeal);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _onAjaxAction);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _deleteDocument);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _updateCreateDate);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _updateTitle);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _downloadDocx);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _downloadPdf);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _printDocument);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _createPublicUrl);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _copyPublicLink);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _openDocument$1);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _onJsEvent);
 	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _popupConfirm, {
 	      writable: true,
 	      value: void 0
@@ -5464,9 +5618,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        animationCallbacks
 	      } = actionParams;
 	      if (ActionType.isJsEvent(actionType)) {
-	        _classPrivateMethodGet$6(this, _onJsEvent, _onJsEvent2).call(this, action, actionData, animationCallbacks, item);
+	        _classPrivateMethodGet$7(this, _onJsEvent, _onJsEvent2).call(this, action, actionData, animationCallbacks, item);
 	      } else if (ActionType.isAjaxAction(actionType)) {
-	        _classPrivateMethodGet$6(this, _onAjaxAction, _onAjaxAction2).call(this, action, actionType, actionData, response);
+	        _classPrivateMethodGet$7(this, _onAjaxAction, _onAjaxAction2).call(this, action, actionType, actionData, response);
 	      }
 	    }
 	  }, {
@@ -5486,7 +5640,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!main_core.Type.isStringFilled(printUrl)) {
 	        return;
 	      }
-	      _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, printUrl, null, item);
+	      _classPrivateMethodGet$7(this, _printDocument, _printDocument2).call(this, printUrl, null, item);
 	      _classStaticPrivateFieldSpecSet(Document, Document, _toPrintAfterRefresh, _classStaticPrivateFieldSpecGet$1(Document, Document, _toPrintAfterRefresh).filter(remainingItem => !itemsToPrint.includes(remainingItem)));
 	    }
 	  }], [{
@@ -5504,24 +5658,24 @@ this.BX.Crm = this.BX.Crm || {};
 	  // 	return;
 	  // }
 	  if (action === ACTION_NAMESPACE + 'Open') {
-	    _classPrivateMethodGet$6(this, _openDocument$1, _openDocument2$1).call(this, documentId);
+	    _classPrivateMethodGet$7(this, _openDocument$1, _openDocument2$1).call(this, documentId);
 	  } else if (action === ACTION_NAMESPACE + 'CopyPublicLink') {
 	    // todo block button while loading
-	    _classPrivateMethodGet$6(this, _copyPublicLink, _copyPublicLink2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.publicUrl);
+	    _classPrivateMethodGet$7(this, _copyPublicLink, _copyPublicLink2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.publicUrl);
 	  } else if (action === ACTION_NAMESPACE + 'Print') {
-	    _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.printUrl, animationCallbacks, item);
+	    _classPrivateMethodGet$7(this, _printDocument, _printDocument2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.printUrl, animationCallbacks, item);
 	  } else if (action === ACTION_NAMESPACE + 'DownloadPdf') {
-	    _classPrivateMethodGet$6(this, _downloadPdf, _downloadPdf2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.pdfUrl);
+	    _classPrivateMethodGet$7(this, _downloadPdf, _downloadPdf2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.pdfUrl);
 	  } else if (action === ACTION_NAMESPACE + 'DownloadDocx') {
-	    _classPrivateMethodGet$6(this, _downloadDocx, _downloadDocx2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.docxUrl);
+	    _classPrivateMethodGet$7(this, _downloadDocx, _downloadDocx2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.docxUrl);
 	  } else if (action === ACTION_NAMESPACE + 'UpdateTitle') {
-	    _classPrivateMethodGet$6(this, _updateTitle, _updateTitle2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
+	    _classPrivateMethodGet$7(this, _updateTitle, _updateTitle2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
 	  } else if (action === ACTION_NAMESPACE + 'UpdateCreateDate') {
-	    _classPrivateMethodGet$6(this, _updateCreateDate, _updateCreateDate2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
+	    _classPrivateMethodGet$7(this, _updateCreateDate, _updateCreateDate2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
 	  } else if (action === ACTION_NAMESPACE + 'ConvertDeal') {
-	    _classPrivateMethodGet$6(this, _convertDeal, _convertDeal2).call(this, documentId, animationCallbacks);
+	    _classPrivateMethodGet$7(this, _convertDeal, _convertDeal2).call(this, documentId, animationCallbacks);
 	  } else if (action === ACTION_NAMESPACE + 'ShowInfoHelperSlider') {
-	    _classPrivateMethodGet$6(this, _showInfoHelperSlider, _showInfoHelperSlider2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.infoHelperCode);
+	    _classPrivateMethodGet$7(this, _showInfoHelperSlider, _showInfoHelperSlider2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.infoHelperCode);
 	  } else if (action === ACTION_NAMESPACE + 'Delete') {
 	    var _actionData$confirmat;
 	    const confirmationText = (_actionData$confirmat = actionData.confirmationText) !== null && _actionData$confirmat !== void 0 ? _actionData$confirmat : '';
@@ -5531,14 +5685,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        modal: true,
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
 	        onYes: () => {
-	          return _classPrivateMethodGet$6(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+	          return _classPrivateMethodGet$7(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
 	        },
 	        onNo: messageBox => {
 	          messageBox.close();
 	        }
 	      });
 	    } else {
-	      _classPrivateMethodGet$6(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+	      _classPrivateMethodGet$7(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
 	    }
 	  } else {
 	    console.info(`Unknown action ${action} in ${item.getType()}`);
@@ -5550,7 +5704,7 @@ this.BX.Crm = this.BX.Crm || {};
 	async function _copyPublicLink2(documentId, publicUrl) {
 	  if (!main_core.Type.isStringFilled(publicUrl)) {
 	    try {
-	      publicUrl = await _classPrivateMethodGet$6(this, _createPublicUrl, _createPublicUrl2).call(this, documentId);
+	      publicUrl = await _classPrivateMethodGet$7(this, _createPublicUrl, _createPublicUrl2).call(this, documentId);
 	    } catch (error) {
 	      ui_dialogs_messagebox.MessageBox.alert(error.message);
 	      return;
@@ -5752,7 +5906,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }).then(response => {
 	    var _response$data3;
 	    if ((response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.ID) > 0) {
-	      _classPrivateMethodGet$6(this, _showMessage, _showMessage2).call(this, main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3', {
+	      _classPrivateMethodGet$7(this, _showMessage, _showMessage2).call(this, main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3', {
 	        '%TITLE%': '<b>' + BX.util.htmlspecialchars(response.data.TITLE || '') + '</b>',
 	        '%INITIATOR%': '<b>' + BX.util.htmlspecialchars(response.data.INITIATOR || '') + '</b>'
 	      }), [new BX.UI.Button({
@@ -5807,10 +5961,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  value: []
 	};
 
-	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const COPILOT_BUTTON_DISABLE_DELAY = 5000;
 	const COPILOT_HELPDESK_CODE = 18799442;
 	var _isCopilotTourShown = /*#__PURE__*/new WeakMap();
@@ -5830,16 +5984,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Call);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this, ...args));
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _sendAiCallParsingData);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _emitTimelineCopilotTourEvent);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _showCopilotTourIfNeeded);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _launchCallRecordingTranscription);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _downloadRecord);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _changePlayerState);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _openTranscript);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _scheduleCall);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _makeCall);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _sendAiCallParsingData);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _emitTimelineCopilotTourEvent);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotTourIfNeeded);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _launchCallRecordingTranscription);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _downloadRecord);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _changePlayerState);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openTranscript);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _scheduleCall);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _makeCall);
 	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _isCopilotTourShown, {
 	      writable: true,
 	      value: false
@@ -5849,7 +6003,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Call, [{
 	    key: "onInitialize",
 	    value: function onInitialize(item) {
-	      _classPrivateMethodGet$7(this, _showCopilotTourIfNeeded, _showCopilotTourIfNeeded2).call(this, item);
+	      _classPrivateMethodGet$8(this, _showCopilotTourIfNeeded, _showCopilotTourIfNeeded2).call(this, item);
 	    }
 	  }, {
 	    key: "onItemAction",
@@ -5863,22 +6017,22 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Call:MakeCall' && actionData) {
-	        _classPrivateMethodGet$7(this, _makeCall, _makeCall2).call(this, actionData);
+	        _classPrivateMethodGet$8(this, _makeCall, _makeCall2).call(this, actionData);
 	      }
 	      if (action === 'Call:Schedule' && actionData) {
-	        _classPrivateMethodGet$7(this, _scheduleCall, _scheduleCall2).call(this, actionData.activityId, actionData.scheduleDate);
+	        _classPrivateMethodGet$8(this, _scheduleCall, _scheduleCall2).call(this, actionData.activityId, actionData.scheduleDate);
 	      }
 	      if (action === 'Call:OpenTranscript' && actionData && actionData.callId) {
-	        _classPrivateMethodGet$7(this, _openTranscript, _openTranscript2).call(this, actionData.callId);
+	        _classPrivateMethodGet$8(this, _openTranscript, _openTranscript2).call(this, actionData.callId);
 	      }
 	      if (action === 'Call:ChangePlayerState' && actionData && actionData.recordId) {
-	        _classPrivateMethodGet$7(this, _changePlayerState, _changePlayerState2).call(this, item, actionData.recordId);
+	        _classPrivateMethodGet$8(this, _changePlayerState, _changePlayerState2).call(this, item, actionData.recordId);
 	      }
 	      if (action === 'Call:DownloadRecord' && actionData && actionData.url) {
-	        _classPrivateMethodGet$7(this, _downloadRecord, _downloadRecord2).call(this, actionData.url);
+	        _classPrivateMethodGet$8(this, _downloadRecord, _downloadRecord2).call(this, actionData.url);
 	      }
 	      if (action === 'Call:LaunchCallRecordingTranscription' && actionData) {
-	        _classPrivateMethodGet$7(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	        _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
 	      }
 	    }
 	  }], [{
@@ -5968,12 +6122,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  main_core.ajax.runAction('crm.timeline.ai.launchRecordingTranscription', {
 	    data
 	  }).then(() => {
-	    _classPrivateMethodGet$7(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, ownerType, crmMode, callId, 'success');
+	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, ownerType, crmMode, callId, 'success');
 	  }).catch(response => {
 	    let errorType = 'error';
 	    const customData = response.errors[0].customData;
 	    if (customData) {
-	      _classPrivateMethodGet$7(this, _showAdditionalInfo, _showAdditionalInfo2).call(this, customData);
+	      _classPrivateMethodGet$8(this, _showAdditionalInfo, _showAdditionalInfo2).call(this, customData);
 	      aiCopilotBtnUI.setState(ui_buttons.ButtonState.ACTIVE);
 	      errorType = 'error_no_limits';
 	    } else {
@@ -5987,7 +6141,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }, COPILOT_BUTTON_DISABLE_DELAY);
 	      errorType = 'error_b24';
 	    }
-	    _classPrivateMethodGet$7(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, ownerType, crmMode, callId, errorType);
+	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, ownerType, crmMode, callId, errorType);
 	    throw response;
 	  });
 	}
@@ -6069,11 +6223,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    if (aiCopilotBtn.isInViewport()) {
-	      _classPrivateMethodGet$7(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer());
+	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer());
 	    } else {
 	      const showCopilotTourOnScroll = () => {
 	        if (aiCopilotBtn.isInViewport()) {
-	          _classPrivateMethodGet$7(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer());
+	          _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer());
 	          babelHelpers.classPrivateFieldSet(this, _isCopilotTourShown, true);
 	          main_core.Event.unbind(window, 'scroll', showCopilotTourOnScroll);
 	        }
@@ -6104,10 +6258,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
-	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _settingsPopup = /*#__PURE__*/new WeakMap();
 	var _responsibleUserSelectorDialog = /*#__PURE__*/new WeakMap();
 	var _showFileUploaderPopup = /*#__PURE__*/new WeakSet();
@@ -6123,13 +6277,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, ToDo);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToDo).call(this, ...args));
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _runResponsibleUserAction);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _getDefaultCalendarParams);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _getSectionSettings);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _onSavePopupSettings);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showResponsibleUserSelector);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showSettingsPopup);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showFileUploaderPopup);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _runResponsibleUserAction);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _getDefaultCalendarParams);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _getSectionSettings);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _onSavePopupSettings);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showResponsibleUserSelector);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showSettingsPopup);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showFileUploaderPopup);
 	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _settingsPopup, {
 	      writable: true,
 	      value: null
@@ -6158,13 +6312,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        item.highlightContentBlockById('description', false);
 	      }
 	      if (action === 'Activity:ToDo:AddFile' && actionData) {
-	        _classPrivateMethodGet$8(this, _showFileUploaderPopup, _showFileUploaderPopup2).call(this, item, actionData);
+	        _classPrivateMethodGet$9(this, _showFileUploaderPopup, _showFileUploaderPopup2).call(this, item, actionData);
 	      }
 	      if (action === 'Activity:ToDo:ShowSettings' && actionData) {
-	        _classPrivateMethodGet$8(this, _showSettingsPopup, _showSettingsPopup2).call(this, item, actionData);
+	        _classPrivateMethodGet$9(this, _showSettingsPopup, _showSettingsPopup2).call(this, item, actionData);
 	      }
 	      if (action === 'Activity:ToDo:ChangeResponsible' && actionData) {
-	        _classPrivateMethodGet$8(this, _showResponsibleUserSelector, _showResponsibleUserSelector2).call(this, item, actionData);
+	        _classPrivateMethodGet$9(this, _showResponsibleUserSelector, _showResponsibleUserSelector2).call(this, item, actionData);
 	      }
 	    }
 	  }], [{
@@ -6191,12 +6345,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _showSettingsPopup2(item, actionData) {
 	  babelHelpers.classPrivateFieldSet(this, _settingsPopup, new crm_activity_settingsPopup.SettingsPopup({
-	    sections: _classPrivateMethodGet$8(this, _getSectionSettings, _getSectionSettings2).call(this),
+	    sections: _classPrivateMethodGet$9(this, _getSectionSettings, _getSectionSettings2).call(this),
 	    fetchSettingsPath: 'crm.activity.todo.fetchSettings',
 	    ownerTypeId: actionData['ownerTypeId'],
 	    ownerId: actionData['ownerId'],
 	    id: actionData['entityId'],
-	    onSave: _classPrivateMethodGet$8(this, _onSavePopupSettings, _onSavePopupSettings2).bind(this)
+	    onSave: _classPrivateMethodGet$9(this, _onSavePopupSettings, _onSavePopupSettings2).bind(this)
 	  }));
 	  babelHelpers.classPrivateFieldGet(this, _settingsPopup).show();
 	}
@@ -6223,7 +6377,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      'Item:onSelect': event => {
 	        const selectedItem = event.getData().item.getDialog().getSelectedItems()[0];
 	        if (selectedItem) {
-	          _classPrivateMethodGet$8(this, _runResponsibleUserAction, _runResponsibleUserAction2).call(this, actionData.id, actionData.ownerId, actionData.ownerTypeId, selectedItem.getId());
+	          _classPrivateMethodGet$9(this, _runResponsibleUserAction, _runResponsibleUserAction2).call(this, actionData.id, actionData.ownerId, actionData.ownerTypeId, selectedItem.getId());
 	        }
 	      },
 	      'Item:onDeselect': event => {
@@ -6231,7 +6385,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          const selectedItems = babelHelpers.classPrivateFieldGet(this, _responsibleUserSelectorDialog).getSelectedItems();
 	          if (selectedItems.length === 0) {
 	            babelHelpers.classPrivateFieldGet(this, _responsibleUserSelectorDialog).hide();
-	            _classPrivateMethodGet$8(this, _runResponsibleUserAction, _runResponsibleUserAction2).call(this, actionData.id, actionData.ownerId, actionData.ownerTypeId, actionData.responsibleId);
+	            _classPrivateMethodGet$9(this, _runResponsibleUserAction, _runResponsibleUserAction2).call(this, actionData.id, actionData.ownerId, actionData.ownerTypeId, actionData.responsibleId);
 	          }
 	        }, 100);
 	      }
@@ -6294,9 +6448,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
-	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openHelpdesk = /*#__PURE__*/new WeakSet();
 	let Helpdesk = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Helpdesk, _Base);
@@ -6304,7 +6458,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Helpdesk);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Helpdesk).call(this, ...args));
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _openHelpdesk);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _openHelpdesk);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Helpdesk, [{
@@ -6315,7 +6469,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        actionData
 	      } = actionParams;
 	      if (action === 'Helpdesk:Open' && actionData && actionData.articleCode) {
-	        _classPrivateMethodGet$9(this, _openHelpdesk, _openHelpdesk2).call(this, actionData.articleCode);
+	        _classPrivateMethodGet$a(this, _openHelpdesk, _openHelpdesk2).call(this, actionData.articleCode);
 	      }
 	    }
 	  }], [{
@@ -6332,9 +6486,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$b(obj, privateSet) { _checkPrivateRedeclaration$e(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$e(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$b(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openRealization = /*#__PURE__*/new WeakSet();
 	let Payment = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Payment, _Base);
@@ -6342,7 +6496,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Payment);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Payment).call(this, ...args));
-	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _openRealization);
+	    _classPrivateMethodInitSpec$b(babelHelpers.assertThisInitialized(_this), _openRealization);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Payment, [{
@@ -6358,7 +6512,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Payment:OpenRealization' && actionData !== null && actionData !== void 0 && actionData.paymentId) {
-	        _classPrivateMethodGet$a(this, _openRealization, _openRealization2).call(this, actionData.paymentId);
+	        _classPrivateMethodGet$b(this, _openRealization, _openRealization2).call(this, actionData.paymentId);
 	      }
 	    }
 	  }], [{
@@ -6550,10 +6704,10 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	function _classPrivateMethodInitSpec$b(obj, privateSet) { _checkPrivateRedeclaration$e(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$e(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$e(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$b(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$f(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _item = /*#__PURE__*/new WeakMap();
 	var _productsGrid = /*#__PURE__*/new WeakMap();
 	var _addProductToDeal = /*#__PURE__*/new WeakSet();
@@ -6563,7 +6717,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, DealProductList);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DealProductList).call(this, ...args));
-	    _classPrivateMethodInitSpec$b(babelHelpers.assertThisInitialized(_this), _addProductToDeal);
+	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _addProductToDeal);
 	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _item, {
 	      writable: true,
 	      value: null
@@ -6616,7 +6770,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'ProductList:AddToDeal') {
-	        _classPrivateMethodGet$b(this, _addProductToDeal, _addProductToDeal2).call(this, actionData, animationCallbacks);
+	        _classPrivateMethodGet$c(this, _addProductToDeal, _addProductToDeal2).call(this, actionData, animationCallbacks);
 	      }
 	    }
 	  }], [{
@@ -6684,9 +6838,9 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$f(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$d(obj, privateSet) { _checkPrivateRedeclaration$g(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$g(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$d(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _viewActivity$1 = /*#__PURE__*/new WeakSet();
 	var _getActivityEditor$1 = /*#__PURE__*/new WeakSet();
 	var _schedule = /*#__PURE__*/new WeakSet();
@@ -6697,10 +6851,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Email);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this, ...args));
-	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _openMessage);
-	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _schedule);
-	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _getActivityEditor$1);
-	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _viewActivity$1);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _openMessage);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _schedule);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _getActivityEditor$1);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _viewActivity$1);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Email, [{
@@ -6715,10 +6869,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Email::OpenMessage' && actionData) {
-	        _classPrivateMethodGet$c(this, _openMessage, _openMessage2).call(this, actionData);
+	        _classPrivateMethodGet$d(this, _openMessage, _openMessage2).call(this, actionData);
 	      }
 	      if (action === 'Email::Schedule' && actionData) {
-	        _classPrivateMethodGet$c(this, _schedule, _schedule2).call(this, actionData.activityId, actionData.scheduleDate);
+	        _classPrivateMethodGet$d(this, _schedule, _schedule2).call(this, actionData.activityId, actionData.scheduleDate);
 	      }
 	    }
 	  }, {
@@ -6738,7 +6892,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Email;
 	}(Base);
 	function _viewActivity2$1(id) {
-	  const editor = _classPrivateMethodGet$c(this, _getActivityEditor$1, _getActivityEditor2$1).call(this);
+	  const editor = _classPrivateMethodGet$d(this, _getActivityEditor$1, _getActivityEditor2$1).call(this);
 	  if (editor && id) {
 	    const emailActivity = BX.CrmActivityEmail.create({
 	      ID: id
@@ -6764,7 +6918,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (!main_core.Type.isNumber(actionData.threadId)) {
 	    return;
 	  }
-	  _classPrivateMethodGet$c(this, _viewActivity$1, _viewActivity2$1).call(this, actionData.threadId);
+	  _classPrivateMethodGet$d(this, _viewActivity$1, _viewActivity2$1).call(this, actionData.threadId);
 	}
 
 	let OrderCheck = /*#__PURE__*/function (_Base) {
@@ -6872,9 +7026,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return FinalSummary;
 	}(Base);
 
-	function _classPrivateMethodInitSpec$d(obj, privateSet) { _checkPrivateRedeclaration$g(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$g(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$d(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$e(obj, privateSet) { _checkPrivateRedeclaration$h(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$h(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$e(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _startSalescenterApp = /*#__PURE__*/new WeakSet();
 	let SalescenterApp = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(SalescenterApp, _Base);
@@ -6882,7 +7036,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, SalescenterApp);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SalescenterApp).call(this, ...args));
-	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _startSalescenterApp);
+	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _startSalescenterApp);
 	    return _this;
 	  }
 	  babelHelpers.createClass(SalescenterApp, [{
@@ -6898,7 +7052,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'SalescenterApp:Start' && actionData) {
-	        _classPrivateMethodGet$d(this, _startSalescenterApp, _startSalescenterApp2).call(this, actionData);
+	        _classPrivateMethodGet$e(this, _startSalescenterApp, _startSalescenterApp2).call(this, actionData);
 	      }
 	    }
 	  }], [{
@@ -6937,10 +7091,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
-	function _classPrivateMethodInitSpec$e(obj, privateSet) { _checkPrivateRedeclaration$h(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$h(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$h(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$e(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$f(obj, privateSet) { _checkPrivateRedeclaration$i(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$i(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$f(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _needCheckRequestStatus = /*#__PURE__*/new WeakMap();
 	var _checkRequestStatusTimeout = /*#__PURE__*/new WeakMap();
 	var _isPullSubscribed = /*#__PURE__*/new WeakMap();
@@ -6960,16 +7114,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Delivery);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Delivery).call(this, ...args));
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _getShipmentIds);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _getDeliveryServiceIds);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _getDeliveryRequest);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _updateCheckRequestStatus);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _checkRequestStatus);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _subscribeDeliveryRequestEvents);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _subscribeDeliveryServiceEvents);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _subscribeShipmentEvents);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _subscribePullEvents);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _makeCall$1);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _getShipmentIds);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _getDeliveryServiceIds);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _getDeliveryRequest);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _updateCheckRequestStatus);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _checkRequestStatus);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribeDeliveryRequestEvents);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribeDeliveryServiceEvents);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribeShipmentEvents);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribePullEvents);
+	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _makeCall$1);
 	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _needCheckRequestStatus, {
 	      writable: true,
 	      value: null
@@ -6987,8 +7141,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Delivery, [{
 	    key: "onInitialize",
 	    value: function onInitialize(item) {
-	      _classPrivateMethodGet$e(this, _updateCheckRequestStatus, _updateCheckRequestStatus2).call(this, item);
-	      _classPrivateMethodGet$e(this, _subscribePullEvents, _subscribePullEvents2).call(this, item);
+	      _classPrivateMethodGet$f(this, _updateCheckRequestStatus, _updateCheckRequestStatus2).call(this, item);
+	      _classPrivateMethodGet$f(this, _subscribePullEvents, _subscribePullEvents2).call(this, item);
 	    }
 	  }, {
 	    key: "onItemAction",
@@ -7003,13 +7157,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Delivery:MakeCall' && actionData) {
-	        _classPrivateMethodGet$e(this, _makeCall$1, _makeCall2$1).call(this, actionData);
+	        _classPrivateMethodGet$f(this, _makeCall$1, _makeCall2$1).call(this, actionData);
 	      }
 	    }
 	  }, {
 	    key: "onAfterItemRefreshLayout",
 	    value: function onAfterItemRefreshLayout(item) {
-	      _classPrivateMethodGet$e(this, _updateCheckRequestStatus, _updateCheckRequestStatus2).call(this, item);
+	      _classPrivateMethodGet$f(this, _updateCheckRequestStatus, _updateCheckRequestStatus2).call(this, item);
 	    }
 	  }], [{
 	    key: "isItemSupported",
@@ -7033,13 +7187,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (babelHelpers.classPrivateFieldGet(this, _isPullSubscribed)) {
 	    return;
 	  }
-	  _classPrivateMethodGet$e(this, _subscribeShipmentEvents, _subscribeShipmentEvents2).call(this, item);
-	  _classPrivateMethodGet$e(this, _subscribeDeliveryServiceEvents, _subscribeDeliveryServiceEvents2).call(this, item);
-	  _classPrivateMethodGet$e(this, _subscribeDeliveryRequestEvents, _subscribeDeliveryRequestEvents2).call(this, item);
+	  _classPrivateMethodGet$f(this, _subscribeShipmentEvents, _subscribeShipmentEvents2).call(this, item);
+	  _classPrivateMethodGet$f(this, _subscribeDeliveryServiceEvents, _subscribeDeliveryServiceEvents2).call(this, item);
+	  _classPrivateMethodGet$f(this, _subscribeDeliveryRequestEvents, _subscribeDeliveryRequestEvents2).call(this, item);
 	  babelHelpers.classPrivateFieldSet(this, _isPullSubscribed, true);
 	}
 	function _subscribeShipmentEvents2(item) {
-	  const shipmentIds = _classPrivateMethodGet$e(this, _getShipmentIds, _getShipmentIds2).call(this, item);
+	  const shipmentIds = _classPrivateMethodGet$f(this, _getShipmentIds, _getShipmentIds2).call(this, item);
 	  pull_client.PULL.subscribe({
 	    moduleId: 'crm',
 	    command: 'onOrderShipmentSave',
@@ -7052,7 +7206,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  pull_client.PULL.extendWatch('CRM_ENTITY_ORDER_SHIPMENT');
 	}
 	function _subscribeDeliveryServiceEvents2(item) {
-	  const deliveryServiceIds = _classPrivateMethodGet$e(this, _getDeliveryServiceIds, _getDeliveryServiceIds2).call(this, item);
+	  const deliveryServiceIds = _classPrivateMethodGet$f(this, _getDeliveryServiceIds, _getDeliveryServiceIds2).call(this, item);
 	  pull_client.PULL.subscribe({
 	    moduleId: 'sale',
 	    command: 'onDeliveryServiceSave',
@@ -7065,7 +7219,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  pull_client.PULL.extendWatch('SALE_DELIVERY_SERVICE');
 	}
 	function _subscribeDeliveryRequestEvents2(item) {
-	  const deliveryRequest = _classPrivateMethodGet$e(this, _getDeliveryRequest, _getDeliveryRequest2).call(this, item);
+	  const deliveryRequest = _classPrivateMethodGet$f(this, _getDeliveryRequest, _getDeliveryRequest2).call(this, item);
 	  pull_client.PULL.subscribe({
 	    moduleId: 'sale',
 	    command: 'onDeliveryRequestUpdate',
@@ -7090,11 +7244,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  main_core.ajax.runAction('crm.timeline.deliveryactivity.checkrequeststatus');
 	}
 	function _updateCheckRequestStatus2(item) {
-	  const deliveryRequest = _classPrivateMethodGet$e(this, _getDeliveryRequest, _getDeliveryRequest2).call(this, item);
+	  const deliveryRequest = _classPrivateMethodGet$f(this, _getDeliveryRequest, _getDeliveryRequest2).call(this, item);
 	  const needCheckRequestStatus = deliveryRequest && deliveryRequest.isProcessed === false;
 	  if (needCheckRequestStatus && !babelHelpers.classPrivateFieldGet(this, _needCheckRequestStatus)) {
 	    clearTimeout(babelHelpers.classPrivateFieldGet(this, _checkRequestStatusTimeout));
-	    babelHelpers.classPrivateFieldSet(this, _checkRequestStatusTimeout, setInterval(() => _classPrivateMethodGet$e(this, _checkRequestStatus, _checkRequestStatus2).call(this), 30 * 1000));
+	    babelHelpers.classPrivateFieldSet(this, _checkRequestStatusTimeout, setInterval(() => _classPrivateMethodGet$f(this, _checkRequestStatus, _checkRequestStatus2).call(this), 30 * 1000));
 	  } else if (!needCheckRequestStatus && babelHelpers.classPrivateFieldGet(this, _needCheckRequestStatus)) {
 	    clearTimeout(babelHelpers.classPrivateFieldGet(this, _checkRequestStatusTimeout));
 	  }
@@ -7122,9 +7276,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return dataPayload.shipmentIds;
 	}
 
-	function _classPrivateMethodInitSpec$f(obj, privateSet) { _checkPrivateRedeclaration$i(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$i(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$f(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$g(obj, privateSet) { _checkPrivateRedeclaration$j(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$j(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$g(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openRestAppSlider = /*#__PURE__*/new WeakSet();
 	let RestApp = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(RestApp, _Base);
@@ -7132,7 +7286,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, RestApp);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(RestApp).call(this, ...args));
-	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _openRestAppSlider);
+	    _classPrivateMethodInitSpec$g(babelHelpers.assertThisInitialized(_this), _openRestAppSlider);
 	    return _this;
 	  }
 	  babelHelpers.createClass(RestApp, [{
@@ -7147,7 +7301,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Activity:ConfigurableRestApp:OpenApp') {
-	        _classPrivateMethodGet$f(this, _openRestAppSlider, _openRestAppSlider2).call(this, actionData);
+	        _classPrivateMethodGet$g(this, _openRestAppSlider, _openRestAppSlider2).call(this, actionData);
 	      }
 	    }
 	  }], [{
@@ -7172,9 +7326,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	function _classPrivateMethodInitSpec$g(obj, privateSet) { _checkPrivateRedeclaration$j(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$j(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$g(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$h(obj, privateSet) { _checkPrivateRedeclaration$k(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$k(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$h(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _showEditor = /*#__PURE__*/new WeakSet();
 	var _onCommentDelete = /*#__PURE__*/new WeakSet();
 	var _isValidParams = /*#__PURE__*/new WeakSet();
@@ -7184,9 +7338,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Comment);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Comment).call(this, ...args));
-	    _classPrivateMethodInitSpec$g(babelHelpers.assertThisInitialized(_this), _isValidParams);
-	    _classPrivateMethodInitSpec$g(babelHelpers.assertThisInitialized(_this), _onCommentDelete);
-	    _classPrivateMethodInitSpec$g(babelHelpers.assertThisInitialized(_this), _showEditor);
+	    _classPrivateMethodInitSpec$h(babelHelpers.assertThisInitialized(_this), _isValidParams);
+	    _classPrivateMethodInitSpec$h(babelHelpers.assertThisInitialized(_this), _onCommentDelete);
+	    _classPrivateMethodInitSpec$h(babelHelpers.assertThisInitialized(_this), _showEditor);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Comment, [{
@@ -7218,10 +7372,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Comment:Edit' || action === 'Comment:AddFile') {
-	        _classPrivateMethodGet$g(this, _showEditor, _showEditor2).call(this, item);
+	        _classPrivateMethodGet$h(this, _showEditor, _showEditor2).call(this, item);
 	      }
 	      if (action === 'Comment:Delete' && actionData) {
-	        _classPrivateMethodGet$g(this, _onCommentDelete, _onCommentDelete2).call(this, actionData, animationCallbacks);
+	        _classPrivateMethodGet$h(this, _onCommentDelete, _onCommentDelete2).call(this, actionData, animationCallbacks);
 	      }
 	      if (action === 'Comment:StartEdit') {
 	        item.highlightContentBlockById('commentContentWeb', true);
@@ -7247,7 +7401,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _onCommentDelete2(actionData, animationCallbacks) {
-	  if (!_classPrivateMethodGet$g(this, _isValidParams, _isValidParams2).call(this, actionData)) {
+	  if (!_classPrivateMethodGet$h(this, _isValidParams, _isValidParams2).call(this, actionData)) {
 	    return;
 	  }
 	  const confirmationText = main_core.Type.isStringFilled(actionData.confirmationText) ? actionData.confirmationText : '';
@@ -7336,9 +7490,9 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	function _classPrivateMethodInitSpec$h(obj, privateSet) { _checkPrivateRedeclaration$k(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$k(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$h(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$i(obj, privateSet) { _checkPrivateRedeclaration$l(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$i(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openCalendarEvent = /*#__PURE__*/new WeakSet();
 	var _startVideoconference = /*#__PURE__*/new WeakSet();
 	let Sharing = /*#__PURE__*/function (_Base) {
@@ -7347,8 +7501,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Sharing);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sharing).call(this, ...args));
-	    _classPrivateMethodInitSpec$h(babelHelpers.assertThisInitialized(_this), _startVideoconference);
-	    _classPrivateMethodInitSpec$h(babelHelpers.assertThisInitialized(_this), _openCalendarEvent);
+	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _startVideoconference);
+	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _openCalendarEvent);
 	    return _this;
 	  }
 	  babelHelpers.createClass(Sharing, [{
@@ -7363,10 +7517,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'Activity:CalendarSharing:OpenCalendarEvent') {
-	        _classPrivateMethodGet$h(this, _openCalendarEvent, _openCalendarEvent2).call(this, item, actionData);
+	        _classPrivateMethodGet$i(this, _openCalendarEvent, _openCalendarEvent2).call(this, item, actionData);
 	      }
 	      if (action === 'Activity:CalendarSharing:StartVideoconference') {
-	        _classPrivateMethodGet$h(this, _startVideoconference, _startVideoconference2).call(this, item, actionData);
+	        _classPrivateMethodGet$i(this, _startVideoconference, _startVideoconference2).call(this, item, actionData);
 	      }
 	      if (action === 'CalendarSharingLinkCopied:OpenPublicPageInNewTab') {
 	        window.open(actionData.url);
@@ -7593,9 +7747,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Task;
 	}(Base);
 
-	function _classPrivateMethodInitSpec$i(obj, privateSet) { _checkPrivateRedeclaration$l(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$i(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$j(obj, privateSet) { _checkPrivateRedeclaration$m(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$m(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$j(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _open = /*#__PURE__*/new WeakSet();
 	let TranscriptResult = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(TranscriptResult, _Base);
@@ -7603,7 +7757,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, TranscriptResult);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(TranscriptResult).call(this, ...args));
-	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _open);
+	    _classPrivateMethodInitSpec$j(babelHelpers.assertThisInitialized(_this), _open);
 	    return _this;
 	  }
 	  babelHelpers.createClass(TranscriptResult, [{
@@ -7618,7 +7772,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'TranscriptResult:Open' && actionData) {
-	        _classPrivateMethodGet$i(this, _open, _open2).call(this, actionData);
+	        _classPrivateMethodGet$j(this, _open, _open2).call(this, actionData);
 	      }
 	    }
 	  }], [{
@@ -7641,9 +7795,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  transcription.open();
 	}
 
-	function _classPrivateMethodInitSpec$j(obj, privateSet) { _checkPrivateRedeclaration$m(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$m(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$j(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$k(obj, privateSet) { _checkPrivateRedeclaration$n(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$n(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$k(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _open$1 = /*#__PURE__*/new WeakSet();
 	let TranscriptSummaryResult = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(TranscriptSummaryResult, _Base);
@@ -7651,7 +7805,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, TranscriptSummaryResult);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(TranscriptSummaryResult).call(this, ...args));
-	    _classPrivateMethodInitSpec$j(babelHelpers.assertThisInitialized(_this), _open$1);
+	    _classPrivateMethodInitSpec$k(babelHelpers.assertThisInitialized(_this), _open$1);
 	    return _this;
 	  }
 	  babelHelpers.createClass(TranscriptSummaryResult, [{
@@ -7666,7 +7820,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 	      if (action === 'TranscriptSummaryResult:Open' && actionData) {
-	        _classPrivateMethodGet$j(this, _open$1, _open2$1).call(this, actionData);
+	        _classPrivateMethodGet$k(this, _open$1, _open2$1).call(this, actionData);
 	      }
 	    }
 	  }], [{
@@ -7689,9 +7843,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  summary.open();
 	}
 
-	function _classPrivateMethodInitSpec$k(obj, privateSet) { _checkPrivateRedeclaration$n(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$n(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$k(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$l(obj, privateSet) { _checkPrivateRedeclaration$o(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$o(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$l(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openAiFormFillAction = /*#__PURE__*/new WeakSet();
 	var _openAiFormFill = /*#__PURE__*/new WeakSet();
 	var _openAiDoneSlider = /*#__PURE__*/new WeakSet();
@@ -7703,11 +7857,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, EntityFieldsFillingResult);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(EntityFieldsFillingResult).call(this, ...args));
-	    _classPrivateMethodInitSpec$k(babelHelpers.assertThisInitialized(_this), _openSendFeedbackPopup);
-	    _classPrivateMethodInitSpec$k(babelHelpers.assertThisInitialized(_this), _fetchOperationStatus);
-	    _classPrivateMethodInitSpec$k(babelHelpers.assertThisInitialized(_this), _openAiDoneSlider);
-	    _classPrivateMethodInitSpec$k(babelHelpers.assertThisInitialized(_this), _openAiFormFill);
-	    _classPrivateMethodInitSpec$k(babelHelpers.assertThisInitialized(_this), _openAiFormFillAction);
+	    _classPrivateMethodInitSpec$l(babelHelpers.assertThisInitialized(_this), _openSendFeedbackPopup);
+	    _classPrivateMethodInitSpec$l(babelHelpers.assertThisInitialized(_this), _fetchOperationStatus);
+	    _classPrivateMethodInitSpec$l(babelHelpers.assertThisInitialized(_this), _openAiDoneSlider);
+	    _classPrivateMethodInitSpec$l(babelHelpers.assertThisInitialized(_this), _openAiFormFill);
+	    _classPrivateMethodInitSpec$l(babelHelpers.assertThisInitialized(_this), _openAiFormFillAction);
 	    return _this;
 	  }
 	  babelHelpers.createClass(EntityFieldsFillingResult, [{
@@ -7724,10 +7878,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      switch (action) {
 	        case 'EntityFieldsFillingResult:OpenAiFormFill':
-	          _classPrivateMethodGet$k(this, _openAiFormFillAction, _openAiFormFillAction2).call(this, actionData);
+	          _classPrivateMethodGet$l(this, _openAiFormFillAction, _openAiFormFillAction2).call(this, actionData);
 	          break;
 	        case 'EntityFieldsFillingResult:OpenSendFeedbackPopup':
-	          _classPrivateMethodGet$k(this, _openSendFeedbackPopup, _openSendFeedbackPopup2).call(this, actionData, animationCallbacks);
+	          _classPrivateMethodGet$l(this, _openSendFeedbackPopup, _openSendFeedbackPopup2).call(this, actionData, animationCallbacks);
 	          break;
 	        default:
 	      }
@@ -7741,13 +7895,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  return EntityFieldsFillingResult;
 	}(Base);
 	async function _openAiFormFillAction2(actionData) {
-	  const operationStatus = await _classPrivateMethodGet$k(this, _fetchOperationStatus, _fetchOperationStatus2).call(this, actionData.mergeUuid);
+	  const operationStatus = await _classPrivateMethodGet$l(this, _fetchOperationStatus, _fetchOperationStatus2).call(this, actionData.mergeUuid);
 	  switch (operationStatus) {
 	    case 'APPLIED':
-	      _classPrivateMethodGet$k(this, _openAiDoneSlider, _openAiDoneSlider2).call(this);
+	      _classPrivateMethodGet$l(this, _openAiDoneSlider, _openAiDoneSlider2).call(this);
 	      break;
 	    case 'CONFLICT':
-	      _classPrivateMethodGet$k(this, _openAiFormFill, _openAiFormFill2).call(this, actionData);
+	      _classPrivateMethodGet$l(this, _openAiFormFill, _openAiFormFill2).call(this, actionData);
 	      break;
 	    default:
 	      throw new Error(`Invalid operation status: ${operationStatus}`);
@@ -7846,6 +8000,7 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(TranscriptResult);
 	ControllerManager.registerController(TranscriptSummaryResult);
 	ControllerManager.registerController(EntityFieldsFillingResult);
+	ControllerManager.registerController(SignB2eDocument);
 
 	exports.Item = Item;
 	exports.ConfigurableItem = ConfigurableItem;
@@ -7853,5 +8008,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.Main,BX,BX.Crm,BX.UI,BX.UI,BX.Crm.DateTime,BX.Currency,BX.UI.Icons.Generator,BX.UI.IconSet,BX,BX,BX,BX.Vue3,BX.Crm.Timeline.Editors,BX.Crm.Field,BX.Main,BX.Crm.Timeline,BX,BX.UI.Analytics,BX.UI,BX,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX,BX.UI.Dialogs,BX.Crm.AI,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.Main,BX,BX.Crm,BX.UI,BX.UI,BX.Currency,BX.UI.Icons.Generator,BX.UI.IconSet,BX,BX,BX,BX.Vue3,BX.Crm.Timeline.Editors,BX.Crm.Field,BX.Main,BX.Crm.Timeline,BX,BX.UI.Analytics,BX.UI,BX,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX,BX.UI.Dialogs,BX.Crm.AI,BX));
 //# sourceMappingURL=index.bundle.js.map

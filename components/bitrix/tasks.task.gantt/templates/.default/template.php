@@ -1,6 +1,8 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
@@ -46,7 +48,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column transparent-workarea");
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 $APPLICATION->IncludeComponent(
@@ -345,11 +347,13 @@ else
                             currentGroupId: <?=$currentGroupId?>
                         };
 
-                        if (newProjectId !== null) {
+                        if (newProjectId !== null)
+						{
                             data.newGroupId = newProjectId;
                         }
 
-                        if (newParentId !== null) {
+                        if (newParentId !== null)
+						{
                             data.newParentId = newParentId;
                         }
 
@@ -375,7 +379,8 @@ else
 							}.bind(this)
 						);
                     },
-                    onDependencyAdd: function (dep) {
+                    onDependencyAdd: function (dep)
+					{
 						if (
 							dep === null
 							|| !dep.from
@@ -497,8 +502,8 @@ else
 
 		<?// hellish hack, sorry for that?>
         window.COMPANY_WORKTIME = {
-            h: <?=intval($arResult['COMPANY_WORKTIME']['END']['H'])?>,
-            m: <?=intval($arResult['COMPANY_WORKTIME']['END']['M'])?>};
+            h: <?=(int)$arResult['COMPANY_WORKTIME']['END']['H']?>,
+            m: <?=(int)$arResult['COMPANY_WORKTIME']['END']['M']?>};
 
         var projects = [
 			<? $i = 0?>
@@ -579,18 +584,23 @@ else
             params = params || {};
             params.task = params.task || {};
 
-            var taskId = parseInt(params.task.ID);
+			const taskId = parseInt(params.task.ID);
 
-            if (cbAction == 'DELETE' && !isNaN(taskId) && taskId) {
+			if (cbAction === 'DELETE' && !isNaN(taskId) && taskId)
+			{
                 onPopupTaskDeleted(params.task.ID);
             }
-            else if (cbAction == 'ADD') {
-                if (params.taskUgly) {
+            else if (cbAction === 'ADD')
+			{
+                if (params.taskUgly)
+				{
                     onPopupTaskAdded(params.taskUgly);
                 }
             }
-            else if (cbAction == 'UPDATE') {
-                if (params.taskUgly) {
+            else if (cbAction === 'UPDATE')
+			{
+                if (params.taskUgly)
+				{
                     onPopupTaskChanged(params.taskUgly);
                 }
             }
@@ -600,12 +610,12 @@ else
 </script>
 
 <?php
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget('inside_pagetitle');
-}
+//if ($isBitrix24Template)
+//{
+//	$this->SetViewTarget('inside_pagetitle');
+//}
 
-if ($arResult['CONTEXT'] === Context::DEFAULT)
+if ($arResult['CONTEXT'] !== Context::getSpaces())
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',

@@ -468,7 +468,10 @@ class CVoxImplantUser
 	public static function GetList($params)
 	{
 		$query = new \Bitrix\Main\Entity\Query(\Bitrix\Main\UserTable::getEntity());
-		$query->registerRuntimeField('', new \Bitrix\Main\Entity\ExpressionField('IS_ONLINE_CUSTOM', 'CASE WHEN LAST_ACTIVITY_DATE > '.self::GetLastActivityDateAgo().' THEN \'Y\' ELSE \'N\' END'));
+		$query->registerRuntimeField(new \Bitrix\Main\Entity\ExpressionField(
+			'IS_ONLINE_CUSTOM',
+			"CASE WHEN LAST_ACTIVITY_DATE > ".self::GetLastActivityDateAgo()." THEN 'Y' ELSE 'N' END'"
+		));
 
 		if (isset($params['select']))
 		{
@@ -503,7 +506,7 @@ class CVoxImplantUser
 		if (IsModuleInstalled('bitrix24'))
 			$lastActivityDate = 1440;
 
-		return Bitrix\Main\Application::getConnection()->getSqlHelper()->addSecondsToDateTime('(-'.$lastActivityDate.')');
+		return Bitrix\Main\Application::getConnection()->getSqlHelper()->addSecondsToDateTime(-1 * $lastActivityDate);
 	}
 
 	public static function GetActiveStatusByTimeman($userId)

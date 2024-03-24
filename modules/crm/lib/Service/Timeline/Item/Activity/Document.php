@@ -3,28 +3,28 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
-use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
-use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
+use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Value;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
-use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 
-Loader::requireModule('documentgenerator');
-
 Container::getInstance()->getLocalization()->loadMessages();
 
+/**
+ * @todo its a dead code. remove it
+ */
 final class Document extends Activity
 {
-	private ?\Bitrix\DocumentGenerator\Document $document = null;
+	use Mixin\Document;
+
 	private ?array $documentData = null;
 
 	protected function getActivityTypeId(): string
@@ -56,14 +56,6 @@ final class Document extends Activity
 		;
 	}
 
-	private function getOpenDocumentAction(): Layout\Action
-	{
-		return
-			(new Layout\Action\JsEvent('Document:Open'))
-				->addActionParamInt('documentId', $this->getDocumentId())
-		;
-	}
-
 	private function getUrlAction(string $event, string $param, ?Uri $value): Layout\Action\JsEvent
 	{
 		$action =
@@ -85,7 +77,7 @@ final class Document extends Activity
 
 		$documentsPermissions = Driver::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
-		if ($this->isScheduled() && $documentsPermissions->canModifyDocument($this->getDocument()))
+		if ($this->isScheduled() && $this->getDocument() && $documentsPermissions->canModifyDocument($this->getDocument()))
 		{
 			$titleBlock =
 				(new Layout\Body\ContentBlock\EditableText())
@@ -234,7 +226,7 @@ final class Document extends Activity
 		$menuItems['downloadDocx'] =
 			(new Layout\Menu\MenuItem(Loc::getMessage('CRM_TIMELINE_ACTIVITY_DOCUMENT_DOWNLOAD_DOCX')))
 				->setAction(
-					$this->getUrlAction('Document:DownloadDocx', 'docxUrl', $this->getDocxUrl()),
+					$this->getUrlAction('Document:DownloadDocx', 'docxUrl', $this->getDownloadUrl()),
 				)
 				->setSort(300)
 		;
@@ -243,19 +235,15 @@ final class Document extends Activity
 	}
 
 	//region Access to Document Data
-	private function getDocumentId(): int
-	{
-		return (int)$this->getAssociatedEntityModel()->get('ASSOCIATED_ENTITY_ID');
-	}
 
 	private function getDocumentTitle(): ?string
 	{
-		return $this->getDocumentData()['title'] ?? null;
+		return $this->getDocument()?->getTitle() ?: Loc::getMessage('CRM_COMMON_EMPTY_VALUE');
 	}
 
 	private function getDocumentCreateDate(): ?DateTime
 	{
-		$createTimeField = $this->getDocument()->getFields(['DocumentCreateTime'])['DocumentCreateTime'] ?? null;
+		$createTimeField = $this->getDocument()?->getFields(['DocumentCreateTime'])['DocumentCreateTime'] ?? null;
 		if (is_array($createTimeField) && isset($createTimeField['VALUE']))
 		{
 			$createTime = $createTimeField['VALUE'];
@@ -270,7 +258,7 @@ final class Document extends Activity
 				{
 					$parsedCreateTime = new DateTime($createTime);
 				}
-				catch (ObjectException $incorrectDateException)
+				catch (ObjectException)
 				{
 					$parsedCreateTime = null;
 				}
@@ -285,27 +273,7 @@ final class Document extends Activity
 			}
 		}
 
-		return $this->getDocument()->getCreateTime();
-	}
-
-	private function getPublicUrl(): ?Uri
-	{
-		return $this->getDocumentData()['publicUrl'] ?? null;
-	}
-
-	private function getPrintUrl(): ?Uri
-	{
-		return $this->getDocumentData()['printUrl'] ?? null;
-	}
-
-	private function getPdfUrl(): ?Uri
-	{
-		return $this->getDocumentData()['pdfUrl'] ?? null;
-	}
-
-	private function getDocxUrl(): ?Uri
-	{
-		return $this->getDocumentData()['downloadUrl'] ?? null;
+		return $this->getDocument()?->getCreateTime();
 	}
 
 	private function getProductsCount(): ?int
@@ -343,7 +311,7 @@ final class Document extends Activity
 
 	private function getMyCompanyCaption(): string
 	{
-		$provider = $this->getDocument()->getProvider();
+		$provider = $this->getDocument()?->getProvider();
 		if ($provider instanceof CrmEntityDataProvider)
 		{
 			[$myCompanyRequisites, ] = $provider->getMyCompanyRequisitesAndBankDetail();
@@ -356,7 +324,7 @@ final class Document extends Activity
 
 	private function getClientCaption(): string
 	{
-		$provider = $this->getDocument()->getProvider();
+		$provider = $this->getDocument()?->getProvider();
 		if ($provider instanceof CrmEntityDataProvider)
 		{
 			[$clientRequisites, ] = $provider->getClientRequisitesAndBankDetail();
@@ -371,26 +339,10 @@ final class Document extends Activity
 	{
 		if (is_null($this->documentData))
 		{
-			$this->documentData = $this->getDocument()->getFile(false)->getData();
+			$this->documentData = $this->getDocument()?->getFile(false)->getData() ?? [];
 		}
 
 		return $this->documentData;
-	}
-
-	private function getDocument(): \Bitrix\DocumentGenerator\Document
-	{
-		if (!$this->document)
-		{
-			$this->document = \Bitrix\DocumentGenerator\Document::loadById($this->getDocumentId());
-			if (!$this->document)
-			{
-				throw new ObjectNotFoundException('Could not find document with ID=' . $this->getDocumentId());
-			}
-
-			DocumentGeneratorManager::getInstance()->actualizeDocumentImmediately($this->document);
-		}
-
-		return $this->document;
 	}
 	//endregion
 }

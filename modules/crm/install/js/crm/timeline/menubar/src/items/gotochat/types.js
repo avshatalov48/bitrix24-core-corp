@@ -4,6 +4,7 @@ declare type Config = {
 	channels: Channel[],
 	communications: Communication[],
 	contactCenterUrl: string,
+	marketplaceUrl: string,
 	currentChannelId: string,
 	currentSender: string,
 	openLineItems: OpenLinesList,

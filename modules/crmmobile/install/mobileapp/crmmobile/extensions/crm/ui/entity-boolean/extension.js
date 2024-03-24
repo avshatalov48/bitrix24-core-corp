@@ -37,7 +37,7 @@ jn.define('crm/ui/entity-boolean', (require, exports, module) => {
 	};
 
 	/**
-	 * @class WizardFields
+	 * @class EntityBoolean
 	 */
 	class EntityBoolean extends LayoutComponent
 	{

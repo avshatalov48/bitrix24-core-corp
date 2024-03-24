@@ -76,9 +76,8 @@ final class Repository
 			return $result;
 		}
 
-		$placementHandlerList = PlacementTable::getHandlersList(
-			AppPlacement::getDetailActivityPlacementCode($this->context->getEntityTypeId())
-		);
+		$placementCode = AppPlacement::getDetailActivityPlacementCode($this->context->getEntityTypeId());
+		$placementHandlerList = PlacementTable::getHandlersList($placementCode);
 		foreach($placementHandlerList as $placementHandler)
 		{
 			$result[] = (new RestPlacement($this->context))
@@ -86,6 +85,8 @@ final class Repository
 				->setAppName($placementHandler['APP_NAME'] ?? '')
 				->setPlacementId($placementHandler['ID'] ?? '')
 				->setPlacementTitle($placementHandler['TITLE'] ?? '')
+				->setPlacementCode($placementCode)
+				->setPlacementOptions($placementHandler['OPTIONS'] ?? [])
 			;
 		}
 

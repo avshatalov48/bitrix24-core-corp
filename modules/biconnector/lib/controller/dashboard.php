@@ -10,6 +10,7 @@ use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Grid\DashboardGrid;
+use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\Application;
@@ -17,7 +18,6 @@ use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
-use Bitrix\Main\Grid\Settings;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -365,7 +365,15 @@ class Dashboard extends Controller
 
 	private function prepareGridRow(Model\Dashboard $dashboard): array
 	{
-		$grid = new DashboardGrid(new Settings(['ID' => 'biconnector_superset_dashboard_grid']));
+		$supersetController = new SupersetController(ProxyIntegrator::getInstance());
+
+		$settings = new DashboardSettings([
+			'ID' => 'biconnector_superset_dashboard_grid',
+			'IS_SUPERSET_AVAILABLE' => $supersetController->isExternalServiceAvailable(),
+		]);
+
+		$grid = new DashboardGrid($settings);
+
 		$result = $grid->getRows()->prepareRows([$dashboard->toArray()]);
 		$result = current($result);
 		if (is_array($result))

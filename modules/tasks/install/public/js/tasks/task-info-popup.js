@@ -169,7 +169,7 @@ BX.TaskQuickInfo = {
 						BX.create("tr", {  children : [
 							BX.create("td", { props : { className: "task-quick-info-left-column" }, children : [
 								BX.create("span", { props : { className: "task-quick-info-fields" }, children : [
-									BX.create("span", { props : { className: "task-quick-info-field-name" }, html : BX.message("TASKS_RESPONSIBLE") + ":" }),
+									BX.create("span", { props : { className: "task-quick-info-field-name" }, html : BX.message('TASKS_ASSIGNEE') + ":" }),
 									BX.create("span", { props : { className: "task-quick-info-field-name" }, html : BX.message("TASKS_DIRECTOR") + ":" })
 								]}),
 								BX.create("span", { props : { className: "task-quick-info-values" }, children : [

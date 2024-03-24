@@ -1,105 +1,267 @@
-<?
+<?php
+
+use Bitrix\Main\Localization\Loc;
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllXDILFScheme
 {
+	public $LAST_ERROR = '';
 
-	function CheckFields($action, &$arFields)
+	public function CheckFields($action, &$arFields): bool
 	{
 		global $DB;
 		$this->LAST_ERROR = "";
 		$aMsg = array();
 
-		if((($action == "update" && array_key_exists("TYPE", $arFields)) || $action == "add") && $arFields["TYPE"] == '')
-			$aMsg[] = array("id"=>"TYPE", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_TYPE"));
-		if((($action == "update" && array_key_exists("ENTITY_TYPE", $arFields)) || $action == "add") && $arFields["ENTITY_TYPE"] == '')
-			$aMsg[] = array("id"=>"ENTITY_TYPE", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_ENTITY_TYPE"));
-		if((($action == "update" && array_key_exists("EVENT_ID", $arFields)) || $action == "add") && $arFields["EVENT_ID"] == '')
-			$aMsg[] = array("id"=>"EVENT_ID", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_EVENT_ID"));
-		if((($action == "update" && array_key_exists("NAME", $arFields)) || $action == "add") && $arFields["NAME"] == '')
-			$aMsg[] = array("id"=>"NAME", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_NAME"));
-		if($arFields["LID"] <> '')
+		if (
+			(
+				(
+					$action === "update"
+					&& array_key_exists("TYPE", $arFields)
+				)
+				|| $action === "add"
+			)
+			&& (string)$arFields["TYPE"] === ''
+		)
+		{
+			$aMsg[] = [
+				"id" => "TYPE",
+				"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_TYPE"),
+			];
+		}
+
+		if (
+			(
+				(
+					$action === "update"
+					&& array_key_exists("ENTITY_TYPE", $arFields)
+				)
+				|| $action === "add"
+			)
+			&& (string)$arFields["ENTITY_TYPE"] === ''
+		)
+		{
+			$aMsg[] = [
+				"id" => "ENTITY_TYPE",
+				"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_ENTITY_TYPE"),
+			];
+		}
+
+		if (
+			(
+				(
+					$action === "update"
+					&& array_key_exists("EVENT_ID", $arFields)
+				)
+				|| $action === "add"
+			)
+			&& (string)$arFields["EVENT_ID"] === ''
+		)
+		{
+			$aMsg[] = [
+				"id" => "EVENT_ID",
+				"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_EVENT_ID"),
+			];
+		}
+
+		if (
+			(
+				(
+					$action === "update"
+					&& array_key_exists("NAME", $arFields)
+				)
+				|| $action === "add"
+			)
+			&& (string)$arFields["NAME"] === ''
+		)
+		{
+			$aMsg[] = [
+				"id" => "NAME",
+				"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_NAME"),
+			];
+		}
+
+		if ((string) ($arFields["LID"] ?? '') !== '')
 		{
 			$r = CLang::GetByID($arFields["LID"]);
-			if(!$r->Fetch())
-				$aMsg[] = array("id"=>"LID", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_SITE"));
+			if (!$r->Fetch())
+			{
+				$aMsg[] = [
+					"id" => "LID",
+					"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_SITE"),
+				];
+			}
 		}
-		elseif (($action == "update" && array_key_exists("LID", $arFields)) || $action == "add")
-			$aMsg[] = array("id"=>"LID", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_SITE2"));
+		elseif (
+			(
+				$action === "update"
+				&& array_key_exists("LID", $arFields)
+			) || $action === "add"
+		)
+		{
+			$aMsg[] = [
+				"id" => "LID",
+				"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_SITE2")
+			];
+		}
 
-		if(
-			($action == "add" && $arFields["TYPE"] == "POST" && (!array_key_exists("HASH", $arFields) || $arFields["HASH"] == ''))
-			|| ($action == "update" && $arFields["TYPE"] == "POST" && array_key_exists("HASH", $arFields) && $arFields["HASH"] == '')
+		if (
+			(
+				$action === "add"
+				&& $arFields["TYPE"] === "POST"
+				&& (
+					!array_key_exists("HASH", $arFields)
+					|| (string)$arFields["HASH"] === ''
+				)
+			)
+			|| (
+				$action === "update"
+				&& ($arFields["TYPE"] ?? null) === "POST"
+				&& array_key_exists("HASH", $arFields)
+				&& (string) $arFields["HASH"] === ''
+			)
 		)
-			$arFields["HASH"] = md5(randString(20));
-			
-		if(
-			($action == "add" && (!array_key_exists("ENABLE_COMMENTS", $arFields) || !in_array($arFields["ENABLE_COMMENTS"], array("Y", "N")))) 
-			|| ($action == "update" && array_key_exists("ENABLE_COMMENTS", $arFields) && !in_array($arFields["ENABLE_COMMENTS"], array("Y", "N")))
+		{
+			$arFields["HASH"] = md5(\Bitrix\Main\Security\Random::getString(20));
+		}
+
+		if (
+			(
+				$action === "add"
+				&& (
+					!array_key_exists("ENABLE_COMMENTS", $arFields)
+					|| !in_array($arFields["ENABLE_COMMENTS"], [ "Y", "N"])
+				)
+			)
+			|| (
+				$action === "update"
+				&& array_key_exists("ENABLE_COMMENTS", $arFields)
+				&& !in_array($arFields["ENABLE_COMMENTS"], [ "Y", "N" ])
+			)
 		)
+		{
 			$arFields["ENABLE_COMMENTS"] = "Y";
+		}
 
-		if((($action == "update" && array_key_exists("DAYS_OF_MONTH", $arFields)) || $action == "add") && $arFields["DAYS_OF_MONTH"] <> '')
+		if (
+			(
+				(
+					$action === "update"
+					&& array_key_exists("DAYS_OF_MONTH", $arFields)
+				)
+				|| $action === "add"
+			)
+			&& (string)$arFields["DAYS_OF_MONTH"] !== ''
+		)
 		{
 			$arDoM = explode(",", $arFields["DAYS_OF_MONTH"]);
 			$arFound = array();
-			foreach($arDoM as $strDoM)
+			foreach ($arDoM as $strDoM)
 			{
-				if(preg_match("/^(\d{1,2})$/", trim($strDoM), $arFound))
+				if (preg_match("/^(\d{1,2})$/", trim($strDoM), $arFound))
 				{
-					if(intval($arFound[1]) < 1 || intval($arFound[1]) > 31)
+					if (
+						(int)$arFound[1] < 1
+						|| (int)$arFound[1] > 31
+					)
 					{
 						$aMsg[] = array("id"=>"DAYS_OF_MONTH", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_DOM"));
 						break;
 					}
 				}
-				elseif(preg_match("/^(\d{1,2})-(\d{1,2})$/", trim($strDoM), $arFound))
+				elseif (preg_match("/^(\d{1,2})-(\d{1,2})$/", trim($strDoM), $arFound))
 				{
-					if(intval($arFound[1]) < 1 || intval($arFound[1]) > 31 || intval($arFound[2]) < 1 || intval($arFound[2]) > 31 || intval($arFound[1]) >= intval($arFound[2]))
+					if (
+						(int)$arFound[1] < 1
+						|| (int)$arFound[1] > 31
+						|| (int)$arFound[2] < 1
+						|| (int)$arFound[2] > 31
+						|| (int)$arFound[1] >= (int)$arFound[2])
 					{
-						$aMsg[] = array("id"=>"DAYS_OF_MONTH", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_DOM"));
+						$aMsg[] = [
+							"id" => "DAYS_OF_MONTH",
+							"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_DOM"),
+						];
 						break;
 					}
 				}
 				else
 				{
-					$aMsg[] = array("id"=>"DAYS_OF_MONTH", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_DOM2"));
+					$aMsg[] = [
+						"id" => "DAYS_OF_MONTH",
+						"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_DOM2"),
+					];
 					break;
 				}
 			}
 		}
-		if((($action == "update" && array_key_exists("DAYS_OF_WEEK", $arFields)) || $action == "add") && $arFields["DAYS_OF_WEEK"] <> '')
+
+		if (
+			(
+				(
+					$action === "update"
+					&& array_key_exists("DAYS_OF_WEEK", $arFields)
+				)
+				|| $action === "add"
+			)
+			&& (string)$arFields["DAYS_OF_WEEK"] !== ''
+		)
 		{
 			$arDoW = explode(",", $arFields["DAYS_OF_WEEK"]);
 			$arFound = array();
-			foreach($arDoW as $strDoW)
+			foreach ($arDoW as $strDoW)
 			{
-				if(preg_match("/^(\d)$/", trim($strDoW), $arFound))
+				if (preg_match("/^(\d)$/", trim($strDoW), $arFound))
 				{
-					if(intval($arFound[1]) < 1 || intval($arFound[1]) > 7)
+					if (
+						(int)$arFound[1] < 1
+						|| (int)$arFound[1] > 7
+					)
 					{
-						$aMsg[] = array("id"=>"DAYS_OF_WEEK", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_DOW"));
+						$aMsg[] = [
+							"id" => "DAYS_OF_WEEK",
+							"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_DOW"),
+						];
 						break;
 					}
 				}
 				else
 				{
-					$aMsg[] = array("id"=>"DAYS_OF_WEEK", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_DOW2"));
+					$aMsg[] = [
+						"id" => "DAYS_OF_WEEK",
+						"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_DOW2"),
+					];
 					break;
 				}
 			}
 		}
-		if((($action == "update" && array_key_exists("TIMES_OF_DAY", $arFields)) || $action == "add") && $arFields["TIMES_OF_DAY"] <> '')
+		if (
+			(
+				(
+					$action === "update"
+					&& array_key_exists("TIMES_OF_DAY", $arFields)
+				)
+				|| $action === "add"
+			)
+			&& (string)$arFields["TIMES_OF_DAY"] !== ''
+		)
 		{
 			$arToD = explode(",", $arFields["TIMES_OF_DAY"]);
 			$arFound = array();
-			foreach($arToD as $strToD)
+			foreach ($arToD as $strToD)
 			{
-				if(preg_match("/^(\d{1,2}):(\d{1,2})$/", trim($strToD), $arFound))
+				if (preg_match("/^(\d{1,2}):(\d{1,2})$/", trim($strToD), $arFound))
 				{
-					if(intval($arFound[1]) > 23 || intval($arFound[2]) > 59)
+					if (
+						(int)$arFound[1] > 23
+						|| (int)$arFound[2] > 59
+					)
 					{
-						$aMsg[] = array("id"=>"TIMES_OF_DAY", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_TOD"));
+						$aMsg[] = [
+							"id" => "TIMES_OF_DAY",
+							"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_TOD"),
+						];
 						break;
 					}
 				}
@@ -115,18 +277,21 @@ class CAllXDILFScheme
 		{
 			if (array_key_exists("TYPE",  $arFields))
 			{
-				if (in_array($arFields["TYPE"], array("XML", "RSS")))
-					$arFields["AUTO"] = "Y";
-				else
-					$arFields["AUTO"] = "N";
+				$arFields["AUTO"] = (
+					in_array($arFields["TYPE"], [ "XML", "RSS" ])
+						? "Y"
+						: "N"
+				);
 			}
 		}
-		elseif (!in_array($arFields["AUTO"], array("Y", "N")))
+		elseif (!in_array($arFields["AUTO"], [ "Y", "N" ]))
+		{
 			$arFields["AUTO"] = "N";
-			
+		}
+
 		if (
 			array_key_exists("IS_HTML", $arFields)
-			&& !in_array($arFields["IS_HTML"], array("Y", "N"))
+			&& !in_array($arFields["IS_HTML"], [ "Y", "N" ])
 		)
 		{
 			$arFields["IS_HTML"] = "N";
@@ -140,24 +305,24 @@ class CAllXDILFScheme
 				&& in_array($arFields["TYPE"], array("XML", "RSS"))
 			)
 			{
-				if($arURI["host"] == '')
+				if ((string)$arURI["host"] === '')
 				{
-					$aMsg[] = array(
+					$aMsg[] = [
 						"id" => "URI", 
-						"text" => GetMessage("LFP_CLASS_SCHEME_ERR_URI_HOST")
-					);	
+						"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_URI_HOST"),
+					];
 				}
 				else
 				{
 					$arFields["HOST"] = $arURI["host"];
 				}
 
-				if($arURI["port"] <> '')
+				if ((string) ($arURI["port"] ?? null) !== '')
 				{
 					$arFields["PORT"] = $arURI["port"];
 				}
 
-				if($arURI["path"] <> '')
+				if ((string) ($arURI["path"] ?? null) !== '')
 				{
 					$arFields["PAGE"] = $arURI["path"];
 				}
@@ -165,81 +330,119 @@ class CAllXDILFScheme
 			
 			if (
 				array_key_exists("TYPE", $arFields) 
-				&& $arFields["TYPE"] == "RSS" 
-				&& $arURI["query"] <> ''
+				&& $arFields["TYPE"] === "RSS"
+				&& (string) ($arURI["query"] ?? null) !== ''
 			)
 			{
 				$arFields["PARAMS"] = $arURI["query"];
 			}
 			
-			if ($arFields["TYPE"] != "RSS")
+			if ($arFields["TYPE"] !== "RSS")
 			{
 				unset($arFields["URI"]);
 			}
 		}
 		elseif (array_key_exists("HOST", $arFields))
 		{
-			if (array_key_exists("TYPE", $arFields) && in_array($arFields["TYPE"], array("XML")))
+			if (
+				array_key_exists("TYPE", $arFields)
+				&& $arFields["TYPE"] === "XML"
+			)
 			{
 				if (mb_strpos($arFields["HOST"], "://") === false)
-					$arFields["HOST"] = "http://".$arFields["HOST"];
+				{
+					$arFields["HOST"] = "http://" . $arFields["HOST"];
+				}
 
 				$arURI = parse_url($arFields["HOST"]);
 
-				if($arURI["host"] == '')
-					$aMsg[] = array("id"=>"HOST", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_URI_HOST"));	
+				if ((string)$arURI["host"] === '')
+				{
+					$aMsg[] = [
+						"id" => "HOST",
+						"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_URI_HOST"),
+					];
+				}
 				else
+				{
 					$arFields["HOST"] = $arURI["host"];
+				}
 
-				if($arURI["port"] <> '')
+				if ((string)$arURI["port"] !== '')
+				{
 					$arFields["PORT"] = $arURI["port"];
+				}
 			}
 		}
 
-		if($arFields["AUTO"]=="Y")
+		if (($arFields["AUTO"] ?? null) === "Y")
 		{
-			if(mb_strlen($arFields["DAYS_OF_MONTH"]) + mb_strlen($arFields["DAYS_OF_WEEK"]) <= 0)
-				$aMsg[] = array("id"=>"DAYS_OF_MONTH", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_DAYS_MISSING"));
-			if($arFields["TIMES_OF_DAY"] == '')
-				$aMsg[] = array("id"=>"TIMES_OF_DAY", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_TIMES_MISSING"));
-			if($arFields["LAST_EXECUTED"] == '')
-				$aMsg[] = array("id"=>"LAST_EXECUTED", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_LE_MISSING"));
-			elseif(is_set($arFields, "LAST_EXECUTED") && $arFields["LAST_EXECUTED"]!==false && $DB->IsDate($arFields["LAST_EXECUTED"], false, false, "FULL")!==true)
-				$aMsg[] = array("id"=>"LAST_EXECUTED", "text"=>GetMessage("LFP_CLASS_SCHEME_ERR_LE_WRONG"));
+			if (mb_strlen($arFields["DAYS_OF_MONTH"]) + mb_strlen($arFields["DAYS_OF_WEEK"]) <= 0)
+			{
+				$aMsg[] = [
+					"id" => "DAYS_OF_MONTH",
+					"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_DAYS_MISSING"),
+				];
+			}
+
+			if ((string)$arFields["TIMES_OF_DAY"] === '')
+			{
+				$aMsg[] = [
+					"id" => "TIMES_OF_DAY",
+					"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_TIMES_MISSING"),
+				];
+			}
+
+			if ((string)$arFields["LAST_EXECUTED"] === '')
+			{
+				$aMsg[] = [
+					"id" => "LAST_EXECUTED",
+					"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_LE_MISSING"),
+				];
+			}
+			elseif (
+				is_set($arFields, "LAST_EXECUTED")
+				&& $arFields["LAST_EXECUTED"] !== false
+				&& $DB->IsDate($arFields["LAST_EXECUTED"], false, false, "FULL") !== true
+			)
+			{
+				$aMsg[] = [
+					"id" => "LAST_EXECUTED",
+					"text" => Loc::getMessage("LFP_CLASS_SCHEME_ERR_LE_WRONG"),
+				];
+			}
 		}
 
-		if(!empty($aMsg))
+		if (!empty($aMsg))
 		{
 			$e = new CAdminException($aMsg);
 			$GLOBALS["APPLICATION"]->ThrowException($e);
 			$this->LAST_ERROR = $e->GetString();
 			return false;
 		}
+
 		return true;
 	}
 
-	public static function Delete($ID)
+	public static function Delete($ID): bool
 	{
 		global $DB, $APPLICATION, $CACHE_MANAGER;
-		$strError = '';
 
-		$res = $DB->Query("DELETE FROM b_xdi_lf_scheme WHERE ID = ".$ID);
-		if(is_object($res))
+		$res = $DB->Query('DELETE FROM b_xdi_lf_scheme WHERE ID = ' . (int)$ID);
+		if (is_object($res))
 		{
 			CXDILFSchemeRights::DeleteBySchemeID($ID);
 
-			if(defined("BX_COMP_MANAGED_CACHE"))
+			if (defined("BX_COMP_MANAGED_CACHE"))
 			{
 				$CACHE_MANAGER->ClearByTag("XDI_SCHEME_".$ID);
 			}
 
 			return true;
 		}
-		else
-		{
-			$e = $APPLICATION->GetException();
-			$strError = GetMessage("LFP_CLASS_SCHEME_DELETE_ERROR", array("#error_msg#" => is_object($e)? $e->GetString(): ''));
-		}
+
+		$e = $APPLICATION->GetException();
+		$strError = GetMessage("LFP_CLASS_SCHEME_DELETE_ERROR", array("#error_msg#" => is_object($e)? $e->GetString(): ''));
 
 		$APPLICATION->ResetException();
 		$e = new CApplicationException($strError);
@@ -251,20 +454,20 @@ class CAllXDILFScheme
 	public static function GetByID($ID)
 	{
 		global $DB;
-		$ID = intval($ID);
+		$ID = (int)$ID;
 
 		$strSql = "
 			SELECT
 				S.*
-				,".$DB->DateToCharFunction("S.LAST_EXECUTED", "FULL")." AS LAST_EXECUTED
+				,".$DB->DateToCharFunction("S.LAST_EXECUTED")." AS LAST_EXECUTED
 			FROM b_xdi_lf_scheme S
-			WHERE S.ID = ".$ID."
+			WHERE S.ID = " . $ID."
 		";
 
 		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 	}
 
-	public static function CheckRequest()
+	public static function CheckRequest(): string
 	{
 		global $DB;
 
@@ -277,12 +480,12 @@ class CAllXDILFScheme
 		$time_of_exec = false;
 
 		$rsScheme = CXDILFScheme::GetList(array(), array("ACTIVE"=>"Y", "AUTO"=>"Y"));
-		while(
+		while (
 			($arScheme = $rsScheme->Fetch()) 
 			&& $time_of_exec === false
 		)
 		{
-			if ($arScheme["LAST_EXECUTED"] == '')
+			if ((string)$arScheme["LAST_EXECUTED"] === '')
 			{
 				continue;
 			}
@@ -297,7 +500,7 @@ class CAllXDILFScheme
 			$arEventTmp = CSocNetLogTools::FindLogEventByID($arScheme["EVENT_ID"]);
 			if (
 				array_key_exists("REAL_EVENT_ID", $arEventTmp) 
-				&& $arEventTmp["REAL_EVENT_ID"] <> ''
+				&& (string)$arEventTmp["REAL_EVENT_ID"] !== ''
 			)
 			{
 				$arScheme["EVENT_ID"] = $arEventTmp["REAL_EVENT_ID"];
@@ -307,8 +510,11 @@ class CAllXDILFScheme
 			$arDoM = CXDImport::ParseDaysOfMonth($arScheme["DAYS_OF_MONTH"]);
 			$arDoW = CXDImport::ParseDaysOfWeek($arScheme["DAYS_OF_WEEK"]);
 			$arToD = CXDImport::ParseTimesOfDay($arScheme["TIMES_OF_DAY"]);
-			if($arToD)
+			if ($arToD)
+			{
 				sort($arToD, SORT_NUMERIC);
+			}
+
 			$arSDate = localtime($last_executed);
 			//sdate = truncate(last_execute)
 			$sdate = mktime(0, 0, 0, $arSDate[4]+1, $arSDate[3], $arSDate[5]+1900);
@@ -318,46 +524,66 @@ class CAllXDILFScheme
 			)
 			{
 				$arSDate = localtime($sdate);
-				if($arSDate[6]==0) $arSDate[6]=7;
+				if ($arSDate[6] == 0)
+				{
+					$arSDate[6] = 7;
+				}
 				//determine if date is good for execution
-				if($arDoM)
+				if ($arDoM)
 				{
 					$flag = array_search($arSDate[3], $arDoM);
-					if($arDoW)
-						$flag = array_search($arSDate[6], $arDoW);
-				}
-				elseif($arDoW)
-					$flag = array_search($arSDate[6], $arDoW);
-				else
-					$flag=false;
-
-				if($flag !== false && $arToD)
-					foreach($arToD as $intToD)
+					if ($arDoW)
 					{
-						if($sdate+$intToD >  $last_executed && $sdate+$intToD <= $current_time)
+						$flag = array_search($arSDate[6], $arDoW);
+					}
+				}
+				elseif ($arDoW)
+				{
+					$flag = array_search($arSDate[6], $arDoW);
+				}
+				else
+				{
+					$flag = false;
+				}
+
+
+				if (
+					$flag !== false
+					&& $arToD
+				)
+				{
+					foreach ($arToD as $intToD)
+					{
+						if (
+							$sdate + $intToD > $last_executed
+							&& $sdate + $intToD <= $current_time)
 						{
 							$time_of_exec = $sdate+$intToD;
 							break;
 						}
 					}
+				}
+
 				$sdate = mktime(0, 0, 0, date("m",$sdate), date("d",$sdate)+1, date("Y",$sdate));//next day
 			}
 
 			$arResponse = false;
 
-			if($time_of_exec !== false)
+			if ($time_of_exec !== false)
 			{
-				if ($arScheme["TYPE"] == "XML")
+				if ($arScheme["TYPE"] === "XML")
 				{
 					$arParams = array();
-					if ($arScheme["PARAMS"] <> '')
+					if ((string)$arScheme["PARAMS"] !== '')
 					{
 						$arTmp = explode("&", $arScheme["PARAMS"]);
 						if (is_array($arTmp) && count($arTmp) > 0)
-						foreach($arTmp as $pair)
 						{
-							list ($key, $value) = explode("=", $pair);
-							$arParams[$key] = $value;
+							foreach ($arTmp as $pair)
+							{
+								[ $key, $value ] = explode("=", $pair);
+								$arParams[$key] = $value;
+							}
 						}
 					}
 
@@ -384,7 +610,7 @@ class CAllXDILFScheme
 
 						$entityName = $arScheme["NAME"];
 
-						if ($arScheme["EVENT_ID"] == "news")
+						if ($arScheme["EVENT_ID"] === "news")
 						{
 							$rsIBlock = CIBlock::GetList(
 								array("ID" => "ASC"),
@@ -419,7 +645,7 @@ class CAllXDILFScheme
 						);
 
 						$logID = CSocNetLog::Add($arSonetFields, false);
-						if (intval($logID) > 0)
+						if ((int)$logID > 0)
 						{
 							$arUpdateFields = array(
 								"TMP_ID" => $logID,
@@ -431,27 +657,27 @@ class CAllXDILFScheme
 							CSocNetLog::CounterIncrement($logID);
 
 							if (
-								$arScheme["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP
-								&& intval($arScheme["ENTITY_ID"]) > 0
+								$arScheme["ENTITY_TYPE"] === SONET_SUBSCRIBE_ENTITY_GROUP
+								&& (int)$arScheme["ENTITY_ID"] > 0
 							)
 							{
 								$notify_title_tmp = str_replace(Array("\r\n", "\n"), " ", $arScheme["NAME"]);
 								$notify_title = TruncateText($notify_title_tmp, 100);
 								$notify_title_out = TruncateText($notify_title_tmp, 255);
 
-								$arNotifyParams = array(
+								$arNotifyParams = [
 									"LOG_ID" => $logID,
-									"GROUP_ID" => intval($arScheme["ENTITY_ID"]),
+									"GROUP_ID" => (int)$arScheme["ENTITY_ID"],
 									"NOTIFY_MESSAGE" => "",
 									"URL" => "",
-									"MESSAGE" => GetMessage("LFP_CLASS_SCHEME_IM_ADD", Array(
+									"MESSAGE" => Loc::getMessage("LFP_CLASS_SCHEME_IM_ADD", [
 										"#title#" => $notify_title,
-									)),
-									"MESSAGE_OUT" => GetMessage("LFP_CLASS_SCHEME_IM_ADD", Array(
+									]),
+									"MESSAGE_OUT" => GetMessage("LFP_CLASS_SCHEME_IM_ADD", [
 										"#title#" => $notify_title_out
-									)),
-									"EXCLUDE_USERS" => array()
-								);
+									]),
+									"EXCLUDE_USERS" => [],
+								];
 
 								CSocNetSubscription::NotifyGroup($arNotifyParams);
 							}
@@ -462,7 +688,7 @@ class CAllXDILFScheme
 						CXDImport::WriteToLog("ERROR: Incorrect webservice response. Scheme ID: ".$arScheme["ID"].", server: ".$arScheme["HOST"].", port: ".$arScheme["PORT"].", page: ".$arScheme["PAGE"].", method: ".$arScheme["METHOD"].", params: ".$arScheme["PARAMS"], "RXML");
 					}
 				}
-				elseif ($arScheme["TYPE"] == "RSS")
+				elseif ($arScheme["TYPE"] === "RSS")
 				{
 					$arResponse = CXDILFSchemeRSS::Request(
 						$arScheme["HOST"],
@@ -486,13 +712,13 @@ class CAllXDILFScheme
 						}
 
 						$sanitizer = false;
-						if ($arScheme["IS_HTML"] == "Y")
+						if ($arScheme["IS_HTML"] === "Y")
 						{
 							$sanitizer = new CBXSanitizer();
 							$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_LOW);
 						}
 
-						foreach($arResponse["item"] as $arItem)
+						foreach ($arResponse["item"] as $arItem)
 						{
 							$checksum = md5(serialize($arItem));
 							$rsLogEvents = CSocNetLog::GetList(
@@ -513,7 +739,7 @@ class CAllXDILFScheme
 							{
 								$entityName = $arScheme["NAME"];
 
-								if ($arScheme["EVENT_ID"] == "news")
+								if ($arScheme["EVENT_ID"] === "news")
 								{
 									$rsIBlock = CIBlock::GetList(
 										array("ID" => "ASC"),
@@ -531,16 +757,16 @@ class CAllXDILFScheme
 									"ENTITY_URL" => $arResponse["link"]
 								);
 
-								if($arItem["pubDate"] <> '')
+								if ((string)$arItem["pubDate"] !== '')
 								{
 									$arLogParams["SOURCE_TIMESTAMP"] = strtotime($arItem["pubDate"]);
 								}
 
-								$description = \CUtil::binSubstr(preg_replace("#^(.*?)([\s]*<br[\s]*/>)+[\s]*[\n]*[\s]*$#is", "\\1", $arItem["description"]), 0, 64500);
-								$description = \Bitrix\Main\Text\UtfSafeString::rtrimInvalidUtf(\CUtil::binSubstr($description, 0, 64000));
+								$description = preg_replace("#^(.*?)([\s]*<br[\s]*/>)+[\s]*[\n]*[\s]*$#is", "\\1", $arItem["description"]);
+								$description = \Bitrix\Main\Text\UtfSafeString::rtrimInvalidUtf(substr($description, 0, 4194304));
 
 								if (
-									$arScheme["IS_HTML"] == "Y"
+									$arScheme["IS_HTML"] === "Y"
 									&& $sanitizer
 								)
 								{
@@ -567,7 +793,7 @@ class CAllXDILFScheme
 								);
 
 								$logID = CSocNetLog::Add($arSonetFields, false);
-								if (intval($logID) > 0)
+								if ((int)$logID > 0)
 								{
 									$arUpdateFields = array(
 										"TMP_ID" => $logID,
@@ -579,8 +805,8 @@ class CAllXDILFScheme
 									CSocNetLog::CounterIncrement($logID);
 
 									if (
-										$arScheme["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP
-										&& intval($arScheme["ENTITY_ID"]) > 0
+										$arScheme["ENTITY_TYPE"] === SONET_SUBSCRIBE_ENTITY_GROUP
+										&& (int)$arScheme["ENTITY_ID"] > 0
 									)
 									{
 										$notify_title_tmp = str_replace(Array("\r\n", "\n"), " ", $arScheme["NAME"]);
@@ -589,7 +815,7 @@ class CAllXDILFScheme
 
 										$arNotifyParams = array(
 											"LOG_ID" => $logID,
-											"GROUP_ID" => intval($arScheme["ENTITY_ID"]),
+											"GROUP_ID" => (int)$arScheme["ENTITY_ID"],
 											"NOTIFY_MESSAGE" => "",
 											"URL" => "",
 											"MESSAGE" => GetMessage("LFP_CLASS_SCHEME_IM_ADD", Array(
@@ -622,7 +848,7 @@ class CAllXDILFScheme
 					&& is_array($arResponse)
 				)
 				{
-					$strSql = "UPDATE b_xdi_lf_scheme SET LAST_EXECUTED=".$DB->GetNowFunction()." WHERE ID=".intval($arScheme["ID"]);
+					$strSql = "UPDATE b_xdi_lf_scheme SET LAST_EXECUTED=" . $DB->GetNowFunction()." WHERE ID=" . (int)$arScheme["ID"];
 					$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 				}
 				else
@@ -638,7 +864,7 @@ class CAllXDILFScheme
 	
 	function GetProviderByID($ID)
 	{
-		$ID = intval($ID);
+		$ID = (int)$ID;
 
 		$rsProvider = CXDILFScheme::GetByID($ID);
 		if ($arProvider = $rsProvider->GetNext())
@@ -646,66 +872,86 @@ class CAllXDILFScheme
 			$arProvider["NAME_FORMATTED"] = $arProvider["NAME"];
 			return $arProvider;
 		}
-		else
-			return false;
+
+		return false;
 	}
 
-	public static function SetSonetLogRights($logID, $entity_type, $entity_id, $event_id)
+	public static function SetSonetLogRights($logID, $entity_type, $entity_id, $event_id): void
 	{
 		if (!CModule::IncludeModule("socialnetwork"))
 		{
 			return;
 		}
 
-		if (in_array($entity_type, array(SONET_SUBSCRIBE_ENTITY_USER, SONET_SUBSCRIBE_ENTITY_GROUP)))
+		if (in_array($entity_type, [ SONET_SUBSCRIBE_ENTITY_USER, SONET_SUBSCRIBE_ENTITY_GROUP ], true))
 		{
-			if (in_array($event_id, array("blog_post", "forum", "photo", "blog_post_micro", "files", "wiki")))
+			if (in_array($event_id, [ "blog_post", "forum", "photo", "blog_post_micro", "files", "wiki" ]))
 			{
 				$arLogEventTmp = CSocNetLogTools::FindLogEventByID($event_id);
 				CSocNetLogRights::SetForSonet($logID, $entity_type, $entity_id, CSocNetLogTools::FindFeatureByEventID($event_id), $arLogEventTmp["OPERATION"]);
 			}
-			elseif (in_array($event_id, array("data", "system")) && $entity_type == SONET_SUBSCRIBE_ENTITY_GROUP)
+			elseif (
+				$entity_type === SONET_SUBSCRIBE_ENTITY_GROUP
+				&& in_array($event_id, [ "data", "system" ])
+
+			)
 			{
-				CSocNetLogRights::Add($logID, array("SA", "S".SONET_SUBSCRIBE_ENTITY_GROUP.$entity_id, "S".SONET_SUBSCRIBE_ENTITY_GROUP.$entity_id."_".SONET_ROLES_OWNER, "S".SONET_SUBSCRIBE_ENTITY_GROUP.$entity_id."_".SONET_ROLES_MODERATOR, "S".SONET_SUBSCRIBE_ENTITY_GROUP.$entity_id."_".SONET_ROLES_USER));
+				CSocNetLogRights::Add(
+					$logID, [
+						"SA",
+						"S" . SONET_SUBSCRIBE_ENTITY_GROUP . $entity_id,
+						"S" . SONET_SUBSCRIBE_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER,
+						"S" . SONET_SUBSCRIBE_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR,
+						"S" . SONET_SUBSCRIBE_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_USER
+					]);
 			}
-			elseif (in_array($event_id, array("data", "system")) && $entity_type == SONET_SUBSCRIBE_ENTITY_USER)
+			elseif (
+				$entity_type === SONET_SUBSCRIBE_ENTITY_USER
+				&& in_array($event_id, [ "data", "system" ], true)
+			)
 			{
 				$perm = CSocNetUserPerms::GetOperationPerms($entity_id, "viewprofile");
-				if (in_array($perm, array(SONET_RELATIONS_TYPE_FRIENDS2, SONET_RELATIONS_TYPE_FRIENDS)))
+				if (in_array($perm, [ SONET_RELATIONS_TYPE_FRIENDS2, SONET_RELATIONS_TYPE_FRIENDS ], true))
 				{
-					CSocNetLogRights::Add($logID, array("SA", "U".$entity_id, "S".SONET_SUBSCRIBE_ENTITY_USER.$entity_id."_".$perm));
+					CSocNetLogRights::Add($logID, [
+						"SA",
+						"U" . $entity_id,
+						"S" . SONET_SUBSCRIBE_ENTITY_USER . $entity_id . "_" . $perm
+					]);
 				}
-				elseif ($perm == SONET_RELATIONS_TYPE_AUTHORIZED)
+				elseif ($perm === SONET_RELATIONS_TYPE_AUTHORIZED)
 				{
-					CSocNetLogRights::Add($logID, array("SA", "AU"));
+					CSocNetLogRights::Add($logID, [ "SA", "AU" ]);
 				}
-				elseif ($perm == SONET_RELATIONS_TYPE_ALL)
+				elseif ($perm === SONET_RELATIONS_TYPE_ALL)
 				{
-					CSocNetLogRights::Add($logID, array("SA", "G2"));
+					CSocNetLogRights::Add($logID, [ "SA", "G2" ]);
 				}
 			}
 		}
-		elseif ($entity_type == SONET_SUBSCRIBE_ENTITY_PROVIDER)
+		elseif ($entity_type === SONET_SUBSCRIBE_ENTITY_PROVIDER)
 		{
-			$arRights = array("SA");
+			$arRights = [ "SA" ];
 			$rsSchemeRights = CXDILFSchemeRights::GetList(array(), array("SCHEME_ID" => $entity_id));
-			while($arSchemeRights = $rsSchemeRights->Fetch())
+			while ($arSchemeRights = $rsSchemeRights->Fetch())
 			{
-				if (mb_substr($arSchemeRights["GROUP_CODE"], 0, 1) == "U")
+				if (mb_strpos($arSchemeRights["GROUP_CODE"], "U") === 0)
 				{
-					if (mb_substr($arSchemeRights["GROUP_CODE"], 1) == "A")
+					if (mb_substr($arSchemeRights["GROUP_CODE"], 1) === "A")
 					{
 						$arRights[] = "AU";
 						break;
 					}
-					elseif(mb_substr($arSchemeRights["GROUP_CODE"], 1) == "N")
+
+					if (mb_substr($arSchemeRights["GROUP_CODE"], 1) === "N")
 					{
 						$arRights[] = "G2";
 						break;
 					}
-					elseif(intval(mb_substr($arSchemeRights["GROUP_CODE"], 1)) > 0)
+
+					if ((int)mb_substr($arSchemeRights["GROUP_CODE"], 1) > 0)
 					{
-						$arRights[] = "U".mb_substr($arSchemeRights["GROUP_CODE"], 1);
+						$arRights[] = "U" . mb_substr($arSchemeRights["GROUP_CODE"], 1);
 					}
 				}
 			}
@@ -714,23 +960,26 @@ class CAllXDILFScheme
 				CSocNetLogRights::Add($logID, $arRights);
 			}
 		}
-		elseif (defined("SONET_SUBSCRIBE_ENTITY_NEWS") && $entity_type == SONET_SUBSCRIBE_ENTITY_NEWS)
+		elseif (
+			defined("SONET_SUBSCRIBE_ENTITY_NEWS")
+			&& $entity_type === SONET_SUBSCRIBE_ENTITY_NEWS
+		)
 		{
 			CSocNetLogRights::Add($logID, array("SA", "G2"));
 		}
 	}
 
-	public static function IsSecureUrl($url)
+	public static function IsSecureUrl($url): bool
 	{
-		$url = trim(strval($url));
+		$url = trim((string)$url);
 		$colonOffset = mb_strpos($url, ':');
-		if($colonOffset === false)
+		if ($colonOffset === false)
 		{
 			$colonOffset = -1;
 		}
 
 		$slashOffset = mb_strpos($url, '/');
-		if($slashOffset === false)
+		if ($slashOffset === false)
 		{
 			$slashOffset = -1;
 		}
@@ -745,4 +994,3 @@ class CAllXDILFScheme
 		return $scheme === '' || preg_match('/^(?:(?:ht|f)tp(?:s)?){1}/i', $scheme) === 1;
 	}
 }
-?>

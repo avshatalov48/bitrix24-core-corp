@@ -4,37 +4,83 @@
 jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { PropTypes } = require('utils/validation');
-	const { plus, trashBin, feedOutline, onlyMine, hideDone } = require('assets/icons');
+	const { outline: { plus, trashCan, newsfeed, onlyMine, hideDone } } = require('assets/icons');
 	const { ContextMenu } = require('layout/ui/context-menu');
 
-	/**
-	 * @function checklistMoreMenu
-	 */
-	const showChecklistMoreMenu = (props = {}) => {
-		const {
-			parentWidget = PageManager,
-			onCreateChecklist,
-			onHideCompleted,
-			onShowOnlyMine,
-			onChangeSort,
-			onRemove,
-		} = props;
+	const ACTION_IDS = {
+		hideCompleted: 'hide-completed',
+		onlyMine: 'show-only-mine',
+	};
 
-		const moreMenu = new ContextMenu({
-			actions: [
+	/**
+	 * @class ChecklistMoreMenu
+	 */
+	class ChecklistMoreMenu extends LayoutComponent
+	{
+		constructor(props = {})
+		{
+			super(props);
+
+			this.state = {
+				selectedId: null,
+			};
+		}
+
+		show(parentWidget)
+		{
+			this.menu = this.createMenu();
+			this.menu.show(parentWidget);
+		}
+
+		createMenu()
+		{
+			return new ContextMenu({
+				actions: this.getAction(),
+			});
+		}
+
+		selectedAction(action, actionId)
+		{
+			const { selectedId: stateSelectedId } = this.state;
+
+			const isSelected = stateSelectedId === actionId;
+			const selectedId = isSelected ? null : actionId;
+
+			this.setState({ selectedId }, () => {
+				action(Boolean(selectedId));
+			});
+		}
+
+		getAction()
+		{
+			const {
+				onCreateChecklist,
+				onHideCompleted,
+				onShowOnlyMine,
+				onChangeSort,
+				onRemove,
+			} = this.props;
+
+			const { selectedId: stateSelectedId } = this.state;
+
+			return [
 				{
 					id: 'create-checklist',
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_CREATE_CHECKLIST'),
-					onClickCallback: onCreateChecklist,
+					onClickCallback: () => {
+						this.menu.close(onCreateChecklist);
+					},
 					data: {
 						svgIcon: plus(),
 					},
 				},
 				{
-					id: 'hide-completed',
+					id: ACTION_IDS.hideCompleted,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_HIDE_COMPLETED'),
-					isDisabled: true,
-					onClickCallback: onHideCompleted,
+					onClickCallback: () => {
+						this.selectedAction(onHideCompleted, ACTION_IDS.hideCompleted);
+					},
+					isSelected: stateSelectedId === ACTION_IDS.hideCompleted,
 					data: {
 						svgIcon: hideDone(),
 					},
@@ -42,8 +88,10 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 				{
 					id: 'show-only-mine',
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_ONLY_MINE'),
-					isDisabled: true,
-					onClickCallback: onShowOnlyMine,
+					onClickCallback: () => {
+						this.selectedAction(onShowOnlyMine, ACTION_IDS.onlyMine);
+					},
+					isSelected: stateSelectedId === ACTION_IDS.onlyMine,
 					data: {
 						svgIcon: onlyMine(),
 					},
@@ -54,26 +102,25 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 					isDisabled: true,
 					onClickCallback: onChangeSort,
 					data: {
-						svgIcon: feedOutline(),
+						svgIcon: newsfeed(),
 					},
 				},
 				{
 					id: 'remove',
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_REMOVE'),
+					isDestructive: true,
 					onClickCallback: () => {
-						moreMenu.close(onRemove);
+						this.menu.close(onRemove);
 					},
 					data: {
-						svgIcon: trashBin(),
+						svgIcon: trashCan(),
 					},
 				},
-			],
-		});
+			];
+		}
+	}
 
-		moreMenu.show(parentWidget);
-	};
-
-	showChecklistMoreMenu.propTypes = {
+	ChecklistMoreMenu.propTypes = {
 		parentWidget: PropTypes.object,
 		onCreateChecklist: PropTypes.func,
 		onHideCompleted: PropTypes.func,
@@ -82,5 +129,5 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 		onRemove: PropTypes.func,
 	};
 
-	module.exports = { showChecklistMoreMenu };
+	module.exports = { ChecklistMoreMenu };
 });

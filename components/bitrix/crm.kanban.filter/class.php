@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Integration\IntranetManager;
 
 class CrmKanbanFilterComponent extends \CBitrixComponent
 {
@@ -34,6 +35,15 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 				$categoryId = 0;
 			}
 			$entity->setCategoryId($categoryId);
+		}
+
+		$customSectionCode = $this->arParams['CUSTOM_SECTION_CODE'] ?? null;
+		if (
+			IntranetManager::isCustomSectionExists($customSectionCode)
+			&& $entity->isCustomSectionSupported()
+		)
+		{
+			$entity->setCustomSectionCode($customSectionCode);
 		}
 
 		$showAutomationView = true;

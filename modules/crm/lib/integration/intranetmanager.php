@@ -143,6 +143,24 @@ class IntranetManager
 		return $sections;
 	}
 
+	public static function getCustomSection(string $customSectionCode): ?CustomSection
+	{
+		if (!static::isCustomSectionsAvailable())
+		{
+			return null;
+		}
+
+		$section = static::fetchCustomSectionByCode($customSectionCode);
+		if (is_null($section))
+		{
+			return null;
+		}
+
+		static::fillPagesInCustomSection($section);
+
+		return $section;
+	}
+
 	/**
 	 * @return CustomSection[]
 	 */
@@ -166,6 +184,23 @@ class IntranetManager
 		}
 
 		return $sections;
+	}
+
+	protected static function fetchCustomSectionByCode(string $customSectionCode): ?CustomSection
+	{
+		$customSectionResult = CustomSectionTable::getList([
+			'filter' => [
+				'=MODULE_ID' => 'crm',
+				'=CODE' => $customSectionCode,
+			],
+		])->fetch();
+
+		if ($customSectionResult)
+		{
+			return CustomSection\Assembler::constructCustomSection($customSectionResult);
+		}
+
+		return null;
 	}
 
 	/**
@@ -198,6 +233,31 @@ class IntranetManager
 				$section->setPages($currentPages);
 			}
 		}
+	}
+
+	protected static function fillPagesInCustomSection(CustomSection $section): void
+	{
+		$sectionID = $section->getId();
+		if (is_null($sectionID))
+		{
+			return;
+		}
+
+		$pages = [];
+		$pagesResult = CustomSectionPageTable::getList([
+			'filter' => [
+				'=CUSTOM_SECTION_ID' => $sectionID,
+				'=MODULE_ID' => 'crm',
+			],
+		]);
+
+		while ($pageRow = $pagesResult->fetch())
+		{
+			$page = CustomSection\Assembler::constructCustomSectionPage($pageRow);
+			$pages[] = $page;
+		}
+
+		$section->setPages($pages);
 	}
 
 	/**
@@ -249,6 +309,24 @@ class IntranetManager
 		return $customSectionManager->getUrlForPage($customSectionCode, $pageCode);
 	}
 
+	public static function isCustomSectionExists(?string $customSectionCode): bool
+	{
+		if (is_null($customSectionCode) || !self::isCustomSectionsAvailable())
+		{
+			return false;
+		}
+
+		foreach (self::getCustomSections() ?? [] as $customSection)
+		{
+			if ($customSection->getCode() === $customSectionCode)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Returns true if the specified entity type is included in a custom section
 	 *
@@ -269,7 +347,7 @@ class IntranetManager
 	/**
 	 * @return int[]
 	 */
-	protected static function getEntityTypesInCustomSections(): array
+	public static function getEntityTypesInCustomSections(): array
 	{
 		if (is_array(static::$entityTypesInCustomSections))
 		{
@@ -277,7 +355,7 @@ class IntranetManager
 		}
 
 		static::$entityTypesInCustomSections = [];
-		$customSections = static::getCustomSections();
+		$customSections = static::getCustomSections() ?? [];
 		foreach ($customSections as $customSection)
 		{
 			foreach ($customSection->getPages() as $page)
@@ -293,6 +371,29 @@ class IntranetManager
 		static::$entityTypesInCustomSections = array_unique(static::$entityTypesInCustomSections);
 
 		return static::$entityTypesInCustomSections;
+	}
+
+	public static function getEntityTypesInCustomSection(string $customSectionCode): array
+	{
+		$customSection = self::getCustomSection($customSectionCode);
+		if (is_null($customSection))
+		{
+			return [];
+		}
+
+		$entityTypes = [];
+		foreach ($customSection->getPages() as $page)
+		{
+			$entityTypeId = self::getEntityTypeIdByPageSettings($page->getSettings());
+			if ($entityTypeId <= 0)
+			{
+				continue;
+			}
+
+			$entityTypes[] = $entityTypeId;
+		}
+
+		return array_unique($entityTypes);
 	}
 
 	public static function deleteCustomPagesByEntityTypeId(int $entityTypeId): Result

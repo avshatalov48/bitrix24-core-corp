@@ -40,4 +40,3 @@ jn.define('crm/crm-mode/wizard/layouts/mode/label', (require, exports, module) =
 
 	module.exports = { label };
 });
-

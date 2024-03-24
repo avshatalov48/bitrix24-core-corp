@@ -1,7 +1,7 @@
-import {Item as ItemType} from "../types";
-import {Item} from "crm.timeline.item";
-import {Type} from "main.core";
-import {TimezoneOffset} from "crm.datetime";
+import { Item } from 'crm.timeline.item';
+import { Type } from 'main.core';
+import { Timezone } from 'main.date';
+import { Item as ItemType } from '../types';
 
 /** @memberof BX.Crm.Timeline */
 export default class CompatibleItem extends Item
@@ -490,7 +490,7 @@ export default class CompatibleItem extends Item
 
 	static getUserTimezoneOffset()
 	{
-		return TimezoneOffset.USER_TO_SERVER;
+		return Timezone.Offset.USER_TO_SERVER;
 	}
 
 	static messages = {};

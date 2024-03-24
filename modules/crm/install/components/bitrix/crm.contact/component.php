@@ -73,7 +73,8 @@ $arDefaultUrlTemplates404 = [
 	'portrait' => 'portrait/#contact_id#/',
 	'details' => 'details/#contact_id#/',
 	'merge' => 'merge/',
-	'requisiteselect' => 'requisite/select/#contact_id#/'
+	'requisiteselect' => 'requisite/select/#contact_id#/',
+	'requisite' => 'requisite/#requisite_id#/'
 ];
 
 $arDefaultVariableAliases404 = [];

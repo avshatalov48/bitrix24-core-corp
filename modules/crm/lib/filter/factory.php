@@ -2,11 +2,11 @@
 
 namespace Bitrix\Crm\Filter;
 
-use Bitrix\Crm\Service\Container;
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Main\Filter\DataProvider;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
+use Bitrix\Main;
+use Bitrix\Main\Filter\DataProvider;
 
 class Factory
 {
@@ -14,7 +14,7 @@ class Factory
 	{
 		$parameters = (array)$parameters;
 		$parameters['ID'] = $filterId;
-		
+
 		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			return new LeadSettings($parameters);
@@ -42,6 +42,10 @@ class Factory
 		if ($entityTypeId === \CCrmOwnerType::Order)
 		{
 			return new OrderSettings($parameters);
+		}
+		if ($entityTypeId === \CCrmOwnerType::Activity)
+		{
+			return new ActivitySettings($parameters);
 		}
 		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
@@ -89,6 +93,10 @@ class Factory
 		if ($settings instanceof OrderSettings)
 		{
 			return new OrderDataProvider($settings);
+		}
+		if ($settings instanceof ActivitySettings)
+		{
+			return new ActivityDataProvider($settings);
 		}
 		if ($settings instanceof TimelineSettings)
 		{

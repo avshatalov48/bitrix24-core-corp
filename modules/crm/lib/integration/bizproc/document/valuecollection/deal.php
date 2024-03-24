@@ -48,7 +48,7 @@ class Deal extends Base
 			],
 			false,
 			false,
-			['*', 'UF_*']
+			['*']
 		);
 
 		$this->document = array_merge($this->document, $result->fetch() ?: []);

@@ -14,7 +14,7 @@ $MESS['M_CRM_CATEGORY_PERMISSION_NONE_FOR_ALL_MSGVER_1'] = 'Доступ зак�
 
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL'] = 'Только свои элементы';
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_LEAD'] = 'Только свои лиды';
-$MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_DEAL'] = 'Только свои сделки';
+$MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_DEAL_MSGVER_1'] = 'Только свои сделки';
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_CONTACT'] = 'Только свои контакты';
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_COMPANY'] = 'Только свои компании';
 $MESS['M_CRM_CATEGORY_PERMISSION_OWN_FOR_ALL_QUOTE_MSGVER_1'] = 'Только свои предложения';

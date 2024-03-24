@@ -54,7 +54,7 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 		return true;
 	}
 
-	public static function execute(array $bindings, array $inputData = null)
+	public static function execute(array $bindings, array $inputData = null, bool $useEntitySearch = true)
 	{
 		$triggersSent = false;
 		$triggersApplied = false;
@@ -89,7 +89,7 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			}
 		}
 
-		if (!empty($clientBindings))
+		if ($clientBindings && $useEntitySearch)
 		{
 			$facilitySelector = (new EntityManageFacility())->getSelector();
 

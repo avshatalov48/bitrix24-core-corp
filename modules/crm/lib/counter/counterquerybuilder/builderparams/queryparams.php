@@ -44,7 +44,8 @@ final class QueryParams
 		array $options,
 		?Date $restrictedFrom,
 		UserParams $userParams,
-		bool $useActivityResponsible
+		bool $useActivityResponsible,
+		bool $completed
 	)
 	{
 		$this->entityTypeId = $entityTypeId;
@@ -58,6 +59,7 @@ final class QueryParams
 		$this->restrictedFrom = $restrictedFrom;
 		$this->userParams = $userParams;
 		$this->useActivityResponsible = $useActivityResponsible;
+		$this->completed = $completed;
 	}
 
 	public function entityTypeId(): int
@@ -125,4 +127,8 @@ final class QueryParams
 		return $this->useActivityResponsible;
 	}
 
+	public function isCompleted(): bool
+	{
+		return $this->completed;
+	}
 }

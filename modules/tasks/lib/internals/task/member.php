@@ -22,9 +22,9 @@ use Bitrix\Tasks\Internals\TaskDataManager;
  * @method static EO_Member_Result getList(array $parameters = [])
  * @method static EO_Member_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\MemberObject createObject($setDefaultValues = true)
- * @method static \Bitrix\Tasks\Internals\Task\EO_Member_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\MemberCollection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\MemberObject wakeUpObject($row)
- * @method static \Bitrix\Tasks\Internals\Task\EO_Member_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\Tasks\Internals\Task\MemberCollection wakeUpCollection($rows)
  */
 class MemberTable extends TaskDataManager
 {
@@ -33,98 +33,86 @@ class MemberTable extends TaskDataManager
 	public const MEMBER_TYPE_ACCOMPLICE = 'A';
 	public const MEMBER_TYPE_AUDITOR = 'U';
 
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_member';
 	}
 
-	public static function getObjectClass()
+	public static function getClass(): string
 	{
-		return MemberObject::class;
-	}
-
-	/**
-	 * @return static
-	 */
-	public static function getClass()
-	{
-		return get_called_class();
+		return static::class;
 	}
 
 	/**
 	 * Returns entity map definition.
-	 *
-	 * @return array
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'TASK_ID' => array(
+		return [
+			'TASK_ID' => [
 				'data_type' => 'integer',
 				'primary' => true,
-			),
-			'USER_ID' => array(
+			],
+			'USER_ID' => [
 				'data_type' => 'integer',
 				'primary' => true,
-			),
-			'TYPE' => array(
+			],
+			'TYPE' => [
 				'data_type' => 'string',
 				'primary' => true,
-				'validation' => array(__CLASS__, 'validateType'),
-			),
+				'validation' => [__CLASS__, 'validateType'],
+			],
 
 			// references
-			'USER' => array(
+			'USER' => [
 				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.USER_ID' => 'ref.ID')
-			),
-			'TASK' => array(
+				'reference' => ['=this.USER_ID' => 'ref.ID'],
+			],
+			'TASK' => [
 				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
-				'reference' => array('=this.TASK_ID' => 'ref.ID')
-			),
-			'TASK_FOLLOWED' => array(
+				'reference' => ['=this.TASK_ID' => 'ref.ID'],
+			],
+			'TASK_FOLLOWED' => [
 				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
-				'reference' => array(
+				'reference' => [
 					'=this.TASK_ID' => 'ref.ID',
-					'=this.TYPE' => array('?', self::MEMBER_TYPE_AUDITOR)
-				)
-			),
-			'TASK_COWORKED' => array(
+					'=this.TYPE' => ['?', self::MEMBER_TYPE_AUDITOR],
+				],
+			],
+			'TASK_COWORKED' => [
 				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
-				'reference' => array(
+				'reference' => [
 					'=this.TASK_ID' => 'ref.ID',
-					'=this.TYPE' => array('?', self::MEMBER_TYPE_ACCOMPLICE)
-				)
-			),
-		);
-	}
-	/**
-	 * Returns validators for TYPE field.
-	 *
-	 * @return array
-	 */
-	public static function validateType()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 1),
-		);
+					'=this.TYPE' => ['?', self::MEMBER_TYPE_ACCOMPLICE],
+				],
+			],
+		];
 	}
 
-	/**
-	 * @return string[]
-	 */
+	public static function validateType(): array
+	{
+		return [
+			new Main\Entity\Validator\Length(null, 1),
+		];
+	}
+
 	public static function possibleTypes(): array
 	{
 		return [
 			self::MEMBER_TYPE_ORIGINATOR,
 			self::MEMBER_TYPE_RESPONSIBLE,
 			self::MEMBER_TYPE_ACCOMPLICE,
-			self::MEMBER_TYPE_AUDITOR
+			self::MEMBER_TYPE_AUDITOR,
 		];
+	}
+
+	public static function getObjectClass(): string
+	{
+		return MemberObject::class;
+	}
+
+	public static function getCollectionClass(): string
+	{
+		return MemberCollection::class;
 	}
 }

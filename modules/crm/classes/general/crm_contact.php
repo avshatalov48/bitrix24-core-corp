@@ -1371,6 +1371,9 @@ class CAllCrmContact
 				$arFields['ASSIGNED_BY_ID'] = $userID;
 			}
 		}
+		$arFields['CREATED_BY_ID'] = (int)($arFields['CREATED_BY_ID'] ?? 0);
+		$arFields['MODIFY_BY_ID'] = (int)($arFields['MODIFY_BY_ID'] ?? 0);
+		$arFields['ASSIGNED_BY_ID'] = (int)($arFields['ASSIGNED_BY_ID'] ?? 0);
 
 		if((!isset($arFields['LAST_NAME']) || trim($arFields['LAST_NAME']) === '')
 			&& (!isset($arFields['NAME']) || trim($arFields['NAME']) === ''))

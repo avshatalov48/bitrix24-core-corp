@@ -259,12 +259,15 @@ class EntityCounterType
 	{
 		$entityTypeID = (int)$entityTypeID;
 		$factory = Container::getInstance()->getFactory($entityTypeID);
-		if (!$factory)
+		if ($factory)
 		{
-			return [];
+			$countersTypes = $factory->getCountersSettings()->getEnabledCountersTypes();
 		}
-
-		$countersTypes = $factory->getCountersSettings()->getEnabledCountersTypes();
+		else
+		{
+			$counterSettings = EntityCounterSettings::createDefault(true);
+			$countersTypes = $counterSettings->getEnabledCountersTypes();
+		}
 
 		if (!$enableGrouping)
 		{
@@ -338,12 +341,19 @@ class EntityCounterType
 
 		$entityTypeId = (int)$entityTypeId;
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		if (!$factory)
+		if (!$factory && $entityTypeId !== \CCrmOwnerType::Activity)
 		{
 			return [];
 		}
 
-		$countersSettings = $factory->getCountersSettings();
+		if ($factory)
+		{
+			$countersSettings = $factory->getCountersSettings();
+		}
+		else
+		{
+			$countersSettings = EntityCounterSettings::createDefault(true);
+		}
 
 		if ($countersSettings->isIncomingCounterEnabledInFilter())
 		{

@@ -252,9 +252,9 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 			'menu' => [
 				'items' => [
 					[
-						'text' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TERMINAL_SETTINGS'),
+						'text' => Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_TERMINAL_SETTINGS_MSGVER_1'),
 						'onclick' => new UI\Buttons\JsHandler(
-							'BX.Crm.Component.TerminalPaymentList.Instance.openSmsSettingsSlider',
+							'BX.Crm.Component.TerminalPaymentList.Instance.openTerminalSettingsSlider',
 							'BX.Crm.Component.TerminalPaymentList.Instance',
 						)
 					],
@@ -267,7 +267,10 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 					],
 				],
 				'closeByEsc' => true,
-				'angle' => true,
+				'angle' => [
+					'offset' => 15,
+					'position' => 'top',
+				],
 				'offsetLeft' => 20,
 			],
 		];

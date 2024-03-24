@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'loc',
 		'type',
-		'feature',
 		'haptics',
 		'apptheme',
 		'crm:communication/communication-selector',

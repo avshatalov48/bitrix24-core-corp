@@ -44,7 +44,7 @@ class Helper
 	 */
 	public static function getCurrentUserId()
 	{
-		return (int)$GLOBALS['USER']->GetID();
+		return isset($GLOBALS['USER']) ? (int)$GLOBALS['USER']->GetID() : 0;
 	}
 
 	/**

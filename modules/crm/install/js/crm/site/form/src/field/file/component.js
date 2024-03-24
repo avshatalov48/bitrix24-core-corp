@@ -116,6 +116,12 @@ const FieldFileItem = {
 			}
 
 			const fileSize = file.size;
+			if (file.size === 0)
+			{
+				this.errorTextTypeFile = this.field.messages.get('fieldFileErrorEmptyContent');
+				return;
+			}
+
 			if (typeof this.field.maxSizeMb == "number" && this.field.maxSizeMb > 0)
 			{
 				if (this.field.getSummaryFilesSize() + fileSize > this.field.maxSizeMb * (1024 * 1024))

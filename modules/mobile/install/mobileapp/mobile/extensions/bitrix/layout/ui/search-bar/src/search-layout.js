@@ -77,10 +77,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			search.on('cancel', () => this.onCancel());
 			search.on(ENTER_PRESSED_EVENT, () => this.close());
 
-			if (Application.getApiVersion() > 44)
-			{
-				search.setReturnKey('done');
-			}
+			search.setReturnKey('done');
 		}
 
 		// endregion

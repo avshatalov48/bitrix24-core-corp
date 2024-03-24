@@ -8,11 +8,13 @@ BX.Tasks.GridActions = {
 	getTotalCountProceed: false,
 	currentGroupAction: null,
 
-	checkCanMove: function() {
+	checkCanMove: function()
+	{
 		return !BX.Tasks.GridInstance || BX.Tasks.GridInstance.checkCanMove();
 	},
 
-	initPopupBalloon: function(mode, searchField, groupIdField) {
+	initPopupBalloon: function(mode, searchField, groupIdField)
+	{
 		this.groupSelector = null;
 
 		BX.bind(BX(searchField + '_control'), 'click', BX.delegate(function() {
@@ -40,7 +42,8 @@ BX.Tasks.GridActions = {
 		}, this));
 	},
 
-	onTagUpdateClick: function(taskId, groupId, event) {
+	onTagUpdateClick: function(taskId, groupId, event)
+	{
 		var onRowUpdate = function(event) {
 			var id = event.getData().id;
 			if (Number(id) === Number(taskId))
@@ -465,7 +468,8 @@ BX.Tasks.GridActions = {
 		}
 	},
 
-	action: function(code, taskId, args) {
+	action: function(code, taskId, args)
+	{
 		if (code === 'add2Timeman')
 		{
 			if (BX.addTaskToPlanner)
@@ -513,7 +517,7 @@ BX.Tasks.GridActions = {
 		args = args || {};
 		args['taskId'] = taskId;
 
-		var component = 'bitrix:tasks.task';
+		let component = 'bitrix:tasks.task';
 		if (action === 'pin' || action === 'unpin')
 		{
 			component = 'bitrix:tasks.task.list';
@@ -529,6 +533,11 @@ BX.Tasks.GridActions = {
 			data: args,
 		}).then(
 			function(response) {
+				if (action === 'complete')
+				{
+					this.sendAnalyticsOnTaskComplete();
+				}
+
 				if (action === 'delete')
 				{
 					BX.Tasks.Util.fireGlobalTaskEvent('DELETE', { ID: taskId });
@@ -551,7 +560,7 @@ BX.Tasks.GridActions = {
 			function(response) {
 				if (response.errors)
 				{
-					var content = response.errors[0].message || response.errors[0].MESSAGE;
+					const content = response.errors[0].message || response.errors[0].MESSAGE;
 					BX.UI.Notification.Center.notify({ content: content });
 				}
 			}.bind(this),
@@ -560,10 +569,9 @@ BX.Tasks.GridActions = {
 
 	doScrumAction(action, taskId, args)
 	{
-		var promise = new BX.Promise();
-
-		var taskStatus = null;
-		var isParentScrumTask = false;
+		const promise = new BX.Promise();
+		let taskStatus = null;
+		let isParentScrumTask = false;
 
 		top.BX.loadExt('tasks.scrum.task-status')
 		.then(function() {
@@ -628,7 +636,8 @@ BX.Tasks.GridActions = {
 		}.bind(this));
 	},
 
-	getTotalCount: function(prefix, userId, groupId, parameters) {
+	getTotalCount: function(prefix, userId, groupId, parameters)
+	{
 		if (this.getTotalCountProceed)
 		{
 			return;
@@ -1091,6 +1100,30 @@ BX.Tasks.GridActions = {
 				state = switchStateTo;
 			}
 		};
+	},
+
+	sendAnalyticsOnTaskComplete: function ()
+	{
+		const analyticsData = {
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'task_complete',
+			type: 'task',
+			c_section: BX.Tasks.Grid.groupId ? 'project' : 'tasks',
+			c_element: 'context_menu',
+			c_sub_section: 'list',
+		};
+
+		if (BX.UI.Analytics)
+		{
+			BX.UI.Analytics.sendData(analyticsData);
+		}
+		else
+		{
+			BX.Runtime.loadExtension('ui.analytics').then(() => {
+				BX.UI.Analytics.sendData(analyticsData);
+			});
+		}
 	},
 };
 
@@ -1879,58 +1912,11 @@ BX(function() {
 		},
 
 		showStub: function() {
-			// this.showMigrationBar();
+
 		},
 
 		hideStub: function() {
 			this.getGrid().hideEmptyStub();
-		},
-
-		showMigrationBar: function() {
-			if (
-				this.taskList.size > 0
-				|| this.groupId
-			)
-			{
-				return;
-			}
-
-			var filterManager = BX.Main.filterManager.getById(BX.Tasks.GridActions.gridId);
-			if (
-				!filterManager
-				|| !BX.Dom.hasClass(filterManager.getSearch().getContainer(), 'main-ui-filter-default-applied')
-			)
-			{
-				return;
-			}
-
-			if (!this.migrationContainer)
-			{
-				var migration = new BX.UI.MigrationBar({
-					title: this.migrationBarOptions.title,
-					minWidth: 600,
-					minHeight: 200,
-					cross: false,
-					items: this.migrationBarOptions.items.map(function(item) {
-						return { src: item };
-					}),
-					buttons: [
-						{
-							text: this.migrationBarOptions.buttonMigrate,
-							color: BX.UI.ButtonColor.PRIMARY,
-							round: true,
-							link: '/marketplace/?tag[]=migrator&tag[]=tasks',
-						},
-					],
-					link: {
-						text: this.migrationBarOptions.other,
-					},
-				});
-				migration.show();
-				this.migrationContainer = migration.getContainer();
-				BX.Dom.style(this.migrationContainer, 'marginTop', '50px');
-			}
-			BX.Dom.append(this.migrationContainer, document.querySelector('.main-grid-empty-inner'));
 		},
 
 		showMoreButton: function() {

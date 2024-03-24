@@ -52,10 +52,8 @@ class CLdapServer
 				case "CONNECTION_TYPE":
 					$arSqlSearch[] = CLdapUtil::FilterCreate("ls.".$key, $val, "number", $cOperationType);
 					break;
-				case "TIMESTAMP_X":
-					$arSqlSearch[] = CLdapUtil::FilterCreate("ls.".$key, $val, "date", $cOperationType);
-					break;
 				case "SYNC_LAST":
+				case "TIMESTAMP_X":
 					$arSqlSearch[] = CLdapUtil::FilterCreate("ls.".$key, $val, "date", $cOperationType);
 					break;
 				case "CODE":
@@ -95,11 +93,7 @@ class CLdapServer
 		$arSqlOrder = Array();
 		foreach($arOrder as $by=>$order)
 		{
-			$order = mb_strtolower($order);
-			if ($order!="asc")
-				$order = "desc".($DB->type=="ORACLE"?" NULLS LAST":"");
-			else
-				$order = "asc".($DB->type=="ORACLE"?" NULLS FIRST":"");
+			$order = mb_strtolower($order) === 'asc' ? 'asc' : 'desc';
 
 			switch(mb_strtoupper($by))
 			{
@@ -332,6 +326,8 @@ class CLdapServer
 			$dbld = CLdapServer::GetById($ID);
 			$arLdap = $dbld->Fetch();
 		}
+
+		$arFields['~TIMESTAMP_X'] = $DB->CurrentTimeFunction();
 
 		$strUpdate = $DB->PrepareUpdate("b_ldap_server", $arFields);
 

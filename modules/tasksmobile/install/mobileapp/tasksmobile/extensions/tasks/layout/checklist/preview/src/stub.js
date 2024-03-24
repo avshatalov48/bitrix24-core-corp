@@ -23,7 +23,7 @@ jn.define('tasks/layout/checklist/preview/src/stub', (require, exports, module) 
 				checked: true,
 				isDisabled: true,
 				style: {
-					backgroundColor: AppTheme.colors.base5,
+					backgroundColor: AppTheme.colors.accentBrandBlue,
 					opacity: 1,
 				},
 			}),
@@ -90,4 +90,3 @@ jn.define('tasks/layout/checklist/preview/src/stub', (require, exports, module) 
 
 	module.exports = { checklistPreviewStub };
 });
-

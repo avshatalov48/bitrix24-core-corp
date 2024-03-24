@@ -178,49 +178,13 @@ final class CheckList extends \Bitrix\Tasks\Dispatcher\PublicAction
 	}
 
 	/**
+	 * @deprecated
+	 * @see TemplateCheckListFacade
 	 * Move a specified check list item after another check list item
 	 */
 	public function moveAfter($id, $afterId)
 	{
-		// you can move check list items ONLY when you have write access to the task
-		$result = [];
-
-		$templateId = $this->getTemplateId($id);
-
-		if (
-			!$templateId
-			|| !TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId)
-		)
-		{
-			$this->addForbiddenError();
-			return $result;
-		}
-
-		if($id = $this->checkId($id))
-		{
-			$item = new Item\Task\Template\CheckList($id);
-			$parent = $item->getParent(); // get parent by item
-
-			if ($parent == null)
-			{
-				return $result;
-			}
-
-			// get the entire collection, move items in it and then save
-			$moveResult = $parent['SE_CHECKLIST']->moveItemAfter($id, $afterId);
-			if($moveResult->isSuccess())
-			{
-				$parent->setFieldModified('SE_CHECKLIST'); // temporal spike, just to tell $parent that collection was changed
-				$saveResult = $parent->save();
-				$this->errors->load($saveResult->getErrors());
-			}
-			else
-			{
-				$this->errors->load($moveResult->getErrors());
-			}
-		}
-
-		return $result;
+		return [];
 	}
 
 	/**

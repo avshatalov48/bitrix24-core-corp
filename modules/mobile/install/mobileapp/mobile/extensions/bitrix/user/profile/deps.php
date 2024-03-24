@@ -5,6 +5,8 @@ return [
 		'disk',
 		'apptheme',
 		'im:messenger/api/dialog-opener',
+		'tasks:task',
+		'require-lazy',
 	],
 	'components' => [
 		'user.profile',
@@ -12,5 +14,6 @@ return [
 	'bundle' => [
 		'./src/profile',
 		'./src/profile-view',
+		'./src/backdrop-profile',
 	],
 ];

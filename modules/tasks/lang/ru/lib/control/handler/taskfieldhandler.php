@@ -9,6 +9,7 @@ $MESS['TASKS_BAD_PLAN_DATES'] = 'В планировании сроков ука
 $MESS['TASKS_BAD_DURATION'] = 'В планировании сроков указана слишком большая длительность задачи';
 $MESS['TASKS_BAD_CREATED_BY'] = 'Не указан постановщик';
 $MESS['TASKS_BAD_RESPONSIBLE_ID'] = 'Не указан ответственный';
+$MESS['TASKS_BAD_ASSIGNEE_ID'] = 'Не указан исполнитель';
 $MESS['TASKS_BAD_RESPONSIBLE_ID_EX'] = 'Пользователь указанный в поле &quot;Ответственный&quot; не найден';
 $MESS['TASKS_DEPENDS_ON_SELF'] = 'Задача не может зависеть сама от себя';
 $MESS['TASKS_DEADLINE_OUT_OF_PROJECT_RANGE'] = 'Крайний срок задачи стоит за рамками проекта';

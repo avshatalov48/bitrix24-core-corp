@@ -744,4 +744,3 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 
 	module.exports = { TunnelListItem };
 });
-

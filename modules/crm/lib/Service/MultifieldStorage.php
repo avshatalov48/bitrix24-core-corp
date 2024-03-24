@@ -285,6 +285,16 @@ class MultifieldStorage
 		return $result;
 	}
 
+	/**
+	 * @param Multifield\Collection $oldValues
+	 * @param Multifield\Collection $newValues
+	 *
+	 * @return array{
+	 *     0: Multifield\Collection,
+	 *     1: Multifield\Collection,
+	 *     2: Multifield\Collection
+	 * }
+	 */
 	private function separateValuesBySaveOperation(
 		Multifield\Collection $oldValues,
 		Multifield\Collection $newValues,
@@ -294,34 +304,16 @@ class MultifieldStorage
 		$update = new Multifield\Collection();
 		$delete = new Multifield\Collection();
 
-		foreach ($newValues as $newValue)
+		$deduplicatedNewValues = $this->deduplicateCollection($newValues);
+
+		foreach ($deduplicatedNewValues as $newValue)
 		{
-			$oldValuesHasSameValueAlready = $oldValues->has($newValue);
-			if ($newValue->getId() > 0)
+			$oldValue = $newValue->getId() > 0 ? $oldValues->getById($newValue->getId()) : null;
+			if ($oldValue && !$oldValue->isEqualTo($newValue))
 			{
-				$oldValue = $oldValues->getById($newValue->getId());
-
-				if ($oldValue?->isEqualTo($newValue))
-				{
-					// nothing to do here
-				}
-				elseif ($oldValuesHasSameValueAlready)
-				{
-					// after update this value will become a duplicate of another value, simply remove it
-					$delete->add($newValue);
-				}
-				elseif ($oldValue)
-				{
-					$update->add($newValue);
-				}
-				else
-				{
-					$newValue->setId(null);
-
-					$add->add($newValue);
-				}
+				$update->add($newValue);
 			}
-			elseif (!$oldValuesHasSameValueAlready)
+			elseif (!$oldValue)
 			{
 				$add->add($newValue);
 			}
@@ -329,17 +321,42 @@ class MultifieldStorage
 
 		foreach ($oldValues as $oldValue)
 		{
-			if (
-				// in case its being updated, we look if there is value with same id
-				!$newValues->getById($oldValue->getId())
-				&& !$newValues->has($oldValue)
-			)
+			if (!$deduplicatedNewValues->getById($oldValue->getId()))
 			{
 				$delete->add($oldValue);
 			}
 		}
 
 		return [$add, $update, $delete];
+	}
+
+	/**
+	 * Even though Collection doesn't allow duplicates addition, someone still can modify
+	 * an existing value in a collection to make it a duplicate
+	 *
+	 * @param Multifield\Collection $collection
+	 *
+	 * @return Multifield\Collection
+	 */
+	private function deduplicateCollection(
+		Multifield\Collection $collection,
+	): Multifield\Collection
+	{
+		$deduplicated = new Multifield\Collection();
+
+		$allValues = $collection->getAll();
+		// values with id > 0 should be added first, as they are already saved to the DB
+		usort($allValues, function (Multifield\Value $left, Multifield\Value $right) {
+			return (int)$left->getId() <=> (int)$right->getId();
+		});
+
+		foreach ($allValues as $value)
+		{
+			// Collection::add doesn't allow adding duplicates. The new collection will contain only unique values
+			$deduplicated->add($value);
+		}
+
+		return $deduplicated;
 	}
 
 	private function saveToDb(

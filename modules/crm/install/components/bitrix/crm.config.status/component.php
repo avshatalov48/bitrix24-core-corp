@@ -1,9 +1,12 @@
-<?
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Integration\PullManager;
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -380,6 +383,4 @@ $arResult['RAND_STRING'] = $this->randString();
 CUtil::InitJSCore();
 $arResult['ENABLE_CONTROL_PANEL'] = isset($arParams['ENABLE_CONTROL_PANEL']) ? $arParams['ENABLE_CONTROL_PANEL'] : true;
 $this->IncludeComponentTemplate();
-$APPLICATION->AddChainItem(GetMessage('CRM_FIELDS_ENTITY_LIST'), $arResult['~ENTITY_LIST_URL']);
-
-?>
+$APPLICATION->AddChainItem(GetMessage('CRM_FIELDS_ENTITY_LIST'), $arResult['~ENTITY_LIST_URL'] ?? null);

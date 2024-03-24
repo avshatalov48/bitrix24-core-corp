@@ -1480,6 +1480,11 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			$deliverableProducts = $productManager->getRealizationableItems();
 			foreach ($deliverableProducts as $deliverableProduct)
 			{
+				if (isset($deliverableProduct['PRODUCT_ID']) && $deliverableProduct['PRODUCT_ID'] <= 0)
+				{
+					continue;
+				}
+				
 				if (
 					!empty($basketIdsFilter)
 					&& !in_array($deliverableProduct['BASKET_CODE'], $basketIdsFilter, true)

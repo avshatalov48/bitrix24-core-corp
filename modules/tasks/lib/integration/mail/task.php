@@ -13,6 +13,7 @@ namespace Bitrix\Tasks\Integration\Mail;
 use \Bitrix\Main\Event;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 
 Loc::loadMessages(__FILE__);
 
@@ -85,7 +86,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 
 	public static function onForwardReceived(Event $event)
 	{
-		$userId = intval($event->getParameter('from'));
+		$userId = (int)$event->getParameter('from');
 		$message = trim($event->getParameter('content'));
 		$subject = trim($event->getParameter('subject'));
 		$attachments = $event->getParameter('attachments');
@@ -93,13 +94,13 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 
 		if (
 			$userId <= 0
-			|| $siteId == ''
+			|| empty($siteId)
 		)
 		{
 			return false;
 		}
 
-		list($message, $files) = static::processAttachments($message, $attachments, $userId);
+		[$message, $files] = static::processAttachments($message, $attachments, $userId);
 
 		try
 		{
@@ -110,7 +111,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 
 			$task = \CTaskItem::add(
 				[
-					'TITLE' => ($subject == ''? Loc::getMessage('TASKS_MAIL_NEW_TASK') : $subject),
+					'TITLE' => (empty($subject) ? Loc::getMessage('TASKS_MAIL_NEW_TASK') : $subject),
 					'DESCRIPTION' => $message,
 					'CREATED_BY' => $userId,
 					'RESPONSIBLE_ID' => $userId,
@@ -122,17 +123,18 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 		}
 		catch(\TasksException $e) // todo: get rid of this annoying catch by making \Bitrix\Tasks\*Exception classes inherited from TasksException (dont forget about code)
 		{
-			if($e->checkOfType(\TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
+			if (
+				$e->checkOfType(\TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE)
+				|| $e->checkOfType(\TasksException::TE_ACCESS_DENIED)
+			)
 			{
 				return false;
 			}
-			else
-			{
-				throw $e; // let it log
-			}
+
+			LogFacade::logThrowable($e);
 		}
 
-		return $task->getId(); // required, dont remove
+		return $task?->getId(); // required, dont remove
 	}
 
 	public static function getDefaultPublicPath($taskId)

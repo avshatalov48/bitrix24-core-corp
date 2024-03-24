@@ -405,7 +405,7 @@ class Bitrix24Manager extends Base
 			$button = [
 				'color' => Color::LIGHT_BORDER,
 				'click' => new JsHandler('BX.Salescenter.Manager.openIntegrationRequestForm'),
-				'text' => Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_2'),
+				'text' => Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_3'),
 				'dataset' => ['toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO],
 			];
 
@@ -454,7 +454,7 @@ class Bitrix24Manager extends Base
 		if($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
-			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" ' . self::renderAttrDataSet($params) . ' onclick="BX.Salescenter.Manager.openIntegrationRequestForm(event);">' . Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_2') . '</button>';
+			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" ' . self::renderAttrDataSet($params) . ' onclick="BX.Salescenter.Manager.openIntegrationRequestForm(event);">' . Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_3') . '</button>';
 		}
 	}
 

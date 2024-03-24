@@ -2,15 +2,11 @@
 
 namespace Bitrix\Tasks\Internals\Task\Search\Repository;
 
-use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
-use Bitrix\Tasks\Control\Tag;
+use Bitrix\Tasks\Internals\Member\MemberFacade;
 use Bitrix\Tasks\Internals\Task\Search\Exception\SearchIndexException;
 use Bitrix\Tasks\Internals\Task\Search\RepositoryInterface;
-use Bitrix\Tasks\Member\AbstractMemberService;
-use Bitrix\Tasks\Member\Config\BaseConfig;
 use Bitrix\Tasks\Member\Service\TaskMemberService;
-use Bitrix\Tasks\Member\Type\Member;
 use Bitrix\Tasks\Provider\Tag\TagList;
 use Bitrix\Tasks\Provider\Tag\TagQuery;
 use Bitrix\Tasks\Provider\TaskList;
@@ -19,14 +15,14 @@ use Exception;
 
 class TaskRepository implements RepositoryInterface
 {
+	private int $taskId;
 	private ?array $task = null;
-	private AbstractMemberService $memberService;
-	private Tag $tagService;
+	private MemberFacade $memberFacade;
 
-	public function __construct(private int $taskId)
+	public function __construct(int $taskId)
 	{
-		$this->memberService = new TaskMemberService($taskId);
-		$this->tagService = new Tag();
+		$this->taskId = $taskId;
+		$this->init();
 	}
 
 	/**
@@ -67,24 +63,16 @@ class TaskRepository implements RepositoryInterface
 	 */
 	private function fillWithMembers(): static
 	{
-		$membersResult = $this->memberService->get(RoleDictionary::getAvailableRoles(), new BaseConfig());
+		$membersResult = $this->memberFacade->load();
 		if (!$membersResult->isSuccess())
 		{
 			throw new SearchIndexException($membersResult->getErrorMessages()[0]);
 		}
 
-		$members = $membersResult->getData();
-
-		$this->task['CREATED_BY'] = (int)array_shift($members[RoleDictionary::ROLE_DIRECTOR])?->getUserId();
-		$this->task['RESPONSIBLE_ID'] = (int)array_shift($members[RoleDictionary::ROLE_RESPONSIBLE])?->getUserId();
-		$this->task['AUDITORS'] = array_map(
-			static fn(Member $member): int => (int)$member?->getUserId(),
-			$members[RoleDictionary::ROLE_AUDITOR]
-		);
-		$this->task['ACCOMPLICES'] = array_map(
-			static fn(Member $member): int => (int)$member?->getUserId(),
-			$members[RoleDictionary::ROLE_ACCOMPLICE]
-		);
+		$this->task['CREATED_BY'] = (int)$this->memberFacade->getCreatedByMemberId();
+		$this->task['RESPONSIBLE_ID'] = (int)$this->memberFacade->getResponsibleMemberId();
+		$this->task['ACCOMPLICES'] = $this->memberFacade->getAccompliceMembersIds();
+		$this->task['AUDITORS'] = $this->memberFacade->getAuditorMembersIds();
 
 		return $this;
 	}
@@ -130,5 +118,10 @@ class TaskRepository implements RepositoryInterface
 			'GROUP_ID',
 			'UF_CRM_TASK',
 		];
+	}
+
+	private function init(): void
+	{
+		$this->memberFacade = new MemberFacade(new TaskMemberService($this->taskId));
 	}
 }

@@ -1,5 +1,6 @@
 <?php
 $MESS["ERROR_TASKS_GUID_NON_UNIQUE"] = "GUID value must be unique";
+$MESS["TASKS_BAD_ASSIGNEE_ID"] = "Assignee not specified.";
 $MESS["TASKS_BAD_CREATED_BY"] = "Task creator is not specified.";
 $MESS["TASKS_BAD_DURATION"] = "The planned task duration period is too long";
 $MESS["TASKS_BAD_PARENT_ID"] = "A task specified in the field &quot;Subtask&quot; was not found.";

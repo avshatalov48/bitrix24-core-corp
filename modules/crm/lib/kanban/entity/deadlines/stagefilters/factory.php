@@ -7,15 +7,12 @@ use Bitrix\Crm\Kanban\Entity\Deadlines\FilterDateMerger;
 
 final class Factory
 {
-	public static function make(string $entityTypeId): StageFilter
+	public static function make(int $entityTypeId): StageFilter
 	{
-		switch ($entityTypeId)
-		{
-			case \CCrmOwnerType::Quote:
-				return self::makeStageFilterNotEx();
-			default:
-				return new StageFilterEx(new DatePeriods());
-		}
+		return match ($entityTypeId){
+			\CCrmOwnerType::Quote => self::makeStageFilterNotEx(),
+			default => new StageFilterEx(new DatePeriods()),
+		};
 	}
 
 	private static function makeStageFilterNotEx(): StageFilterNotEx

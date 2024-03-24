@@ -112,7 +112,7 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeId;
 		$this->arResult['PAGE_TITLE'] =
-			$this->entityTypeId === CCrmOwnerType::SmartDocument
+			in_array($this->entityTypeId, [CCrmOwnerType::SmartDocument, CCrmOwnerType::SmartB2eDocument], true)
 				? Loc::getMessage('CRM_ITEM_AUTOMATION_PAGETITLE_AUTOMATION')
 				: Loc::getMessage('CRM_ITEM_AUTOMATION_PAGETITLE')
 		;

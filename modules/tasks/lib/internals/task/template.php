@@ -17,6 +17,7 @@ Loc::loadMessages(__FILE__);
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Tasks\Internals\Task\Template\TemplateCollection;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
@@ -35,16 +36,20 @@ use Bitrix\Tasks\Util\UserField;
  * @method static EO_Template_Result getList(array $parameters = [])
  * @method static EO_Template_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateObject createObject($setDefaultValues = true)
- * @method static \Bitrix\Tasks\Internals\Task\EO_Template_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateCollection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateObject wakeUpObject($row)
- * @method static \Bitrix\Tasks\Internals\Task\EO_Template_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateCollection wakeUpCollection($rows)
  */
 class TemplateTable extends Main\Entity\DataManager
 {
-
-	public static function getObjectClass()
+	public static function getObjectClass(): string
 	{
 		return TemplateObject::class;
+	}
+
+	public static function getCollectionClass(): string
+	{
+		return TemplateCollection::class;
 	}
 
 	/**
@@ -121,7 +126,7 @@ class TemplateTable extends Main\Entity\DataManager
 			'RESPONSIBLE_ID' => array(
 				'data_type' => 'integer',
 				'required' => true,
-				'title' => Loc::getMessage('TASKS_TASK_TEMPLATE_ENTITY_RESPONSIBLE_ID_FIELD'),
+				'title' => Loc::getMessage('TASKS_TASK_TEMPLATE_ENTITY_ASSIGNEE_ID_FIELD'),
 			),
 			'TIME_ESTIMATE' => array( // in seconds
 				'data_type' => 'integer',

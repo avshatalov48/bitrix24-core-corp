@@ -832,6 +832,11 @@ if ($bPostChecked)
 			{
 				$arFields['STORAGE_ELEMENT_IDS'] = StorageManager::filterFiles($arFileIds, $storageTypeId);
 			}
+
+			if ($storageTypeId === CCrmQuoteStorageType::File)
+			{
+				$arFields['STORAGE_ELEMENT_IDS'] = [];
+			}
 			unset($arFileIds);
 		}
 

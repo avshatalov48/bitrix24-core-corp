@@ -38,6 +38,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 	{
 		$arParams['MODE'] = $arParams['MODE'] ?? 'main';
 		$this->mode = $arParams['MODE'];
+		$arParams['HIDE_CASH'] = $arParams['HIDE_CASH'] ?? false;
 
 		return parent::onPrepareComponentParams($arParams);
 	}
@@ -46,6 +47,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 	{
 		return [
 			'PAYSYSTEM_COLOR',
+			'HIDE_CASH',
 		];
 	}
 
@@ -118,6 +120,9 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			$this->isMainMode(),
 			self::PAYSYSTEM_TITLE_LENGTH_LIMIT,
 			$this->paySystemColor,
+			[
+				'hideCash' => $this->arParams['HIDE_CASH'],
+			]
 		);
 
 		$paySystemItems = $paySystemItemsResult->isSuccess()
@@ -399,7 +404,8 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 		$paySystemPath->addParams([
 			'analyticsLabel' => 'salescenterClickPaymentTile',
 			'type' => 'extra',
-			'mode' => 'extra'
+			'mode' => 'extra',
+			'hideCash' => $this->arParams['HIDE_CASH'],
 		]);
 
 		return [

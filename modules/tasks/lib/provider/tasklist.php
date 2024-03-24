@@ -4,6 +4,8 @@ namespace Bitrix\Tasks\Provider;
 
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ORM\Query\Result;
+use Bitrix\Tasks\Provider\Exception\TaskListException;
+use Exception;
 
 class TaskList
 {
@@ -18,29 +20,22 @@ class TaskList
 	/**
 	 * @param TaskQuery $query
 	 * @return array
-	 * @throws Exception\InvalidSelectException
-	 * @throws Exception\UnexpectedTableException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws TaskListException
 	 */
 	public function getList(TaskQuery $query): array
 	{
 		$this->query = clone $query;
 		$this->prepareQuery();
 
-		// if ($query->needSeparated())
-		// {
-		// 	$taskIds = $this->getTaskIds();
-		// 	// set filter by task ids
-		// 	$this->query->setWhere([
-		// 		'ID' => $taskIds,
-		// 	]);
-		// 	$this->query->skipAccessCheck();
-		// }
-
-		$dbQuery = TaskQueryBuilder::build($this->query);
-		$this->dbResult = $dbQuery->exec();
+		try
+		{
+			$dbQuery = TaskQueryBuilder::build($this->query);
+			$this->dbResult = $dbQuery->exec();
+		}
+		catch (Exception $exception)
+		{
+			throw new TaskListException($exception->getMessage());
+		}
 
 		$tasks = $this->dbResult->fetchAll();
 		$tasks = $this->loadRelations($tasks);

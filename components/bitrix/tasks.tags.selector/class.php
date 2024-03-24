@@ -255,7 +255,7 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 			$items[] = "<a data-slider-ignore-autobinding=\"true\" target=\"_top\" {$type}='{$action}' style='cursor: pointer;'>{$tag}</a>";
 		}
 
-		$this->arResult['TAGS'] = implode(',', $items);
+		$this->arResult['TAGS'] = implode(', ', $items);
 	}
 
 	private function hasNewTag(string $tag = ''): bool

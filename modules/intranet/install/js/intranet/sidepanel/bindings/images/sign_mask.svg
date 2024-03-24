@@ -1,0 +1,212 @@
+<svg viewBox="0 0 795 768" fill="none" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg_wrapper" class="defs-only" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 1200px" preserveAspectRatio="xMinYMin meet">
+	<svg height="1200px">
+		<rect width="795" height="768" fill="#EEF2F4"/>
+		<g clip-path="url(#clip0_637_420762)">
+			<rect x="24" y="420" width="751" height="303" rx="10" fill="white"/>
+			<rect x="49.5" y="487.5" width="678" height="63" rx="11.5" fill="white" stroke="#EAECF0"/>
+
+			<rect x="254" y="511" width="1" height="16" rx="0.5" fill="#DFE0E3"/>
+
+
+			<rect x="49.5" y="563.5" width="678" height="63" rx="11.5" fill="white" stroke="#EAECF0"/>
+
+
+			<rect x="254" y="587" width="1" height="16" rx="0.5" fill="#DFE0E3"/>
+
+			<rect x="49.5" y="639.5" width="678" height="63" rx="11.5" fill="white" stroke="#EAECF0"/>
+
+			<rect x="254" y="663" width="1" height="16" rx="0.5" fill="#DFE0E3"/>
+		</g>
+		<g clip-path="url(#clip1_637_420762)">
+			<rect x="24" y="90" width="751" height="151" rx="10" fill="white"/>
+			<rect x="49.5" y="157.5" width="678" height="63" rx="11.5" fill="white" stroke="#EAECF0"/>
+			<rect x="254" y="181" width="1" height="16" rx="0.5" fill="#DFE0E3"/>
+		</g>
+		<g clip-path="url(#clip2_637_420762)">
+			<rect x="24" y="253" width="751" height="151" rx="10" fill="white"/>
+			<rect x="49.5" y="320.5" width="678" height="63" rx="11.5" fill="white" stroke="#EAECF0"/>
+			<rect x="111" y="343" width="85" height="6" rx="3" fill="#DFE0E3"/>
+			<rect x="254" y="344" width="1" height="16" rx="0.5" fill="#DFE0E3"/>
+			<path d="M111 358C111 356.343 112.343 355 114 355H230C231.657 355 233 356.343 233 358C233 359.657 231.657 361 230 361H114C112.343 361 111 359.657 111 358Z" fill="#DFE0E3"/>
+		</g>
+		<defs>
+			<linearGradient id="paint0_linear_637_420762" x1="45" y1="719.485" x2="-16" y2="719.485" gradientUnits="userSpaceOnUse">
+				<stop stop-color="white" stop-opacity="0"/>
+				<stop offset="0.491803" stop-color="white"/>
+				<stop offset="1" stop-color="white" stop-opacity="0"/>
+			</linearGradient>
+			<linearGradient id="paint1_linear_637_420762" x1="45" y1="389.485" x2="-16" y2="389.485" gradientUnits="userSpaceOnUse">
+				<stop stop-color="white" stop-opacity="0"/>
+				<stop offset="0.491803" stop-color="white"/>
+				<stop offset="1" stop-color="white" stop-opacity="0"/>
+			</linearGradient>
+			<linearGradient id="paint2_linear_637_420762" x1="45" y1="552.485" x2="-16" y2="552.485" gradientUnits="userSpaceOnUse">
+				<stop stop-color="white" stop-opacity="0"/>
+				<stop offset="0.491803" stop-color="white"/>
+				<stop offset="1" stop-color="white" stop-opacity="0"/>
+			</linearGradient>
+			<clipPath id="clip0_637_420762">
+				<rect x="24" y="420" width="751" height="303" rx="10" fill="white"/>
+			</clipPath>
+			<clipPath id="clip1_637_420762">
+				<rect x="24" y="90" width="751" height="151" rx="10" fill="white"/>
+			</clipPath>
+			<clipPath id="clip2_637_420762">
+				<rect x="24" y="253" width="751" height="151" rx="10" fill="white"/>
+			</clipPath>
+		</defs>
+	</svg>
+
+	<svg height="1200px" id="header">
+		<g id="header">
+			<rect x="24" y="39" width="416" height="11" rx="5.5" fill="#DFE0E3"/>
+		</g>
+
+		<g id="head-line">
+			<rect x="49" y="123" width="298" height="8" rx="4" fill="#DFE0E3"/>
+		</g>
+
+		<g id="head-line">
+			<rect x="49" y="286" width="298" height="8" rx="4" fill="#DFE0E3"/>
+		</g>
+
+		<g id="head-line">
+			<rect x="49" y="453" width="298" height="8" rx="4" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle">
+			<circle cx="81" cy="519" r="18" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle-sm">
+			<circle cx="745" cy="519" r="6" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle">
+			<circle cx="81" cy="595" r="18" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle-sm">
+			<circle cx="745" cy="595" r="6" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle">
+			<circle cx="81" cy="671" r="18" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle-sm">
+			<circle cx="745" cy="671" r="6" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle">
+			<circle cx="81" cy="352" r="18" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle-sm">
+			<circle cx="745" cy="352" r="6" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle">
+			<circle cx="81" cy="189" r="18" fill="#DFE0E3"/>
+		</g>
+
+		<g id="circle-sm">
+			<circle cx="745" cy="189" r="6" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line">
+			<rect x="111" y="586" width="130" height="6" rx="3" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line-sm">
+			<rect x="111" y="598" width="44" height="6" rx="3" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line">
+			<rect x="111" y="662" width="85" height="6" rx="3" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line-sm">
+			<path d="M111 677C111 675.343 112.343 674 114 674H230C231.657 674 233 675.343 233 677C233 678.657 231.657 680 230 680H114C112.343 680 111 678.657 111 677Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line">
+			<rect x="111" y="510" width="85" height="6" rx="3" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line-sm">
+			<path d="M111 525C111 523.343 112.343 522 114 522H230C231.657 522 233 523.343 233 525C233 526.657 231.657 528 230 528H114C112.343 528 111 526.657 111 525Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line">
+			<rect x="111" y="180" width="85" height="6" rx="3" fill="#DFE0E3"/>
+		</g>
+
+		<g id="inner-line-sm">
+			<path d="M111 195C111 193.343 112.343 192 114 192H230C231.657 192 233 193.343 233 195C233 196.657 231.657 198 230 198H114C112.343 198 111 196.657 111 195Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon">
+			<path d="M598 519C598 510.716 604.716 504 613 504H693C701.284 504 708 510.716 708 519C708 527.284 701.284 534 693 534H613C604.716 534 598 527.284 598 519Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon-sm">
+			<rect x="267" y="509" width="80" height="20" rx="10" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon">
+			<path d="M598 595C598 586.716 604.716 580 613 580H693C701.284 580 708 586.716 708 595C708 603.284 701.284 610 693 610H613C604.716 610 598 603.284 598 595Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon-sm">
+			<rect x="267" y="585" width="130" height="20" rx="10" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon">
+			<path d="M598 671C598 662.716 604.716 656 613 656H693C701.284 656 708 662.716 708 671C708 679.284 701.284 686 693 686H613C604.716 686 598 679.284 598 671Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon-sm">
+			<rect x="267" y="661" width="80" height="20" rx="10" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon">
+			<path d="M598 352C598 343.716 604.716 337 613 337H693C701.284 337 708 343.716 708 352C708 360.284 701.284 367 693 367H613C604.716 367 598 360.284 598 352Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon-sm">
+			<rect x="267" y="342" width="80" height="20" rx="10" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon">
+			<path d="M598 189C598 180.716 604.716 174 613 174H693C701.284 174 708 180.716 708 189C708 197.284 701.284 204 693 204H613C604.716 204 598 197.284 598 189Z" fill="#DFE0E3"/>
+		</g>
+
+		<g id="balloon-sm">
+			<rect x="267" y="179" width="80" height="20" rx="10" fill="#DFE0E3"/>
+		</g>
+
+		<use xlink:href="#header" y="0" x="0" width="416px"/>
+		<use xlink:href="#head-line" x="0" y="0" width="298px"/>
+		<use xlink:href="#inner-line" x="0" y="0" width="85px"/>
+		<use xlink:href="#inner-line-sm" x="0" y="0"/>
+		<use xlink:href="#circle" x="0" y="0"/>
+		<use xlink:href="#circle-sm" x="0" y="0"/>
+		<use xlink:href="#balloon" x="0" y="0"/>
+		<use xlink:href="#balloon-sm" x="0" y="0"/>
+	</svg>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1200"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#header"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+</svg>

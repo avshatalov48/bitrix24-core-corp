@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,rest_client,ui_label,main_date,main_popup,ui_buttons,ui_hint,main_core_events,main_loader,ui_vue3,ui_notification,crm_datetime,main_core,crm_timeline_item,crm_timeline_tools) {
+(function (exports,ui_cnt,rest_client,ui_analytics,ui_label,main_date,main_popup,ui_buttons,ui_hint,main_core_events,main_loader,ui_vue3,ui_notification,main_core,crm_timeline_item,crm_timeline_tools) {
 	'use strict';
 
 	let _ = t => t,
@@ -611,7 +611,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "getUserTimezoneOffset",
 	    value: function getUserTimezoneOffset() {
-	      return crm_datetime.TimezoneOffset.USER_TO_SERVER;
+	      return main_date.Timezone.Offset.USER_TO_SERVER;
 	    }
 	  }]);
 	  return CompatibleItem;
@@ -2115,10 +2115,13 @@ this.BX.Crm = this.BX.Crm || {};
 	            actionType: ActionType.AJAX_ACTION.STARTED,
 	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
 	          });
-	          main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _value), {
-	            data: _classPrivateMethodGet$1(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams)),
-	            analyticsLabel: babelHelpers.classPrivateFieldGet(this, _analytics)
-	          }).then(response => {
+	          const ajaxConfig = {
+	            data: _classPrivateMethodGet$1(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
+	          };
+	          if (babelHelpers.classPrivateFieldGet(this, _analytics)) {
+	            ajaxConfig.analytics = babelHelpers.classPrivateFieldGet(this, _analytics);
+	          }
+	          main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _value), ajaxConfig).then(response => {
 	            _classPrivateMethodGet$1(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
 	            vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	              action: babelHelpers.classPrivateFieldGet(this, _value),
@@ -2355,17 +2358,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (!AnimationTarget.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).target)) {
 	    return false;
 	  }
-	  if (!AnimationType.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).type)) {
-	    return false;
-	  }
-	  return true;
+	  return AnimationType.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).type);
 	}
 	function _sendAnalytics2() {
 	  if (babelHelpers.classPrivateFieldGet(this, _analytics) && babelHelpers.classPrivateFieldGet(this, _analytics).hit) {
-	    main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _analytics).hit, {
-	      data: {},
-	      analyticsLabel: babelHelpers.classPrivateFieldGet(this, _analytics)
-	    });
+	    const clonedAnalytics = {
+	      ...babelHelpers.classPrivateFieldGet(this, _analytics)
+	    };
+	    delete clonedAnalytics.hit;
+	    ui_analytics.sendData(clonedAnalytics);
 	  }
 	}
 
@@ -4954,22 +4955,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getUserTimezoneOffset",
 	    value: function getUserTimezoneOffset() {
-	      return crm_datetime.TimezoneOffset.USER_TO_SERVER;
+	      return main_date.Timezone.Offset.USER_TO_SERVER;
 	    }
 	  }, {
 	    key: "getServerTimezoneOffset",
 	    value: function getServerTimezoneOffset() {
-	      return crm_datetime.TimezoneOffset.SERVER_TO_UTC;
+	      return main_date.Timezone.Offset.SERVER_TO_UTC;
 	    } // @todo replace by DatetimeConverter
 	  }, {
 	    key: "formatTime",
 	    value: function formatTime(time, now, utc) {
-	      return BX.date.format(this._timeFormat, time, now, utc);
+	      return main_date.DateTimeFormat.format(this._timeFormat, time, now, utc);
 	    } // @todo replace by DatetimeConverter
 	  }, {
 	    key: "formatDate",
 	    value: function formatDate(date) {
-	      return BX.date.format([["today", "today"], ["tommorow", "tommorow"], ["yesterday", "yesterday"], ["", date.getFullYear() === this._year ? crm_datetime.Format.DAY_MONTH_FORMAT : crm_datetime.Format.LONG_DATE_FORMAT]], date);
+	      return main_date.DateTimeFormat.format([["today", "today"], ["tommorow", "tommorow"], ["yesterday", "yesterday"], ["", date.getFullYear() === this._year ? main_date.DateTimeFormat.getFormat('DAY_MONTH_FORMAT') : main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT')]], date);
 	    }
 	  }, {
 	    key: "cutOffText",
@@ -16305,5 +16306,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Animations = Animations;
 	exports.CompatibleItem = CompatibleItem;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.Main,BX.Main,BX.UI,BX,BX.Event,BX,BX.Vue3,BX,BX.Crm.DateTime,BX,BX.Crm.Timeline,BX.Crm.Timeline));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI.Analytics,BX.UI,BX.Main,BX.Main,BX.UI,BX,BX.Event,BX,BX.Vue3,BX,BX,BX.Crm.Timeline,BX.Crm.Timeline));
 //# sourceMappingURL=timeline.bundle.js.map

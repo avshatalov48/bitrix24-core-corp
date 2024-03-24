@@ -2,7 +2,7 @@
  * @module layout/ui/button-list/pill-button
  */
 jn.define('layout/ui/button-list/pill-button', (require, exports, module) => {
-	const { changeFillColor } = require('utils/svg');
+	const AppTheme = require('apptheme');
 	const { PropTypes } = require('utils/validation');
 
 	/**
@@ -28,13 +28,14 @@ jn.define('layout/ui/button-list/pill-button', (require, exports, module) => {
 			this.state = {
 				isActive: props?.isActive || false,
 			};
+
+			this.handleOnClick = this.handleOnClick.bind(this);
 		}
 
 		render()
 		{
 			const {
 				onDeleteButton,
-				onClick,
 				mainSvgIcon,
 				content,
 				additionalSvgIcon,
@@ -55,7 +56,7 @@ jn.define('layout/ui/button-list/pill-button', (require, exports, module) => {
 							height: 30,
 							maxHeight: 30,
 							alignSelf: 'center',
-							borderColor: this.getColor('#e6e7e9'),
+							borderColor: this.getColor(AppTheme.colors.bgSeparatorPrimary),
 							borderWidth: 1,
 							borderRadius: borderRadius ?? 8,
 							flexDirection: 'row',
@@ -64,10 +65,7 @@ jn.define('layout/ui/button-list/pill-button', (require, exports, module) => {
 							paddingVertical: 5,
 						},
 						onClick: () => {
-							if (onClick)
-							{
-								onClick();
-							}
+							this.handleOnClick();
 
 							if (deleteAfterClick)
 							{
@@ -129,7 +127,7 @@ jn.define('layout/ui/button-list/pill-button', (require, exports, module) => {
 					style: {
 						width: 0.5,
 						height: 20,
-						backgroundColor: this.getColor('#d9d9d9'),
+						backgroundColor: this.getColor(AppTheme.colors.base6),
 						marginHorizontal: 5,
 					},
 				},
@@ -196,16 +194,27 @@ jn.define('layout/ui/button-list/pill-button', (require, exports, module) => {
 						paddingHorizontal: 2,
 						flexBasis: 'content',
 					},
+					tintColor: this.getColor(),
 					svg: {
-						content: changeFillColor(icon, this.getColor()),
+						content: icon,
 					},
 				},
 			);
 		}
 
+		handleOnClick()
+		{
+			const { onClick } = this.props;
+
+			if (onClick)
+			{
+				onClick();
+			}
+		}
+
 		getColor(defaultColor = '#909090')
 		{
-			return this.state.isActive ? '#0091e3' : defaultColor;
+			return this.state.isActive ? AppTheme.colors.accentExtraDarkblue : defaultColor;
 		}
 	}
 

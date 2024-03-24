@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Task\Status;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -130,9 +131,7 @@ $arPaths = array(
 			); ?>', event)">
 				<? /*<div class="task-head-drag-btn"><span class="task-head-drag-btn-inner"></span></div>*/ ?>
 				<div class="task-head-cell">
-					<span class="task-head-cell-sort-order"></span><span class="task-head-cell-title"><?php echo GetMessage(
-					"TASKS_RESPONSIBLE"
-				) ?></span></div>
+					<span class="task-head-cell-sort-order"></span><span class="task-head-cell-title"><?php Loc::getMessage('TASKS_ASSIGNEE') ?></span></div>
 			</th>
 			<th class="task-director-column<?php if (is_array($arResult["ORDER"]) &&
 													 key($arResult["ORDER"]) ==

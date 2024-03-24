@@ -1035,6 +1035,7 @@ var exports = {};
 var Vue = exports.Vue;
 
 
+/* eslint-disable */
 (function (exports) {
     'use strict';
 
@@ -3852,6 +3853,10 @@ var Vue = exports.Vue;
             return;
           }
           var fileSize = file.size;
+          if (file.size === 0) {
+            this.errorTextTypeFile = this.field.messages.get('fieldFileErrorEmptyContent');
+            return;
+          }
           if (typeof this.field.maxSizeMb == "number" && this.field.maxSizeMb > 0) {
             if (this.field.getSummaryFilesSize() + fileSize > this.field.maxSizeMb * (1024 * 1024)) {
               this.errorTextTypeFile = this.field.messages.get('fieldSummaryFilesSizeExceeded').replace('%summaryMaxFileSize%', this.field.maxSizeMb);
@@ -6389,7 +6394,7 @@ var Vue = exports.Vue;
     }();
 
     /*! 
-     * portal-vue В© Thorsten LГјnborg, 2019 
+     * portal-vue © Thorsten Lünborg, 2019 
      * 
      * Version: 2.1.7
      * 
@@ -6933,7 +6938,7 @@ var Vue = exports.Vue;
 
     var Scrollable = {
       props: ['show', 'enabled', 'zIndex', 'text', 'topIntersected', 'bottomIntersected'],
-      template: "\n\t\t<div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-up-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorTopIntersected\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(false)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-up\"></button>\n\t\t\t\t</div>\n\t\t\t</transition>\t\t\t\t\t\t\n\t\t\t<div class=\"b24-window-scrollable\" :style=\"{ zIndex: zIndexComputed }\">\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t\t<slot></slot>\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t</div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-down-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorBottomIntersected && !hideEars\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-down\"></button>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-scroll-textable\"\n\t\t\t\t\tv-if=\"enabled && text && !anchorBottomIntersected && !hideEars\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<p class=\"b24-form-scroll-textable-text\">{{ text }}</p>\n\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow\">\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\t\n\t",
+      template: "\n\t\t<div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-up-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorTopIntersected\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(false)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-up\"></button>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t\t<div class=\"b24-window-scrollable\" :style=\"{ zIndex: zIndexComputed }\">\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t\t<slot></slot>\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t</div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-down-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorBottomIntersected && !hideEars\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-down\"></button>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-scroll-textable\"\n\t\t\t\t\tv-if=\"enabled && text && !anchorBottomIntersected && !hideEars\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<p class=\"b24-form-scroll-textable-text\">{{ text }}</p>\n\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow\">\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
       data: function data() {
         return {
           showed: false,
@@ -7008,6 +7013,11 @@ var Vue = exports.Vue;
           });
           topAnchor ? this.anchorObserver.observe(topAnchor) : null;
           bottomAnchor ? this.anchorObserver.observe(bottomAnchor) : null;
+        }
+      },
+      beforeDestroy: function beforeDestroy() {
+        if (this.show) {
+          Scroll.enable();
         }
       },
       mounted: function mounted() {
@@ -7155,6 +7165,27 @@ var Vue = exports.Vue;
       Panel: Panel,
       Widget: Widget,
       Definition: Definition$1
+    };
+
+    var AbuseBlock = {
+      props: ['messages', 'abuseLink'],
+      components: Object.assign(Components.Definition, {
+        field: Factory.getComponent()
+      }),
+      data: function data() {
+        return {
+          popupShown: false
+        };
+      },
+      template: "\n\t\t<div>\n\t\t\t<span class=\"b24-form-sign-abuse\">\n\t\t\t\t<!--noindex--><a :href=\"abuseLink\" target=\"_blank\" rel=\"nofollow\" class=\"b24-form-sign-abuse-link\">\n\t\t\t\t\t{{ messages.get('abuseLink') }}\n\t\t\t\t</a><!--/noindex-->\n\t\t\t\t<span class=\"b24-form-sign-abuse-help\"\n\t\t\t\t\t:title=\"messages.get('abuseInfoHint')\"\n\t\t\t\t\t@click.capture=\"showPopup\"\n\t\t\t\t></span>\n\t\t\t</span>\n\n\t\t\t<b24-popup\n\t\t\t\t:show=\"popupShown\"\n\t\t\t\t:title=\"this.messages.get('abuseLink')\"\n\t\t\t\t:scrollDown=\"false\"\n\t\t\t\t:hideOnOverlayClick=\"true\"\n\t\t\t\t@hide=\"hidePopup\"\n\t\t\t>\n\t\t\t\t<div class=\"b24-form-sign-abuse-popup\">\n\t\t\t\t\t{{this.messages.get('abuseInfoHint')}}\n\t\t\t\t</div>\n\t\t\t</b24-popup>\n\t\t</div>\n\t",
+      methods: {
+        showPopup: function showPopup() {
+          this.popupShown = true;
+        },
+        hidePopup: function hidePopup() {
+          this.popupShown = false;
+        }
+      }
     };
 
     var AgreementBlock = {
@@ -7373,13 +7404,14 @@ var Vue = exports.Vue;
       },
       components: {
         'field': Factory.getComponent(),
+        'abuse-block': AbuseBlock,
         'agreement-block': AgreementBlock,
         'state-block': StateBlock,
         'pager-block': PagerBlock,
         'basket-block': BasketBlock,
         'recaptcha-block': ReCaptcha$2
       },
-      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form \n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div v-if=\"!form.disabled\">\t\t\n\t\t\t\t\t\t<component \n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\t\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\" \n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\t\t\t\n\t\t\t<state-block :form=\"form\" />\n\t\t\t\n\t\t\t<recaptcha-block :form=\"form\" />\n\t\t\t\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option \n\t\t\t\t\t\tv-for=\"language in form.languages\" \n\t\t\t\t\t\t:value=\"language\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\t\t\t\t\n\t\t\t\t</select>\n\n\t\t\t\t<!--noindex--><a :href=\"abuseLink\" target=\"_blank\" rel=\"nofollow\" class=\"b24-form-sign-abuse-link\" v-if=\"abuseEnabled\">\n\t\t\t\t\t{{ form.messages.get('abuseLink') }}\n\t\t\t\t</a><!--/noindex-->\n\t\t\t\t<span class=\"b24-form-sign-abuse-help\" :title=\"form.messages.get('abuseInfoHint')\"></span>\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form\n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div v-if=\"!form.disabled\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\"\n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\n\t\t\t<state-block :form=\"form\" />\n\n\t\t\t<recaptcha-block :form=\"form\" />\n\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option\n\t\t\t\t\t\tv-for=\"language in form.languages\"\n\t\t\t\t\t\t:value=\"language\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\n\t\t\t\t<component\n\t\t\t\t\tv-if=\"abuseEnabled\"\n\t\t\t\t\t:is=\"'abuse-block'\"\n\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t:abuseLink=\"abuseLink\"\n\t\t\t\t></component>\n\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         hasErrors: function hasErrors() {
           return this.form.validated && !this.form.valid();
@@ -7390,6 +7422,10 @@ var Vue = exports.Vue;
         },
         abuseLink: function abuseLink() {
           return this.abuseEnabled ? this.getQueryParametersForAbuseLink() : '';
+        },
+        isDark: function isDark() {
+          var _this$form2, _this$form2$design;
+          return !!((_this$form2 = this.form) !== null && _this$form2 !== void 0 && (_this$form2$design = _this$form2.design) !== null && _this$form2$design !== void 0 && _this$form2$design.isDark());
         }
       },
       methods: {

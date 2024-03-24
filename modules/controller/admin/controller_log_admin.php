@@ -112,7 +112,10 @@ if ($arID && $USER->CanDoOperation("controller_log_delete"))
 				$DB->Rollback();
 				$lAdmin->AddGroupError(GetMessage("CTRL_LOG_ADMIN_ERR_DELETE"), $ID);
 			}
-			$DB->Commit();
+			else
+			{
+				$DB->Commit();
+			}
 			break;
 		}
 	}

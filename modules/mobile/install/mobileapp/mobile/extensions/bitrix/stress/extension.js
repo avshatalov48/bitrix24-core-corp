@@ -243,51 +243,40 @@
 
 		share()
 		{
-			if (Application.getApiVersion() >= 32)
-			{
-				let style = WidgetListStyle.create()
-					.setFont(WidgetListItemFont.create()
-						.setColor("#333333").setSize(20));
-				let cancelStyle = WidgetListStyle.create()
-					.setFont(WidgetListItemFont.create()
-						.setColor("#fb0000").setSize(20));
-				BackdropMenu.create("stress_share")
-					.setEventListener((name, params, message, backdrop) => {
+			let style = WidgetListStyle.create()
+				.setFont(WidgetListItemFont.create()
+					.setColor("#333333").setSize(20));
+			let cancelStyle = WidgetListStyle.create()
+				.setFont(WidgetListItemFont.create()
+					.setColor("#fb0000").setSize(20));
+			BackdropMenu.create("stress_share")
+				.setEventListener((name, params, message, backdrop) => {
 
-						if (name === 'selected')
+					if (name === 'selected')
+					{
+						if(params.id === "stream")
 						{
-							if(params.id === "stream")
-							{
-								this.shareActivityStream();
-							}
-
+							this.shareActivityStream();
 						}
-					}, "stress")
-					.setOnlyMediumPosition(true)
-					.setShouldResizeContent(false)
-					.setItems(
-						[
-							BackdropMenuItem.create("stream")
-								.setType("button")
-								.setTitle(BX.message("STRESS_SHARE_NEWS"))
-								.setStyles({label:style, title:style})
-							,
-							BackdropMenuItem.create("cancel")
-								.setType("button")
-								.setTitle(BX.message("STRESS_SHARE_CANCEL"))
-								.setStyles({label:cancelStyle, title:cancelStyle}),
-							BackdropMenuItem.create("space").setHeight(30),
-						]
-					).show();
-			}
-			else
-			{
-				Notify.alert(
-					BX.message("STRESS_SHARE_COMING_SOON"),
-					BX.message("STRESS_SHARE_ALERT_TITLE"),
-					BX.message("STRESS_SHARE_ALERT_GOTIT")
-				)
-			}
+
+					}
+				}, "stress")
+				.setOnlyMediumPosition(true)
+				.setShouldResizeContent(false)
+				.setItems(
+					[
+						BackdropMenuItem.create("stream")
+							.setType("button")
+							.setTitle(BX.message("STRESS_SHARE_NEWS"))
+							.setStyles({label:style, title:style})
+						,
+						BackdropMenuItem.create("cancel")
+							.setType("button")
+							.setTitle(BX.message("STRESS_SHARE_CANCEL"))
+							.setStyles({label:cancelStyle, title:cancelStyle}),
+						BackdropMenuItem.create("space").setHeight(30),
+					]
+				).show();
 		}
 
 		shareActivityStream()

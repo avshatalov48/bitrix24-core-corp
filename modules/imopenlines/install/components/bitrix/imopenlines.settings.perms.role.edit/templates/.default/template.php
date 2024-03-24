@@ -26,6 +26,7 @@ Extension::load([
 	'ui.alerts',
 	'ui.forms',
 	'ui.design-tokens',
+	'ui.hint',
 ]);
 ?>
 <script type="text/javascript">
@@ -64,6 +65,9 @@ Extension::load([
 								<tr class="<?=($firstAction ? 'tr-first' : '')?>">
 									<td class="table-blue-td-name">
 										<?=($firstAction ? htmlspecialcharsbx(\Bitrix\ImOpenlines\Security\Permissions::getEntityName($entity)) : '&nbsp;')?>
+										<?php if(in_array($entity, ['HISTORY', 'JOIN'], true)): ?>
+											<a href="<?= $arResult['RIGHTS_ARTICLE_URL'] ?>" class="tooltip-role-more"><?= Loc::getMessage('IMOL_ROLE_TOOLTIP_MORE') ?></a><span data-hint-html data-hint="<?= Loc::getMessage('IMOL_ROLE_TOOLTIP_' . $entity); ?>"></span>
+										<?php endif ?>
 										<?if (
 												$entity == 'VOTE_HEAD' &&
 												(
@@ -149,3 +153,10 @@ Extension::load([
 		?>
 	<?endif?>
 </form>
+
+<script>
+	(function()
+	{
+		BX.UI.Hint.init(BX('table-blue-td-name'));
+	})();
+</script>

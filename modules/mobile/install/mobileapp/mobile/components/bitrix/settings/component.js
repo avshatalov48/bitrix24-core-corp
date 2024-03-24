@@ -12,7 +12,7 @@
 		 * @param {string} title
 		 * @param {string} subtitle
 		 */
-		constructor(id, title, subtitle = "")
+		constructor(id, title, subtitle = '')
 		{
 			this.title = title;
 			this.subtitle = subtitle;
@@ -22,33 +22,41 @@
 
 		getSection()
 		{
+			// eslint-disable-next-line no-undef
 			return new FormItem(
 				this.id,
+				// eslint-disable-next-line no-undef
 				FormItemType.BUTTON,
 				this.title,
-				this.subtitle
-			).setButtonTransition(true).setCustomParam("providerId", this.id).compile()
-		};
+				this.subtitle,
+			)
+				.setButtonTransition(true)
+				.setCustomParam('providerId', this.id)
+				.compile();
+		}
 
 		/**
 		 * Handler of button tap
 		 */
-		onButtonTap(item){
-			//must be overridden in subclass
+		onButtonTap(item)
+		{
+			// must be overridden in subclass
 		}
 
 		/**
 		 * Handles the changes of settings
 		 */
-		onValueChanged(item){
-			//must be overridden in subclass
+		onValueChanged(item)
+		{
+			// must be overridden in subclass
 		}
 
 		/**
 		 * Handles the changes of form's
 		 */
-		onStateChanged(state, formId){
-			//must be overridden in subclass
+		onStateChanged(state, formId)
+		{
+			// must be overridden in subclass
 		}
 
 		/**
@@ -59,23 +67,25 @@
 		 */
 		openForm(data, formId, onReady = null)
 		{
-			data.onReady = obj=>
-			{
+			data.onReady = (obj) => {
 				this.forms[formId] = obj;
 
-				if(typeof onReady == "function")
+				if (typeof onReady === 'function')
 				{
 					onReady(obj);
 				}
 
-				obj.setListener((event, data)=>
-				{
-					if(event === "onItemChanged")
+				obj.setListener((event, data) => {
+					if (event === 'onItemChanged')
 					{
-						if(data.type == "button")
+						if (data.type === 'button')
+						{
 							this.onButtonTap(data);
+						}
 						else
+						{
 							this.onValueChanged(data);
+						}
 					}
 					else
 					{
@@ -86,7 +96,7 @@
 				});
 			};
 
-			PageManager.openWidget("form", data);
+			PageManager.openWidget('form', data);
 		}
 
 		/**
@@ -99,72 +109,82 @@
 		 */
 		listener(event, data, formId)
 		{
-			if(event == "onViewRemoved")
+			if (event === 'onViewRemoved')
 			{
-				console.info(`SettingsProvider.listener: onViewRemoved - %c${formId}`, "color: red; font-weight: bold");
+				console.info(`SettingsProvider.listener: onViewRemoved - %c${formId}`, 'color: red; font-weight: bold');
 				this.forms[formId] = null;
 				delete this.forms[formId];
 			}
 		}
 	};
 
-	let AppSettingsManager = {
+	const AppSettingsManager = {
 		/**
 		 * @type  {Array<SettingsProvider>} provider
 		 */
-		providers:[],
-		listener:function(event, item){
-			if(item)
+		providers: [],
+		listener(event, item)
+		{
+			if (item)
 			{
 				/**
 				 * @type  {SettingsProvider} provider
 				 */
-				let provider = this.providerById(item.params.providerId);
-				if(provider)
+				const provider = this.providerById(item.params.providerId);
+				if (provider)
+				{
 					provider.onButtonTap(item);
+				}
 			}
 		},
 		/**
 		 * @param id
 		 * @return {SettingsProvider}
 		 */
-		providerById:function(id)
+		providerById(id)
 		{
-			return this.providers.find(provider=>provider.id === id);
+			return this.providers.find((provider) => provider.id === id);
 		},
 		/**
 		 *
 		 * @param {SettingsProvider} provider
 		 */
-		addProvider:function(provider)
+		addProvider(provider)
 		{
-			if(provider instanceof SettingsProvider)
-				this.providers.push(provider);
+			// eslint-disable-next-line no-undef
+			if (!(provider instanceof SettingsProvider))
+			{
+				return;
+			}
+
+			this.providers.push(provider);
 		},
-		init:function()
+		init()
 		{
 			this.providers = [];
+			// eslint-disable-next-line no-undef
 			settings.setListener((event, item) => this.listener(event, item));
 
-			BX.onCustomEvent("onRegisterProvider", [ provider => this.addProvider(provider)]);
+			BX.onCustomEvent('onRegisterProvider', [(provider) => this.addProvider(provider)]);
 
-			let items = [];
-			if(this.providers.length > 0)
+			const items = [];
+			if (this.providers.length > 0)
 			{
-				this.providers.forEach(provider=>
-				{
+				this.providers.forEach((provider) => {
 					/**
 					 * @type {SettingsProvider} provider
 					 */
 					items.push(provider.getSection());
-				})
+				});
 			}
 
-			BX.onViewLoaded(()=>settings.setItems(items, [
-				new FormSection("main", BX.message("SETTINGS_TITLE")).compile()
+			// eslint-disable-next-line no-undef
+			BX.onViewLoaded(() => settings.setItems(items, [
+				// eslint-disable-next-line no-undef
+				new FormSection('main', BX.message('SETTINGS_TITLE')).compile(),
 			]));
 
-			console.info("AppSettingsManager.init:", items);
+			console.info('AppSettingsManager.init:', items);
 		},
 	};
 

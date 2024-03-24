@@ -2,6 +2,7 @@
 
 namespace Bitrix\Voximplant;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Event;
@@ -12,7 +13,6 @@ class CallQueue
 	/**
 	 * @param $userId
 	 * @return Result|bool
-	 * @throws ArgumentException
 	 */
 	public static function dequeueFirstUserCall($userId)
 	{
@@ -30,31 +30,33 @@ class CallQueue
 	 *
 	 * @param int $userId Id of the user.
 	 * @return Call|false Returns the found call or false if nothing is found.
-	 * @throws ArgumentException
 	 */
 	public static function getCallToDequeue($userId)
 	{
 		$isDayOpen = \CVoxImplantUser::GetActiveStatusByTimeman($userId);
 
+		$helper = Application::getConnection()->getSqlHelper();
+
 		$query = CallTable::query()
 			->setSelect(['CALL_ID'])
 			->where('STATUS', CallTable::STATUS_ENQUEUED)
-			->where('DATE_CREATE', '>', new SqlExpression("date_sub(now(), interval 1 hour)"))
+			->where('DATE_CREATE', '>', new SqlExpression($helper->addSecondsToDateTime(-3600)))
 			->where('QUEUE.\Bitrix\Voximplant\Model\QueueUserTable:QUEUE.USER_ID', $userId)
 			->setOrder(['ID' => 'asc'])
 			->setLimit(1);
 
-		if(!$isDayOpen)
+		if (!$isDayOpen)
 		{
 			$query->where('CONFIG.TIMEMAN', 'N');
 		}
 
 		$cursor = $query->exec();
 		$row = $cursor->fetch();
-		if(!$row)
+		if (!$row)
 		{
 			return false;
 		}
+
 		return Call::load($row['CALL_ID']);
 	}
 
@@ -67,24 +69,21 @@ class CallQueue
 	public static function getCallPosition($callId)
 	{
 		$call = Call::load($callId);
-		if(!$call)
+		if (!$call)
 		{
 			throw new ArgumentException("Call " . $callId . " is not found");
 		}
 
-		$row = Model\CallTable::getRow([
-			'select' => [
-				'CNT' => new \Bitrix\Main\Entity\ExpressionField('CNT', 'count(\'*\')')
-			],
-			'filter' => [
-				'=STATUS' => Model\CallTable::STATUS_ENQUEUED,
-				'=QUEUE_ID' => $call->getQueueId(),
-				'>DATE_CREATE' => new SqlExpression("date_sub(now(), interval 1 hour)"),
-				'<ID' => $call->getId()
-			]
+		$helper = Application::getConnection()->getSqlHelper();
+
+		$cnt = Model\CallTable::getCount([
+			'=STATUS' => Model\CallTable::STATUS_ENQUEUED,
+			'=QUEUE_ID' => $call->getQueueId(),
+			'>DATE_CREATE' => new SqlExpression($helper->addSecondsToDateTime(-3600)),
+			'<ID' => $call->getId()
 		]);
 
-		return $row['CNT'] + 1;
+		return $cnt + 1;
 	}
 
 	/**
@@ -96,7 +95,7 @@ class CallQueue
 	public static function onUserSetLastActivityDate(Event $event)
 	{
 		global $USER;
-		if(!isset($USER) || !($USER instanceof \CUser))
+		if (!isset($USER) || !($USER instanceof \CUser))
 		{
 			return;
 		}
@@ -104,9 +103,9 @@ class CallQueue
 		$users = $event->getParameter(0);
 		foreach ($users as $userId)
 		{
-			if($userId == $USER->GetID())
+			if ($userId == $USER->GetID())
 			{
-				if($USER->isJustBecameOnline())
+				if ($USER->isJustBecameOnline())
 				{
 					static::dequeueFirstUserCall($USER->GetID());
 				}
@@ -118,7 +117,6 @@ class CallQueue
 	 * OnAfterTMDayStart event handler.
 	 * Checks for enqueued calls that could be assigned to this user.
 	 * @param $event Event object.
-	 * @throws ArgumentException
 	 */
 	public static function onAfterTMDayStart($event)
 	{
@@ -130,7 +128,6 @@ class CallQueue
 	 * OnAfterTMDayContinue event handler.
 	 * Checks for enqueued calls that could be assigned to this user.
 	 * @param $event Event object.
-	 * @throws ArgumentException
 	 */
 	public static function onAfterTMDayContinue($event)
 	{

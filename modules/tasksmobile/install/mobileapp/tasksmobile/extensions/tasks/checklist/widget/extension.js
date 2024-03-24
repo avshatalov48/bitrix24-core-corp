@@ -2,129 +2,156 @@
  * @module tasks/checklist/widget
  */
 jn.define('tasks/checklist/widget', (require, exports, module) => {
-	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
 	const { PropTypes } = require('utils/validation');
 	const { Checklist } = require('tasks/layout/checklist/list');
-	const { showChecklistMoreMenu } = require('tasks/checklist/widget/src/more-menu');
+	const { checklistWidgetFactoryLayout, BOTTOM_SHEET, PAGE_LAYOUT } = require(
+		'tasks/checklist/widget/src/manager/factory-layout',
+	);
+	const { ChecklistMoreMenu } = require('tasks/checklist/widget/src/more-menu');
 
 	/**
 	 * @class ChecklistWidget
 	 */
 	class ChecklistWidget
 	{
-		static open(props)
+		/**
+		 * @param {object} props
+		 * @param {object} [props.checklist]
+		 * @param {CheckListFlatTree} [props.parentWidget]
+		 * @param {boolean} [props.inLayout]
+		 * @param {number | string} [props.focusedItemId]
+		 * @return {Promise}
+		 */
+		static async open(props)
 		{
 			const checklistWidget = new ChecklistWidget(props);
-			const checklistProps = checklistWidget.getShowProps();
-			const { taskTitle, onClose, parentWidget = PageManager } = props;
 
-			return new Promise((resolve) => {
-				parentWidget
-					.openWidget('layout', {
-						titleParams: {
-							text: taskTitle,
-						},
-					})
-					.then((layoutWidget) => {
-						layoutWidget.showComponent(new Checklist(checklistProps));
-						checklistWidget.setParentWidget(layoutWidget);
-						checklistWidget.updateRightButtons(false);
-						layoutWidget.setListener((event) => {
-							if (event === 'onViewRemoved' && onClose)
-							{
-								onClose();
-							}
-						});
-
-						resolve({ checklistWidget, layoutWidget });
-					}).catch(console.error);
-			});
+			return checklistWidget.initialOpenPageManager();
 		}
 
 		constructor(props)
 		{
 			this.props = props;
-			this.parentWidget = null;
+			/** @type {ChecklistBaseLayout} */
+			this.openManager = null;
+			this.parentWidget = props.parentWidget;
+			this.handleOnSave = this.handleOnSave.bind(this);
+			this.handleOnClose = this.handleOnClose.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
-			this.handleOnComplete = this.handleOnComplete.bind(this);
 			this.handleOnShowMoreMenu = this.handleOnShowMoreMenu.bind(this);
+
+			this.moreMenuActions = new ChecklistMoreMenu(props.moreMenuActions);
 		}
 
-		setParentWidget(parentWidget)
+		async initialOpenPageManager()
 		{
-			this.parentWidget = parentWidget;
+			const { parentWidget, inLayout } = this.props;
+
+			const checklistComponent = this.getChecklistComponent();
+			const layoutType = inLayout ? PAGE_LAYOUT : BOTTOM_SHEET;
+
+			/** @type ChecklistBaseLayout */
+			const openManager = await checklistWidgetFactoryLayout({
+				layoutType,
+				parentWidget,
+				checklist: Checklist,
+				onSave: this.handleOnSave,
+				onClose: this.handleOnClose,
+				component: checklistComponent,
+				onShowMoreMenu: this.handleOnShowMoreMenu,
+			});
+
+			const layoutWidget = await openManager.open();
+
+			this.setParentWidget(layoutWidget);
+			this.setOpenManager(openManager);
+			checklistComponent.setParentWidget(layoutWidget);
+
+			return openManager;
 		}
 
-		getParentWidget(parentWidget)
+		/**
+		 * @private
+		 * @return {Checklist}
+		 */
+		getChecklistComponent()
 		{
-			this.parentWidget = parentWidget;
+			const checklistProps = this.getChecklistProps();
+
+			return new Checklist(checklistProps);
 		}
 
-		getShowProps()
+		getChecklistProps()
 		{
-			const { moreMenuActions, ...restProps } = this.props;
+			const { moreMenuActions = {}, ...restProps } = this.props;
+			const { onMoveToCheckList } = moreMenuActions;
 
 			return {
 				...restProps,
+				onMoveToCheckList,
 				onChange: this.handleOnChange,
 			};
 		}
 
-		handleOnChange()
+		getChecklistId()
 		{
-			this.updateRightButtons(true);
+			const { checklist } = this.props;
+
+			return checklist.getId();
 		}
 
-		handleOnComplete()
+		setParentWidget(layoutWidget)
 		{
-			const { onSave } = this.props;
+			this.parentWidget = layoutWidget;
+		}
 
-			this.updateRightButtons(false);
-
-			onSave();
+		setOpenManager(openManager)
+		{
+			this.openManager = openManager;
 		}
 
 		handleOnShowMoreMenu()
 		{
-			const { moreMenuActions } = this.props;
-
-			showChecklistMoreMenu({
-				...moreMenuActions,
-				parentWidget: this.parentWidget,
-			});
+			this.moreMenuActions.show(this.parentWidget);
 		}
 
-		updateRightButtons(isChanged)
+		handleOnChange(params)
 		{
-			const buttons = [];
+			this.openManager.onChange(params);
+		}
 
-			if (isChanged)
-			{
-				buttons.push({
-					type: 'text',
-					name: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_DONE'),
-					color: AppTheme.colors.accentExtraDarkblue,
-					callback: this.handleOnComplete,
-				});
-			}
-			else
-			{
-				buttons.push({
-					type: 'more',
-					callback: this.handleOnShowMoreMenu,
-				});
-			}
+		handleOnSave()
+		{
+			const { onSave } = this.props;
 
-			this.parentWidget.setRightButtons(buttons);
+			if (onSave)
+			{
+				onSave(this.getChecklistId());
+			}
+		}
+
+		handleOnClose()
+		{
+			const { onClose } = this.props;
+
+			if (onClose)
+			{
+				onClose(this.getChecklistId());
+			}
 		}
 	}
 
 	ChecklistWidget.propTypes = {
 		checklist: PropTypes.object,
-		taskTitle: PropTypes.string,
-		onClose: PropTypes.func,
 		onSave: PropTypes.func,
+		onClose: PropTypes.func,
+		moreMenuActions: PropTypes.shape({
+			onCreateChecklist: PropTypes.func,
+			onRemove: PropTypes.func,
+			onMoveToCheckList: PropTypes.func,
+			onShowOnlyMine: PropTypes.func,
+			onHideCompleted: PropTypes.func,
+		}),
 	};
 
 	module.exports = { ChecklistWidget };

@@ -318,13 +318,19 @@ class ConfigTable extends Data\DataManager
 			'NUMBER' => new Entity\ReferenceField(
 				'NUMBER',
 				'\Bitrix\Voximplant\Model\Number',
-				array('=this.ID' => 'ref.CONFIG_ID', '=this.PORTAL_MODE' => new \Bitrix\Main\DB\SqlExpression('?', \CVoxImplantConfig::MODE_RENT)),
+				array(
+					'=this.ID' => 'ref.CONFIG_ID',
+					'=this.PORTAL_MODE' => new \Bitrix\Main\DB\SqlExpression('?', \CVoxImplantConfig::MODE_RENT)
+				),
 				array('join_type' => 'LEFT')
 			),
 			'GROUP_NUMBER' => new Entity\ReferenceField(
 				'NUMBER',
 				'\Bitrix\Voximplant\Model\Number',
-				array('=this.ID' => 'ref.CONFIG_ID', '=this.PORTAL_MODE' => new \Bitrix\Main\DB\SqlExpression('?', \CVoxImplantConfig::MODE_GROUP)),
+				array(
+					'=this.ID' => 'ref.CONFIG_ID',
+					'=this.PORTAL_MODE' => new \Bitrix\Main\DB\SqlExpression('?', \CVoxImplantConfig::MODE_GROUP)
+				),
 				array('join_type' => 'LEFT')
 			),
 			'CALLER_ID' => new Entity\ReferenceField(
@@ -336,15 +342,18 @@ class ConfigTable extends Data\DataManager
 			'CNT' => new Entity\ExpressionField('CNT', 'COUNT(*)'),
 			'HAS_NUMBER' => new Entity\ExpressionField(
 				'HAS_NUMBER',
-				'CASE WHEN EXISTS (SELECT ID from b_voximplant_number WHERE CONFIG_ID = %s) THEN "Y" ELSE "N" END', ['ID']
+				"CASE WHEN EXISTS (SELECT ID from b_voximplant_number WHERE CONFIG_ID = %s) THEN 'Y' ELSE 'N' END",
+				['ID']
 			),
 			'HAS_SIP_CONNECTION' => new Entity\ExpressionField(
 				'HAS_SIP_CONNECTION',
-				'CASE WHEN EXISTS (SELECT ID from b_voximplant_sip WHERE CONFIG_ID = %s) THEN "Y" ELSE "N" END', ['ID']
+				"CASE WHEN EXISTS (SELECT ID from b_voximplant_sip WHERE CONFIG_ID = %s) THEN 'Y' ELSE 'N' END",
+				['ID']
 			),
 			'HAS_CALLER_ID' => new Entity\ExpressionField(
 				'HAS_CALLER_ID',
-				'CASE WHEN EXISTS (SELECT ID from b_voximplant_caller_id WHERE CONFIG_ID = %s) THEN "Y" ELSE "N" END', ['ID']
+				"CASE WHEN EXISTS (SELECT ID from b_voximplant_caller_id WHERE CONFIG_ID = %s) THEN 'Y' ELSE 'N' END",
+				['ID']
 			),
 		);
 	}

@@ -1445,7 +1445,7 @@ class CCrmPaySystem
 			}
 		}
 
-		return $arPTIDs[$siteId];
+		return $arPTIDs[$siteId] ?? [];
 	}
 
 	public static function getPersonTypesList($getEmpty = false)

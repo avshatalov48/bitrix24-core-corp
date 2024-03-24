@@ -341,47 +341,11 @@
 		 */
 		static openPicker(options = {})
 		{
-			if (Application.getApiVersion() >= 32)
-			{
-				return new Promise((resolve, reject) => {
-					(new RecipientList(['users'], options.listOptions))
-						.open(options)
-						.then((data) => resolve(data.users))
-						.catch((e) => reject(e));
-				});
-			}
-
 			return new Promise((resolve, reject) => {
-				PageManager.openWidget(
-					'list',
-					{
-						backdrop: {
-							bounceEnable: true,
-							swipeAllowed: false,
-							showOnTop: true,
-						},
-						modal: true,
-						title: BX.message('USER_LIST_COMPANY'),
-						useSearch: true,
-						useClassicSearchField: true,
-						onReady: (list) => {
-							const delegate = {
-								onUserSelected: (user) => list.close(() => resolve([user])),
-								onSearchResult(items, sections, list, state)
-								{
-									list.setSearchResultItems(items, sections);
-								},
-								formatUserData: (item) => {
-									item.type = 'info';
-
-									return item;
-								},
-							};
-							(new UserList(list, delegate)).init();
-						},
-						onError: (error) => reject(error),
-					},
-				);
+				(new RecipientList(['users'], options.listOptions))
+					.open(options)
+					.then((data) => resolve(data.users))
+					.catch((e) => reject(e));
 			});
 		}
 	}

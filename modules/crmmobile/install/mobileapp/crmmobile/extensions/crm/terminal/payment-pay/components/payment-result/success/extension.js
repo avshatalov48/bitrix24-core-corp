@@ -51,4 +51,3 @@ jn.define('crm/terminal/payment-pay/components/payment-result/success', (require
 
 	module.exports = { PaymentResultSuccess };
 });
-

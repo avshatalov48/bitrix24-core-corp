@@ -162,6 +162,10 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 			return this.props.emptyValue || BX.message('FIELDS_DATE_CHOOSE_DATE');
 		}
 
+		/**
+		 * @private
+		 * @return {Promise}
+		 */
 		handleAdditionalFocusActions()
 		{
 			const config = this.getConfig();
@@ -178,7 +182,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 						.then(() => {
 							if (Number.isInteger(newTs))
 							{
-								const timeInSeconds = this.getTimeInSeconds(newTs);
+								const timeInSeconds = DateTimeField.getTimeInSeconds(newTs);
 								const timeWith00Seconds = timeInSeconds - (timeInSeconds % 60);
 								this.handleChange(timeWith00Seconds);
 							}
@@ -191,9 +195,12 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 		getFormattedDate()
 		{
-			const value = this.getValue();
+			return this.getDateString(this.getValue());
+		}
 
-			return (BX.type.isNumber(value) ? DateFormatter.getDateString(value, this.getConfig().dateFormat) : '');
+		getDateString(date)
+		{
+			return BX.type.isNumber(date) ? DateFormatter.getDateString(date, this.getConfig().dateFormat) : '';
 		}
 
 		getTimeInMilliseconds(value)
@@ -201,7 +208,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 			return value * 1000;
 		}
 
-		getTimeInSeconds(value)
+		static getTimeInSeconds(value)
 		{
 			return Math.floor(value / 1000);
 		}
@@ -316,6 +323,11 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 		prepareValueToCopy()
 		{
 			return this.getFormattedDate();
+		}
+
+		getForcedTextValue()
+		{
+			return this.props.forcedTextValue;
 		}
 	}
 

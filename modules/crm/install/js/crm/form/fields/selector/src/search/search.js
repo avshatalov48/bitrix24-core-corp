@@ -89,7 +89,7 @@ export default class Search extends EventEmitter
 
 	setValue(value: string)
 	{
-		this.#getInput().value = Text.encode(value);
+		this.#getInput().value = value;
 		this.#onInput();
 	}
 

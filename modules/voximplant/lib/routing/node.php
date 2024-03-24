@@ -65,7 +65,7 @@ abstract class Node
 	{
 		if($this->next instanceof Node && $next->next instanceof Node)
 		{
-			throw new ArgumentException("This node and inserted node can not both have `next` property set.");
+			throw new ArgumentException("This node and inserted node can not both have 'next' property set.");
 		}
 
 		if($this->next instanceof Node)

@@ -1074,11 +1074,11 @@
 																children: [
 																	BX.create('div', {
 																		props: { className: 'landing-ui-panel-top-menu-link-help' },
-																		text: BX.message('LANDING_TPL_FEATURES_HELP_TITLE')
+																		text: BX.message('LANDING_TPL_FEATURES_HELP_TITLE_MSGVER_1')
 																	}),
 																	BX.create('a', {
 																		props: { className: 'landing-popup-features-content-block-link' },
-																		text: BX.message('LANDING_TPL_FEATURES_HELP_PROMO_LINK'),
+																		text: BX.message('LANDING_TPL_FEATURES_HELP_PROMO_LINK_MSGVER_1'),
 																		attrs: {
 																			href: '#'
 																		}
@@ -1256,6 +1256,12 @@
 					}
 				}
 			}
+			else if (errorCode === 'SHOP_1C')
+			{
+				return function() {
+					window.open(BX.message('LANDING_PUBLICATION_SHOP_ERROR_1C_BUTTON_LINK'), '_blank');
+				};
+			}
 
 			return null;
 		},
@@ -1282,6 +1288,10 @@
 			)
 			{
 				return BX.message('LANDING_PUBLICATION_BUY_RENEW');
+			}
+			else if (errorCode === 'SHOP_1C')
+			{
+				return BX.message('LANDING_PUBLICATION_SHOP_ERROR_1C_BUTTON');
 			}
 		},
 

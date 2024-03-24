@@ -27,6 +27,7 @@ $MESS["CRM_ENT_DETAIL_ORDER_DELETE_DIALOG_MESSAGE"] = "Вы уверены, чт
 $MESS["CRM_ENT_DETAIL_ORDER_PAYMENT_DELETE_DIALOG_MESSAGE"] = "Вы уверены, что хотите удалить эту оплату?";
 $MESS["CRM_ENT_DETAIL_ORDER_SHIPMENT_DELETE_DIALOG_MESSAGE"] = "Вы уверены, что хотите удалить эту отгрузку?";
 $MESS["CRM_ENT_DETAIL_REST_BUTTON_2"] = "Маркет";
+$MESS["CRM_ENT_DETAIL_SIGN_PROCESS_BUTTON"] = "Процесс подписания";
 $MESS['CRM_ENT_DETAIL_COPY_QUOTE_URL_MSGVER_1'] = "Скопировать ссылку на предложение в буфер обмена";
 $MESS['CRM_ENT_DETAIL_QUOTE_URL_COPIED_MSGVER_1'] = "Ссылка на предложение скопирована в буфер обмена";
 $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_TITLE_MSGVER_1"] = "Удаление предложения";

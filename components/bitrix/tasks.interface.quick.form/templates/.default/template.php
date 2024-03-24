@@ -13,7 +13,10 @@ use Bitrix\Tasks\Integration\Network\MemberSelector;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\UI\ScopeDictionary;
 
-Extension::load(['ui.design-tokens', 'ui.entity-selector']);
+Extension::load([
+	'ui.design-tokens',
+	'ui.entity-selector',
+]);
 
 $projectId = 0;
 $projectName = Loc::getMessage('TASKS_QUICK_IN_GROUP');
@@ -52,7 +55,7 @@ $formattedUserName = CUser::FormatName(
 <div class="task-top-panel-righttop" id="task-new-item">
 	<form id="task-new-item-form" action="">
 		<span class="task-top-panel-create-container">
-			<input type="text" autocomplete="off" placeholder="<?= Loc::getMessage('TASKS_QUICK_RESPONSIBLE') ?>"
+			<input type="text" autocomplete="off" placeholder="<?= Loc::getMessage('TASKS_QUICK_ASSIGNEE') ?>"
 				   tabindex="3" id="task-new-item-responsible" name="task-new-item-responsible"
 				   value="<?= $formattedUserName ?>">
 			<input type="hidden" id="task-new-item-responsible-id" value="<?= $arParams['USER_ID'] ?>">

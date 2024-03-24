@@ -252,6 +252,11 @@ jn.define('tab.presets', (require, exports, module) => {
 			const tabsDesc = this.state.tabs.list;
 
 			return tabs.map((code, index) => {
+				if (!tabsDesc?.[code])
+				{
+					return null;
+				}
+
 				const title = tabsDesc?.[code]?.shortTitle ?? '';
 
 				return View({

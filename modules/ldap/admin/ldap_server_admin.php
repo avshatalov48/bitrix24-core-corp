@@ -66,10 +66,13 @@ if ($MOD_RIGHT=="W" && $lAdmin->EditAction()) // if save is done from list
 			if($e = $APPLICATION->GetException())
 			{
 				$lAdmin->AddUpdateError(GetMessage("SAVE_ERROR").$ID.". ".$e->GetString(), $ID);
-				$DB->Rollback();
 			}
+			$DB->Rollback();
 		}
-		$DB->Commit();
+		else
+		{
+			$DB->Commit();
+		}
 	}
 }
 

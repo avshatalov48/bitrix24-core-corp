@@ -676,9 +676,16 @@ abstract class Queue
 
 	protected function prepareToQueue(): void
 	{
-		$this->sessionManager->update([
+		$sessionData = [
 			'STATUS' => Session::STATUS_SKIP
-		]);
+		];
+
+		if (in_array((int)$this->session['STATUS'], [Session::STATUS_CLIENT, Session::STATUS_CLIENT_AFTER_OPERATOR], true))
+		{
+			$sessionData['WAIT_ANSWER'] = 'Y';
+		}
+
+		$this->sessionManager->update($sessionData);
 
 		$removeOperator = true;
 		if (
@@ -695,6 +702,11 @@ abstract class Queue
 		{
 			$relations = \Bitrix\Im\V2\Chat::getInstance((int)$this->session['CHAT_ID']);
 			$relations->deleteUser((int)$this->session['OPERATOR_ID'], false, false, false);
+		}
+		else
+		{
+			$fakeRelations = new \Bitrix\ImOpenLines\Relation((int)$this->session['CHAT_ID']);
+			$fakeRelations->addRelation((int)$this->session['OPERATOR_ID']);
 		}
 	}
 

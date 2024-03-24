@@ -56,6 +56,7 @@ $MESS["TASKS_PRESET_COMPLETED"] = "Завершены";
 $MESS["TASKS_PRESET_EXPIRED"] = "Просрочены";
 $MESS["TASKS_PRESET_EXPIRED_CAND"] = "Почти просрочены";
 $MESS["TASKS_HELPER_FLT_RESPONSIBLE_ID"] = "Ответственный";
+$MESS['TASKS_HELPER_FLT_ASSIGNEE_ID'] = 'Исполнитель';
 $MESS["TASKS_HELPER_FLT_CREATED_BY"] = "Постановщик";
 $MESS["TASKS_HELPER_FLT_ACCOMPLICES"] = "Соисполнитель";
 $MESS["TASKS_HELPER_FLT_AUDITOR"] = "Наблюдатель";

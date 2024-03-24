@@ -1,5 +1,5 @@
 import { addCustomEvent, Loc, removeCustomEvent, Text } from 'main.core';
-import { mapMutations } from 'ui.vue3.vuex';
+import { mapGetters, mapMutations } from 'ui.vue3.vuex';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import '../css/close-confirm.css';
 
@@ -10,6 +10,9 @@ export const CloseConfirm = {
 			messageBoxInstance: null,
 			uniquePopupId: `ai-form-fill-feedback-popup_${Text.getRandom(20).toLowerCase()}`,
 		};
+	},
+	computed: {
+		...mapGetters(['isFooterHiddenAndSaveDisabled']),
 	},
 	methods: {
 		...mapMutations(['setIsConfirmPopupShow']),
@@ -53,6 +56,10 @@ export const CloseConfirm = {
 		removeCustomEvent(window, 'BX.Main.Popup:onClose', this.onMessageClose);
 	},
 	template: `
-		<div ref="closeConfirmRoot" class="crm-ai-form-fill__close-confirm"></div>
+		<div 
+			ref="closeConfirmRoot" 
+			class="crm-ai-form-fill__close-confirm"
+			:class="{'hidden-footer': isFooterHiddenAndSaveDisabled}"
+		></div>
 	`,
 };

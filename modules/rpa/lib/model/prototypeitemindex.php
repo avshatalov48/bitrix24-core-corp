@@ -25,7 +25,6 @@ abstract class PrototypeItemIndex extends ORM\Data\DataManager
 	public static function merge(int $itemId, string $searchContent): Result
 	{
 		$result = new Result();
-		global $DB;
 		$helper = Application::getConnection()->getSqlHelper();
 
 		$updateData = $insertData = [
@@ -34,9 +33,15 @@ abstract class PrototypeItemIndex extends ORM\Data\DataManager
 		];
 		$insertData['ITEM_ID'] = $itemId;
 
-		$preparedSearchContent = $DB->forSql($searchContent);
+		$preparedSearchContent = $helper->forSql($searchContent);
 		$encryptedSearchContent = sha1($searchContent);
-		$updateData['SEARCH_CONTENT'] = new SqlExpression("IF(SHA1(SEARCH_CONTENT) = '{$encryptedSearchContent}', SEARCH_CONTENT, '{$preparedSearchContent}')");
+		$sqlSha1 = $helper->getSha1Function('?v');
+
+		$updateData['SEARCH_CONTENT'] = new SqlExpression(
+			"case when {$sqlSha1} = '{$encryptedSearchContent}' then ?v else '{$preparedSearchContent}' end",
+			'SEARCH_CONTENT',
+			'SEARCH_CONTENT',
+		);
 
 		$merge = $helper->prepareMerge(
 			static::getEntity()->getDBTableName(),
@@ -48,7 +53,6 @@ abstract class PrototypeItemIndex extends ORM\Data\DataManager
 		if ($merge[0] !== '')
 		{
 			Application::getConnection()->query($merge[0]);
-
 		}
 		else
 		{

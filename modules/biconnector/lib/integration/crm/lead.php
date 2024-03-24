@@ -235,8 +235,8 @@ class Lead
 				],
 				*/
 				'CRM_PRODUCT_ID' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'P.ID',
 					'FIELD_TYPE' => 'string',
@@ -245,8 +245,8 @@ class Lead
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'L\' AND P.OWNER_ID = L.ID',
 				],
 				'CRM_PRODUCT_NAME' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'P.PRODUCT_NAME',
 					'FIELD_TYPE' => 'string',
@@ -255,8 +255,8 @@ class Lead
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'L\' AND P.OWNER_ID = L.ID',
 				],
 				'CRM_PRODUCT' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat_ws(\' \', concat(\'[\', P.ID, \']\'), nullif(P.PRODUCT_NAME, \'\'))',
 					'FIELD_TYPE' => 'string',
@@ -265,8 +265,8 @@ class Lead
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'L\' AND P.OWNER_ID = L.ID',
 				],
 				'CRM_PRODUCT_COUNT' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'TRIM(TRAILING \'.\' FROM (TRIM(TRAILING \'0\' FROM P.QUANTITY)))',
 					'FIELD_TYPE' => 'string',
@@ -467,7 +467,12 @@ class Lead
 				//TODO:HAS_PHONE CHAR(1) NULL,
 				//TODO:HAS_EMAIL CHAR(1) NULL,
 				//TODO:HAS_IMOL CHAR(1) DEFAULT 'N',
-				//TODO:IS_RETURN_CUSTOMER CHAR(1) NOT NULL DEFAULT 'N',
+				//IS_RETURN_CUSTOMER CHAR(1) NOT NULL DEFAULT 'N',
+				'IS_RETURN_CUSTOMER' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'L.IS_RETURN_CUSTOMER',
+					'FIELD_TYPE' => 'string',
+				],
 				//TODO:FACE_ID INT(18) NULL,
 				//TODO:SEARCH_CONTENT MEDIUMTEXT NULL,
 				//TODO:IS_MANUAL_OPPORTUNITY CHAR(1) DEFAULT 'N',
@@ -512,8 +517,8 @@ class Lead
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_utm UTM_T ON UTM_T.ENTITY_TYPE_ID = ' . \CCrmOwnerType::Lead . ' AND UTM_T.ENTITY_ID = L.ID and UTM_T.CODE = \'' . \Bitrix\Crm\UtmTable::ENUM_CODE_UTM_TERM . '\'',
 				],
 				'PHONE' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'PHONE',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'PHONE',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_PHONE.VALUE_TYPE, \'] \', FM_PHONE.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -522,8 +527,8 @@ class Lead
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_field_multi FM_PHONE  ON FM_PHONE.ENTITY_ID = \'LEAD\' and FM_PHONE.TYPE_ID = \'' . \CCrmFieldMulti::PHONE . '\' AND FM_PHONE.ELEMENT_ID = L.ID',
 				],
 				'WEB' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'WEB',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'WEB',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_WEB.VALUE_TYPE, \'] \', FM_WEB.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -532,8 +537,8 @@ class Lead
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_field_multi FM_WEB  ON FM_WEB.ENTITY_ID = \'LEAD\' and FM_WEB.TYPE_ID = \'' . \CCrmFieldMulti::WEB . '\' AND FM_WEB.ELEMENT_ID = L.ID',
 				],
 				'EMAIL' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'EMAIL',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'EMAIL',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_EMAIL.VALUE_TYPE, \'] \', FM_EMAIL.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -542,8 +547,8 @@ class Lead
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_field_multi FM_EMAIL  ON FM_EMAIL.ENTITY_ID = \'LEAD\' and FM_EMAIL.TYPE_ID = \'' . \CCrmFieldMulti::EMAIL . '\' AND FM_EMAIL.ELEMENT_ID = L.ID',
 				],
 				'IM' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'IM',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'IM',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_IM.VALUE_TYPE, \'] \', FM_IM.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -556,7 +561,7 @@ class Lead
 
 		if (\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
 		{
-			$result['crm_deal']['DICTIONARY'] = [
+			$result['crm_lead']['DICTIONARY'] = [
 				\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT,
 			];
 		}

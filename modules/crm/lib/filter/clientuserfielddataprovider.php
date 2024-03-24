@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Filter;
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Filter\EntitySettings;
 
 class ClientUserFieldDataProvider extends UserFieldDataProvider
@@ -48,6 +47,11 @@ class ClientUserFieldDataProvider extends UserFieldDataProvider
 		static $result = [];
 
 		$entityId = $this->getUserFieldEntityID();
+		if (empty($entityId))
+		{
+			return [];
+		}
+
 		$ufEntityId = $this->getUfEntityId();
 		$hashKey = $entityId. '_' . $ufEntityId;
 		if (!isset($result[$hashKey]))

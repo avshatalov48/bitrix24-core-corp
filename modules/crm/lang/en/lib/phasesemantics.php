@@ -1,4 +1,6 @@
 <?php
+$MESS["CRM_PHASE_SEMANTICS_ACTIVITY_PROCESS_MSGVER_1"] = "\"Current activities\" stage group";
+$MESS["CRM_PHASE_SEMANTICS_ACTIVITY_SUCCESS_MSGVER_1"] = "\"Completed activities\" stage";
 $MESS["CRM_PHASE_SEMANTICS_DEAL_CAPTION"] = "Select stages";
 $MESS["CRM_PHASE_SEMANTICS_DEAL_FAILURE"] = "\"Deal lost\" stage";
 $MESS["CRM_PHASE_SEMANTICS_DEAL_GROUP_TITLE"] = "Stages";

@@ -68,21 +68,6 @@ Loc::loadMessages(__FILE__);
 						}
 					}),
 				],
-				events: {
-					onPopupClose: function()
-					{
-						var listUrl = window.location.href;
-
-						if (listUrl.indexOf("?") !== -1)
-						{
-							listUrl = window.location.href.split("?")[0];
-						}
-
-						listUrl += "?F_STATE=sV80";
-
-						window.location.href = listUrl;
-					}
-				}
 			}
 		)).show();
 	});

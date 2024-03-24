@@ -23,14 +23,6 @@ interface Recyclebinable
 	public static function removeFromRecyclebin(Entity $entity, array $params = []);
 
 	/**
-	 * @param Entity $entity
-	 *
-	 * @return boolean
-	 */
-	public static function previewFromRecyclebin(Entity $entity);
-
-
-	/**
 	 * @return array
 	 *
 	 * [

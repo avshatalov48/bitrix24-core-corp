@@ -4,19 +4,23 @@
 
 jn.define('layout/ui/button-list/sliding-button-list', (require, exports, module) => {
 	const { PillButton } = require('layout/ui/button-list/pill-button');
+
 	class SlidingButtonList extends LayoutComponent
 	{
-		constructor(props) {
+		constructor(props)
+		{
 			super(props);
 
 			this.bindButtons(props);
 		}
 
-		componentWillReceiveProps(props) {
+		componentWillReceiveProps(props)
+		{
 			this.bindButtons(props);
 		}
 
-		bindButtons(props) {
+		bindButtons(props)
+		{
 			const { buttonsData } = props;
 			const buttons = new Map();
 
@@ -27,7 +31,8 @@ jn.define('layout/ui/button-list/sliding-button-list', (require, exports, module
 			this.state = { buttons };
 		}
 
-		onDeleteButton(buttonId) {
+		onDeleteButton(buttonId)
+		{
 			return () => {
 				const { buttons } = this.state;
 
@@ -37,7 +42,8 @@ jn.define('layout/ui/button-list/sliding-button-list', (require, exports, module
 			};
 		}
 
-		renderButtons() {
+		renderButtons()
+		{
 			const { buttons } = this.state;
 			const pillButtons = [];
 
@@ -58,7 +64,8 @@ jn.define('layout/ui/button-list/sliding-button-list', (require, exports, module
 			);
 		}
 
-		render() {
+		render()
+		{
 			return ScrollView(
 				{
 					style: {

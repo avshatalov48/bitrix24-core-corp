@@ -3,9 +3,10 @@ namespace Bitrix\Voximplant\Model;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Error;
-use Bitrix\Main\SystemException;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Voximplant\Internals\Entity\Query;
 
 abstract class Base extends ORM\Data\DataManager
@@ -16,10 +17,7 @@ abstract class Base extends ORM\Data\DataManager
 	 */
 	public static function truncate()
 	{
-		$helper = Application::getConnection()->getSqlHelper();
-		$sql = "TRUNCATE ".$helper->quote(static::getTableName());
-
-		return Application::getConnection()->query($sql);
+		return Application::getConnection()->truncateTable(static::getTableName());
 	}
 
 	/**
@@ -31,7 +29,9 @@ abstract class Base extends ORM\Data\DataManager
 	{
 		$id = (int)$id;
 		if($id == 0)
+		{
 			return;
+		}
 
 		$conn = Application::getConnection();
 		$helper = $conn->getSqlHelper();
@@ -52,24 +52,42 @@ abstract class Base extends ORM\Data\DataManager
 		$limit = (int)$limit;
 		$tableName = static::getTableName();
 		$connection = Application::getConnection();
-		$sqlHelper = $connection->getSqlHelper();
-
-		$update = $sqlHelper->prepareUpdate($tableName, $fields);
+		$helper = $connection->getSqlHelper();
 
 		$query = new Query(static::getEntity());
 		$query->setFilter($filter);
-		$query->getQuery();
 
-		$alias = $sqlHelper->quote($query->getInitAlias()) . '.';
-		$where = str_replace($alias, '', $query->getWhere());
-
-		$sql = 'UPDATE ' . $tableName . ' SET ' . $update[0] . ' WHERE ' . $where;
-		if($limit > 0)
+		if ($limit > 0)
 		{
-			$sql .= ' LIMIT ' . $limit;
+			$entity = static::getEntity();
+			$primaryField = current($entity->getPrimaryArray());
+
+			$borderLimit = (new Query($entity))
+				->registerRuntimeField(new ExpressionField('MINID', 'MIN(%s)', [$primaryField]))
+				->registerRuntimeField(new ExpressionField('MAXID', 'MAX(%s)', [$primaryField]))
+				->setSelect(['MAXID', 'MINID'])
+				->setFilter($filter)
+				->setOrder([$primaryField => 'ASC'])
+				->setLimit($limit)
+				->exec()
+				->fetch()
+			;
+			if ($borderLimit)
+			{
+				$query->whereBetween($primaryField, $borderLimit['MINID'], $borderLimit['MAXID']);
+			}
 		}
 
+		$query->getQuery();
+
+		$alias = $helper->quote($query->getInitAlias()) . '.';
+		$where = str_replace($alias, '', $query->getWhere());
+
+		$update = $helper->prepareUpdate($tableName, $fields);
+		$sql = 'UPDATE ' . $helper->quote($tableName) . ' SET ' . $update[0] . ' WHERE ' . $where;
+
 		$connection->queryExecute($sql, $update[1]);
+
 		return $connection->getAffectedRowsCount();
 	}
 
@@ -78,28 +96,33 @@ abstract class Base extends ORM\Data\DataManager
 	 * @param array $filter Filter.
 	 * @param int $limit Limit.
 	 * @return int Returns count of affected rows.
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
-	public static function deleteBatch(array $filter, $limit = 0)
+	public static function deleteBatch(array $filter, int $limit = 0)
 	{
 		$tableName = static::getTableName();
+		$entity = static::getEntity();
 		$connection = Application::getConnection();
-		$sqlHelper = $connection->getSqlHelper();
+		$helper = $connection->getSqlHelper();
 
-		$query = new Query(static::getEntity());
+		$query = new Query($entity);
 		$query->setFilter($filter);
 		$query->getQuery();
 
-		$alias = $sqlHelper->quote($query->getInitAlias()) . '.';
+		$alias = $helper->quote($query->getInitAlias()) . '.';
 		$where = str_replace($alias, '', $query->getWhere());
 
-		$sql = 'DELETE FROM ' . $tableName . ' WHERE ' . $where;
-		if($limit > 0)
+		if ($limit > 0)
 		{
-			$sql .= ' LIMIT ' . $limit;
+			$primaryFields = $entity->getPrimaryArray();
+			$sql = $helper->prepareDeleteLimit($tableName, $primaryFields, $where, [], $limit);
+		}
+		else
+		{
+			$sql = 'DELETE FROM ' . $helper->quote($tableName) . ' WHERE ' . $where;
 		}
 
 		$connection->queryExecute($sql);
+
 		return $connection->getAffectedRowsCount();
 	}
 
@@ -149,6 +172,6 @@ abstract class Base extends ORM\Data\DataManager
 	 */
 	protected static function getMergeFields()
 	{
-		throw new SystemException("Method should be implemented in class " . get_called_class());
+		throw new NotImplementedException("Method should be implemented in class " . get_called_class());
 	}
 }

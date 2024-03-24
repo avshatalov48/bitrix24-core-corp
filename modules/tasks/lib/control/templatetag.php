@@ -65,15 +65,13 @@ class TemplateTag
 			{
 				continue;
 			}
-			$insertRows[] = '('.$this->templateId.', '. $this->userId .', "'. $dbHelper->forSql($tag) .'")';
+			$insertRows[] = '('.$this->templateId.', '. $this->userId .', \''. $dbHelper->forSql($tag) .'\')';
 		}
 
-		$sql = "
-			INSERT IGNORE INTO ". TemplateTagTable::getTableName() ."
-			(`TEMPLATE_ID`, `USER_ID`, `NAME`)
-			VALUES
-			". implode(", ", $insertRows) ."
-		";
+		$sql = $this->getInsertIgnore(
+			'(TEMPLATE_ID, USER_ID, NAME)',
+			"VALUES ". implode(", ", $insertRows)
+		);
 
 		Application::getConnection()->query($sql);
 	}

@@ -19,6 +19,7 @@ $MESS["TASKS_PRIORITY_V2"] = "Важная задача";
 $MESS["TASKS_QUICK_INFO_DETAILS"] = "Подробности";
 $MESS["TASKS_QUICK_INFO_EMPTY_DATE"] = "нет";
 $MESS["TASKS_RESPONSIBLE"] = "Ответственный";
+$MESS['TASKS_ASSIGNEE'] = 'Исполнитель';
 $MESS["TASKS_DIRECTOR"] = "Постановщик";
 $MESS["TASKS_FILES"] = "Файлы";
 ?>

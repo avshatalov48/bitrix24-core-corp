@@ -3420,6 +3420,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		storeDocument: 33,
 		shipmentDocument: 34,
 		smartdocument: 36,
+		smartb2edocument: 39,
 		agentcontract: 38,
 		document: 12
 	};
@@ -3442,6 +3443,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		smartinvoice: "SMART_INVOICE",
 		dynamic: "DYNAMIC",
 		smartdocument: "SMART_DOCUMENT",
+		smartb2edocument: 'SMART_B2E_DOC',
 		agentcontract: "AGENT_CONTRACT"
 	};
 	BX.CrmEntityType.abbreviations =
@@ -3458,6 +3460,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		orderpayment: "OP",
 		smartinvoice: "SI",
 		smartdocument: "DO",
+		smartb2edocument: "SBD",
 		agentcontract: "AC",
 	};
 	BX.CrmEntityType.isDefined = function(typeId)
@@ -3544,6 +3547,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return BX.CrmEntityType.names.smartdocument;
 		}
+		else if (typeId === BX.CrmEntityType.enumeration.smartb2edocument)
+		{
+			return BX.CrmEntityType.names.smartb2edocument;
+		}
 		else if(typeId === BX.CrmEntityType.enumeration.agentcontract)
 		{
 			return BX.CrmEntityType.names.agentcontract;
@@ -3615,6 +3622,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		else if(name === BX.CrmEntityType.names.smartdocument)
 		{
 			return this.enumeration.smartdocument;
+		}
+		else if (name === BX.CrmEntityType.names.smartb2edocument)
+		{
+			return this.enumeration.smartb2edocument;
 		}
 		else if(name === BX.CrmEntityType.names.agentcontract)
 		{
@@ -3700,6 +3711,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 			typeId === this.enumeration.quote
 			|| typeId === this.enumeration.smartinvoice
 			|| typeId === this.enumeration.smartdocument
+			|| typeId === this.enumeration.smartb2edocument
 			|| this.isDynamicTypeByTypeId(typeId)
 		);
 	};
@@ -3736,6 +3748,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 			return true;
 		}
 		if (name === BX.CrmEntityType.names.smartdocument)
+		{
+			return true;
+		}
+		if (name === BX.CrmEntityType.names.smartb2edocument)
 		{
 			return true;
 		}

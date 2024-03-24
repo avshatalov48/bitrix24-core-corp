@@ -16,7 +16,7 @@ return [
 		'crm.activity.settings-popup',
 		'crm.activity.todo-editor',
 		'crm.timeline.tools',
-		'crm.datetime',
+		'main.date',
 		'main.popup',
 		'main.core.events',
 		'ui.vue3',

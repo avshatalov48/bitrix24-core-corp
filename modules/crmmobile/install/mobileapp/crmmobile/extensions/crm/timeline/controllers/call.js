@@ -7,7 +7,6 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Filesystem } = require('native/filesystem');
 	const { withCurrentDomain } = require('utils/url');
-	const { Feature } = require('feature');
 
 	const SupportedActions = {
 		MAKE_CALL: 'Call:MakeCall',
@@ -86,19 +85,12 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 				return;
 			}
 
-			if (Feature.isShareDialogSupportsFiles())
-			{
-				Notify.showIndicatorLoading();
+			Notify.showIndicatorLoading();
 
-				Filesystem.downloadFile(withCurrentDomain(url)).then((uri) => {
-					Notify.hideCurrentIndicator();
-					dialogs.showSharingDialog({ uri });
-				});
-			}
-			else
-			{
-				Feature.showDefaultUnsupportedWidget();
-			}
+			Filesystem.downloadFile(withCurrentDomain(url)).then((uri) => {
+				Notify.hideCurrentIndicator();
+				dialogs.showSharingDialog({ uri });
+			});
 		}
 
 		togglePlayer(actionData = {})

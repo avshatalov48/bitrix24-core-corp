@@ -35,4 +35,6 @@ $MESS["CRM_PHASE_SEMANTICS_FAILURE"] = "Провал";
 $MESS["CRM_PHASE_SEMANTICS_ORDER_PROCESS"] = "Группа статусов \" #todo# \"";
 $MESS["CRM_PHASE_SEMANTICS_ORDER_SUCCESS"] = "Статус \" #todo# \"";
 $MESS["CRM_PHASE_SEMANTICS_ORDER_FAILURE"] = "Группа статусов \" #todo# \"";
-?>
+
+$MESS["CRM_PHASE_SEMANTICS_ACTIVITY_PROCESS_MSGVER_1"] = "Группа стадий \"Текущие дела\"";
+$MESS["CRM_PHASE_SEMANTICS_ACTIVITY_SUCCESS_MSGVER_1"] = "Стадия \"Завершённые дела\"";

@@ -11,16 +11,13 @@ use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\OverdueComp
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\OverdueCountable;
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\OverdueUncompleted;
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\PendingCompatible;
+use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\PendingCountable;
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\PendingUncompleted;
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\ReadyTodoCompatible;
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\ReadyTodoCountable;
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\ReadyTodoLightTime;
-use Bitrix\Crm\Counter\CounterQueryBuilder\Idle;
-use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased;
-use Bitrix\Crm\Counter\CounterQueryBuilder\IncomingChannel;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Main;
-use  Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\PendingCountable;
 
 final class CounterQueryBuilderFactory
 {
@@ -50,7 +47,6 @@ final class CounterQueryBuilderFactory
 			case EntityCounterType::INCOMING_CHANNEL:
 				return $this->makeIncomingChannel($config);
 
-
 			default:
 				$typeName = EntityCounterType::resolveName($counterTypeId);
 				throw new Main\NotSupportedException("The '$typeName' is not supported in current context");
@@ -79,14 +75,13 @@ final class CounterQueryBuilderFactory
 		{
 			return new DeadlineBased\Compatible(new PendingCompatible());
 		}
-		elseif ($config->isUncompletedActivityWay())
+
+		if ($config->isUncompletedActivityWay())
 		{
 			return new DeadlineBased\UncompletedBased(new PendingUncompleted());
 		}
-		else
-		{
-			return new DeadlineBased\CountableBased(new PendingCountable());
-		}
+
+		return new DeadlineBased\CountableBased(new PendingCountable());
 	}
 
 	private function makeOverdue(FactoryConfig $config): CounterQueryBuilder
@@ -95,14 +90,13 @@ final class CounterQueryBuilderFactory
 		{
 			return new DeadlineBased\Compatible(new OverdueCompatible());
 		}
-		elseif ($config->isUncompletedActivityWay())
+
+		if ($config->isUncompletedActivityWay())
 		{
 			return new DeadlineBased\UncompletedBased(new OverdueUncompleted());
 		}
-		else
-		{
-			return new DeadlineBased\CountableBased(new OverdueCountable());
-		}
+
+		return new DeadlineBased\CountableBased(new OverdueCountable());
 	}
 
 	private function makeReadyTodo(FactoryConfig $config): CounterQueryBuilder
@@ -126,10 +120,8 @@ final class CounterQueryBuilderFactory
 		{
 			return new Idle\Compatible();
 		}
-		else
-		{
-			return new Idle\UncompletedBased();
-		}
+
+		return new Idle\UncompletedBased();
 	}
 
 	private function makeCurrent(FactoryConfig $config): CounterQueryBuilder
@@ -145,10 +137,8 @@ final class CounterQueryBuilderFactory
 			{
 				return new DeadlineBased\UncompletedBased(new CurrentUncompleted());
 			}
-			else
-			{
-				return new DeadlineBased\Compatible(new CurrentCompatible());
-			}
+
+			return new DeadlineBased\Compatible(new CurrentCompatible());
 		}
 
 		if (!$config->readyActCounterLight())
@@ -157,19 +147,15 @@ final class CounterQueryBuilderFactory
 			{
 				return new DeadlineBased\UncompletedBased(new CurrentUncompleted());
 			}
-			else
-			{
-				return new DeadlineBased\CountableBased(new CurrentCountable());
-			}
+
+			return new DeadlineBased\CountableBased(new CurrentCountable());
 		}
 
 		if ($config->mustUseUncompleted())
 		{
 			return new DeadlineBased\UncompletedBased(new CurrentLightTimeUncompleted());
 		}
-		else
-		{
-			return new DeadlineBased\CountableBased(new CurrentLightTimeCountable());
-		}
+
+		return new DeadlineBased\CountableBased(new CurrentLightTimeCountable());
 	}
 }

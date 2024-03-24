@@ -10,6 +10,7 @@ namespace Bitrix\Tasks\Internals\Counter\Processor;
 
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\PgsqlConnection;
 use Bitrix\Tasks\Internals\Counter\Exception\UnknownCounterException;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\MemberTable;
@@ -185,17 +186,34 @@ class UserProcessor
 	 */
 	private function crossTypeReset(array $types, array $coverTypes, array $groupIds = []): void
 	{
-		$sql = "
-			DELETE ts1.*
-			FROM ". CounterTable::getTableName(). " ts1
-			INNER JOIN b_tasks_scorer ts2
-				ON ts2.TASK_ID = ts1.TASK_ID
-				AND ts2.USER_ID = {$this->userId}
-				AND ts2.`TYPE` IN ('". implode("','", $types) ."')
-			WHERE
-				ts1.USER_ID = {$this->userId}
-				AND ts1.`TYPE` IN ('". implode("','", $coverTypes) ."')
-		";
+		if (Application::getConnection() instanceof PgsqlConnection)
+		{
+			$sql = "
+				DELETE
+				FROM ". CounterTable::getTableName(). " ts1
+				USING b_tasks_scorer ts2
+				WHERE
+					ts2.TASK_ID = ts1.TASK_ID
+					AND ts2.USER_ID = {$this->userId}
+					AND ts2.TYPE IN ('". implode("','", $types) ."')
+					AND ts1.USER_ID = {$this->userId}
+					AND ts1.TYPE IN ('". implode("','", $coverTypes) ."')
+			";
+		}
+		else
+		{
+			$sql = "
+				DELETE ts1.*
+				FROM ". CounterTable::getTableName(). " ts1
+				INNER JOIN b_tasks_scorer ts2
+					ON ts2.TASK_ID = ts1.TASK_ID
+					AND ts2.USER_ID = {$this->userId}
+					AND ts2.`TYPE` IN ('". implode("','", $types) ."')
+				WHERE
+					ts1.USER_ID = {$this->userId}
+					AND ts1.`TYPE` IN ('". implode("','", $coverTypes) ."')
+			";
+		}
 
 		if (!empty($groupIds))
 		{

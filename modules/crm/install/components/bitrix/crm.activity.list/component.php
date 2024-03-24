@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
+use Bitrix\Crm\Integration\IntranetManager;
+use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -18,6 +20,11 @@ global $APPLICATION, $USER;
 // PARSE PARAMS
 $arResult['PATH_TO_FULL_VIEW'] = $arParams['PATH_TO_FULL_VIEW'] = CrmCheckPath('PATH_TO_FULL_VIEW', $arParams['PATH_TO_FULL_VIEW'] ?? null, COption::GetOptionString('crm', 'path_to_activity_list'));
 $arParams['PATH_TO_ACTIVITY_LIST'] = CrmCheckPath('PATH_TO_ACTIVITY_LIST', $arParams['PATH_TO_ACTIVITY_LIST'] ?? null, COption::GetOptionString('crm', 'path_to_activity_list'));
+$arParams['PATH_TO_ACTIVITY_KANBAN'] = CrmCheckPath(
+	'PATH_TO_ACTIVITY_KANBAN',
+	$arParams['PATH_TO_ACTIVITY_KANBAN'] ?? null,
+	COption::GetOptionString('crm', 'path_to_activity_kanban')
+);
 $arParams['PATH_TO_ACTIVITY_WIDGET'] = CrmCheckPath('PATH_TO_ACTIVITY_WIDGET', $arParams['PATH_TO_ACTIVITY_WIDGET'] ?? null, $APPLICATION->GetCurPage().'?widget');
 $bindings = (isset($arParams['BINDINGS']) && is_array($arParams['BINDINGS'])) ? $arParams['BINDINGS'] : array();
 // Check show mode
@@ -90,7 +97,30 @@ if(!empty($arBindingFilter))
 	$arFilter['BINDINGS'] = $arBindingFilter;
 }
 
-$arResult['UID'] = $arResult['GRID_ID'] = 'CRM_ACTIVITY_LIST_'.($arResult['PREFIX'] !== ''? $arResult['PREFIX'] : mb_strtoupper($arResult['OWNER_UID']));
+$isCustomSectionActivities = false;
+if (\Bitrix\Main\Loader::includeModule('intranet') && method_exists(\Bitrix\Intranet\CustomSection\Manager::class, 'getSystemPagesCodes'))
+{
+	$customSectionCode = $arParams['CUSTOM_SECTION_CODE'] ?? null;
+	$isCustomSectionActivities = IntranetManager::isCustomSectionExists($customSectionCode);
+	if ($isCustomSectionActivities)
+	{
+		$arFilter['@OWNER_TYPE_ID'] = IntranetManager::getEntityTypesInCustomSection($customSectionCode);
+	}
+	else
+	{
+		$allEntityTypesInSections = IntranetManager::getEntityTypesInCustomSections();
+		if (!empty($allEntityTypesInSections))
+		{
+			$arFilter['!@OWNER_TYPE_ID'] = $allEntityTypesInSections;
+		}
+	}
+}
+
+$arResult['UID'] = $arResult['GRID_ID'] =
+	'CRM_ACTIVITY_LIST_'
+	. ($arResult['PREFIX'] !== '' ? $arResult['PREFIX'] : mb_strtoupper($arResult['OWNER_UID']))
+	. ($isCustomSectionActivities ? "_{$customSectionCode}" : '')
+;
 $arResult['IS_INTERNAL'] = $arResult['OWNER_UID'] !== '';
 
 $enableWidgetFilter = !$arResult['IS_INTERNAL'] && isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y';
@@ -228,6 +258,7 @@ $arResult['FILTER_PRESETS'] = array();
 
 $typeListItems = \Bitrix\Crm\Activity\Provider\Base::makeTypeCodeNameList();
 
+// @todo replace to Bitrix\Crm\Filter\ActivityDataProvider
 $arResult['FILTER'] = array(
 	array('id' => "{$filterFieldPrefix}ID", 'name' => 'ID', 'default' => false),
 	array('id' => "{$filterFieldPrefix}COMPLETED", 'name' => GetMessage('CRM_ACTIVITY_FILTER_COMPLETED'), 'type'=> 'list', 'items'=> array('Y' => GetMessage('CRM_ACTIVITY_FILTER_ITEM_COMPLETED'), 'N' => GetMessage('CRM_ACTIVITY_FILTER_ITEM_NOT_COMPLETED')), 'params' => array('multiple' => 'Y'), 'default' => true),
@@ -1042,7 +1073,14 @@ $arOptions = isset($arNavParams['nTopCount']) && $arNavParams['nTopCount'] > 0
 
 $arSelect[] = 'PROVIDER_PARAMS';
 
-$dbRes = CCrmActivity::GetList($arSort, $arFilter, false, false, $arSelect, $arOptions);
+$dbRes = CCrmActivity::GetList(
+	$arSort,
+	$arFilter,
+	false,
+	false,
+	$arSelect,
+	$arOptions
+);
 $arResult['ITEMS'] = array();
 $bbCodeParser = new CTextParser();
 $responsibleIDs = array();
@@ -1266,7 +1304,10 @@ if(is_string($arResult['USE_QUICK_FILTER']))
 {
 	$arResult['USE_QUICK_FILTER'] = mb_strtoupper($arResult['USE_QUICK_FILTER']) === 'Y';
 }
-$arResult['ENABLE_TOOLBAR'] = isset($arParams['ENABLE_TOOLBAR']) ? $arParams['ENABLE_TOOLBAR'] : true;
+
+$arResult['ENABLE_TOOLBAR'] = (bool)($arParams['ENABLE_TOOLBAR'] ?? true);
+$arResult['ENABLE_CREATE_TOOLBAR_BUTTON'] = $arResult['ENABLE_TOOLBAR'] && !$isCustomSectionActivities;
+
 $arResult['ENABLE_WEBDAV'] = IsModuleInstalled('webdav');
 if(!$arResult['ENABLE_WEBDAV'])
 {
@@ -1326,6 +1367,7 @@ if($arResult['TAB_ID'] === '')
 	}
 }
 
+$APPLICATION->SetTitle(htmlspecialcharsbx(Loc::getMessage('CRM_ACTIVITY_MAIN_TITLE')));
 // HACK: for to prevent title overwrite after AJAX call.
 if(isset($_REQUEST['bxajaxid']))
 {

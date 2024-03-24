@@ -46,7 +46,7 @@ if (!empty($arResult['ERROR_MESSAGES']))
 		<script>
 			BX.ready(() => {
 				BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-					c_element: '<?=CUtil::JSEscape($analyticSource)?>',
+					c_element: '<?= CUtil::JSEscape($analyticSource) ?>',
 					status: 'error',
 				});
 			});
@@ -83,15 +83,24 @@ else
 	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-ru.svg';
 }
 
+$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
+$limitManager->setIsSuperset();
+if (!$limitManager->checkLimitWarning())
+{
+	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '', [
+		'SUPERSET_LIMIT' => 'Y',
+	]);
+}
+
 ?>
 <style>
 	.dashboard-header {
-		--forward-icon: url("<?=$templateFolder . '/images/forward.svg'?>");
-		--more-icon: url("<?=$templateFolder . '/images/more.svg'?>");
+		--forward-icon: url("<?= $templateFolder . '/images/forward.svg' ?>");
+		--more-icon: url("<?= $templateFolder . '/images/more.svg' ?>");
 	}
 
 	.dashboard-header-logo-svg-url {
-		background-image: url("<?=$biBuilderLogo?>");
+		background-image: url("<?= $biBuilderLogo ?>");
 	}
 
 	.icon-forward i {
@@ -115,7 +124,7 @@ else
 			</div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-edit"><?=Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT')?></button>
+			<button id="edit-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-edit"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
 			<div id="more-btn" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more"><i></i></div>
 		</div>
 	</div>
@@ -124,20 +133,20 @@ else
 
 
 <script>
-	BX.message(<?=Json::encode(Loc::loadLanguageFile(__FILE__))?>);
+	BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 	BX.ready(() => {
-		const dashboardAppId = '<?=CUtil::JSEscape($arResult['DASHBOARD_APP_ID'] ?? 'unknown')?>';
+		const dashboardAppId = '<?= CUtil::JSEscape($arResult['DASHBOARD_APP_ID'] ?? 'unknown') ?>';
 
 		BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-			c_element: '<?=CUtil::JSEscape($analyticSource)?>',
+			c_element: '<?= CUtil::JSEscape($analyticSource) ?>',
 			status: 'success',
-			type: '<?=CUtil::JSEscape($arResult['DASHBOARD_TYPE'])?>'.toLowerCase(),
+			type: '<?= CUtil::JSEscape($arResult['DASHBOARD_TYPE']) ?>'.toLowerCase(),
 			p1: BX.BIConnector.ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(dashboardAppId),
 			p2: '<?= (int)$arResult['DASHBOARD_ID'] ?>'
 		});
 
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
-			<?=CUtil::PhpToJSObject([
+			<?= CUtil::PhpToJSObject([
 				'appNodeId' => 'dashboard',
 				'openLoginPopup' => $arResult['OPEN_LOGIN_POPUP'],
 				'isExportEnabled' => $arResult['IS_EXPORT_ENABLED'],
@@ -152,7 +161,7 @@ else
 					'sourceDashboard' => $arResult['SOURCE_DASHBOARD_DATA'] ?? null,
 					'appId' => $arResult['DASHBOARD_APP_ID'],
 				],
-			])?>
+			]) ?>
 		);
 
 		new BX.BIConnector.SupersetDashboardSelector(<?= CUtil::PhpToJSObject([
@@ -160,6 +169,6 @@ else
 			'textNodeId' => 'dashboard-selector-text',
 			'dashboardId' => $arResult['DASHBOARD_ID'],
 			'marketCollectionUrl' => $arResult['MARKET_COLLECTION_URL'],
-		])?>);
+		]) ?>);
 	});
 </script>

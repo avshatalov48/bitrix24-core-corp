@@ -5,9 +5,7 @@ namespace Bitrix\Voximplant\Integration\Report\Handler\PeriodCompare;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\UI\Filter\DateType;
 use Bitrix\Voximplant\Integration\Report\CallType;
 use Bitrix\Voximplant\StatisticTable;
 use Bitrix\Voximplant\Integration\Report\Handler\Base;
@@ -32,9 +30,6 @@ abstract class PeriodCompare extends Base
 	 * Creates a query to select data based on a filter.
 	 *
 	 * @return Query
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getQueryForReport(): Query
 	{
@@ -52,7 +47,7 @@ abstract class PeriodCompare extends Base
 		$subQuery = StatisticTable::query();
 		$this->addDateWithGrouping($subQuery, true);
 		$subQuery->addSelect('PREVIOUS_DATE');
-		if ($filterParameters['PORTAL_USER_ID'])
+		if (!empty($filterParameters['PORTAL_USER_ID']))
 		{
 			$subQuery->addSelect('PORTAL_USER_ID');
 		}
@@ -66,7 +61,7 @@ abstract class PeriodCompare extends Base
 		$query = StatisticTable::query();
 		$this->addDateWithGrouping($query, true);
 		$query->addSelect('previous.DATE', 'PREVIOUS_DATE');
-		if ($filterParameters['PORTAL_USER_ID'])
+		if (!empty($filterParameters['PORTAL_USER_ID']))
 		{
 			$query->addSelect('PORTAL_USER_ID');
 		}
@@ -98,7 +93,7 @@ abstract class PeriodCompare extends Base
 	{
 		$filterParameters = $this->getFilterParameters();
 
-		switch ($filterParameters['INCOMING'])
+		switch ($filterParameters['INCOMING'] ?? 0)
 		{
 			case CallType::INCOMING:
 				$urlParams['INCOMING'] = $filterParameters['INCOMING'];
@@ -114,17 +109,17 @@ abstract class PeriodCompare extends Base
 				break;
 		}
 
-		if ($filterParameters['PORTAL_USER_ID'])
+		if (!empty($filterParameters['PORTAL_USER_ID']))
 		{
 			$urlParams['PORTAL_USER_ID'] = $filterParameters['PORTAL_USER_ID'];
 		}
 
-		if ($filterParameters['PORTAL_NUMBER'])
+		if (!empty($filterParameters['PORTAL_NUMBER']))
 		{
 			$urlParams['PORTAL_NUMBER'] = $filterParameters['PORTAL_NUMBER'];
 		}
 
-		if ($filterParameters['PHONE_NUMBER'])
+		if (!empty($filterParameters['PHONE_NUMBER']))
 		{
 			$urlParams['PHONE_NUMBER'] = $filterParameters['PHONE_NUMBER'];
 		}

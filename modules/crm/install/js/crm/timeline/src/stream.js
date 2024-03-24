@@ -1,9 +1,9 @@
-import {Type, Dom} from 'main.core';
-import Manager from "./manager";
-import {Item, ConfigurableItem, StreamType} from 'crm.timeline.item';
-import ItemAnimation from "./animations/item";
-import ItemNew from "./animations/item-new";
-import {TimezoneOffset, Format} from "crm.datetime"
+import { ConfigurableItem, Item, StreamType } from 'crm.timeline.item';
+import { Dom, Type } from 'main.core';
+import { DateTimeFormat, Timezone } from 'main.date';
+import ItemAnimation from './animations/item';
+import ItemNew from './animations/item-new';
+import Manager from './manager';
 
 /** @memberof BX.Crm.Timeline */
 export default class Steam
@@ -154,30 +154,30 @@ export default class Steam
 
 	getUserTimezoneOffset()
 	{
-		return TimezoneOffset.USER_TO_SERVER;
+		return Timezone.Offset.USER_TO_SERVER;
 	}
 
 	getServerTimezoneOffset()
 	{
-		return TimezoneOffset.SERVER_TO_UTC;
+		return Timezone.Offset.SERVER_TO_UTC;
 	}
 
 	// @todo replace by DatetimeConverter
 	formatTime(time, now, utc)
 	{
-		return BX.date.format(this._timeFormat, time, now, utc);
+		return DateTimeFormat.format(this._timeFormat, time, now, utc);
 	}
 
 	// @todo replace by DatetimeConverter
 	formatDate(date)
 	{
 		return (
-			BX.date.format(
+			DateTimeFormat.format(
 				[
 					["today", "today"],
 					["tommorow", "tommorow"],
 					["yesterday", "yesterday"],
-					["", (date.getFullYear() === this._year) ? Format.DAY_MONTH_FORMAT : Format.LONG_DATE_FORMAT],
+					["", (date.getFullYear() === this._year) ? DateTimeFormat.getFormat('DAY_MONTH_FORMAT') : DateTimeFormat.getFormat('LONG_DATE_FORMAT')],
 				],
 				date
 			)

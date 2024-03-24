@@ -2,9 +2,7 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\EmployeesWorkload;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Voximplant\Integration\Report\CallType;
 use Bitrix\Voximplant\Integration\Report\Handler\Base;
@@ -20,10 +18,6 @@ abstract class EmployeesWorkload extends Base
 	 * Prepares report data.
 	 *
 	 * @return array|mixed
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws SystemException
 	 */
 	public function prepare()
 	{
@@ -66,8 +60,6 @@ abstract class EmployeesWorkload extends Base
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	abstract protected function getQueryForReport($startDate, $finishDate, $previousStartDate, $previousFinishDate, $filterParameters): Query;
 
@@ -79,8 +71,6 @@ abstract class EmployeesWorkload extends Base
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	protected function getBaseQuery($startDate, $finishDate, $filterParameters)
 	{

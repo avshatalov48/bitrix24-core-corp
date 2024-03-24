@@ -5,10 +5,9 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { Haptics } = require('haptics');
-	const { settings } = require('assets/common');
+	const { settingsOutline } = require('assets/common');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { getEntityMessage } = require('crm/loc');
-	const { BackdropHeader, CreateBannerImage } = require('layout/ui/banners');
 	const { TimelineSchedulerActivityProvider } = require('crm/timeline/scheduler/providers/activity');
 
 	const EXTENSION_IMAGE_PATH = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/timeline/scheduler/providers/activity-reminder/images`;
@@ -78,20 +77,16 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 					},
 					resizableByKeyboard: true,
 				},
-				this.renderBanner(),
 				View(
 					{
 						style: {
 							flex: 1,
-							marginVertical: 12,
 							backgroundColor: AppTheme.colors.bgContentPrimary,
-							borderRadius: 12,
-							borderWidth: 1.4,
-							borderColor: AppTheme.colors.accentBrandBlue,
-							maxHeight: this.state.maxHeight,
+							maxHeight: '100%',
 						},
 						onLayout: ({ height }) => this.setMaxHeight(height),
 					},
+					this.renderBanner(),
 					this.renderTextField(),
 					this.renderAttachments(),
 					View(
@@ -113,17 +108,46 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 
 		renderBanner()
 		{
-			return BackdropHeader({
-				title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_BANNER_TITLE'),
-				description: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_BANNER_DESCRIPTION'),
-				image: CreateBannerImage({
-					image: {
-						svg: {
-							uri: `${EXTENSION_IMAGE_PATH}/${AppTheme.id}/plan-activity.svg`,
-						},
+			return View(
+				{
+					style: {
+						marginHorizontal: 14,
+						marginTop: 12,
+						borderRadius: 8,
+						borderWidth: 1,
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+						padding: 14,
 					},
-				}),
-			});
+				},
+				View(
+					{},
+					Text(
+						{
+							style: {
+								fontSize: 14,
+								fontWeight: 600,
+								color: AppTheme.colors.base1,
+							},
+							text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_BANNER_TITLE_MSGVER_1'),
+						},
+					),
+					Text(
+						{
+							style: {
+								marginTop: 4,
+								fontSize: 12,
+								fontWeight: 400,
+								color: AppTheme.colors.base4,
+							},
+							text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_BANNER_DESCRIPTION_MSGVER_1'),
+						},
+					),
+				),
+				this.renderMenuButton(),
+			);
 		}
 
 		renderMenuButton()
@@ -142,13 +166,13 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 				},
 				Image({
 					style: {
-						width: 28,
-						height: 28,
+						width: 17,
+						height: 17,
 					},
 					resizeMode: 'contain',
 					tintColor: AppTheme.colors.base4,
 					svg: {
-						content: settings(),
+						content: settingsOutline(),
 					},
 				}),
 			);

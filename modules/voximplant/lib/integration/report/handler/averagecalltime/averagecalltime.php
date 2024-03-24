@@ -2,17 +2,12 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\AverageCallTime;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ObjectException;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
-use Bitrix\Voximplant\Model\StatisticMissedTable;
 use Bitrix\Voximplant\Integration\Report\Handler\Base;
 use Bitrix\Voximplant\StatisticTable;
 
@@ -26,10 +21,6 @@ class AverageCallTime extends Base implements IReportMultipleData
 	 * Prepares report data.
 	 *
 	 * @return array|mixed
-	 * @throws ArgumentException
-	 * @throws ObjectException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
 	 */
 	public function prepare()
 	{
@@ -72,8 +63,6 @@ class AverageCallTime extends Base implements IReportMultipleData
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	public function getQueryForReport($startDate, $finishDate, $previousStartDate, $previousFinishDate, $filterParameters): Query
 	{
@@ -121,12 +110,11 @@ class AverageCallTime extends Base implements IReportMultipleData
 	 * Converts data from a report handler for a grid
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ObjectException
 	 */
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}

@@ -24,8 +24,7 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 		 * @return {string}
 		 */
 		static getTitle()
-		{
-		}
+		{}
 
 		/**
 		 * @abstract

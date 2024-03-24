@@ -32,6 +32,7 @@ class QueryParamsBuilder
 	private ?Date $restrictedFrom = null;
 
 	private bool $useActivityResponsible;
+	private bool $completed = false;
 
 	/**
 	 * @param int $entityTypeId
@@ -105,6 +106,13 @@ class QueryParamsBuilder
 		return $this;
 	}
 
+	public function setCompleted(bool $completed = false): self
+	{
+		$this->completed = $completed;
+
+		return $this;
+	}
+
 	public function build(): QueryParams
 	{
 		$entityUserParams = new UserParams($this->userIds, $this->needExcludeUsers);
@@ -120,7 +128,8 @@ class QueryParamsBuilder
 			$this->options,
 			$this->restrictedFrom,
 			$entityUserParams,
-			$this->useActivityResponsible
+			$this->useActivityResponsible,
+			$this->completed,
 		);
 	}
 }

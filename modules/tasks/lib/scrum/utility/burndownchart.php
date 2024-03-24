@@ -23,7 +23,7 @@ class BurnDownChart
 			$realDayNumber = $sprintRanges->getRealDayNumber($dayNumber);
 			$value += $averagePointsPerDay;
 			$idealData[] = [
-				'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_DAY_LABEL').' '.$realDayNumber,
+				'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_ALL_DAY_LABEL', ['#NUM#' => $realDayNumber]),
 				'idealValue' => round(($sumStoryPoints - $value), 2)
 			];
 		}
@@ -52,7 +52,7 @@ class BurnDownChart
 			{
 				$realDayNumber = $sprintRanges->getRealDayNumber($dayNumber);
 				$remainData[$realDayNumber] = [
-					'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_DAY_LABEL').' '.$realDayNumber,
+					'day' => Loc::getMessage('TASKS_SCRUM_SPRINT_BURN_DOWN_CHART_ALL_DAY_LABEL', ['#NUM#' => $realDayNumber]),
 					'remainValue' => $remainStoryPoints
 				];
 			}

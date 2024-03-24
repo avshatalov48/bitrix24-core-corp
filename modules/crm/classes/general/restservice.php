@@ -442,12 +442,23 @@ final class CCrmRestService extends IRestService
 				$bindings[$name] = $callback;
 			}
 
-			$bindings[\CRestUtil::PLACEMENTS] = array();
+			$allActivityPlacementsCodes = \Bitrix\Crm\Integration\Rest\AppPlacement::getAllDetailActivityCodes();
+			$bindings[\CRestUtil::PLACEMENTS] = [];
 			foreach(\Bitrix\Crm\Integration\Rest\AppPlacement::getAll() as $name)
 			{
 				if ($name === 'CRM_REQUISITE_AUTOCOMPLETE')
 				{
 					$bindings[\CRestUtil::PLACEMENTS][$name] = ['options' => ['countries' => 'string']];
+				}
+				if (in_array($name, $allActivityPlacementsCodes, true))
+				{
+					$bindings[\CRestUtil::PLACEMENTS][$name] = [
+						'options' => [
+							'useBuiltInInterface' => 'string',
+							'newUserNotificationText' => 'string',
+							'newUserNotificationTitle' => 'string',
+						]
+					];
 				}
 				else
 				{
@@ -14540,10 +14551,8 @@ class CCrmPaySystemRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$personTypeIds = array();
-		foreach (CCrmPaySystem::getPersonTypeIDs() as $ptId)
-			$personTypeIds[] = (int)$ptId;
-		$personTypeIds = array_values(CCrmPaySystem::getPersonTypeIDs());
+		$personTypeIds = CCrmPaySystem::getPersonTypeIDs();
+		$personTypeIds = is_array($personTypeIds) ? array_values($personTypeIds) : [];
 
 		$page = isset($navigation['iNumPage']) ? (int)$navigation['iNumPage'] : 1;
 		$limit = isset($navigation['nPageSize']) ? (int)$navigation['nPageSize'] : CCrmRestService::LIST_LIMIT;

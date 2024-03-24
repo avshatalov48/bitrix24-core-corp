@@ -171,4 +171,3 @@ jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) =
 
 	module.exports = { ConversionWizardEntitiesLayout };
 });
-

@@ -46,8 +46,6 @@ class Relation
 		$this->sendPullChatHide();
 
 		Recent::removeRecent($this->userId, $this->chatId);
-
-		\CIMDisk::ChangeFolderMembers($this->chatId, $this->userId, false);
 	}
 
 	public function removeAllRelations(bool $force = false, array $excludeUserIds = []): void

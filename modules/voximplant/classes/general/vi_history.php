@@ -1099,24 +1099,18 @@ class CVoxImplantHistory
 	 * @param string $callId
 	 * @return bool
 	 */
-	public static function getLock($callId)
+	public static function getLock($callId): bool
 	{
-		$sqlHelper = Application::getConnection()->getSqlHelper();
-		$lockName = $sqlHelper->forSql(self::CALL_LOCK_PREFIX . "_" . $callId);
-		$lockRow = Application::getConnection()->query("SELECT GET_LOCK('{$lockName}', 0) as L")->fetch();
-		return $lockRow["L"] == "1";
+		return Application::getConnection()->lock(self::CALL_LOCK_PREFIX . "_" . $callId);
 	}
 
 	/**
 	 * @param string $callId
 	 * @return bool
 	 */
-	public static function releaseLock($callId)
+	public static function releaseLock($callId): bool
 	{
-		$sqlHelper = Application::getConnection()->getSqlHelper();
-		$lockName = $sqlHelper->forSql(self::CALL_LOCK_PREFIX . "_" . $callId);
-		Application::getConnection()->query("SELECT RELEASE_LOCK('{$lockName}')");
-		return true;
+		return Application::getConnection()->unlock(self::CALL_LOCK_PREFIX . "_" . $callId);
 	}
 
 	public static function setLastPaidCallTimestamp($ts)

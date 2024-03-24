@@ -7,7 +7,7 @@ namespace Bitrix\CrmMobile\Controller\Action;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Service\Container;
 use Bitrix\CrmMobile\Controller\Action;
-use Bitrix\CrmMobile\Controller\PublicErrorsTrait;
+use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 

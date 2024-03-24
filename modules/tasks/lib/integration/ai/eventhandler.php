@@ -46,7 +46,9 @@ final class EventHandler
 	private function isForMe(): bool
 	{
 		return Loader::includeModule(self::MODULE_ID)
-			&& $this->event->getParameter('module') === self::MODULE_ID;
+			&& $this->event->getParameter('module') === self::MODULE_ID
+			&& isset($this->event->getParameter('params')['xmlId'])
+		;
 	}
 
 	private function getContext(): string

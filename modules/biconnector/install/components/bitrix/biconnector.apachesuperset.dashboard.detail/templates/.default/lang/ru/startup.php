@@ -5,3 +5,5 @@ $MESS['SUPERSET_DASHBOARD_DETAIL_HINT_DESC_MSGVER_1'] = 'Это займёт к�
 $MESS['SUPERSET_DASHBOARD_DETAIL_HINT_LINK'] = 'Подробнее';
 $MESS['SUPERSET_DASHBOARD_DETAIL_ERROR_DESC'] = 'Не удалось создать отчёт.<br>Попробуйте ещё раз';
 $MESS['SUPERSET_DASHBOARD_DETAIL_ERROR_RELOAD_BTN'] = 'Повторить';
+$MESS['SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_UNAVAILABLE'] = 'Отчёт недоступен';
+$MESS['SUPERSET_DASHBOARD_DETAIL_HINT_DESC_UNAVAILABLE'] = 'Это временно,<br>скоро всё заработает';

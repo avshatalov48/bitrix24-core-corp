@@ -24,8 +24,10 @@ class ClientResolver
 	const TYPE_UNKNOWN = 0;
 	const TYPE_COMPANY = 1;
 	const TYPE_PERSON = 2;
+	const TYPE_BIC = 3;
 	const PROP_ITIN = 'ITIN';    // Individual Taxpayer Identification Number
 	const PROP_SRO = 'SRO';      // State Register of organizations
+	const PROP_BIC = 'BIC';      // Bank identification code
 
 	private $compatibilityMode = false;
 
@@ -34,7 +36,13 @@ class ClientResolver
 	/** @var boolean|null */
 	private static $isOnline = null;
 
-	protected static $allowedCountries = array(1, 14);
+	protected static $allowedCountries = [1, 14];
+	protected static $allowedTypesMap = [1 => ['ITIN', 'BIC'], 14 => ['SRO']];
+
+	public static function getAllowedTypesMap(): array
+	{
+		return static::$allowedTypesMap;
+	}
 
 	protected static function isRestModuleIncluded(): bool
 	{
@@ -98,25 +106,47 @@ class ClientResolver
 		return in_array($countryID, static::$allowedCountries, true) && self::isOnline();
 	}
 
+	public static function isGetByBicAvailable(): bool
+	{
+		return method_exists(self::getClient(), 'getByBic');
+	}
+
 	public function setCompatibilityMode(bool $compatibilityMode): void
 	{
 		$this->compatibilityMode = $compatibilityMode;
 	}
 
+	private static function throwCountryException(int $countryID): void
+	{
+		throw new Main\NotSupportedException("Country ID: '$countryID' is not supported in current context.");
+	}
+
 	public function resolveClient(string $propertyTypeID, string $propertyValue, int $countryID = 1): array
 	{
-		if (($countryID === 1 && $propertyTypeID === static::PROP_ITIN
-				&& !RestrictionManager::isDetailsSearchByInnPermitted())
-			|| ($countryID === 14 && $propertyTypeID === static::PROP_SRO
-				&& !RestrictionManager::isDetailsSearchByEdrpouPermitted()))
+		if (
+			(
+				$countryID === 1
+				&& ($propertyTypeID === static::PROP_ITIN || $propertyTypeID === static::PROP_BIC)
+				&& !RestrictionManager::isDetailsSearchByInnPermitted()
+			)
+			|| (
+				$countryID === 14
+				&& $propertyTypeID === static::PROP_SRO
+				&& !RestrictionManager::isDetailsSearchByEdrpouPermitted()
+			)
+		)
 		{
 			return [];
 		}
 
 
-		if(!in_array($countryID, static::$allowedCountries, true))
+		if (
+			!in_array($countryID, static::$allowedCountries, true)
+			|| (($propertyTypeID === self::PROP_ITIN || $propertyTypeID === self::PROP_BIC) && $countryID !== 1)
+			|| ($propertyTypeID === self::PROP_SRO && $countryID !== 14)
+		)
 		{
-			throw new Main\NotSupportedException("Country ID: '{$countryID}' is not supported in current context.");
+			self::throwCountryException($countryID);
 		}
 
 		$fieldTitles = (new EntityRequisite)->getFieldsTitles($countryID);
@@ -130,17 +160,21 @@ class ClientResolver
 
 		if($propertyTypeID === self::PROP_ITIN)
 		{
-			if($countryID !== 1)
-			{
-				throw new Main\NotSupportedException("Country ID: '{$countryID}' is not supported in current context.");
-			}
-
 			$info = self::getClient()->getByInn($propertyValue);
 			if(is_array($info))
 			{
 				$caption = '';
 				$fields = null;
-				$len = mb_strlen(isset($info['INN'])? $info['INN'] : '');
+
+				if (isset($info['INN']))
+				{
+					$len = mb_strlen($info['INN']);
+				}
+				else
+				{
+					$len = 0;
+				}
+
 				$clientType = self::TYPE_UNKNOWN;
 				if($len === 10)
 				{
@@ -154,30 +188,31 @@ class ClientResolver
 				if($clientType === self::TYPE_COMPANY)
 				{
 
-					$fullName = isset($info['NAME']) ? $info['NAME'] : '';
-					$shortName = isset($info['NAME_SHORT']) ? $info['NAME_SHORT'] : '';
+					$fullName = $info['NAME'] ?? '';
+					$shortName = $info['NAME_SHORT'] ?? '';
 
-					$fields = array(
-						EntityRequisite::INN => isset($info['INN']) ? $info['INN'] : '',
-						EntityRequisite::KPP => isset($info['KPP']) ? $info['KPP'] : '',
-						EntityRequisite::OGRN => isset($info['OGRN']) ? $info['OGRN'] : '',
-						EntityRequisite::OKVED => isset($info['OKVED_CODE']) ? $info['OKVED_CODE'] : '',
+					$fields = [
+						EntityRequisite::INN => $info['INN'] ?? '',
+						EntityRequisite::KPP => $info['KPP'] ?? '',
+						EntityRequisite::OGRN => $info['OGRN'] ?? '',
+						EntityRequisite::OKVED => $info['OKVED_CODE'] ?? '',
 						EntityRequisite::COMPANY_NAME => $shortName,
 						EntityRequisite::COMPANY_FULL_NAME => $fullName,
-						EntityRequisite::IFNS => isset($info['TAX_REGISTRAR_NAME']) ? $info['TAX_REGISTRAR_NAME'] : ''
-					);
+						EntityRequisite::IFNS => $info['TAX_REGISTRAR_NAME'] ?? '',
+					];
 					$presetId = Crm\EntityPreset::getByXmlId('#CRM_REQUISITE_PRESET_DEF_RU_COMPANY#');
 					if ($presetId > 0)
 					{
 						$fields['PRESET_ID'] = $presetId;
-						$fields['PRESET_COUNTRY_ID'] = EntityRequisite::getSingleInstance()
-							->getCountryIdByPresetId($presetId);
+						$fields['PRESET_COUNTRY_ID'] =
+							EntityRequisite::getSingleInstance()
+								->getCountryIdByPresetId($presetId)
+						;
 					}
 
 					$caption = $shortName !== '' ? $shortName : $fullName;
 
-					$registrationDate = isset($info['CREATION_REGISTRATION_DATE'])
-						? $info['CREATION_REGISTRATION_DATE'] : '';
+					$registrationDate = $info['CREATION_REGISTRATION_DATE'] ?? '';
 
 					if($registrationDate === '' && isset($info['CREATION_OGRN_DATE']))
 					{
@@ -401,13 +436,8 @@ class ClientResolver
 				}
 			}
 		}
-		else if ($propertyTypeID === self::PROP_SRO)
+		elseif ($propertyTypeID === self::PROP_SRO)
 		{
-			if($countryID !== 14)
-			{
-				throw new Main\NotSupportedException("Country ID: '{$countryID}' is not supported in current context.");
-			}
-
 			$info = self::getClient()->uaGetByEdrpou($propertyValue);
 			if(is_array($info))
 			{
@@ -488,9 +518,95 @@ class ClientResolver
 				}
 			}
 		}
+		elseif ($propertyTypeID === self::PROP_BIC)
+		{
+			$info = self::getClient()->getByBic($propertyValue);
+			if(is_array($info))
+			{
+				$caption = $info['NAMEP'] ?? '';
+				$title = $caption;
+				$fieldTitles = (new Crm\EntityBankDetail())->getFieldsTitles($countryID);
+				$bic = $info['BIC'] ?? '';
+				$subtitle = ($bic === '' ? '' : $fieldTitles['RQ_BIK'] . ' ' . $bic);
+				$np = '';
+				if (isset($info['NNP']) && is_string($info['NNP']) && $info['NNP'] !== '')
+				{
+					if (isset($info['TNP']) && is_string($info['TNP']) && $info['TNP'] !== '')
+					{
+						$np .= $info['TNP'] . '. ';
+					}
+					$np .= $info['NNP'];
+				}
+				$addrComponents = [$info['IND'] ?? '', $np, $info['ADR'] ?? ''];
+				$n = 0;
+				$bankAddr = '';
+				foreach ($addrComponents as $item)
+				{
+					if (is_string($item) && $item !== '')
+					{
+						$bankAddr .= ($n++ > 0 ? ', ' : '') . $item;
+					}
+				}
+				unset($np, $n, $addrComponents, $item);
+				$corAccNum = '';
+				if (isset($info['ACCOUNTS']) && is_array($info['ACCOUNTS']))
+				{
+					foreach ($info['ACCOUNTS'] as $accInfo)
+					{
+						if (
+							isset(
+								$accInfo['ACCOUNTSTATUS'],
+								$accInfo['REGULATIONACCOUNTTYPE'],
+								$accInfo['ACCOUNT']
+							)
+							&& $accInfo['ACCOUNTSTATUS'] === 'ACAC'
+							&& $accInfo['REGULATIONACCOUNTTYPE'] === 'CRSA'
+							&& is_string($accInfo['ACCOUNT'])
+						)
+						{
+							$corAccNum = $accInfo['ACCOUNT'];
+							break;
+						}
+					}
+					unset($accInfo);
+				}
+				$bicSw = '';
+				if (isset($info['BICSW']) && is_array($info['BICSW']))
+				{
+					foreach ($info['BICSW'] as $bicSwInfo)
+					{
+						if (
+							isset($bicSwInfo['SWBIC'])
+							&& isset($bicSwInfo['DEFAULTSWBIC'])
+							&& $bicSwInfo['DEFAULTSWBIC'] === '1'
+							&& is_string($bicSwInfo['SWBIC'])
+						)
+						{
+							$bicSw = $bicSwInfo['SWBIC'];
+							break;
+						}
+					}
+				}
+				unset($bicSwInfo);
+
+				$results[] = [
+					'caption' => $caption,
+					'title' => $title,
+					'subTitle' => $subtitle,
+					'fields' => [
+						'NAME' => $title,
+						'RQ_BANK_NAME' => $title,
+						'RQ_BIK' => $info['BIC'] ?? '',
+						'RQ_BANK_ADDR' => $bankAddr,
+						'RQ_COR_ACC_NUM' => $corAccNum,
+						'RQ_SWIFT' => $bicSw,
+					]
+				];
+			}
+		}
 		else
 		{
-			throw new Main\ArgumentOutOfRangeException('propertyTypeID', self::PROP_ITIN, self::PROP_ITIN);
+			throw new Main\ArgumentException('propertyTypeID');
 		}
 
 		return $results;
@@ -749,6 +865,21 @@ class ClientResolver
 				: ''
 		;
 		if (is_string($title) && $title !== '' && $clientResolverPropertyType['IS_PLACEMENT'] !== 'Y')
+		{
+			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN');
+			if (is_string($template) && $template !== '')
+			{
+				$template = mb_strtolower($template);
+				$title = strtr($template, ['#field_name#' => $title]);
+			}
+		}
+
+		return $title;
+	}
+
+	public static function getClientResolverPlaceholderTextByTitle(string $title): string
+	{
+		if (is_string($title) && $title !== '')
 		{
 			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN');
 			if (is_string($template) && $template !== '')

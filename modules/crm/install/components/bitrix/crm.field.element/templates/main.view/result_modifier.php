@@ -146,20 +146,24 @@ if(is_array($arResult['value']) && count($arResult['value']))
 	{
 		$companies = CCrmCompany::GetListEx(
 			['TITLE' => 'ASC'],
-			['ID' => $values['COMPANY']]
+			['ID' => $values['COMPANY']],
+			false,
+			false,
+			[
+				'ID',
+				'TITLE',
+			]
 		);
 		$arResult['value']['COMPANY']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.company.show/card.ajax.php';
 
 		while($company = $companies->Fetch())
 		{
-			$arResult['value']['COMPANY']['items'][$company['ID']] = [
+			$companyId = $company['ID'];
+			$arResult['value']['COMPANY']['items'][$companyId] = [
 				'ENTITY_TITLE' => $company['TITLE'],
-				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'COMPANY_'.$company['ID'],
-				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'CO_' . $company['ID'],
-				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
-					CCrmOwnerType::Company,
-					$company['ID']
-				),
+				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'COMPANY_' . $companyId,
+				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'CO_' . $companyId,
+				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $companyId),
 			];
 		}
 	}
@@ -173,17 +177,24 @@ if(is_array($arResult['value']) && count($arResult['value']))
 	{
 		$deals = CCrmDeal::GetListEx(
 			['TITLE' => 'ASC'],
-			['ID' => $values['DEAL']]
+			['ID' => $values['DEAL']],
+			false,
+			false,
+			[
+				'ID',
+				'TITLE',
+			]
 		);
 		$arResult['value']['DEAL']['tooltipLoaderUrl'] = '/bitrix/components/bitrix/crm.deal.show/card.ajax.php';
 
-		while($deal = $deals->Fetch())
+		while ($deal = $deals->Fetch())
 		{
-			$arResult['value']['DEAL']['items'][$deal['ID']] = [
+			$dealId = $deal['ID'];
+			$arResult['value']['DEAL']['items'][$dealId] = [
 				'ENTITY_TITLE' => $deal['TITLE'],
-				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'DEAL_'.$deal['ID'],
-				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'D_' . $deal['ID'],
-				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $deal['ID']),
+				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'DEAL_' . $dealId,
+				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'D_' . $dealId,
+				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $dealId),
 			];
 		}
 	}

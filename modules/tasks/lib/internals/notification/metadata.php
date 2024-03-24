@@ -74,4 +74,16 @@ class Metadata
 	{
 		return $this->params;
 	}
+
+	public function addParams(string $key, mixed $value): void
+	{
+		if (!isset($this->params[$key]) || !is_array($this->params[$key]))
+		{
+			$this->params[$key] = $value;
+		}
+		elseif (is_array($this->params[$key]))
+		{
+			$this->params[$key] = array_unique(array_merge($this->params[$key], $value));
+		}
+	}
 }

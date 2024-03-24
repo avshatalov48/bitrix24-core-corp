@@ -273,11 +273,6 @@ var WidgetListAnimationType = {
 		 */
 		setHeight(height)
 		{
-			if (Application.getApiVersion() <= 27)
-			{
-				return this;
-			}
-
 			if (typeof height !== 'number')
 			{
 				console.warn(`%c${this.className}.setHeight: height is not a number, action skipped. (%c${typeof height}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
@@ -1007,11 +1002,6 @@ var WidgetListAnimationType = {
 		 */
 		setFont(font)
 		{
-			if (Application.getApiVersion() <= 27)
-			{
-				return this;
-			}
-
 			if (font instanceof WidgetListItemFont)
 			{
 				this.font = font.compile();
@@ -1222,11 +1212,6 @@ var WidgetListAnimationType = {
 		 */
 		setHeight(height)
 		{
-			if (Application.getApiVersion() <= 27)
-			{
-				return this;
-			}
-
 			if (typeof height !== 'number')
 			{
 				console.warn(`%c${this.className}.setHeight: height is not a number, action skipped. (%c${typeof height}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");

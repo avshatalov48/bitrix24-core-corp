@@ -905,8 +905,8 @@ if (!Crm::isUniversalActivityScenarioEnabled())
 }
 
 $sanitizer = new \CBXSanitizer();
-$sanitizer->AddTags(['br' => []]);
-$actResponsibleCountersHint = $sanitizer->SanitizeHtml(GetMessage('CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_HINT'));
+$sanitizer->AddTags(['br' => [], 'b' => []]);
+$actResponsibleCountersHint = $sanitizer->SanitizeHtml(GetMessage('CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_HINT_MSGVER_1'));
 $actResponsibleCountersByAct = htmlspecialcharsbx(GetMessage('CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_ACTIVITY'));
 $actResponsibleCountersByEntity = htmlspecialcharsbx(GetMessage('CRM_SETTINGS_COUNTERS_RESPONSIBLE_MODE_ENTITY'));
 

@@ -5,7 +5,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Terminal\Config\TerminalPaysystemManager;
 use Bitrix\Main\Loader;
+use Bitrix\SalesCenter\Integration\SaleManager;
 
 /**
  * Class SalesCenterPaySystemAjaxController
@@ -18,6 +20,14 @@ class CrmConfigTerminalSettingsController extends \Bitrix\Main\Engine\Controller
 	private static function getPaymentSlipManager()
 	{
 		return \Bitrix\Crm\Integration\SalesCenterManager::getInstance()->getPaymentSlipSenderManager();
+	}
+
+	/**
+	 * @return TerminalPaysystemManager
+	 */
+	private static function getPaysystemManager(): TerminalPaysystemManager
+	{
+		return TerminalPaysystemManager::getInstance();
 	}
 
 	/**
@@ -34,15 +44,18 @@ class CrmConfigTerminalSettingsController extends \Bitrix\Main\Engine\Controller
 	/**
 	 * @return array
 	 */
-	public function saveSettingsAction()
+	public function saveSettingsAction(array $changedValues = [])
 	{
 		$paymentSlipManager = self::getPaymentSlipManager();
+		$paysystemManager = self::getPaysystemManager();
+
+		// TODO check rights, maybe SaleManager::getInstance()->isFullAccess() ?
 		if (!$paymentSlipManager || !\CCrmSaleHelper::isShopAccess('admin'))
 		{
 			return [];
 		}
 		$paymentSlipConfig = $paymentSlipManager->getConfig();
-		$changedValues = is_array($this->request->get('changedValues')) ? $this->request->get('changedValues') : [];
+		$paysystemConfig = $paysystemManager->getConfig();
 
 		if (
 			isset($changedValues['selectedServiceId'])
@@ -59,6 +72,37 @@ class CrmConfigTerminalSettingsController extends \Bitrix\Main\Engine\Controller
 		{
 			$changedValues['isSmsSendingEnabled'] = ($changedValues['isSmsSendingEnabled'] === 'true');
 			$paymentSlipConfig->setEnablingSending($changedValues['isSmsSendingEnabled']);
+		}
+
+		if (
+			isset($changedValues['terminalDisabledPaysystems'])
+			&& is_array($changedValues['terminalDisabledPaysystems'])
+		)
+		{
+			$paysystemConfig->setDisabledPaysystems($changedValues['terminalDisabledPaysystems']);
+		}
+
+		if (isset($changedValues['terminalPaysystemsAllEnabled']))
+		{
+			$paysystemConfig->enableAllPaysystems();
+		}
+
+		if (isset($changedValues['isLinkPaymentEnabled']))
+		{
+			$changedValues['isLinkPaymentEnabled'] = ($changedValues['isLinkPaymentEnabled'] === 'true');
+			$paysystemConfig->setLinkPaymentEnabled($changedValues['isLinkPaymentEnabled']);
+		}
+
+		if (isset($changedValues['isSbpEnabled']))
+		{
+			$changedValues['isSbpEnabled'] = ($changedValues['isSbpEnabled'] === 'true');
+			$paysystemConfig->setSbpEnabled($changedValues['isSbpEnabled']);
+		}
+
+		if (isset($changedValues['isSberQrEnabled']))
+		{
+			$changedValues['isSberQrEnabled'] = ($changedValues['isSberQrEnabled'] === 'true');
+			$paysystemConfig->setSberQrEnabled($changedValues['isSberQrEnabled']);
 		}
 
 		return [
@@ -84,5 +128,59 @@ class CrmConfigTerminalSettingsController extends \Bitrix\Main\Engine\Controller
 			'isUCNEnabled' => false,
 			'activeSmsServices' => [],
 		];
+	}
+
+	/**
+	 * @return array
+	 */
+	public function updatePaysystemPathsAction()
+	{
+		$terminalPaysystemManager = self::getPaysystemManager();
+
+		if (
+			!Loader::includeModule('salescenter')
+			|| !SaleManager::getInstance()->isFullAccess())
+		{
+			return [
+				'sbp' => '',
+				'sberbankQr' => '',
+			];
+		}
+
+		return [
+			'sbp' => $terminalPaysystemManager->getSbpPaysystemPath(),
+			'sberbankQr' => $terminalPaysystemManager->getSberQrPaysystemPath(),
+			'isSbpConnected' => $terminalPaysystemManager->isSbpPaysystemConnected(),
+			'isSberQrConnected' => $terminalPaysystemManager->isSberQrPaysystemConnected(),
+			'isAnyPaysystemActive' => $terminalPaysystemManager->isAnyPaysystemActive(),
+			'availablePaysystems' => $terminalPaysystemManager->getAvailablePaysystems(),
+		];
+	}
+
+	/**
+	 * @param string $collapsed
+	 * @return void
+	 */
+	public function updatePaysystemsCollapsedAction(string $collapsed): void
+	{
+		self::getPaysystemManager()->getConfig()->setCollapsed($collapsed === 'true');
+	}
+
+	/**
+	 * @param string $collapsed
+	 * @return void
+	 */
+	public function updateSmsCollapsedAction(string $collapsed): void
+	{
+		if (!Loader::includeModule('salescenter'))
+		{
+			return;
+		}
+		$paymentSlipManager = self::getPaymentSlipManager();
+		if (!$paymentSlipManager)
+		{
+			return;
+		}
+		$paymentSlipManager->getConfig()->setCollapsed($collapsed === 'true');
 	}
 }

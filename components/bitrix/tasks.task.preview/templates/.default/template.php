@@ -1,6 +1,9 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var $arParams
@@ -16,6 +19,12 @@ UI\Extension::load([
 	'ui.link',
 	'ui.urlpreview',
 	'ui.icons.b24',
+]);
+
+$taskViewUri = new Uri($arParams['URL']);
+$taskViewUri->addParams([
+	'ta_sec' => 'comment',
+	'ta_el' => 'title_click',
 ]);
 
 ?>
@@ -45,21 +54,21 @@ UI\Extension::load([
 			</span><?php
 		}
 
-		?><a class="urlpreview__time" href="<?= htmlspecialcharsbx($arParams['URL']) ?>">
+		?><a class="urlpreview__time" href="<?= htmlspecialcharsbx($taskViewUri->getUri()) ?>">
 			<?= htmlspecialcharsbx($arResult['TASK']['CREATED_DATE_FORMATTED']) ?>
 		</a>
 	</div>
 	<div class="task-preview-info">
-		<a href="<?= htmlspecialcharsbx($arParams['URL']) ?>" target="_blank" class="ui-link ui-link-dashed"><?= htmlspecialcharsbx($arResult['TASK']['TITLE']) ?></a><br>
+		<a href="<?= htmlspecialcharsbx($taskViewUri->getUri()) ?>" target="_blank" class="ui-link ui-link-dashed"><?= htmlspecialcharsbx($arResult['TASK']['TITLE']) ?></a><br>
 		<?= Loc::getMessage('TASKS_STATUS_' . $arResult['TASK']['REAL_STATUS']) ?><br>
 
-		<?
-		if ($arResult['TASK']['DEADLINE'] <> '')
+		<?php
+		if (!empty($arResult['TASK']['DEADLINE']))
 		{
 			?><?= Loc::getMessage('TASKS_DEADLINE')?>: <?= FormatDateFromDB($arResult['TASK']['DEADLINE'], 'SHORT') ?><br><?php
 		}
 
-		if ($arResult['TASK']['CLOSED_DATE'] <> '')
+		if (!empty($arResult['TASK']['CLOSED_DATE']))
 		{
 			?><?= Loc::getMessage('TASKS_CLOSED_DATE') ?>: <?= FormatDateFromDB($arResult['TASK']['CLOSED_DATE'], 'SHORT') ?><br><?php
 		}

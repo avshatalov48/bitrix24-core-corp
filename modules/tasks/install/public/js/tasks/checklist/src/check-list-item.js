@@ -1,11 +1,11 @@
 import 'ui.design-tokens';
 import './css/check-list-item.css';
 
-import {Dom, Event, Loc, Runtime, Tag, Text} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events';
+import { Dom, Event, Loc, Runtime, Tag, Text } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 
-import {CompositeTreeItem} from './composite-tree-item';
-import {CheckListItemFields} from './check-list-item-fields';
+import { CompositeTreeItem } from './composite-tree-item';
+import { CheckListItemFields } from './check-list-item-fields';
 
 class CheckListItem extends CompositeTreeItem
 {
@@ -215,7 +215,7 @@ class CheckListItem extends CompositeTreeItem
 			}
 		}
 
-		return {start, end};
+		return { start, end };
 	}
 
 	static getDefaultCheckListTitle(title)
@@ -231,7 +231,10 @@ class CheckListItem extends CompositeTreeItem
 			else if (title.match(/BX_CHECKLIST_\d+$/))
 			{
 				const itemNumber = title.replace('BX_CHECKLIST_', '');
-				defaultTitle = Loc.getMessage('TASKS_CHECKLIST_DEFAULT_DISPLAY_TITLE_WITH_NUMBER').replace('#ITEM_NUMBER#', itemNumber);
+				defaultTitle = Loc.getMessage('TASKS_CHECKLIST_DEFAULT_DISPLAY_TITLE_WITH_NUMBER').replace(
+					'#ITEM_NUMBER#',
+					itemNumber,
+				);
 			}
 		}
 
@@ -317,7 +320,7 @@ class CheckListItem extends CompositeTreeItem
 
 	constructor(fields = {})
 	{
-		const {action} = fields;
+		const { action } = fields;
 
 		super();
 		this.fields = new CheckListItemFields(fields);
@@ -549,7 +552,7 @@ class CheckListItem extends CompositeTreeItem
 			this.getNotificationBalloon(action, data);
 		}
 
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'delete'});
+		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action: 'delete' });
 
 		this.input = null;
 		this.updateMode = false;
@@ -565,7 +568,7 @@ class CheckListItem extends CompositeTreeItem
 		{
 			const items = this.getSelectedItems();
 			const action = 'DELETE_SELECTED';
-			const data = {items};
+			const data = { items };
 
 			this.runForEachSelectedItem((item) => {
 				item.fields.setIsSelected(false);
@@ -601,8 +604,7 @@ class CheckListItem extends CompositeTreeItem
 				actions.push({
 					title: Loc.getMessage('TASKS_CHECKLIST_NOTIFICATION_BALLOON_CANCEL'),
 					events: {
-						click: (event, balloon) =>
-						{
+						click: (event, balloon) => {
 							balloon.close();
 
 							this.restore();
@@ -620,8 +622,7 @@ class CheckListItem extends CompositeTreeItem
 				actions.push({
 					title: Loc.getMessage('TASKS_CHECKLIST_NOTIFICATION_BALLOON_CANCEL'),
 					events: {
-						click: (event, balloon) =>
-						{
+						click: (event, balloon) => {
 							balloon.close();
 
 							data.items.forEach((item) => {
@@ -666,7 +667,7 @@ class CheckListItem extends CompositeTreeItem
 		}
 
 		BX.loadExt('ui.notification').then(() => {
-			BX.UI.Notification.Center.notify({content, actions});
+			BX.UI.Notification.Center.notify({ content, actions });
 		});
 	}
 
@@ -690,7 +691,8 @@ class CheckListItem extends CompositeTreeItem
 				offsetLeft: e.target.offsetWidth / 3,
 				angle: true,
 				events: {
-					onPopupClose() {
+					onPopupClose()
+					{
 						this.destroy();
 					},
 				},
@@ -731,7 +733,7 @@ class CheckListItem extends CompositeTreeItem
 				});
 			});
 
-			popupMenuItems.push({delimiter: true});
+			popupMenuItems.push({ delimiter: true });
 			popupMenuItems.push(toNewCheckListMenuItem);
 
 			return popupMenuItems;
@@ -751,7 +753,7 @@ class CheckListItem extends CompositeTreeItem
 			});
 		});
 
-		popupMenuItems.push({delimiter: true});
+		popupMenuItems.push({ delimiter: true });
 		popupMenuItems.push(toNewCheckListMenuItem);
 
 		return popupMenuItems;
@@ -760,7 +762,7 @@ class CheckListItem extends CompositeTreeItem
 	moveToNewCheckList(number)
 	{
 		const title = `${Loc.getMessage('TASKS_CHECKLIST_NEW_CHECKLIST_TITLE')}`.replace('#ITEM_NUMBER#', number);
-		const newCheckList = new CheckListItem({TITLE: title});
+		const newCheckList = new CheckListItem({ TITLE: title });
 
 		this.getRootNode().addCheckListItem(newCheckList).then(() => {
 			if (this.checkSelectedItems())
@@ -808,7 +810,10 @@ class CheckListItem extends CompositeTreeItem
 
 		this.fields.addMember(member);
 
-		const newInputText = `${inputText.slice(0, start - mentioned)}${startSpace}${Text.decode(member.nameFormatted)}${endSpace}`;
+		const newInputText = `${inputText.slice(
+			0,
+			start - mentioned,
+		)}${startSpace}${Text.decode(member.nameFormatted)}${endSpace}`;
 
 		this.inputCursorPosition.start = newInputText.length;
 		this.inputCursorPosition.end = newInputText.length;
@@ -823,32 +828,32 @@ class CheckListItem extends CompositeTreeItem
 	{
 		const type = 'auditor';
 		const userData = this.prepareUserData(auditor);
-		const resultAuditor = {...userData, type};
+		const resultAuditor = { ...userData, type };
 
 		const notificationAction = `${type.toUpperCase()}_ADDED`;
-		const notificationData = {avatar: auditor.avatar};
+		const notificationData = { avatar: auditor.avatar };
 
 		this.processMemberSelect(resultAuditor);
 		this.getNotificationBalloon(notificationAction, notificationData);
 
 		EventEmitter.emit('BX.Tasks.CheckListItem:auditorAdded', userData);
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'addAuditor'});
+		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action: 'addAuditor' });
 	}
 
 	onSocNetSelectorAccompliceSelected(accomplice)
 	{
 		const type = 'accomplice';
 		const userData = this.prepareUserData(accomplice);
-		const resultAccomplice = {...userData, type};
+		const resultAccomplice = { ...userData, type };
 
 		const notificationAction = `${type.toUpperCase()}_ADDED`;
-		const notificationData = {avatar: accomplice.avatar};
+		const notificationData = { avatar: accomplice.avatar };
 
 		this.processMemberSelect(resultAccomplice);
 		this.getNotificationBalloon(notificationAction, notificationData);
 
 		EventEmitter.emit('BX.Tasks.CheckListItem:accompliceAdded', userData);
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'addAccomplice'});
+		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action: 'addAccomplice' });
 	}
 
 	prepareUserData(user)
@@ -891,7 +896,7 @@ class CheckListItem extends CompositeTreeItem
 		this.isSelectorLoading = true;
 
 		Runtime.loadExtension('ui.entity-selector').then(exports => {
-			const {Dialog} = exports;
+			const { Dialog } = exports;
 			const dialog = new Dialog({
 				targetNode: e.target,
 				enableSearch: true,
@@ -905,6 +910,7 @@ class CheckListItem extends CompositeTreeItem
 							emailUsers: true,
 							networkUsers: this.optionManager.isNetworkEnabled,
 							extranetUsers: true,
+							analyticModuleName: 'task',
 						},
 					},
 				],
@@ -917,7 +923,7 @@ class CheckListItem extends CompositeTreeItem
 						this.mentioned = mentioned;
 						this.retrieveFocus();
 
-						const {item: selectedItem} = event.getData();
+						const { item: selectedItem } = event.getData();
 						typeFunction(selectedItem);
 					},
 				},
@@ -939,8 +945,8 @@ class CheckListItem extends CompositeTreeItem
 	onUploadAttachmentClick(e)
 	{
 		const nodeId = this.getNodeId();
-		const {prefix, diskUrls} = this.optionManager;
-		const {urlSelect, urlRenameFile, urlDeleteFile, urlUpload} = diskUrls;
+		const { prefix, diskUrls } = this.optionManager;
+		const { urlSelect, urlRenameFile, urlDeleteFile, urlUpload } = diskUrls;
 
 		if (this.filesLoaderPopup === null)
 		{
@@ -981,48 +987,57 @@ class CheckListItem extends CompositeTreeItem
 	{
 		this.fields.removeAttachment(fileId);
 		Dom.remove(this.getAttachmentsContainer().querySelector(`#disk-attach-${fileId}`));
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'deleteAttachment'});
+		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action: 'deleteAttachment' });
 	}
 
 	getPanelBodyLayout()
 	{
 		const membersLayout = Tag.render`
-			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-auditor" onclick="${this.onAddAuditorClick.bind(this)}">
+			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-auditor" onclick="${this.onAddAuditorClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 				<span class="tasks-checklist-item-editor-panel-text">${Tag.message`+ ${'TASKS_CHECKLIST_PANEL_AUDITOR'}`}</span>
 			</div>
 			<div class="tasks-checklist-item-editor-panel-separator"></div>
-			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-accomplice" onclick="${this.onAddAccompliceClick.bind(this)}">
+			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-accomplice" onclick="${this.onAddAccompliceClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 				<span class="tasks-checklist-item-editor-panel-text">${Tag.message`+ ${'TASKS_CHECKLIST_PANEL_ACCOMPLICE'}`}</span>
 			</div>
 		`;
 		const attachmentButtonLayout = Tag.render`
-			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-attachment" onclick="${this.onUploadAttachmentClick.bind(this)}">
+			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-attachment" onclick="${this.onUploadAttachmentClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 			</div>
 		`;
 		const itemsActionButtonsLayout = Tag.render`
 			${this.checkSelectedItems() ? '' : attachmentButtonLayout}
-			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabin" onclick="${this.onTabInClick.bind(this)}">
+			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabin" onclick="${this.onTabInClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 			</div>
-			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabout" onclick="${this.onTabOutClick.bind(this)}">
+			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-tabout" onclick="${this.onTabOutClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 			</div>
 			<div class="tasks-checklist-item-editor-panel-separator"></div>
 			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-important
-				${this.fields.getIsImportant() ? ' tasks-checklist-item-editor-panel-btn-important-selected' : ''}" onclick="${this.onImportantClick.bind(this)}">
+				${this.fields.getIsImportant() ? ' tasks-checklist-item-editor-panel-btn-important-selected' : ''}" onclick="${this.onImportantClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 				<span class="tasks-checklist-item-editor-panel-text">${Loc.getMessage('TASKS_CHECKLIST_PANEL_IMPORTANT')}</span>
 			</div>
 			<div class="tasks-checklist-item-editor-panel-separator"></div>
-			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-checklist" onclick="${this.onToAnotherCheckListClick.bind(this)}">
+			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-checklist" onclick="${this.onToAnotherCheckListClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
-				<span class="tasks-checklist-item-editor-panel-text">${Loc.getMessage('TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST')}</span>
+				<span class="tasks-checklist-item-editor-panel-text">${Loc.getMessage(
+			'TASKS_CHECKLIST_PANEL_TO_ANOTHER_CHECKLIST')}</span>
 			</div>
 			<div class="tasks-checklist-item-editor-panel-separator"></div>
-			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-remove" onclick="${this.onDeleteClick.bind(this)}">
+			<div class="tasks-checklist-item-editor-panel-btn tasks-checklist-item-editor-panel-btn-remove" onclick="${this.onDeleteClick.bind(
+			this)}">
 				<span class="tasks-checklist-item-editor-panel-icon"></span>
 			</div>
 		`;
@@ -1049,13 +1064,13 @@ class CheckListItem extends CompositeTreeItem
 
 	getTitleLayout()
 	{
-		const {userPath} = this.optionManager;
+		const { userPath } = this.optionManager;
 		const escapeRegExp = (string) => string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 		let title = this.fields.getTitle();
 
 		title = (this.isCheckList() ? CheckListItem.getDefaultCheckListTitle(title) : title);
 
-		this.fields.getMembers().forEach(({id, nameFormatted, type}) => {
+		this.fields.getMembers().forEach(({ id, nameFormatted, type }) => {
 			const regExp = new RegExp(escapeRegExp(nameFormatted), 'g');
 			const url = userPath.replace('#user_id#', id).replace('#USER_ID#', id);
 			title = title.replace(regExp, CheckListItem.getMemberLinkLayout(type, nameFormatted, url));
@@ -1074,7 +1089,7 @@ class CheckListItem extends CompositeTreeItem
 	{
 		const membersToDelete = [];
 
-		this.fields.getMembers().forEach(({id, nameFormatted}) => {
+		this.fields.getMembers().forEach(({ id, nameFormatted }) => {
 			if (this.fields.getTitle().indexOf(nameFormatted) === -1)
 			{
 				membersToDelete.push(id);
@@ -1124,7 +1139,7 @@ class CheckListItem extends CompositeTreeItem
 
 	handleTaskOptions()
 	{
-		const {userId, showCompleted, showOnlyMine} = this.optionManager;
+		const { userId, showCompleted, showOnlyMine } = this.optionManager;
 
 		this.getRootNode().hideByCondition((item) => {
 			const isComplete = item.fields.getIsComplete();
@@ -1287,7 +1302,7 @@ class CheckListItem extends CompositeTreeItem
 	{
 		if (this.input !== null && this.inputCursorPosition)
 		{
-			const {start, end} = this.inputCursorPosition;
+			const { start, end } = this.inputCursorPosition;
 
 			setTimeout(() => {
 				this.input.focus();
@@ -1513,7 +1528,7 @@ class CheckListItem extends CompositeTreeItem
 			if (!rootNode.checkActiveUpdateExist())
 			{
 				this.enableUpdateMode();
-				EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'toggleUpdateMode'});
+				EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action: 'toggleUpdateMode' });
 			}
 		}
 	}
@@ -1651,10 +1666,13 @@ class CheckListItem extends CompositeTreeItem
 		else
 		{
 			this.fields.setIsImportant(true);
-			Dom.insertBefore(this.getImportantLayout(), this.container.querySelector('.tasks-checklist-item-description'));
+			Dom.insertBefore(
+				this.getImportantLayout(),
+				this.container.querySelector('.tasks-checklist-item-description'),
+			);
 		}
 
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'toggleImportant'});
+		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action: 'toggleImportant' });
 
 		this.retrieveFocus();
 	}
@@ -1731,7 +1749,7 @@ class CheckListItem extends CompositeTreeItem
 
 	runAjaxCompleteAll(): void
 	{
-		const {ajaxActions, entityId, entityType, stableTreeStructure} = this.optionManager;
+		const { ajaxActions, entityId, entityType, stableTreeStructure } = this.optionManager;
 
 		if (!ajaxActions || !ajaxActions.COMPLETE_ALL)
 		{
@@ -1742,10 +1760,14 @@ class CheckListItem extends CompositeTreeItem
 			data: {
 				[`${entityType.toLowerCase()}Id`]: entityId,
 				checkListItemId: this.fields.getId(),
-			}
+			},
 		}).then((response) => {
 			response.data.forEach(item => {
-				this.findById(item.id).updateStableTreeStructure(item.isComplete, stableTreeStructure, stableTreeStructure);
+				this.findById(item.id).updateStableTreeStructure(
+					item.isComplete,
+					stableTreeStructure,
+					stableTreeStructure,
+				);
 			});
 		});
 	}
@@ -1793,14 +1815,14 @@ class CheckListItem extends CompositeTreeItem
 		}
 
 		const data = {};
-		const {ajaxActions, entityId, entityType, stableTreeStructure} = this.optionManager;
+		const { ajaxActions, entityId, entityType, stableTreeStructure } = this.optionManager;
 		const actionName = (this.fields.getIsComplete() ? ajaxActions.COMPLETE : ajaxActions.RENEW);
 
 		data[`${entityType.toLowerCase()}Id`] = entityId;
 		data.checkListItemId = id;
 
-		BX.ajax.runAction(actionName, {data}).then((response) => {
-			const {isComplete} = response.data.checkListItem;
+		BX.ajax.runAction(actionName, { data }).then((response) => {
+			const { isComplete } = response.data.checkListItem;
 			this.updateStableTreeStructure(isComplete, stableTreeStructure, stableTreeStructure);
 		});
 	}
@@ -1959,7 +1981,9 @@ class CheckListItem extends CompositeTreeItem
 
 			wrapperList.style.overflow = 'hidden';
 			wrapperList.style.height = wrapperListHeight;
-			setTimeout(() => { wrapperList.style.height = 0; }, 0);
+			setTimeout(() => {
+				wrapperList.style.height = 0;
+			}, 0);
 
 			Dom.addClass(this.container, this.collapseClass);
 
@@ -2140,7 +2164,7 @@ class CheckListItem extends CompositeTreeItem
 		this.handleCheckListIsEmpty();
 		this.handleTaskOptions();
 
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action});
+		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action });
 	}
 
 	makeChildOf(item, position = 'bottom', action = 'makeChildOf')
@@ -2170,7 +2194,7 @@ class CheckListItem extends CompositeTreeItem
 			this.handleCheckListIsEmpty();
 			this.handleTaskOptions();
 
-			EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action});
+			EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action });
 		}
 	}
 
@@ -2326,7 +2350,7 @@ class CheckListItem extends CompositeTreeItem
 		};
 
 		this.fields.getMembers().forEach((value, key) => {
-			const {nameFormatted, type} = value;
+			const { nameFormatted, type } = value;
 			itemRequestData.MEMBERS.push({
 				[key]: {
 					TYPE: type,
@@ -2411,7 +2435,7 @@ class CheckListItem extends CompositeTreeItem
 	getAttachmentsLayout()
 	{
 		const searchId = this.fields.getId() || this.fields.getCopiedId();
-		const {optionManager} = this;
+		const { optionManager } = this;
 		const optionAttachments = optionManager.attachments;
 		let attachmentsLayout = '';
 
@@ -2498,14 +2522,17 @@ class CheckListItem extends CompositeTreeItem
 
 	getLoadedAttachmentLayout(attachment)
 	{
-		const {id, name, viewUrl, size, ext} = attachment;
+		const { id, name, viewUrl, size, ext } = attachment;
 		let img = '';
 
 		if (viewUrl)
 		{
 			img = Tag.render`
 				<div class="tasks-checklist-item-attachment-file-cover" style="background-image: url(${viewUrl})">
-					<div class="tasks-checklist-item-attachment-file-remove" onclick="${this.onDeleteAttachmentClick.bind(this, id)}"></div>
+					<div class="tasks-checklist-item-attachment-file-remove" onclick="${this.onDeleteAttachmentClick.bind(
+				this,
+				id,
+			)}"></div>
 				</div>
 			`;
 		}
@@ -2516,7 +2543,10 @@ class CheckListItem extends CompositeTreeItem
 			img = Tag.render`
 				<div class="tasks-checklist-item-attachment-file-cover">
 					<div class="ui-icon ui-icon-file-${extension}"><i></i></div>
-					<div class="tasks-checklist-item-attachment-file-remove" onclick="${this.onDeleteAttachmentClick.bind(this, id)}"></div>
+					<div class="tasks-checklist-item-attachment-file-remove" onclick="${this.onDeleteAttachmentClick.bind(
+				this,
+				id,
+			)}"></div>
 				</div>
 			`;
 		}
@@ -2545,7 +2575,7 @@ class CheckListItem extends CompositeTreeItem
 	getAttachmentsLoaderLayout()
 	{
 		const nodeId = this.getNodeId();
-		const {prefix} = this.optionManager;
+		const { prefix } = this.optionManager;
 		const filesChooser = Tag.render`
 			<div id="files_chooser">
 				<div id="diskuf-selectdialog-${nodeId}" class="diskuf-files-entity diskuf-selectdialog bx-disk">
@@ -2559,7 +2589,8 @@ class CheckListItem extends CompositeTreeItem
 					<div class="diskuf-extended" style="display: block">
 						<input type="hidden" name="${prefix}[${nodeId}][UF_CHECKLIST_FILES][]" value=""/>
 						<div class="diskuf-extended-item">
-							<label for="file_loader_${nodeId}" onclick="${this.onAttachmentsLoaderMenuItemClick.bind(this)}">
+							<label for="file_loader_${nodeId}" onclick="${this.onAttachmentsLoaderMenuItemClick.bind(
+			this)}">
 								${Loc.getMessage('TASKS_CHECKLIST_FILES_LOADER_POPUP_FROM_COMPUTER')}
 							</label>
 							<input class="diskuf-fileUploader" id="file_loader_${nodeId}" type="file"
@@ -2590,7 +2621,7 @@ class CheckListItem extends CompositeTreeItem
 
 	onUploadProgress(item, progress)
 	{
-		const {id, name, size} = item;
+		const { id, name, size } = item;
 		const newProgress = Math.min(progress, 98);
 
 		if (!this.filesLoaderProgressBars.has(id))
@@ -2654,7 +2685,7 @@ class CheckListItem extends CompositeTreeItem
 			ext: uploaderFile.ext,
 		};
 
-		this.fields.addAttachments({[attachmentId]: attachmentId});
+		this.fields.addAttachments({ [attachmentId]: attachmentId });
 		this.filesLoaderProgressBars.delete(uploaderFile.id);
 
 		const attachmentProgress = this.getAttachmentsContainer().querySelector(`#disk-attach-${uploaderFile.id}`);
@@ -2684,7 +2715,7 @@ class CheckListItem extends CompositeTreeItem
 			}
 		}
 
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'fileUpload'});
+		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', { action: 'fileUpload' });
 	}
 
 	getTaskRootLayout(children)
@@ -2782,7 +2813,8 @@ class CheckListItem extends CompositeTreeItem
 					<div class="tasks-checklist-header-actions">
 						${layouts.completeAllButton}
 						${layouts.groupButton}
-						<div class="tasks-checklist-action-collapse-btn collapsed" onclick="${this.onCollapseButtonClick.bind(this)}"></div>
+						<div class="tasks-checklist-action-collapse-btn collapsed" onclick="${this.onCollapseButtonClick.bind(
+			this)}"></div>
 					</div>
 				</div>
 				<div class="tasks-checklist-items-wrapper">
@@ -2829,11 +2861,13 @@ class CheckListItem extends CompositeTreeItem
 		this.container = Tag.render`
 			<div class="tasks-checklist-item" id="${nodeId}">
 				<div class="tasks-checklist-item-inner droppable ${this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : ''}"
-					 onmousedown="${this.onInnerContainerMouseDown.bind(this)}" onmouseup="${this.onInnerContainerMouseUp.bind(this)}">
+					 onmousedown="${this.onInnerContainerMouseDown.bind(this)}" onmouseup="${this.onInnerContainerMouseUp.bind(
+			this)}">
 					${layouts.dndButton}
 					<div class="tasks-checklist-item-flag-block">
 						<div class="tasks-checklist-item-flag">
-							<label class="tasks-checklist-item-flag-element" onclick="${this.onCompleteButtonClick.bind(this)}">
+							<label class="tasks-checklist-item-flag-element" onclick="${this.onCompleteButtonClick.bind(
+			this)}">
 								<span class="tasks-checklist-item-flag-sub-checklist-progress" id="progress_${nodeId}">
 									${this.progress.getContainer()}
 								</span>
@@ -2950,7 +2984,7 @@ class MobileCheckListItem extends CheckListItem
 		};
 
 		this.fields.getMembers().forEach((value, key) => {
-			itemRequestData.MEMBERS[key] = {TYPE: membersTypes[value.type]};
+			itemRequestData.MEMBERS[key] = { TYPE: membersTypes[value.type] };
 		});
 
 		return itemRequestData;
@@ -2972,7 +3006,6 @@ class MobileCheckListItem extends CheckListItem
 
 			fields.PARENT_ID = parent.fields.getId() || (parent.isTaskRoot() ? 0 : null);
 
-
 			BX.ajax.runAction('tasks.task.checklist.add', {
 				data: {
 					taskId: this.optionManager.entityId,
@@ -2981,7 +3014,7 @@ class MobileCheckListItem extends CheckListItem
 			}).then((response) => {
 				if (response.status === 'success')
 				{
-					const {checkListItem} = response.data;
+					const { checkListItem } = response.data;
 					this.fields.setId(checkListItem.id);
 					resolve();
 				}
@@ -3050,10 +3083,10 @@ class MobileCheckListItem extends CheckListItem
 		const toChecklistAddData = {
 			taskId: this.optionManager.entityId,
 			checkListItemId: this.fields.getId(),
-			members: {[member.id]: currentType.letter},
+			members: { [member.id]: currentType.letter },
 		};
 
-		BX.ajax.runAction(toChecklistAddAction, {data: toChecklistAddData}).then((toChecklistAddResponse) => {
+		BX.ajax.runAction(toChecklistAddAction, { data: toChecklistAddData }).then((toChecklistAddResponse) => {
 			if (toChecklistAddResponse.status === 'success')
 			{
 				if (focusInput)
@@ -3061,10 +3094,12 @@ class MobileCheckListItem extends CheckListItem
 					this.toggleUpdateMode();
 				}
 
-				BX.ajax.runAction(`tasks.task.${currentType.actionName}`, {data: {
-					taskId: this.optionManager.entityId,
-					[currentType.paramName]: [member.id],
-				}});
+				BX.ajax.runAction(`tasks.task.${currentType.actionName}`, {
+					data: {
+						taskId: this.optionManager.entityId,
+						[currentType.paramName]: [member.id],
+					},
+				});
 			}
 			else
 			{
@@ -3174,8 +3209,8 @@ class MobileCheckListItem extends CheckListItem
 		const type = (this.isCheckList() ? 'checklist' : 'checklistItem');
 
 		Object.keys(popupMenuItemsBuildMap[type]).forEach((id) => {
-			const {sectionCode, title, iconUrl, condition} = popupMenuItemsBuildMap[type][id];
-			popupMenuItems.push({id, sectionCode, title, iconUrl, disable: !condition()});
+			const { sectionCode, title, iconUrl, condition } = popupMenuItemsBuildMap[type][id];
+			popupMenuItems.push({ id, sectionCode, title, iconUrl, disable: !condition() });
 		});
 
 		return popupMenuItems;
@@ -3205,7 +3240,7 @@ class MobileCheckListItem extends CheckListItem
 
 	onMemberSelectedEvent(eventData)
 	{
-		const {nodeId, member, position, focusInput} = eventData;
+		const { nodeId, member, position, focusInput } = eventData;
 		const node = this.findChild(nodeId);
 
 		if (!node)
@@ -3238,7 +3273,7 @@ class MobileCheckListItem extends CheckListItem
 
 		if (!this.checkEditMode())
 		{
-			node.sendUpdateAjaxAction({TITLE: Text.decode(node.fields.getTitle())});
+			node.sendUpdateAjaxAction({ TITLE: Text.decode(node.fields.getTitle()) });
 			node.sendMembersAddAjaxAction(member, focusInput);
 		}
 		else if (focusInput)
@@ -3249,7 +3284,7 @@ class MobileCheckListItem extends CheckListItem
 
 	onAddAttachmentEvent(eventData)
 	{
-		const {nodeId, attachment} = eventData;
+		const { nodeId, attachment } = eventData;
 		const node = this.findChild(nodeId);
 
 		if (node)
@@ -3257,13 +3292,13 @@ class MobileCheckListItem extends CheckListItem
 			const key = Object.keys(attachment)[0];
 			const value = Object.values(attachment)[0];
 
-			node.fields.addAttachments({[`n${key}`]: value});
+			node.fields.addAttachments({ [`n${key}`]: value });
 		}
 	}
 
 	onRemoveAttachmentEvent(eventData)
 	{
-		const {nodeId, attachmentId} = eventData;
+		const { nodeId, attachmentId } = eventData;
 		const node = this.findChild(nodeId);
 
 		if (node)
@@ -3284,7 +3319,8 @@ class MobileCheckListItem extends CheckListItem
 	setLayoutAttachmentsCount(attachmentsCount)
 	{
 		const newAttachmentsLayout = Tag.render`
-			<div class="mobile-task-checklist-item-param" id="attachments_${this.getNodeId()}" onclick="${this.onAttachmentsLayoutClick.bind(this)}">
+			<div class="mobile-task-checklist-item-param" id="attachments_${this.getNodeId()}" onclick="${this.onAttachmentsLayoutClick.bind(
+			this)}">
 				${attachmentsCount > 0 ? `<div class="mobile-task-checklist-item-param-attach">${attachmentsCount}</div>` : ''}
 			</div>
 		`;
@@ -3304,7 +3340,7 @@ class MobileCheckListItem extends CheckListItem
 
 	onAttachFilesEvent(eventData)
 	{
-		const {nodeId, filesToRemove, filesToAdd, attachments, checkListItemId} = eventData;
+		const { nodeId, filesToRemove, filesToAdd, attachments, checkListItemId } = eventData;
 		const node = (nodeId ? this.findChild(nodeId) : this.findById(checkListItemId));
 
 		if (node)
@@ -3315,7 +3351,7 @@ class MobileCheckListItem extends CheckListItem
 
 	onRemoveFilesEvent(eventData)
 	{
-		const {nodeId, filesToRemove, filesToAdd, attachments} = eventData;
+		const { nodeId, filesToRemove, filesToAdd, attachments } = eventData;
 		const node = this.findChild(nodeId);
 
 		if (node)
@@ -3326,7 +3362,7 @@ class MobileCheckListItem extends CheckListItem
 
 	onFakeAttachFilesEvent(eventData)
 	{
-		const {nodeId, filesToRemove, filesToAdd, checkListItemId} = eventData;
+		const { nodeId, filesToRemove, filesToAdd, checkListItemId } = eventData;
 		const node = (nodeId ? this.findChild(nodeId) : this.findById(checkListItemId));
 
 		if (node)
@@ -3337,7 +3373,7 @@ class MobileCheckListItem extends CheckListItem
 
 	onFakeRemoveFilesEvent(eventData)
 	{
-		const {nodeId, filesToRemove, filesToAdd} = eventData;
+		const { nodeId, filesToRemove, filesToAdd } = eventData;
 		const node = this.findChild(nodeId);
 
 		if (node)
@@ -3392,7 +3428,9 @@ class MobileCheckListItem extends CheckListItem
 						PARENT_ID: node.getParent().fields.getId(),
 						SORT_INDEX: node.fields.getSortIndex(),
 					};
-					const onFailCallback = () => { node.tabOut(); };
+					const onFailCallback = () => {
+						node.tabOut();
+					};
 
 					node.sendUpdateAjaxAction(fields, onFailCallback);
 				}
@@ -3423,15 +3461,17 @@ class MobileCheckListItem extends CheckListItem
 			node.toggleImportant();
 			if (!this.checkEditMode())
 			{
-				const onFailCallback = () => { node.toggleImportant(); };
-				node.sendUpdateAjaxAction({IS_IMPORTANT: node.fields.getIsImportant()}, onFailCallback);
+				const onFailCallback = () => {
+					node.toggleImportant();
+				};
+				node.sendUpdateAjaxAction({ IS_IMPORTANT: node.fields.getIsImportant() }, onFailCallback);
 			}
 		}
 	}
 
 	onToAnotherCheckListEvent(eventData)
 	{
-		const {nodeId, checklistId} = eventData;
+		const { nodeId, checklistId } = eventData;
 		const node = this.findChild(nodeId);
 
 		if (!node)
@@ -3503,7 +3543,7 @@ class MobileCheckListItem extends CheckListItem
 	moveToNewCheckList(number)
 	{
 		const title = `${Loc.getMessage('TASKS_CHECKLIST_NEW_CHECKLIST_TITLE')}`.replace('#ITEM_NUMBER#', number);
-		const newCheckList = new MobileCheckListItem({TITLE: title});
+		const newCheckList = new MobileCheckListItem({ TITLE: title });
 
 		this.getRootNode().addCheckListItem(newCheckList).then(() => {
 			this.makeChildOf(newCheckList);
@@ -3516,7 +3556,8 @@ class MobileCheckListItem extends CheckListItem
 						PARENT_ID: this.getParent().fields.getId(),
 						SORT_INDEX: this.fields.getSortIndex(),
 					});
-				}, () => {});
+				}, () => {
+				});
 			}
 		});
 	}
@@ -3580,7 +3621,9 @@ class MobileCheckListItem extends CheckListItem
 				}
 				else
 				{
-					this.sendAddAjaxAction().then(() => {}, () => {});
+					this.sendAddAjaxAction().then(() => {
+					}, () => {
+					});
 				}
 			}
 		}
@@ -3600,7 +3643,7 @@ class MobileCheckListItem extends CheckListItem
 			BXMobileApp.Events.postToComponent(
 				'onChecklistInputMemberSelectorCall',
 				params,
-				this.getNativeComponentName()
+				this.getNativeComponentName(),
 			);
 			e.preventDefault();
 		}
@@ -3622,7 +3665,7 @@ class MobileCheckListItem extends CheckListItem
 			return {};
 		}
 
-		const {entityId, entityType, taskGuid, diskOptions, mode} = this.optionManager;
+		const { entityId, entityType, taskGuid, diskOptions, mode } = this.optionManager;
 		const defaultParams = {
 			taskGuid,
 			taskId: entityId,
@@ -3642,7 +3685,7 @@ class MobileCheckListItem extends CheckListItem
 			localParams = {
 				popupChecklists: this.getPopupChecklistsList(),
 				popupMenuItems: this.getPopupMenuItems(),
-				popupMenuSections: [{id: '0', title: Text.decode(this.fields.getTitle())}],
+				popupMenuSections: [{ id: '0', title: Text.decode(this.fields.getTitle()) }],
 			};
 		}
 		else if (type === 'attachments')
@@ -3653,7 +3696,7 @@ class MobileCheckListItem extends CheckListItem
 			};
 		}
 
-		return {...defaultParams, ...localParams};
+		return { ...defaultParams, ...localParams };
 	}
 
 	onAttachmentsLayoutClick()
@@ -3715,7 +3758,8 @@ class MobileCheckListItem extends CheckListItem
 		const attachmentsCount = Object.keys(this.fields.getAttachments()).length;
 
 		return Tag.render`
-			<div class="mobile-task-checklist-item-param" id="attachments_${this.getNodeId()}" onclick="${this.onAttachmentsLayoutClick.bind(this)}">
+			<div class="mobile-task-checklist-item-param" id="attachments_${this.getNodeId()}" onclick="${this.onAttachmentsLayoutClick.bind(
+			this)}">
 				${attachmentsCount > 0 ? `<div class="mobile-task-checklist-item-param-attach">${attachmentsCount}</div>` : ''}
 			</div>
 		`;
@@ -3816,4 +3860,4 @@ class MobileCheckListItem extends CheckListItem
 	}
 }
 
-export {CheckListItem, MobileCheckListItem};
+export { CheckListItem, MobileCheckListItem };

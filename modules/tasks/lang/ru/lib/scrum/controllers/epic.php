@@ -17,4 +17,5 @@ $MESS['TASKS_EC_ERROR_COULD_NOT_READ_EPIC'] = 'Не удалось найти Э
 $MESS['TASKS_EC_ERROR_COULD_NOT_DELETE_EPIC'] = 'Не удалось удалить Эпик.';
 $MESS["TASKS_SCRUM_TASKS_GRID_NAME"] = "Название";
 $MESS["TASKS_SCRUM_TASKS_GRID_RESPONSIBLE"] = "Ответственный";
+$MESS['TASKS_SCRUM_TASKS_GRID_ASSIGNEE'] = 'Исполнитель';
 $MESS["TASKS_SCRUM_TASKS_GRID_STORY_POINTS"] = "Стори Поинты";

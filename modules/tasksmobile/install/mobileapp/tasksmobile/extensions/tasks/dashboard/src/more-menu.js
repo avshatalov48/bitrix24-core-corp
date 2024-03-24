@@ -96,7 +96,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		 */
 		openMoreMenu()
 		{
-			let menuItems = [
+			const menuItems = [
 				{
 					id: TaskFilter.counterType.expired,
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_EXPIRED'),

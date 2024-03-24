@@ -71,11 +71,24 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 				return false;
 			}
 
+			const canBeReloaded = BX.prop.getBoolean(item, 'canBeReloaded', true);
+			if (!canBeReloaded)
+			{
+				return false;
+			}
+
 			const appLanguage = env.languageId.toLowerCase();
 			const languageId = BX.prop.getString(item, 'languageId', appLanguage).toLowerCase();
-			const canBeReloaded = BX.prop.getBoolean(item, 'canBeReloaded', true);
+			if (languageId !== appLanguage)
+			{
+				return true;
+			}
 
-			return (languageId !== appLanguage) && canBeReloaded;
+			const userId = Number(env.userId.toString());
+			const targetUsersList = BX.prop.getArray(item, 'targetUsersList', []);
+			const isForCurrentUser = targetUsersList.includes(userId) || targetUsersList.length === 0;
+
+			return !isForCurrentUser;
 		}
 
 		fetchItems()

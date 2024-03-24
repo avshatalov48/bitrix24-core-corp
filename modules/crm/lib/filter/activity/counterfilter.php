@@ -66,12 +66,21 @@ final class CounterFilter
 
 		if ($this->queryApproach === EntityDataProvider::QUERY_APPROACH_ORM)
 		{
-			$this->prepareFilterFieldsWithFactory($filterFields, $counter, $counterUserIds, $isExcludeUsers);
+			$this->prepareFilterFieldsWithFactory(
+				$filterFields,
+				$counter,
+				$counterUserIds,
+				$isExcludeUsers,
+				$entityTypeId
+			);
 		}
 		elseif ($this->queryApproach === EntityDataProvider::QUERY_APPROACH_BUILDER)
 		{
 			$entity = EntityManager::resolveByTypeID($entityTypeId);
-			$this->prepareFilterFieldsWithoutFactory($entity, $filterFields, $counter, $counterUserIds, $isExcludeUsers);
+			if ($entity)
+			{
+				$this->prepareFilterFieldsWithoutFactory($entity, $filterFields, $counter, $counterUserIds, $isExcludeUsers);
+			}
 		}
 	}
 
@@ -79,16 +88,18 @@ final class CounterFilter
 		array &$filterFields,
 		EntityCounter $counter,
 		array $counterUserIds,
-		bool $isExcludeUsers
+		bool $isExcludeUsers,
+		int $entityTypeId
 	): void
 	{
+		$stageField = $this->getStageField($entityTypeId);
 		$activitySubQuery = $counter->getEntityListSqlExpression(
 			[
 				'MASTER_ALIAS' => null,
 				'MASTER_IDENTITY' => null,
 				'USER_IDS' => $counterUserIds,
 				'EXCLUDE_USERS' => $isExcludeUsers,
-				'STAGE_SEMANTIC_ID' => $filterFields['STAGE_SEMANTIC_ID'] ?? null,
+				'STAGE_SEMANTIC_ID' => $filterFields[$stageField] ?? null,
 			]
 		);
 		$filterFields[] = ['@ID' => new SqlExpression($activitySubQuery)];
@@ -102,15 +113,25 @@ final class CounterFilter
 		bool $isExcludeUsers
 	): void
 	{
+		$stageField = $this->getStageField($entity->getEntityTypeID());
 		$filterFields += $counter->prepareEntityListFilter(
 			[
 				'MASTER_ALIAS' => $entity->getDbTableAlias(),
 				'MASTER_IDENTITY' => 'ID',
 				'USER_IDS' => $counterUserIds,
 				'EXCLUDE_USERS' => $isExcludeUsers,
-				'STAGE_SEMANTIC_ID' => $filterFields['STAGE_SEMANTIC_ID'] ?? null,
+				'STAGE_SEMANTIC_ID' => $filterFields[$stageField] ?? null,
 			]
 		);
+	}
+
+	private function getStageField(int $entityId): ?string
+	{
+		return match ($entityId) {
+			\CCrmOwnerType::Lead => 'STATUS_SEMANTIC_ID',
+			\CCrmOwnerType::Quote => '=STATUS_ID',
+			default => 'STAGE_SEMANTIC_ID',
+		};
 	}
 
 	private function extractUserFilterParamsFromFilter(array &$filterFields): array

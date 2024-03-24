@@ -12,6 +12,7 @@
 	const { TaskCreate } = require('tasks/layout/task/create');
 	const { TaskFilter } = require('tasks/filter/task');
 	const colorUtils = require('utils/color');
+	const { TaskStatus } = require('tasks/enum');
 
 	const platform = Application.getPlatform();
 	const caches = new Map();
@@ -47,7 +48,7 @@
 			{
 				dialogs.showSpinnerIndicator({
 					color: AppTheme.colors.base3,
-					backgroundColor: colorUtils.transparent(AppTheme.colors.base8, 0.7)
+					backgroundColor: colorUtils.transparent(AppTheme.colors.base8, 0.7),
 				});
 				this.isShowed = true;
 			}
@@ -3057,7 +3058,7 @@
 			if (task.isCompletedCounts)
 			{
 				this.updateItem(task.id, {
-					status: Task.statusList.pending,
+					status: TaskStatus.PENDING,
 					activityDate: Date.now(),
 				});
 				void task.renew();
@@ -3069,7 +3070,7 @@
 			else if (!task.isResultRequired || task.isOpenResultExists)
 			{
 				this.updateItem(task.id, {
-					status: Task.statusList.completed,
+					status: TaskStatus.COMPLETED,
 					activityDate: Date.now(),
 				});
 				void task.complete();
@@ -3359,7 +3360,7 @@
 		 */
 		onApproveAction(task)
 		{
-			if (task.status === Task.statusList.waitCtrl)
+			if (task.status === TaskStatus.SUPPOSEDLY_COMPLETED)
 			{
 				task.updateActions({
 					canApprove: false,
@@ -3380,7 +3381,7 @@
 		 */
 		onDisapproveAction(task)
 		{
-			if (task.status === Task.statusList.waitCtrl)
+			if (task.status === TaskStatus.SUPPOSEDLY_COMPLETED)
 			{
 				task.updateActions({
 					canApprove: false,
@@ -3431,7 +3432,7 @@
 		 */
 		onStartAction(task)
 		{
-			if (task.status !== Task.statusList.inprogress)
+			if (task.status !== TaskStatus.IN_PROGRESS)
 			{
 				task.updateActions({
 					canStartTimer: false,
@@ -3450,7 +3451,7 @@
 		 */
 		onPauseAction(task)
 		{
-			if (task.status !== Task.statusList.pending)
+			if (task.status !== TaskStatus.PENDING)
 			{
 				task.updateActions({
 					canStartTimer: false,

@@ -13,7 +13,7 @@ global $APPLICATION, $DB;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
-use Bitrix\Tasks\Replicator\Template\Option\Options;
+use Bitrix\Tasks\Replication\Template\Option\Options;
 use Bitrix\Tasks\Template;
 
 Loc::loadMessages(__FILE__);
@@ -262,13 +262,13 @@ class CTaskTemplates
 				$r = CUser::GetByID($arFields["RESPONSIBLE_ID"]);
 				if (!$r->Fetch())
 				{
-					$this->_errors[] = array("text" => GetMessage("TASKS_BAD_RESPONSIBLE_ID_EX"), "id" => "ERROR_TASKS_BAD_RESPONSIBLE_ID_EX");
+					$this->_errors[] = array("text" => Loc::getMessage('TASKS_BAD_ASSIGNEE_EX'), "id" => "ERROR_TASKS_BAD_RESPONSIBLE_ID_EX");
 				}
 			}
 			else
 			{
 				if($ID === false)
-					$this->_errors[] = array("text" => GetMessage("TASKS_BAD_RESPONSIBLE_ID"), "id" => "ERROR_TASKS_BAD_RESPONSIBLE_ID");
+					$this->_errors[] = array("text" => Loc::getMessage('TASKS_BAD_ASSIGNEE_ID'), "id" => "ERROR_TASKS_BAD_RESPONSIBLE_ID");
 			}
 		}
 

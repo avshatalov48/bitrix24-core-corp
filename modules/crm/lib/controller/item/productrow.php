@@ -621,20 +621,22 @@ class ProductRow extends Base
 	}
 
 	/**
-	 * @param int $entityId
-	 * @param int $entityTypeId
-	 * @return array
+	 * @param int $ownerId
+	 * @param string $ownerType
+	 * @return array[]|null
 	 */
-	public function getUndistributedByPaymentsAction(int $entityId, int $entityTypeId): array
+	public function getAvailableForPaymentAction(int $ownerId, string $ownerType): ?array
 	{
 		$repository = ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
 
-		if (!$repository->checkPermission($entityTypeId, $entityId))
+		$ownerTypeId = \CCrmOwnerTypeAbbr::ResolveTypeID($ownerType);
+
+		if (!$repository->checkPermission($ownerTypeId, $ownerId))
 		{
-			return [];
+			return ['productRows' => []];
 		}
 
-		$orderIds = OrderEntityTable::getOrderIdsByOwner($entityId, $entityTypeId);
+		$orderIds = OrderEntityTable::getOrderIdsByOwner($ownerId, $ownerTypeId);
 		if (count($orderIds) > 1)
 		{
 			$this->addError(
@@ -642,10 +644,11 @@ class ProductRow extends Base
 					Loc::getMessage('CONTROLLER_ITEM_PRODUCT_ROW_ERROR_MULTI_ORDERS_NOT_SUPPORTED')
 				)
 			);
-			return [];
+
+			return null;
 		}
 
-		$manager = new Order\ProductManager($entityTypeId, $entityId);
+		$manager = new Order\ProductManager($ownerTypeId, $ownerId);
 
 		$orderId = current($orderIds);
 		if ($orderId)
@@ -666,16 +669,14 @@ class ProductRow extends Base
 
 		if (!$idToQuantityMap)
 		{
-			return [];
+			return ['productRows' => []];
 		}
 
-		$parameters = [];
-		if ($idToQuantityMap)
-		{
-			$parameters['filter'] = [
+		$parameters = [
+			'filter' => [
 				'=ID' => array_keys($idToQuantityMap)
-			];
-		}
+			]
+		];
 
 		$result = [];
 
@@ -684,9 +685,9 @@ class ProductRow extends Base
 		{
 			$product['QUANTITY'] = $idToQuantityMap[$product['ID']];
 
-			$result[] = $product;
+			$result[] = $this->convertKeysToCamelCase($product);
 		}
 
-		return $result;
+		return ['productRows' => $result];
 	}
 }

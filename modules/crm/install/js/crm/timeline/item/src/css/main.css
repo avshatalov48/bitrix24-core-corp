@@ -103,25 +103,6 @@
 	--crm-timeline__icon-size: 0.00000000001px; /* hack due to the css minifier replaces `0px` to `0` and breaks expression calc(100% - var(--crm-timeline__icon-size) - 18px); */
 }
 
-.crm-timeline__card_link {
-	font-weight: var(--ui-font-weight-normal, 400);
-	color: var(--ui-color-link-primary-base, #2066b0);
-	text-decoration: underline !important;
-	text-decoration-color: transparent !important;
-	cursor: pointer;
-	transition: var(--crm-timeline__transition-hover);
-	word-break: break-all;
-}
-
-.crm-timeline__card_link.--bold {
-	font-weight: var(--ui-font-weight-medium, 500);
-}
-
-.crm-timeline__card_link:hover {
-	/*text-decoration-color: var(--ui-color-link-primary-base, #2066b0) !important;*/
-	transition-duration: unset;
-}
-
 .crm-timeline__card-icon + .crm-timeline__card-container {
 	max-width: calc(100% - 98px);
 }

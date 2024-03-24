@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_NAME_1'),
+	'NAME' => Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_NAME_1_V2'),
 	'DESCRIPTION' => Loc::getMessage('TASKS_CHANGE_RESPONSIBLE_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'TasksChangeResponsibleActivity',

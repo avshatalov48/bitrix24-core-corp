@@ -205,6 +205,8 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 			this.layoutDeletedValue(entityEditor, id);
 		}
 
+		BX.Crm.RequisiteDetailsManager.create({ entityEditorId });
+
 		return entityEditor;
 	}
 

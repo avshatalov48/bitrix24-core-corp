@@ -43,6 +43,8 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
  */
 class ViewedTable extends TaskDataManager
 {
+	use Main\ORM\Data\Internal\MergeTrait;
+
 	private const STEP_LIMIT = 5000;
 
 	private static $cache = [];
@@ -126,7 +128,13 @@ class ViewedTable extends TaskDataManager
 		]);
 	}
 
-	public static function getListForReadAll(int $currentUserId, string $userJoin, string $groupCondition = '', array $select = []) :? array
+	public static function getListForReadAll(
+		int $currentUserId,
+		string $userJoin,
+		string $groupCondition = '',
+		array $select = [],
+		bool $distinct = false
+	): ?array
 	{
 		$result = [];
 		$connection = Main\Application::getConnection();
@@ -137,9 +145,10 @@ class ViewedTable extends TaskDataManager
 			$strSelect .= ",". $field["FIELD_NAME"]." AS ".$key."\n";
 		}
 
+		$distinct = $distinct ? 'DISTINCT' : '';
 		$sql = "
 			SELECT
-					{$strSelect}
+				{$distinct} {$strSelect}
 				FROM b_tasks T
 				INNER JOIN b_tasks_scorer TS
 					ON TS.TASK_ID = T.ID
@@ -184,9 +193,10 @@ class ViewedTable extends TaskDataManager
 		$connection = Main\Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
-		$viewedDate = $sqlHelper->convertToDbDateTime(new DateTime());
+		$currentDateTime = new DateTime();
+		$viewedDate = $sqlHelper->convertToDbDateTime($currentDateTime);
 
-		$list = static::getListForReadAll($currentUserId, $userJoin, $groupCondition);
+		$list = static::getListForReadAll($currentUserId, $userJoin, $groupCondition, [], true);
 
 		$inserts = [];
 		foreach ($list as $row)
@@ -199,11 +209,15 @@ class ViewedTable extends TaskDataManager
 
 		foreach ($chunks as $chunk)
 		{
-			$sql = "
-				INSERT INTO b_tasks_viewed (TASK_ID, USER_ID, VIEWED_DATE)
-				VALUES " . implode(',', $chunk) . "
-				ON DUPLICATE KEY UPDATE VIEWED_DATE = {$viewedDate}
-			";
+			$values = implode(',', $chunk);
+			$values = "VALUES {$values}";
+			$sql = $sqlHelper->prepareMergeSelect(
+				static::getTableName(),
+				['TASK_ID', 'USER_ID'],
+				['TASK_ID', 'USER_ID', 'VIEWED_DATE'],
+				$values,
+				['VIEWED_DATE' => $currentDateTime]
+			);
 			$connection->query($sql);
 		}
 	}
@@ -220,7 +234,8 @@ class ViewedTable extends TaskDataManager
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
-		$viewedDate = $sqlHelper->convertToDbDateTime(new DateTime());
+		$currentDateTime = new DateTime();
+		$viewedDate = $sqlHelper->convertToDbDateTime($currentDateTime);
 
 		$intGroupIds = array_map(function($el) {
 			return (int) $el;
@@ -268,11 +283,15 @@ class ViewedTable extends TaskDataManager
 
 		foreach ($chunks as $chunk)
 		{
-			$sql = "
-				INSERT INTO b_tasks_viewed (TASK_ID, USER_ID, VIEWED_DATE)
-				VALUES " . implode(',', $chunk) . "
-				ON DUPLICATE KEY UPDATE VIEWED_DATE = {$viewedDate}
-			";
+			$values = implode(',', $chunk);
+			$values = "VALUES {$values}";
+			$sql = $sqlHelper->prepareMergeSelect(
+				static::getTableName(),
+				['TASK_ID', 'USER_ID'],
+				['TASK_ID', 'USER_ID', 'VIEWED_DATE'],
+				$values,
+				['VIEWED_DATE' => $currentDateTime]
+			);
 			$connection->query($sql);
 		}
 	}

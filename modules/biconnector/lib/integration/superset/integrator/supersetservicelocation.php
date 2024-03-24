@@ -21,11 +21,6 @@ final class SupersetServiceLocation
 			return $supersetProxyOption;
 		}
 
-		if (defined('BI_APACHE_SUPERSET_PROXY_URL') && is_string(BI_APACHE_SUPERSET_PROXY_URL))
-		{
-			return BI_APACHE_SUPERSET_PROXY_URL;
-		}
-
 		return self::getServiceUrlByRegion(self::getCurrentDatacenterLocationRegion());
 	}
 

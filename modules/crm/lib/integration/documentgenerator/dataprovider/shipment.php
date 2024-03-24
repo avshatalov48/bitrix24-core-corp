@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
-use Bitrix\Crm\Discount;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\ItemIdentifier;
@@ -202,22 +201,22 @@ class Shipment extends CrmEntityDataProvider
 
 	public function getEmpAllowDelivery()
 	{
-		return $this->source['EMP_ALLOW_DELIVERY_ID'];
+		return $this->source['EMP_ALLOW_DELIVERY_ID'] ?? null;
 	}
 
 	public function getEmpDeducted()
 	{
-		return $this->source['EMP_DEDUCTED_ID'];
+		return $this->source['EMP_DEDUCTED_ID'] ?? null;
 	}
 
 	public function getEmpMarked()
 	{
-		return $this->source['EMP_MARKED_ID'];
+		return $this->source['EMP_MARKED_ID'] ?? null;
 	}
 
 	public function getEmpCanceled()
 	{
-		return $this->source['EMP_CANCELED_ID'];
+		return $this->source['EMP_CANCELED_ID'] ?? null;
 	}
 
 	public function getResponsibleId()
@@ -337,8 +336,8 @@ class Shipment extends CrmEntityDataProvider
 	public function getTimelineItemIdentifier(): ?ItemIdentifier
 	{
 		$entityTypeId = \CCrmOwnerType::Order;
-		$entityId = (int)$this->getOrderId();
-		if ($entityTypeId > 0 && $entityId > 0)
+		$entityId = $this->getOrderId();
+		if ($entityId > 0)
 		{
 			return new ItemIdentifier($entityTypeId, $entityId);
 		}

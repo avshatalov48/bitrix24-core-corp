@@ -3,6 +3,7 @@ IncludeModuleLangFile(__FILE__);
 
 class CXDIUser
 {
+	public $LAST_ERROR = '';
 
 	function CheckFields($action, &$arFields)
 	{

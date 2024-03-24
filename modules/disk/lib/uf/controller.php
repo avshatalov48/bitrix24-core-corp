@@ -28,6 +28,7 @@ use Bitrix\Disk\User;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -197,18 +198,28 @@ class Controller extends Internals\Controller
 				->where('UG.GROUP.CLOSED', 'N')
 			;
 
+			$connection = Application::getConnection();
+			$sqlHelper = $connection->getSqlHelper();
+
 			$diskSecurityContext = new DiskSecurityContext($userId);
 			$storages = Storage::getReadableList(
 				$diskSecurityContext,
 				array(
 					'filter' => $conditionTree,
-					'runtime' => array(
-						new ReferenceField('UG',
+					'runtime' => [
+						(new ReferenceField('UG',
 							'Bitrix\Socialnetwork\UserToGroupTable',
-							array('=this.STORAGE.ENTITY_ID' => 'ref.GROUP_ID'),
+							[
+								'=this.STORAGE.ENTITY_ID' => (
+									$connection instanceof \Bitrix\Main\DB\PgsqlConnection
+									? new SqlExpression($sqlHelper->castToChar('?#'), 'GROUP_ID')
+									: 'ref.GROUP_ID'
+								)
+							],
 							array('join_type' => 'INNER')
-						)
-					),
+						))
+
+					],
 					'extra' => array('UG_GROUP_NAME' => 'UG.GROUP.NAME'),
 				)
 			);

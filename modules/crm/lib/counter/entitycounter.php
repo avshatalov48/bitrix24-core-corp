@@ -2,11 +2,10 @@
 
 namespace Bitrix\Crm\Counter;
 
-use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\UserParams;
+use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParamsBuilder;
 use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilder;
 use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilderFactory;
 use Bitrix\Crm\Counter\CounterQueryBuilder\FactoryConfig;
-use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParamsBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main;
@@ -305,7 +304,6 @@ class EntityCounter extends CounterBase
 		{
 			return $results;
 		}
-		$countersSettings = $factory->getCountersSettings();
 
 		$typeIDs = EntityCounterType::splitType($entityCounterTypeID);
 		$isCurrentCounter = in_array(EntityCounterType::READY_TODO, $typeIDs) && in_array(EntityCounterType::OVERDUE, $typeIDs);
@@ -315,7 +313,9 @@ class EntityCounter extends CounterBase
 			$typeIDs[] = EntityCounterType::CURRENT;
 		}
 
+		$countersSettings = $factory->getCountersSettings();
 		$qbBuilderFactory = new CounterQueryBuilderFactory();
+
 		foreach($typeIDs as $typeID)
 		{
 			$queryParams = null;
@@ -343,7 +343,9 @@ class EntityCounter extends CounterBase
 
 			if($typeID === EntityCounterType::IDLE)
 			{
-				$config = FactoryConfig::create(true);
+				$config = FactoryConfig::create(true)
+					->setEntityTypeId($this->entityTypeID)
+				;
 				$queryBuilder = $qbBuilderFactory->make(EntityCounterType::IDLE, $config);
 				$queryParams = $queryBuilderParams->build();
 
@@ -357,7 +359,9 @@ class EntityCounter extends CounterBase
 					$useUncompletedActivityTable = $this->getExtraParam('ONLY_MIN_DEADLINE', false);
 				}
 
-				$config = FactoryConfig::create($useUncompletedActivityTable);
+				$config = FactoryConfig::create($useUncompletedActivityTable)
+					->setEntityTypeId($this->entityTypeID)
+				;
 
 				$periodFrom = \CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID);
 				$periodTo = \CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID);
@@ -380,7 +384,10 @@ class EntityCounter extends CounterBase
 			}
 			elseif ($typeID === EntityCounterType::READY_TODO)
 			{
-				$config = FactoryConfig::create($useUncompletedActivityTable);
+				$config = FactoryConfig::create($useUncompletedActivityTable)
+					->setEntityTypeId($this->entityTypeID)
+				;
+
 				$queryBuilder = $qbBuilderFactory->make($typeID, $config);
 				$queryParams = $queryBuilderParams
 					->setPeriodFrom($this->extras['PERIOD_FROM'] ?? null)
@@ -391,7 +398,9 @@ class EntityCounter extends CounterBase
 			}
 			elseif ($typeID === EntityCounterType::CURRENT)
 			{
-				$config = FactoryConfig::create($useUncompletedActivityTable);
+				$config = FactoryConfig::create($useUncompletedActivityTable)
+					->setEntityTypeId($this->entityTypeID)
+				;
 
 				$queryParams = $queryBuilderParams
 					->setPeriodFrom($this->extras['PERIOD_FROM'] ?? null)
@@ -406,7 +415,8 @@ class EntityCounter extends CounterBase
 				$config = FactoryConfig::create(
 					$useUncompletedActivityTable,
 					false
-				);
+				)->setEntityTypeId($this->entityTypeID);
+
 				$queryBuilder = $qbBuilderFactory->make(EntityCounterType::OVERDUE, $config);
 				$queryParams = $queryBuilderParams->build();
 
@@ -414,11 +424,11 @@ class EntityCounter extends CounterBase
 			}
 			else if($typeID === EntityCounterType::INCOMING_CHANNEL)
 			{
-
 				$config = FactoryConfig::create(
 					$useUncompletedActivityTable,
 					$this->getExtraParam('ONLY_MIN_INCOMING_CHANNEL', false)
-				);
+				)->setEntityTypeId($this->entityTypeID);
+
 				$queryBuilder = $qbBuilderFactory->make(EntityCounterType::INCOMING_CHANNEL, $config);
 
 				$queryParams = $queryBuilderParams
@@ -487,7 +497,7 @@ class EntityCounter extends CounterBase
 		}
 
 		$result = 0;
-		$queries = $this->prepareQueries(array('SELECT' => 'QTY'));
+		$queries = $this->prepareQueries(['SELECT' => 'QTY']);
 
 		foreach($queries as $query)
 		{
@@ -608,14 +618,25 @@ class EntityCounter extends CounterBase
 		return array('__CONDITIONS' => array(array('SQL' => "{$masterAlias}.{$masterIdentity} IN ({$sql})")));
 	}
 
+	public function getActivityFilterParam(array $params = null): array
+	{
+		if ($params === null)
+		{
+			$params = [];
+		}
+
+		$params['GET_QUERY_OBJECTS'] = true;
+
+		return $this->getEntityListSqlExpression($params);
+	}
+
 	/**
 	 * @param array $params
 	 *
-	 * @return string
+	 * @return string|array
 	 */
 	public function getEntityListSqlExpression(array $params = [])
 	{
-		$union = array();
 		$queryParams = array('SELECT' => 'ENTY', 'DISTINCT' => false);
 		if(isset($params['USER_IDS']))
 		{
@@ -630,10 +651,18 @@ class EntityCounter extends CounterBase
 			$queryParams['EXCLUDE_USERS'] = (bool)$params['EXCLUDE_USERS'];
 		}
 
+		$isGetQueryObjects = (bool)($params['GET_QUERY_OBJECTS'] ?? false);
+
 		$queries = $this->prepareQueries($queryParams);
+		$union = [];
 		foreach($queries as $query)
 		{
-			$union[] = $query->getQuery();
+			$union[] = $isGetQueryObjects ? $query : $query->getQuery();
+		}
+
+		if ($isGetQueryObjects)
+		{
+			return $union;
 		}
 
 		if(empty($union))

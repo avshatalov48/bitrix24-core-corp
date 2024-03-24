@@ -14,7 +14,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 
 	const privateMap = new WeakMap();
 	const nameSymbol = Symbol('name');
-	class Node {
+	class BBCodeNode {
 	  constructor(options = {}) {
 	    this[nameSymbol] = '#unknown';
 	    this.children = [];
@@ -22,7 +22,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      delayedChildren: []
 	    });
 	    this.setName(options.name);
-	    this.setScheme(options.scheme);
+	    privateMap.get(this).scheme = options.scheme;
 	    this.setParent(options.parent);
 	    this.setChildren(options.children);
 	  }
@@ -56,7 +56,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  static flattenChildren(children) {
 	    if (Type.isArrayFilled(children)) {
 	      return children.flatMap(node => {
-	        if (node.getType() === Node.FRAGMENT_NODE) {
+	        if (node.getType() === BBCodeNode.FRAGMENT_NODE) {
 	          return node.getChildren();
 	        }
 	        return node;
@@ -64,7 +64,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    }
 	    return [];
 	  }
-	  setScheme(scheme) {
+	  setScheme(scheme, onUnknown) {
 	    privateMap.get(this).scheme = scheme;
 	  }
 	  getScheme() {
@@ -132,7 +132,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	  getLastChildOfName(name) {
 	    return this.getChildren().reverse().find(node => {
-	      return node.getType() === Node.ELEMENT_NODE && node.getName() === name;
+	      return node.getType() === BBCodeNode.ELEMENT_NODE && node.getName() === name;
 	    });
 	  }
 	  getFirstChild() {
@@ -145,7 +145,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	  getFirstChildOfName(name) {
 	    return this.getChildren().find(node => {
-	      return node.getType() === Node.ELEMENT_NODE && node.getName() === name;
+	      return node.getType() === BBCodeNode.ELEMENT_NODE && node.getName() === name;
 	    });
 	  }
 	  getPreviewsSibling() {
@@ -194,6 +194,9 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  hasChildren() {
 	    return this.getChildrenCount() > 0;
 	  }
+	  adjustChildren() {
+	    this.setChildren(this.getChildren());
+	  }
 	  setDelayedChildren(children) {
 	    if (Type.isArray(children)) {
 	      privateMap.get(this).delayedChildren = children;
@@ -211,7 +214,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    return [...privateMap.get(this).delayedChildren];
 	  }
 	  appendChild(...children) {
-	    const flattenedChildren = Node.flattenChildren(children);
+	    const flattenedChildren = BBCodeNode.flattenChildren(children);
 	    flattenedChildren.forEach(node => {
 	      node.remove();
 	      node.setParent(this);
@@ -219,17 +222,38 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    });
 	  }
 	  prependChild(...children) {
-	    const flattenedChildren = Node.flattenChildren(children);
+	    const flattenedChildren = BBCodeNode.flattenChildren(children);
 	    flattenedChildren.forEach(node => {
 	      node.remove();
 	      node.setParent(this);
 	      this.children.unshift(node);
 	    });
 	  }
+	  insertBefore(...nodes) {
+	    if (this.hasParent() && Type.isArrayFilled(nodes)) {
+	      const parent = this.getParent();
+	      const parentChildren = parent.getChildren();
+	      const currentNodeIndex = parentChildren.indexOf(this);
+	      const deleteCount = 0;
+	      parentChildren.splice(currentNodeIndex, deleteCount, ...nodes);
+	      parent.setChildren(parentChildren);
+	    }
+	  }
+	  insertAfter(...nodes) {
+	    if (this.hasParent() && Type.isArrayFilled(nodes)) {
+	      const parent = this.getParent();
+	      const parentChildren = parent.getChildren();
+	      const currentNodeIndex = parentChildren.indexOf(this);
+	      const startIndex = currentNodeIndex + 1;
+	      const deleteCount = 0;
+	      parentChildren.splice(startIndex, deleteCount, ...nodes);
+	      parent.setChildren(parentChildren);
+	    }
+	  }
 	  propagateChild(...children) {
 	    if (this.hasParent()) {
-	      this.getParent().prependChild(...children.filter(node => {
-	        return node.getType() === Node.ELEMENT_NODE || node.getName() === '#text';
+	      this.insertBefore(...children.filter(child => {
+	        return !['#linebreak', '#tab'].includes(child.getName());
 	      }));
 	    } else {
 	      this.addDelayedChildren(children);
@@ -255,7 +279,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    this.children = this.children.flatMap(node => {
 	      if (node === targetNode) {
 	        node.setParent(null);
-	        const flattenedChildren = Node.flattenChildren(children);
+	        const flattenedChildren = BBCodeNode.flattenChildren(children);
 	        return flattenedChildren.map(child => {
 	          child.remove();
 	          child.setParent(this);
@@ -280,9 +304,8 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      }
 	      return [];
 	    })();
-	    return new Node({
+	    return this.getScheme().createNode({
 	      name: this.getName(),
-	      scheme: this.getScheme(),
 	      parent: this.getParent(),
 	      children
 	    });
@@ -291,6 +314,9 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    return this.getChildren().map(child => {
 	      return child.toPlainText();
 	    }).join('');
+	  }
+	  getTextContent() {
+	    return this.toPlainText();
 	  }
 	  getPlainTextLength() {
 	    return this.toPlainText().length;
@@ -329,8 +355,8 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    let currentIndex = 0;
 	    let startIndex = 0;
 	    let endIndex = 0;
-	    const node = Node.flattenAst(this).find(child => {
-	      if (child.getName() === '#text') {
+	    const node = BBCodeNode.flattenAst(this).find(child => {
+	      if (child.getName() === '#text' || child.getName() === '#linebreak' || child.getName() === '#tab') {
 	        startIndex = currentIndex;
 	        endIndex = startIndex + child.getLength();
 	        currentIndex = endIndex;
@@ -448,19 +474,34 @@ jn.define('bbcode/model', (require, exports, module) => {
 
 	const inlineSymbol = Symbol('inline');
 	const voidSymbol = Symbol('void');
-	class ElementNode extends Node {
+	const formatNames = ['b', 'u', 'i', 's'];
+	class BBCodeElementNode extends BBCodeNode {
 	  constructor(options = {}) {
 	    super(options);
 	    this.attributes = {};
 	    this.value = '';
 	    this[inlineSymbol] = false;
 	    this[voidSymbol] = false;
-	    privateMap.get(this).type = Node.ELEMENT_NODE;
+	    privateMap.get(this).type = BBCodeNode.ELEMENT_NODE;
 	    const tagScheme = this.getTagScheme();
 	    this[inlineSymbol] = tagScheme.isInline();
 	    this[voidSymbol] = tagScheme.isVoid();
 	    this.setValue(options.value);
 	    this.setAttributes(options.attributes);
+	  }
+	  setScheme(scheme, onUnknown) {
+	    this.getChildren().forEach(node => {
+	      node.setScheme(scheme, onUnknown);
+	    });
+	    if (scheme.isAllowedTag(this.getName())) {
+	      super.setScheme(scheme);
+	      const tagScheme = this.getTagScheme();
+	      this[inlineSymbol] = tagScheme.isInline();
+	      this[voidSymbol] = tagScheme.isVoid();
+	    } else {
+	      super.setScheme(scheme);
+	      onUnknown(this, scheme);
+	    }
 	  }
 	  filterChildren(children) {
 	    const filteredChildren = {
@@ -474,7 +515,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      return filteredChildren;
 	    }
 	    children.forEach(child => {
-	      if (allowedChildren.includes(child.getName()) || allowedChildren.includes('#inline') && child.getType() === Node.ELEMENT_NODE && child.isInline() || allowedChildren.includes('#void') && child.getType() === Node.ELEMENT_NODE && child.isVoid()) {
+	      if (allowedChildren.includes(child.getName()) || allowedChildren.includes('#inline') && child.getType() === BBCodeNode.ELEMENT_NODE && child.isInline() || allowedChildren.includes('#block') && child.getType() === BBCodeNode.ELEMENT_NODE && child.isInline() === false || allowedChildren.includes('#void') && child.getType() === BBCodeNode.ELEMENT_NODE && child.isVoid() || allowedChildren.includes('#format') && formatNames.includes(child.getName())) {
 	        filteredChildren.resolved.push(child);
 	      } else {
 	        filteredChildren.unresolved.push(child);
@@ -537,7 +578,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    };
 	  }
 	  appendChild(...children) {
-	    const flattenedChildren = Node.flattenChildren(children);
+	    const flattenedChildren = BBCodeNode.flattenChildren(children);
 	    const filteredChildren = this.filterChildren(flattenedChildren);
 	    const convertedChildren = this.convertChildren(filteredChildren.resolved);
 	    convertedChildren.forEach(node => {
@@ -546,11 +587,17 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      this.children.push(node);
 	    });
 	    if (Type.isArrayFilled(filteredChildren.unresolved)) {
-	      this.propagateChild(...filteredChildren.unresolved);
+	      if (this.getScheme().isAllowedUnresolvedNodesHoisting()) {
+	        this.propagateChild(...filteredChildren.unresolved);
+	      } else {
+	        filteredChildren.unresolved.forEach(node => {
+	          node.remove();
+	        });
+	      }
 	    }
 	  }
 	  prependChild(...children) {
-	    const flattenedChildren = Node.flattenChildren(children);
+	    const flattenedChildren = BBCodeNode.flattenChildren(children);
 	    const filteredChildren = this.filterChildren(flattenedChildren);
 	    const convertedChildren = this.convertChildren(filteredChildren.resolved);
 	    convertedChildren.forEach(node => {
@@ -559,14 +606,20 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      this.children.unshift(node);
 	    });
 	    if (Type.isArrayFilled(filteredChildren.unresolved)) {
-	      this.propagateChild(...filteredChildren.unresolved);
+	      if (this.getScheme().isAllowedUnresolvedNodesHoisting()) {
+	        this.propagateChild(...filteredChildren.unresolved);
+	      } else {
+	        filteredChildren.unresolved.forEach(node => {
+	          node.remove();
+	        });
+	      }
 	    }
 	  }
 	  replaceChild(targetNode, ...children) {
 	    this.children = this.children.flatMap(node => {
 	      if (node === targetNode) {
 	        node.setParent(null);
-	        const flattenedChildren = Node.flattenChildren(children);
+	        const flattenedChildren = BBCodeNode.flattenChildren(children);
 	        const filteredChildren = this.filterChildren(flattenedChildren);
 	        const convertedChildren = this.convertChildren(filteredChildren.resolved);
 	        return convertedChildren.map(child => {
@@ -612,7 +665,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      }
 	      return [];
 	    })();
-	    return new ElementNode({
+	    return this.getScheme().createElement({
 	      name: this.getName(),
 	      void: this.isVoid(),
 	      inline: this.isInline(),
@@ -620,7 +673,6 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      attributes: {
 	        ...this.getAttributes()
 	      },
-	      scheme: this.getScheme(),
 	      children
 	    });
 	  }
@@ -689,16 +741,25 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	class RootNode extends ElementNode {
+	class BBCodeRootNode extends BBCodeElementNode {
 	  constructor(options) {
 	    super({
 	      ...options,
 	      name: '#root'
 	    });
-	    privateMap.get(this).type = Node.ROOT_NODE;
-	    RootNode.makeNonEnumerableProperty(this, 'value');
-	    RootNode.makeNonEnumerableProperty(this, 'attributes');
-	    RootNode.freezeProperty(this, nameSymbol, '#root');
+	    privateMap.get(this).type = BBCodeNode.ROOT_NODE;
+	    BBCodeRootNode.makeNonEnumerableProperty(this, 'value');
+	    BBCodeRootNode.makeNonEnumerableProperty(this, 'attributes');
+	    BBCodeRootNode.freezeProperty(this, nameSymbol, '#root');
+	  }
+	  setScheme(scheme, onUnknown) {
+	    BBCodeNode.flattenAst(this).forEach(node => {
+	      node.setScheme(scheme, onUnknown);
+	    });
+	    super.setScheme(scheme);
+	    BBCodeNode.flattenAst(this).forEach(node => {
+	      node.adjustChildren();
+	    });
 	  }
 	  getParent() {
 	    return null;
@@ -712,7 +773,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      }
 	      return [];
 	    })();
-	    return new RootNode({
+	    return this.getScheme().createRoot({
 	      children
 	    });
 	  }
@@ -728,16 +789,16 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	class FragmentNode extends ElementNode {
+	class BBCodeFragmentNode extends BBCodeElementNode {
 	  constructor(options) {
 	    super({
 	      ...options,
 	      name: '#fragment'
 	    });
-	    privateMap.get(this).type = Node.FRAGMENT_NODE;
-	    FragmentNode.makeNonEnumerableProperty(this, 'value');
-	    FragmentNode.makeNonEnumerableProperty(this, 'attributes');
-	    FragmentNode.freezeProperty(this, nameSymbol, '#fragment');
+	    privateMap.get(this).type = BBCodeNode.FRAGMENT_NODE;
+	    BBCodeFragmentNode.makeNonEnumerableProperty(this, 'value');
+	    BBCodeFragmentNode.makeNonEnumerableProperty(this, 'attributes');
+	    BBCodeFragmentNode.freezeProperty(this, nameSymbol, '#fragment');
 	  }
 	  clone(options = {}) {
 	    const children = (() => {
@@ -748,15 +809,14 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      }
 	      return [];
 	    })();
-	    return new FragmentNode({
-	      children,
-	      scheme: this.getScheme()
+	    return this.getScheme().createFragment({
+	      children
 	    });
 	  }
 	}
 
 	const contentSymbol = Symbol('content');
-	class TextNode extends Node {
+	class BBCodeTextNode extends BBCodeNode {
 	  constructor(options = {}) {
 	    const nodeOptions = Type.isString(options) ? {
 	      content: options
@@ -764,36 +824,32 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    super(nodeOptions);
 	    this[nameSymbol] = '#text';
 	    this[contentSymbol] = '';
-	    privateMap.get(this).type = Node.TEXT_NODE;
+	    privateMap.get(this).type = BBCodeNode.TEXT_NODE;
 	    this.setContent(nodeOptions.content);
-	    Node.makeNonEnumerableProperty(this, 'children');
+	    BBCodeNode.makeNonEnumerableProperty(this, 'children');
 	  }
 	  static isTextNodeContent(value) {
 	    return Type.isString(value) || Type.isNumber(value);
 	  }
 	  static decodeSpecialChars(content) {
-	    if (TextNode.isTextNodeContent(content)) {
-	      return content.replaceAll('&#91;', '[').replaceAll('&#93;', ']');
-	    }
-	    return content;
+	    return String(content).replaceAll('&#91;', '[').replaceAll('&#93;', ']');
 	  }
 	  setName(name) {}
 	  setContent(content) {
-	    if (TextNode.isTextNodeContent(content)) {
-	      this[contentSymbol] = TextNode.decodeSpecialChars(content);
+	    if (BBCodeTextNode.isTextNodeContent(content)) {
+	      this[contentSymbol] = BBCodeTextNode.decodeSpecialChars(content);
 	    }
 	  }
 	  getContent() {
-	    return TextNode.decodeSpecialChars(this[contentSymbol]);
+	    return BBCodeTextNode.decodeSpecialChars(this[contentSymbol]);
 	  }
+	  adjustChildren() {}
 	  getLength() {
 	    return String(this[contentSymbol]).length;
 	  }
 	  clone(options) {
-	    const Constructor = this.constructor;
-	    return new Constructor({
-	      content: this.getContent(),
-	      scheme: this.getScheme()
+	    return this.getScheme().createText({
+	      content: this.getContent()
 	    });
 	  }
 	  split(options) {
@@ -860,28 +916,33 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	class NewLineNode extends TextNode {
+	class BBCodeNewLineNode extends BBCodeTextNode {
 	  constructor(options = {}) {
 	    super(options);
 	    this[nameSymbol] = '#linebreak';
 	    this[contentSymbol] = '\n';
 	  }
 	  setContent(options) {}
+	  clone(options) {
+	    return this.getScheme().createNewLine();
+	  }
 	}
 
-	class TabNode extends TextNode {
+	class BBCodeTabNode extends BBCodeTextNode {
 	  constructor(options = {}) {
 	    super(options);
 	    this[nameSymbol] = '#tab';
 	    this[contentSymbol] = '\t';
 	  }
 	  setContent(options) {}
+	  clone(options) {
+	    return this.getScheme().createTab();
+	  }
 	}
 
-	class NodeScheme {
+	class BBCodeNodeScheme {
 	  constructor(options) {
 	    this.name = [];
-	    this.converter = null;
 	    this.stringifier = null;
 	    this.serializer = null;
 	    if (!Type.isPlainObject(options)) {
@@ -891,7 +952,6 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      throw new TypeError('options.name is not specified');
 	    }
 	    this.setName(options.name);
-	    this.setConverter(options.convert);
 	    this.setStringifier(options.stringify);
 	    this.setSerializer(options.serialize);
 	  }
@@ -911,14 +971,6 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      return !names.includes(name);
 	    }));
 	  }
-	  setConverter(converter) {
-	    if (Type.isFunction(converter) || Type.isNull(converter)) {
-	      this.converter = converter;
-	    }
-	  }
-	  getConverter() {
-	    return this.converter;
-	  }
 	  setStringifier(stringifier) {
 	    if (Type.isFunction(stringifier) || Type.isNull(stringifier)) {
 	      this.stringifier = stringifier;
@@ -937,7 +989,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	class TagScheme extends NodeScheme {
+	class BBCodeTagScheme extends BBCodeNodeScheme {
 	  constructor(options) {
 	    super(options);
 	    this.inline = false;
@@ -964,7 +1016,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    })();
 	    const isAllowNewlineAfterClosingTag = (() => {
 	      const nextSibling = node.getNextSibling();
-	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === Node.ELEMENT_NODE && !nextSibling.isInline());
+	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === BBCodeNode.ELEMENT_NODE && !nextSibling.isInline());
 	    })();
 	    const openingTag = node.getOpeningTag();
 	    const content = node.getContent();
@@ -1007,7 +1059,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 
 	class BBCodeScheme {
 	  static isNodeScheme(value) {
-	    return value instanceof NodeScheme;
+	    return value instanceof BBCodeNodeScheme;
 	  }
 	  constructor(options = {}) {
 	    this.tagSchemes = [];
@@ -1093,7 +1145,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    return allowedTags.includes(String(tagName).toLowerCase());
 	  }
 	  createRoot(options = {}) {
-	    return new RootNode({
+	    return new BBCodeRootNode({
 	      ...options,
 	      scheme: this
 	    });
@@ -1108,7 +1160,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    if (!this.isAllowedTag(options.name)) {
 	      throw new TypeError(`Scheme for "${options.name}" tag is not specified.`);
 	    }
-	    return new Node({
+	    return new BBCodeNode({
 	      ...options,
 	      scheme: this
 	    });
@@ -1123,7 +1175,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    if (!this.isAllowedTag(options.name)) {
 	      throw new TypeError(`Scheme for "${options.name}" tag is not specified.`);
 	    }
-	    return new ElementNode({
+	    return new BBCodeElementNode({
 	      ...options,
 	      scheme: this
 	    });
@@ -1132,7 +1184,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    const preparedOptions = Type.isPlainObject(options) ? options : {
 	      content: options
 	    };
-	    return new TextNode({
+	    return new BBCodeTextNode({
 	      ...preparedOptions,
 	      scheme: this
 	    });
@@ -1141,7 +1193,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    const preparedOptions = Type.isPlainObject(options) ? options : {
 	      content: options
 	    };
-	    return new NewLineNode({
+	    return new BBCodeNewLineNode({
 	      ...preparedOptions,
 	      scheme: this
 	    });
@@ -1150,13 +1202,13 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    const preparedOptions = Type.isPlainObject(options) ? options : {
 	      content: options
 	    };
-	    return new TabNode({
+	    return new BBCodeTabNode({
 	      ...preparedOptions,
 	      scheme: this
 	    });
 	  }
 	  createFragment(options = {}) {
-	    return new FragmentNode({
+	    return new BBCodeFragmentNode({
 	      ...options,
 	      scheme: this
 	    });
@@ -1167,7 +1219,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  UPPER: 'upper'
 	};
 
-	class TextScheme extends NodeScheme {
+	class BBCodeTextScheme extends BBCodeNodeScheme {
 	  constructor(options) {
 	    super({
 	      ...options,
@@ -1176,9 +1228,9 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	class NewLineScheme extends NodeScheme {}
+	class BBCodeNewLineScheme extends BBCodeNodeScheme {}
 
-	class TabScheme extends NodeScheme {
+	class BBCodeTabScheme extends BBCodeNodeScheme {
 	  constructor(options) {
 	    super({
 	      ...options,
@@ -1190,25 +1242,29 @@ jn.define('bbcode/model', (require, exports, module) => {
 	class DefaultBBCodeScheme extends BBCodeScheme {
 	  constructor(options = {}) {
 	    super({
-	      tagSchemes: [new TagScheme({
+	      tagSchemes: [new BBCodeTagScheme({
 	        name: ['b', 'i', 'u', 's', 'span'],
 	        inline: true,
 	        allowedChildren: ['#text', '#linebreak', '#inline']
-	      }), new TagScheme({
-	        name: ['img', 'url'],
+	      }), new BBCodeTagScheme({
+	        name: ['img'],
 	        inline: true,
 	        allowedChildren: ['#text']
-	      }), new TagScheme({
+	      }), new BBCodeTagScheme({
+	        name: ['url'],
+	        inline: true,
+	        allowedChildren: ['#text', '#format']
+	      }), new BBCodeTagScheme({
 	        name: 'p',
 	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline', 'disk'],
-	        stringify: TagScheme.defaultBlockStringifier
-	      }), new TagScheme({
+	        allowedChildren: ['#text', '#linebreak', '#inline', 'disk', 'video'],
+	        stringify: BBCodeTagScheme.defaultBlockStringifier
+	      }), new BBCodeTagScheme({
 	        name: 'list',
 	        inline: false,
 	        allowedChildren: ['*'],
-	        stringify: TagScheme.defaultBlockStringifier
-	      }), new TagScheme({
+	        stringify: BBCodeTagScheme.defaultBlockStringifier
+	      }), new BBCodeTagScheme({
 	        name: ['*'],
 	        inline: false,
 	        allowedChildren: ['#text', '#linebreak', '#inline', 'list'],
@@ -1217,78 +1273,63 @@ jn.define('bbcode/model', (require, exports, module) => {
 	          const content = node.getContent().trim();
 	          return `${openingTag}${content}`;
 	        }
-	      }), new TagScheme({
+	      }), new BBCodeTagScheme({
 	        name: ['ul'],
 	        inline: false,
-	        allowedChildren: ['li'],
-	        convert: (node, scheme) => {
-	          return scheme.createElement({
-	            name: 'list',
-	            attributes: node.getAttributes(),
-	            children: node.getChildren()
-	          });
-	        }
-	      }), new TagScheme({
+	        allowedChildren: ['li']
+	      }), new BBCodeTagScheme({
 	        name: ['ol'],
 	        inline: false,
-	        allowedChildren: ['li'],
-	        convert: (node, scheme) => {
-	          return scheme.createElement({
-	            name: 'list',
-	            value: '1',
-	            attributes: node.getAttributes(),
-	            children: node.getChildren()
-	          });
-	        }
-	      }), new TagScheme({
+	        allowedChildren: ['li']
+	      }), new BBCodeTagScheme({
 	        name: ['li'],
 	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline', 'ul', 'ol'],
-	        convert: (node, scheme) => {
-	          return scheme.createElement({
-	            name: '*',
-	            children: node.getChildren()
-	          });
-	        }
-	      }), new TagScheme({
+	        allowedChildren: ['#text', '#linebreak', '#inline', 'ul', 'ol']
+	      }), new BBCodeTagScheme({
 	        name: 'table',
 	        inline: false,
 	        allowedChildren: ['tr'],
-	        stringify: TagScheme.defaultBlockStringifier
-	      }), new TagScheme({
+	        stringify: BBCodeTagScheme.defaultBlockStringifier
+	      }), new BBCodeTagScheme({
 	        name: 'tr',
 	        inline: false,
 	        allowedChildren: ['th', 'td']
-	      }), new TagScheme({
+	      }), new BBCodeTagScheme({
 	        name: ['th', 'td'],
 	        inline: false,
 	        allowedChildren: ['#text', '#linebreak', '#inline']
-	      }), new TagScheme({
+	      }), new BBCodeTagScheme({
 	        name: 'quote',
 	        inline: false,
 	        allowedChildren: ['#text', '#linebreak', '#inline', 'quote']
-	      }), new TagScheme({
+	      }), new BBCodeTagScheme({
 	        name: 'code',
 	        inline: false,
-	        stringify: TagScheme.defaultBlockStringifier,
+	        stringify: BBCodeTagScheme.defaultBlockStringifier,
 	        convertChild: (child, scheme) => {
 	          if (['#linebreak', '#tab', '#text'].includes(child.getName())) {
 	            return child;
 	          }
 	          return scheme.createText(child.toString());
 	        }
-	      }), new TagScheme({
+	      }), new BBCodeTagScheme({
+	        name: 'video',
+	        inline: false,
+	        allowedChildren: ['#text']
+	      }), new BBCodeTagScheme({
+	        name: 'spoiler',
+	        inline: false,
+	        allowedChildren: ['#text', '#linebreak', '#inline', 'p', 'quote', 'code', 'table', 'disk', 'video', 'spoiler', 'list']
+	      }), new BBCodeTagScheme({
+	        name: ['user', 'project', 'department'],
+	        inline: true,
+	        allowedChildren: ['#text', '#format']
+	      }), new BBCodeTagScheme({
 	        name: 'disk',
 	        void: true
-	      }), new TagScheme({
+	      }), new BBCodeTagScheme({
 	        name: ['#root', '#fragment']
-	      }), new TextScheme({
-	        convert: (node, scheme) => {
-	          return scheme.createText({
-	            content: node.toString().replaceAll(' - ', '&mdash;')
-	          });
-	        }
-	      }), new TabScheme({
+	      }), new BBCodeTabScheme({
 	        stringify: () => {
 	          return '';
 	        }
@@ -1304,18 +1345,18 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	exports.Node = Node;
-	exports.RootNode = RootNode;
-	exports.ElementNode = ElementNode;
-	exports.FragmentNode = FragmentNode;
-	exports.NewLineNode = NewLineNode;
-	exports.TabNode = TabNode;
-	exports.TextNode = TextNode;
+	exports.BBCodeNode = BBCodeNode;
+	exports.BBCodeRootNode = BBCodeRootNode;
+	exports.BBCodeElementNode = BBCodeElementNode;
+	exports.BBCodeFragmentNode = BBCodeFragmentNode;
+	exports.BBCodeNewLineNode = BBCodeNewLineNode;
+	exports.BBCodeTabNode = BBCodeTabNode;
+	exports.BBCodeTextNode = BBCodeTextNode;
 	exports.BBCodeScheme = BBCodeScheme;
-	exports.TagScheme = TagScheme;
-	exports.TextScheme = TextScheme;
-	exports.NewLineScheme = NewLineScheme;
-	exports.TabScheme = TabScheme;
+	exports.BBCodeTagScheme = BBCodeTagScheme;
+	exports.BBCodeTextScheme = BBCodeTextScheme;
+	exports.BBCodeNewLineScheme = BBCodeNewLineScheme;
+	exports.BBCodeTabScheme = BBCodeTabScheme;
 	exports.DefaultBBCodeScheme = DefaultBBCodeScheme;
 
 });

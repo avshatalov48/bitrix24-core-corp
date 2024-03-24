@@ -17,6 +17,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		this._infos = null;
 		this._items = null;
 		this._innerWrapper = null;
+		this._emptyState = null;
 
 		this._topButton = null;
 		this._bottomButton = null;
@@ -89,15 +90,17 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	{
 		var item = BX.Crm.EntityEditorMultipleUserItem.create("", { parent: this, data: data });
 
-		if(this._items === null)
+		if (this._items === null)
 		{
 			this._items = [];
 		}
 
 		this._items.push(item);
 
-		if(this._hasLayout)
+		if (this._hasLayout)
 		{
+			this.removeEmptyState();
+
 			item.setMode(this._mode);
 			item.setContainer(this._innerWrapper);
 			item.layout();
@@ -176,12 +179,12 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		var title = this._schemeElement.getTitle();
 		this._wrapper.appendChild(this.createTitleNode(title));
 
+		this._innerWrapper = BX.create('div', { props: { className: 'crm-entity-widget-content-block-inner' } });
+		this._wrapper.appendChild(this._innerWrapper);
+
 		if(this.hasContentToDisplay())
 		{
-			this._innerWrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block-inner" } });
-			this._wrapper.appendChild(this._innerWrapper);
-
-			for(var i = 0, length = this._items.length; i < length; i++)
+			for (var i = 0, length = this._items.length; i < length; i++)
 			{
 				var item = this._items[i];
 
@@ -190,7 +193,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 				item.layout();
 			}
 
-			if(this.isInEditMode())
+			if (this.isInEditMode())
 			{
 				this._bottomButton = BX.create("span",
 					{
@@ -216,13 +219,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		}
 		else
 		{
-			this._innerWrapper = BX.create("div",
-				{
-					props: { className: "crm-entity-widget-content-block-inner" },
-					text: this.getMessage("isEmpty")
-				}
-			);
-			this._wrapper.appendChild(this._innerWrapper);
+			this._innerWrapper.appendChild(this.getEmptyState());
 		}
 
 		if(this.isContextMenuEnabled())
@@ -239,6 +236,22 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 
 		this.registerLayout(options);
 		this._hasLayout = true;
+	};
+	BX.Crm.EntityEditorMultipleUser.prototype.getEmptyState = function()
+	{
+		if (!this._emptyState)
+		{
+			this._emptyState = BX.create('span', { text: this.getMessage('isEmpty') });
+		}
+
+		return this._emptyState;
+	};
+	BX.Crm.EntityEditorMultipleUser.prototype.removeEmptyState = function()
+	{
+		if (this._innerWrapper?.contains(this.getEmptyState()))
+		{
+			this.getEmptyState().remove();
+		}
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.doRegisterLayout = function()
 	{

@@ -76,6 +76,12 @@ if (Loader::includeModule('catalog'))
 			return (!empty($result) ? $result: null);
 		}
 
+		// TODO: remove this code after iblock 24.0.0 will be stable
+		public function getListMode(): string
+		{
+			return $this->iblockListMode;
+		}
+
 		protected function initConfig(): void
 		{
 			parent::initConfig();

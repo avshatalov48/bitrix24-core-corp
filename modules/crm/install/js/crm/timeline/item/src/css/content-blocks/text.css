@@ -8,6 +8,22 @@
 	color: var(--ui-color-palette-green-80, #688800);
 }
 
+.crm-timeline__text-block.--color-primary {
+	color: var(--ui-color-primary, #2fc6f6);
+}
+
+.crm-timeline__text-block.--color-warning {
+	color: var(--ui-color-text-warning, #ffa900);
+}
+
+.crm-timeline__text-block.--color-danger {
+	color: var(--ui-color-text-alert, #ff5752);
+}
+
+.crm-timeline__text-block.--color-success {
+	color: var(--ui-color-primary-alt, #9dcf00);
+}
+
 .crm-timeline__text-block.--color-base-50 {
 	color: var(--ui-color-base-50, #a8adb4);
 }
@@ -46,4 +62,12 @@
 
 .crm-timeline__text-block.--size-md {
 	font-size: var(--ui-font-size-md, 14px);
+}
+
+.crm-timeline__text-block.--size-lg {
+	font-size: var(--ui-font-size-lg, 15px);
+}
+
+.crm-timeline__text-block.--size-xl {
+	font-size: var(--ui-font-size-xl, 16px);
 }

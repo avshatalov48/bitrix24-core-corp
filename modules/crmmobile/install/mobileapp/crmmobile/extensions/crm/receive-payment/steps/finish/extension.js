@@ -145,4 +145,3 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 
 	module.exports = { FinishStep };
 });
-

@@ -161,7 +161,9 @@ class Manager
 		$sections = [];
 		foreach ($collection as $entityObject)
 		{
-			$sections[] = $this->assembler::constructCustomSectionFromEntityObject($entityObject);
+			$section = $this->assembler::constructCustomSectionFromEntityObject($entityObject);
+			$this->loadSystemPagesIntoSection($section);
+			$sections[] = $section;
 		}
 
 		return $sections;
@@ -176,7 +178,39 @@ class Manager
 			],
 		])->fetchObject();
 
-		return ($object ? $this->assembler::constructCustomSectionFromEntityObject($object) : null);
+		$section = ($object ? $this->assembler::constructCustomSectionFromEntityObject($object) : null);
+		if (!is_null($section))
+		{
+			$this->loadSystemPagesIntoSection($section);
+		}
+
+		return $section;
+	}
+
+	/**
+	 * Set in $section system pages
+	 *
+	 * @param CustomSection $section
+	 * @return void
+	 */
+	protected function loadSystemPagesIntoSection(CustomSection $section): void
+	{
+		$sectionModuleId = $section->getModuleId();
+		if (is_null($sectionModuleId))
+		{
+			return;
+		}
+
+		$provider = $this->getProvider($sectionModuleId);
+		if (is_null($provider))
+		{
+			return;
+		}
+
+		$systemPages = $provider->getSystemPages($section);
+		$pages = $section->getPages();
+
+		$section->setPages(array_merge($pages, $systemPages));
 	}
 
 	protected function isCustomSectionAvailable(CustomSection $customSection): bool
@@ -594,7 +628,7 @@ class Manager
 		}
 
 		$provider = $this->getProvider($activePage->getModuleId());
-		$component = $provider ? $provider->resolveComponent($activePage->getSettings(), $url) : null;
+		$component = $provider?->resolveComponent($activePage->getSettings(), $url);
 
 		if (is_null($component))
 		{
@@ -626,5 +660,44 @@ class Manager
 	public static function buildCustomSectionCounterId(string $moduleId, ?int $customSectionId): string
 	{
 		return $moduleId . self::COUNTER_INFIX . $customSectionId;
+	}
+
+	/**
+	 * Return array of system pages by custom section code
+	 *
+	 * @param string $customSectionCode
+	 * @param bool $ignorePageAvailability
+	 * @return CustomSectionPage[]
+	 */
+	public function getSystemPages(string $customSectionCode, bool $ignorePageAvailability = false): array
+	{
+		$section = $this->getCustomSection($customSectionCode);
+		if (is_null($section))
+		{
+			return [];
+		}
+
+		$provider = $this->getProvider($section->getModuleId());
+		if (is_null($provider))
+		{
+			return [];
+		}
+
+		return $provider->getSystemPages($section, $ignorePageAvailability);
+	}
+
+	/**
+	 * Return array of system page codes by custom section code
+	 *
+	 * @param string $customSectionCode
+	 * @param bool $ignorePageAvailability
+	 * @return array
+	 */
+	public function getSystemPagesCodes(string $customSectionCode, bool $ignorePageAvailability = false): array
+	{
+		return array_map(
+			static fn($page) => $page->getCode(),
+			$this->getSystemPages($customSectionCode, $ignorePageAvailability),
+		);
 	}
 }

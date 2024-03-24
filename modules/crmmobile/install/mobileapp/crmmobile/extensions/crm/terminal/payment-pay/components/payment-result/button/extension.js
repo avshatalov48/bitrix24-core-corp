@@ -69,4 +69,3 @@ jn.define('crm/terminal/payment-pay/components/payment-result/button', (require,
 
 	module.exports = { Button };
 });
-

@@ -206,12 +206,8 @@ class CVoxImplantRestService extends IRestService
 
 		$arReturn = [];
 
-		$dbResCnt = \Bitrix\Voximplant\SipTable::getList([
-			'filter' => $arFilter,
-			'select' => ["CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')],
-		]);
-		$arResCnt = $dbResCnt->fetch();
-		if ($arResCnt && $arResCnt["CNT"] > 0)
+		$cnt = \Bitrix\Voximplant\SipTable::getCount($arFilter);
+		if ($cnt > 0)
 		{
 			$arNavParams = self::getNavData($nav, true);
 
@@ -250,7 +246,7 @@ class CVoxImplantRestService extends IRestService
 			return self::setNavData(
 				$result,
 				[
-					"count" => $arResCnt['CNT'],
+					"count" => $cnt,
 					"offset" => $arNavParams['offset']
 				]
 			);
@@ -316,15 +312,11 @@ class CVoxImplantRestService extends IRestService
 		$arParams['LOGIN'] ??= null;
 		$arParams['PASSWORD'] ??= null;
 
-		$dbResCnt = \Bitrix\Voximplant\SipTable::getList([
-			'filter' => [
-				'CONFIG_ID' => $arParams["CONFIG_ID"],
-				'APP_ID' => $server->getAppId()
-			],
-			'select' => ["CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')],
+		$cnt = \Bitrix\Voximplant\SipTable::getCount([
+			'CONFIG_ID' => $arParams["CONFIG_ID"],
+			'APP_ID' => $server->getAppId()
 		]);
-		$arResCnt = $dbResCnt->fetch();
-		if (!$arResCnt || $arResCnt["CNT"] <= 0)
+		if ($cnt <= 0)
 		{
 			throw new Bitrix\Rest\RestException("Specified CONFIG_ID is not found", Bitrix\Rest\RestException::ERROR_NOT_FOUND, CRestServer::STATUS_NOT_FOUND);
 		}
@@ -381,15 +373,11 @@ class CVoxImplantRestService extends IRestService
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 		$arParams["CONFIG_ID"] ??= null;
 
-		$dbResCnt = \Bitrix\Voximplant\SipTable::getList([
-			'filter' => [
-				'CONFIG_ID' => $arParams["CONFIG_ID"],
-				'APP_ID' => $server->getAppId()
-			],
-			'select' => ["CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')],
+		$cnt = \Bitrix\Voximplant\SipTable::getCount([
+			'CONFIG_ID' => $arParams["CONFIG_ID"],
+			'APP_ID' => $server->getAppId()
 		]);
-		$arResCnt = $dbResCnt->fetch();
-		if (!$arResCnt || $arResCnt["CNT"] <= 0)
+		if ($cnt <= 0)
 		{
 			throw new Bitrix\Rest\RestException("Specified CONFIG_ID is not found", Bitrix\Rest\RestException::ERROR_NOT_FOUND, CRestServer::STATUS_WRONG_REQUEST);
 		}
@@ -1175,7 +1163,8 @@ class CVoxImplantRestService extends IRestService
 
 		CVoxImplantIncoming::SendCommand(Array(
 			'CALL_ID' => $params['CALL_ID'],
-			'COMMAND' => CVoxImplantIncoming::COMMAND_BUSY
+			'COMMAND' => CVoxImplantIncoming::COMMAND_BUSY,
+			'DEBUG_INFO' => $params['DEBUG_INFO'],
 		));
 	}
 

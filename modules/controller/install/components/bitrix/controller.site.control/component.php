@@ -276,9 +276,9 @@ else
 				}
 				else
 				{
+					$DB->Commit();
 					echo "200 OK\n";
 				}
-				$DB->Commit();
 				break;
 			case "email":
 				$query = '

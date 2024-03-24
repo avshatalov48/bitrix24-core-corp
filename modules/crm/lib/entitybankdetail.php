@@ -1190,6 +1190,7 @@ class EntityBankDetail
 	public function getFormFieldsTypes()
 	{
 		return array(
+			'AUTOCOMPLETE' => 'requisite_qutocomplete',
 			'RQ_BANK_ADDR' => 'textarea',
 			'COMMENTS' => 'textarea'
 		);
@@ -1197,12 +1198,14 @@ class EntityBankDetail
 
 	public function getFormFieldsInfo($countryId = 0)
 	{
-		$result = array();
+		$result = [];
 
 		$formTypes = $this->getFormFieldsTypes();
 		$rqFields = array();
 		foreach ($this->getRqFields() as $rqFieldName)
+		{
 			$rqFields[$rqFieldName] = true;
+		}
 		$fieldTitles = $this->getFieldsTitles($countryId);
 		foreach (BankDetailTable::getMap() as $fieldName => $fieldInfo)
 		{
@@ -1225,22 +1228,28 @@ class EntityBankDetail
 
 	public function getFormFieldsInfoByCountry($countryId)
 	{
-		$result = array();
+		$result = [];
 
 		$countryId = (int)$countryId;
 		if ($countryId <= 0 || !isset(self::$rqFieldMapByCountry[$countryId]))
+		{
 			$countryId = 122;    // US by default
+		}
 
 		$fieldsInfo = $this->getFormFieldsInfo($countryId);
-		$fieldsByCountry = array();
+		$fieldsByCountry = [];
 		if (is_array(self::$rqFieldMapByCountry[$countryId]))
+		{
 			$fieldsByCountry = self::$rqFieldMapByCountry[$countryId];
+		}
 
 		$result['NAME'] = $fieldsInfo['NAME'];
 		foreach ($fieldsByCountry as $fieldName)
 		{
 			if (isset($fieldsInfo[$fieldName]))
+			{
 				$result[$fieldName] = $fieldsInfo[$fieldName];
+			}
 		}
 		$result['COMMENTS'] = $fieldsInfo['COMMENTS'];
 

@@ -3,7 +3,6 @@
  */
 jn.define('layout/ui/detail-card/floating-button', (require, exports, module) => {
 	const { AnalyticsLabel } = require('analytics-label');
-	const { Feature } = require('feature');
 	const { FloatingButtonMenu } = require('layout/ui/detail-card/floating-button/menu');
 
 	const isIOS = Application.getPlatform() === 'ios';
@@ -58,7 +57,7 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 			this.eventEmitter.on('DetailCard.FloatingMenu.Item::onRecentAction', this.handleRecentItemAction);
 			this.eventEmitter.on('DetailCard.FloatingMenu.Item::onSaveInRecent', this.handleRecentAdd);
 
-			if (isIOS && Feature.isKeyboardEventsSupported())
+			if (isIOS)
 			{
 				Keyboard.on(Keyboard.Event.WillShow, () => {
 					if (this.floatingButtonRef)

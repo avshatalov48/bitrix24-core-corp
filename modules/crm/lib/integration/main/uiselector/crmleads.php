@@ -212,8 +212,8 @@ class CrmLeads extends CrmEntity
 		{
 			$filter = [
 				'LOGIC' => 'OR',
-				'%FULL_NAME' => $search,
-				'%TITLE' => $search
+				'?FULL_NAME' => $search,
+				'?TITLE' => $search
 			];
 
 			$filter = [

@@ -3,10 +3,10 @@
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Catalog\ContractorTable;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 
 /**
  * Class StoreDocumentArrival
@@ -141,7 +141,7 @@ class StoreDocumentArrival extends StoreDocument
 	 */
 	public function getDocumentContractorName(): string
 	{
-		return (string)$this->data['CONTRACTOR_NAME'];
+		return (string)($this->data['CONTRACTOR_NAME'] ?? '');
 	}
 
 	/**
@@ -149,7 +149,7 @@ class StoreDocumentArrival extends StoreDocument
 	 */
 	public function getDocumentContractorCompany(): string
 	{
-		return (string)$this->data['CONTRACTOR_COMPANY'];
+		return (string)($this->data['CONTRACTOR_COMPANY'] ?? '');
 	}
 
 	/**
@@ -157,7 +157,7 @@ class StoreDocumentArrival extends StoreDocument
 	 */
 	public function getDocumentContractorPersonName(): string
 	{
-		return (string)$this->data['CONTRACTOR_PERSON_NAME'];
+		return (string)($this->data['CONTRACTOR_PERSON_NAME'] ?? '');
 	}
 
 	/**
@@ -165,7 +165,7 @@ class StoreDocumentArrival extends StoreDocument
 	 */
 	public function getDocumentContractorPhone(): string
 	{
-		return (string)$this->data['CONTRACTOR_PHONE'];
+		return (string)($this->data['CONTRACTOR_PHONE'] ?? '');
 	}
 
 	/**
@@ -186,7 +186,7 @@ class StoreDocumentArrival extends StoreDocument
 	 */
 	public function getDocumentContractorKpp(): string
 	{
-		return (string)$this->data['CONTRACTOR_KPP'];
+		return (string)($this->data['CONTRACTOR_KPP'] ?? '');
 	}
 
 	/**
@@ -194,6 +194,6 @@ class StoreDocumentArrival extends StoreDocument
 	 */
 	public function getDocumentContractorAddress(): string
 	{
-		return (string)$this->data['CONTRACTOR_ADDRESS'];
+		return (string)($this->data['CONTRACTOR_ADDRESS'] ?? '');
 	}
 }

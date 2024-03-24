@@ -42,3 +42,4 @@ $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_MESSAGE_MSGVER_1"] = "Möchten Sie die
 $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_TITLE_MSGVER_1"] = "Angebot löschen";
 $MESS["CRM_ENT_DETAIL_QUOTE_URL_COPIED_MSGVER_1"] = "Angebotslink wurde in die Zwischenablage kopiert.";
 $MESS["CRM_ENT_DETAIL_REST_BUTTON_2"] = "Market";
+$MESS["CRM_ENT_DETAIL_SIGN_PROCESS_BUTTON"] = "Fortschritt der Unterzeichnung";

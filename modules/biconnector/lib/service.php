@@ -41,6 +41,16 @@ abstract class Service
 	}
 
 	/**
+	 * Return Service ID for key restrictions
+	 *
+	 * @return string
+	 */
+	public static function getServiceId(): string
+	{
+		return static::$serviceId;
+	}
+
+	/**
 	 * Changes the language if it is exists and active.
 	 * Otherwise sets the language to the current one.
 	 *
@@ -161,6 +171,16 @@ abstract class Service
 					$type = $fieldInfo['FIELD_TYPE'];
 				}
 
+				//Backwards compatibility
+				if (isset($fieldInfo['CONCAT_KEY']))
+				{
+					$fieldInfo['GROUP_KEY'] = $fieldInfo['CONCAT_KEY'];
+				}
+				if (isset($fieldInfo['CONCAT_GROUP_BY']))
+				{
+					$fieldInfo['GROUP_CONCAT'] = $fieldInfo['CONCAT_GROUP_BY'];
+				}
+
 				$result[] = [
 					'CONCEPT_TYPE' => (isset($fieldInfo['IS_METRIC']) && $fieldInfo['IS_METRIC'] === 'Y' ? 'METRIC' : 'DIMENSION'),
 					'ID' => $fieldName,
@@ -169,11 +189,13 @@ abstract class Service
 					'TYPE' => $this->mapType($type),
 					'AGGREGATION_TYPE' => $fieldInfo['AGGREGATION_TYPE'] ?? null,
 					'IS_PRIMARY' => $fieldInfo['IS_PRIMARY'] ?? null,
-					'CONCAT_GROUP_BY' => $fieldInfo['CONCAT_GROUP_BY'] ?? null,
-					'CONCAT_KEY' => $fieldInfo['CONCAT_KEY'] ?? null,
+					'GROUP_KEY' => $fieldInfo['GROUP_KEY'] ?? null,
+					'GROUP_CONCAT' => $fieldInfo['GROUP_CONCAT'] ?? null,
+					'GROUP_COUNT' => $fieldInfo['GROUP_COUNT'] ?? null,
 				];
 			}
 		}
+
 		return $result;
 	}
 
@@ -341,7 +363,19 @@ abstract class Service
 
 		if (isset($parameters['dateRange']) && is_array($parameters['dateRange']))
 		{
-			$timeFilterColumn = $parameters['configParams']['timeFilterColumn'] ?? '';
+			if (isset($parameters['configParams']['timeFilterColumn']))
+			{
+				$timeFilterColumn = $parameters['configParams']['timeFilterColumn'];
+			}
+			elseif (isset($parameters['configParams']['timefiltercolumn']))
+			{
+				$timeFilterColumn = $parameters['configParams']['timefiltercolumn'];
+			}
+			else
+			{
+				$timeFilterColumn = '';
+			}
+
 			$this->applyDateFilter($sqlWhere, $tableFields, $parameters['dateRange'], $timeFilterColumn);
 		}
 
@@ -365,7 +399,7 @@ abstract class Service
 		}
 
 		$selectedFields = [];
-		$concatFields = [];
+		$groupFields = [];
 		if (isset($parameters['fields']) && is_array($parameters['fields']))
 		{
 			foreach ($parameters['fields'] as $field)
@@ -379,11 +413,11 @@ abstract class Service
 						|| !($strQueryWhere && $canBeFiltered)
 					)
 					{
-						if (isset($tableField['CONCAT_KEY']))
+						if (isset($tableField['GROUP_KEY']))
 						{
-							$concatKey = $tableField['CONCAT_KEY'];
-							$concatFields[$concatKey] = $tableFields[$concatKey];
-							$concatFields[$concatKey]['ID'] = $concatKey;
+							$groupKey = $tableField['GROUP_KEY'];
+							$groupFields[$groupKey] = $tableFields[$groupKey];
+							$groupFields[$groupKey]['ID'] = $groupKey;
 						}
 						$selectedFields[$fieldName] = $tableField;
 					}
@@ -406,7 +440,7 @@ abstract class Service
 		}
 
 		$primaryFields = [];
-		if ($concatFields)
+		if ($groupFields)
 		{
 			foreach ($tableFields as $fieldName => $tableField)
 			{
@@ -418,11 +452,11 @@ abstract class Service
 			}
 		}
 
-		foreach ($concatFields as $concatKey => $_)
+		foreach ($groupFields as $groupKey => $_)
 		{
-			if (isset($selectedFields[$concatKey]))
+			if (isset($selectedFields[$groupKey]))
 			{
-				unset($concatFields[$concatKey]);
+				unset($groupFields[$groupKey]);
 			}
 		}
 
@@ -434,7 +468,7 @@ abstract class Service
 			}
 		}
 
-		$shadowFields = array_merge($primaryFields, $concatFields);
+		$shadowFields = array_merge($primaryFields, $groupFields);
 
 		$queryWhere->SetSelect(array_merge($selectedFields, $shadowFields), static::$dateFormats);
 

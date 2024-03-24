@@ -1303,7 +1303,13 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	final public function normalizeProductRows(): Result
 	{
 		$results = [];
-		foreach ($this->getProductRows() as $product)
+		$productRows = $this->getProductRows();
+		if ($productRows === null)
+		{
+			return new Result();
+		}
+
+		foreach ($productRows as $product)
 		{
 			$results[] = $this->normalizeProduct($product);
 		}

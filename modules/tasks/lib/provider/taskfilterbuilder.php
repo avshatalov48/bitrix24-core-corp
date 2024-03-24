@@ -313,19 +313,61 @@ class TaskFilterBuilder
 
 				case 'GUID':
 				case 'TITLE':
-					if (!is_scalar($val))
+					if (is_scalar($val))
 					{
+						if ($this->query->needTitleEscape())
+						{
+							$val = $this->escapeStencilCharacters($val);
+						}
+						$subFilter = $this->createSubfilter($field, $val, $operation, self::CAST_STRING);
+						if ($subFilter)
+						{
+							$conditionTree->where($subFilter);
+						}
 						break;
 					}
-					if ($this->query->needTitleEscape())
+
+					if (
+						is_array($val)
+						&& in_array($operation, [self::OPERATION_NOT, self::OPERATION_EQUAL, self::OPERATION_DEFAULT])
+					)
 					{
-						$val = $this->escapeStencilCharacters($val);
+						$subFilter = Query::filter();
+
+						if ($operation === self::OPERATION_NOT)
+						{
+							$subFilter->logic('and');
+						}
+						else
+						{
+							$subFilter->logic('or');
+						}
+
+						$conditions = false;
+						foreach ($val as $row)
+						{
+							if (!is_scalar($row))
+							{
+								continue;
+							}
+
+							$conditions = true;
+
+							if ($this->query->needTitleEscape())
+							{
+								$val = $this->escapeStencilCharacters($row);
+							}
+							$subFilter->where($this->createSubfilter($field, $val, $operation, self::CAST_STRING));
+						}
+
+						if ($conditions)
+						{
+							$conditionTree->where($subFilter);
+						}
+
+						break;
 					}
-					$subFilter = $this->createSubfilter($field, $val, $operation, self::CAST_STRING);
-					if ($subFilter)
-					{
-						$conditionTree->where($subFilter);
-					}
+
 					break;
 
 				case 'FULL_SEARCH_INDEX':
@@ -664,26 +706,26 @@ class TaskFilterBuilder
 
 				case "PERIOD":
 				case "ACTIVE":
-					if (
-						!$val['START']
-						&& !$val['END']
-					)
+					$startValue = $val['START'] ?? null;
+					$endValue = $val['END'] ?? null;
+					if (is_null($startValue) && is_null($endValue))
 					{
 						break;
 					}
 
 					$dateStart = null;
-					if ($val['START'])
+					if (!is_null($startValue))
 					{
-						$dateStart = new DateTime($val['START']);
+						$dateStart = new DateTime($startValue);
 					}
 
 					$dateEnd = null;
-					if ($val['END'])
+					if (!is_null($endValue))
 					{
-						$dateEnd = new DateTime($val['END']);
+						$dateEnd = new DateTime($endValue);
 					}
 
+					$subFilter = null;
 					if (
 						$dateStart
 						&& $dateEnd
@@ -725,7 +767,7 @@ class TaskFilterBuilder
 							->where('CHANGED_DATE', '<=', $dateEnd);
 					}
 
-					$conditionTree->where($subFilter);
+					!is_null($subFilter) && $conditionTree->where($subFilter);
 					break;
 
 				case 'DOER':

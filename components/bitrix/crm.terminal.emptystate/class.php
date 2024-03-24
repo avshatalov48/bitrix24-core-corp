@@ -5,8 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Terminal\Config\TerminalPaysystemManager;
 use Bitrix\Main;
-use Bitrix\Sale;
 
 class CrmTerminalEmptyState extends \CBitrixComponent implements Main\Engine\Contract\Controllerable, Main\Errorable
 {
@@ -45,8 +45,8 @@ class CrmTerminalEmptyState extends \CBitrixComponent implements Main\Engine\Con
 
 		if ($this->arResult['ZONE'] === 'ru')
 		{
-			$this->arResult['SBERBANK_PAY_SYSTEM_PATH'] = $this->getPaySystemPath($this->getSberQrPaySystem());
-			$this->arResult['SBP_PAY_SYSTEM_PATH'] = $this->getPaySystemPath($this->getSpbPaySystem());
+			$this->arResult['SBERBANK_PAY_SYSTEM_PATH'] = TerminalPaysystemManager::getInstance()->getSberQrPaysystemPath();
+			$this->arResult['SBP_PAY_SYSTEM_PATH'] = TerminalPaysystemManager::getInstance()->getSbpPaysystemPath();
 		}
 	}
 
@@ -69,87 +69,6 @@ class CrmTerminalEmptyState extends \CBitrixComponent implements Main\Engine\Con
 		}
 
 		return 'en';
-	}
-
-	private function getSpbPaySystem(): array
-	{
-		$actionFile = $this->getYandexCheckoutHandlerCode();
-
-		$paySystem = $this->getPaySystem($actionFile, \Sale\Handlers\PaySystem\YandexCheckoutHandler::MODE_SBP);
-		if (!$paySystem)
-		{
-			$paySystem = [
-				'ACTION_FILE' => $actionFile,
-				'PS_MODE' => \Sale\Handlers\PaySystem\YandexCheckoutHandler::MODE_SBP,
-			];
-		}
-
-		return $paySystem;
-	}
-
-	private function getSberQrPaySystem(): array
-	{
-		$actionFile = $this->getYandexCheckoutHandlerCode();
-
-		$paySystem = $this->getPaySystem($actionFile, \Sale\Handlers\PaySystem\YandexCheckoutHandler::MODE_SBERBANK_QR);
-		if (!$paySystem)
-		{
-			$paySystem = [
-				'ACTION_FILE' => $actionFile,
-				'PS_MODE' => \Sale\Handlers\PaySystem\YandexCheckoutHandler::MODE_SBERBANK_QR,
-			];
-		}
-
-		return $paySystem;
-	}
-
-	private function getPaySystem(string $actionFile, string $psMode): ?array
-	{
-		$paySystem = Sale\PaySystem\Manager::getList([
-			'filter' => [
-				'=ACTION_FILE' => $actionFile,
-				'=PS_MODE' => $psMode,
-				'=ACTIVE' => 'Y',
-				'=ENTITY_REGISTRY_TYPE' => Sale\Registry::REGISTRY_TYPE_ORDER,
-			],
-			'select' => ['ID','ACTION_FILE', 'PS_MODE'],
-			'order' => ['ID' => 'DESC'],
-			'limit' => 1,
-		])->fetch();
-
-		return $paySystem ?: null;
-	}
-
-	private function getYandexCheckoutHandlerCode(): string
-	{
-		static $result = null;
-		if (!is_null($result))
-		{
-			return $result;
-		}
-
-		$result = (string)Sale\PaySystem\Manager::getFolderFromClassName(
-			\Sale\Handlers\PaySystem\YandexCheckoutHandler::class
-		);
-		Sale\PaySystem\Manager::includeHandler($result);
-
-		return $result;
-	}
-
-	private function getPaySystemPath(array $queryParams): string
-	{
-		$paySystemPath = $this->getPaySystemComponentPath();
-		$paySystemPath->addParams($queryParams);
-
-		return $paySystemPath->getLocator();
-	}
-
-	private function getPaySystemComponentPath(): Main\Web\Uri
-	{
-		$paySystemPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem');
-		$paySystemPath = getLocalPath('components' . $paySystemPath . '/slider.php');
-
-		return new Main\Web\Uri($paySystemPath);
 	}
 
 	private function checkModules(): bool

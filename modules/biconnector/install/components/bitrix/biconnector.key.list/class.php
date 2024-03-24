@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Services\ApacheSuperset;
 use Bitrix\BiConnector\Settings\Grid\KeysGrid;
 use Bitrix\BiConnector\Settings\Grid\KeysSettings;
 use Bitrix\Main\Engine\Contract\Controllerable;
@@ -24,6 +25,7 @@ class KeyListComponent extends CBitrixComponent implements Controllerable
 	private CurrentUser $currentUser;
 	private bool $canWrite;
 	private bool $canRead;
+	private ?Buttons\Button $createKeyButton;
 	private KeysGrid $grid;
 	private const GRID_ID = 'biconnector_key_list';
 	private const FILTER_FIELDS_ID = ['ACCESS_KEY', 'LAST_ACTIVITY_DATE', 'DATE_CREATE', 'TIMESTAMP_X'];
@@ -147,24 +149,33 @@ class KeyListComponent extends CBitrixComponent implements Controllerable
 
 	protected function getGridData(KeysGrid $grid): array
 	{
-		$keyQuery = BIConnector\KeyTable::query()->setSelect([
-			'ID',
-			'DATE_CREATE',
-			'CREATED_BY',
-			'CREATED_USER.NAME',
-			'CREATED_USER.LAST_NAME',
-			'CREATED_USER.SECOND_NAME',
-			'CREATED_USER.EMAIL',
-			'CREATED_USER.LOGIN',
-			'CREATED_USER.PERSONAL_PHOTO',
-			'CONNECTION',
-			'ACCESS_KEY',
-			'ACTIVE',
-			'APP_ID',
-			'APPLICATION.APP_NAME',
-			'LAST_ACTIVITY_DATE',
-			'TIMESTAMP_X',
-		])->setOrder($grid->getOrmOrder())->setFilter($grid->getOrmFilter());
+		$keyQuery = BIConnector\KeyTable::query()
+			->setSelect([
+				'ID',
+				'DATE_CREATE',
+				'CREATED_BY',
+				'CREATED_USER.NAME',
+				'CREATED_USER.LAST_NAME',
+				'CREATED_USER.SECOND_NAME',
+				'CREATED_USER.EMAIL',
+				'CREATED_USER.LOGIN',
+				'CREATED_USER.PERSONAL_PHOTO',
+				'CONNECTION',
+				'ACCESS_KEY',
+				'ACTIVE',
+				'APP_ID',
+				'APPLICATION.APP_NAME',
+				'LAST_ACTIVITY_DATE',
+				'TIMESTAMP_X',
+			])
+			->setOrder($grid->getOrmOrder())
+			->setFilter($grid->getOrmFilter())
+			->addFilter(null, [
+				'LOGIC' => 'OR',
+				'==SERVICE_ID' => null,
+				'!=SERVICE_ID' => ApacheSuperset::getServiceId(),
+			])
+		;
 
 		if (!$this->canWrite)
 		{
@@ -193,7 +204,6 @@ class KeyListComponent extends CBitrixComponent implements Controllerable
 		if ($this->canWrite && Loader::includeModule('biconnector'))
 		{
 			BIConnector\KeyUserTable::deleteByFilter(['=KEY_ID' => $id]);
-			BIConnector\LogTable::deleteByFilter(['=KEY_ID' => $id]);
 
 			return BIConnector\KeyTable::delete($id)->isSuccess();
 		}

@@ -2,9 +2,10 @@
 
 namespace Bitrix\Crm\Counter\CounterQueryBuilder\Idle;
 
-use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilder;
-use Bitrix\Crm\Counter\CounterQueryBuilder\QueryParts\ResponsibleFilter;
 use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParams;
+use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilder;
+use Bitrix\Crm\Counter\CounterQueryBuilder\QueryParts;
+use Bitrix\Crm\Counter\CounterQueryBuilder\QueryParts\ResponsibleFilter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Pseudoactivity\Entity\WaitTable;
 use Bitrix\Crm\Service\Factory;
@@ -13,7 +14,6 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Crm\Counter\CounterQueryBuilder\QueryParts;
 
 final class Compatible implements CounterQueryBuilder
 {

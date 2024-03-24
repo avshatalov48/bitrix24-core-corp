@@ -14,6 +14,7 @@ abstract class IntegratorResponse
 	public const STATUS_NOT_FOUND = 404;
 	public const STATUS_SERVER_ERROR = 500;
 	public const STATUS_FROZEN = 555;
+	public const STATUS_SERVER_DOWN = 521;
 	public const STATUS_UNKNOWN = 0;
 
 	protected int $status;
@@ -68,7 +69,7 @@ abstract class IntegratorResponse
 
 	public function getStatus(): int
 	{
-		return $this->status;
+		return $this->status === 0 ? static::STATUS_SERVER_DOWN : $this->status;
 	}
 
 	public function setStatus(mixed $status): static

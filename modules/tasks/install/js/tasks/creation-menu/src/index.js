@@ -1,4 +1,4 @@
- import { CreationMenu } from './creation-menu';
+import { CreationMenu } from './creation-menu';
 
 export {
 	CreationMenu,

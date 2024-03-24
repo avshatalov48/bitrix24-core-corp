@@ -1,6 +1,5 @@
-/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,main_core) {
+(function (exports,main_popup,ui_analytics,main_core) {
 	'use strict';
 
 	var Delimiter = /*#__PURE__*/function () {
@@ -192,7 +191,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getCreationItems",
 	    value: function getCreationItems() {
-	      return [Task.create(this.createTaskLink), TaskByTemplate.create(this.createTaskLink), Delimiter.create(), TemplateList.create(this.templatesListLink)];
+	      var createLink = main_core.Uri.addParam(this.createTaskLink, {
+	        ta_sec: 'space',
+	        ta_el: 'create_button'
+	      });
+	      return [Task.create(createLink), TaskByTemplate.create(createLink), Delimiter.create(), TemplateList.create(this.templatesListLink)];
 	    }
 	  }]);
 	  return CreationMenu;
@@ -201,5 +204,5 @@ this.BX = this.BX || {};
 
 	exports.CreationMenu = CreationMenu;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.Main,BX));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX.Main,BX.UI.Analytics,BX));
 //# sourceMappingURL=creation-menu.bundle.js.map

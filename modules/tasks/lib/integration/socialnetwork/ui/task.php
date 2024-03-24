@@ -12,11 +12,14 @@ namespace Bitrix\Tasks\Integration\Socialnetwork\UI;
 
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Task\Status;
+use CDBResult;
+use CUser;
 
 Loc::loadMessages(__FILE__);
 
 final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 {
+	private static array $userStorage = [];
 	/**
 	 * Returns default action path for the current site and task NOT being added to a group
 	 *
@@ -144,23 +147,9 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 
 			if ($actorUserId)
 			{
-				$rsUser = \CUser::GetList(
-					'id',
-					'asc',
-					array('ID_EQUAL_EXACT' => (int) $actorUserId),
-					array(
-						'FIELDS' => array(
-							'ID',
-							'NAME',
-							'LAST_NAME',
-							'SECOND_NAME',
-							'LOGIN',
-							'PERSONAL_GENDER'
-						)
-					)
-				);
+				$arUser = self::getUser((int)$actorUserId);
 
-				if ($arUser = $rsUser->fetch())
+				if ($arUser)
 				{
 					if (isset($arUser['PERSONAL_GENDER']))
 					{
@@ -173,7 +162,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 						}
 					}
 
-					$actorUserName = \CUser::FormatName($nameTemplate, $arUser, true);
+					$actorUserName = CUser::FormatName($nameTemplate, $arUser, true);
 				}
 			}
 
@@ -206,28 +195,14 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 					: ''
 			);
 
-			$rsUser = \CUser::GetList(
-				'id',
-				'asc',
-				array('ID_EQUAL_EXACT' => (int) $arFields['PARAMS']['CREATED_BY']),
-				array(
-					'FIELDS' => array(
-						'PERSONAL_GENDER',
-						'ID',
-						'NAME',
-						'LAST_NAME',
-						'SECOND_NAME',
-						'LOGIN'
-					)
-				)
-			);
+			$arUser = self::getUser((int)$arFields['PARAMS']['CREATED_BY']);
 
-			if ($arUser = $rsUser->Fetch())
+			if ($arUser)
 			{
 				$title_tmp .= " ("
 					. str_replace(
 						"#USER_NAME#",
-						\CUser::FormatName(\CSite::GetNameFormat(false), $arUser) . $suffix,
+						CUser::FormatName(\CSite::GetNameFormat(false), $arUser) . $suffix,
 						Loc::getMessage("TASKS_SONET_GL_EVENT_TITLE_TASK_CREATED")
 					)
 					. ")";
@@ -395,5 +370,31 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 		}
 
 		return $arResult;
+	}
+
+	private static function getUser(int $userId): bool|array
+	{
+		if (!isset(self::$userStorage[$userId]))
+		{
+			self::$userStorage[$userId] = CUser::GetList(
+				'id',
+				'asc',
+				[
+					'ID_EQUAL_EXACT' => $userId
+				],
+				[
+					'FIELDS' => [
+						'PERSONAL_GENDER',
+						'ID',
+						'NAME',
+						'LAST_NAME',
+						'SECOND_NAME',
+						'LOGIN',
+					],
+				]
+			)->Fetch();
+		}
+
+		return self::$userStorage[$userId];
 	}
 }

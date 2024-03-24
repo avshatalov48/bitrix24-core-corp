@@ -29,6 +29,7 @@
 	const { showToast } = require('toast');
 	const { Type } = require('type');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { fetchDisabledTools } = require('settings/disabled-tools');
 	const {
 		tasksUpserted,
 		tasksAdded,
@@ -53,6 +54,8 @@
 		constructor(props)
 		{
 			super(props);
+
+			fetchDisabledTools();
 
 			this.showSearch = this.showSearch.bind(this);
 			this.openViewSwitcher = this.openViewSwitcher.bind(this);
@@ -534,7 +537,7 @@
 
 				task.setData(mapStateToTaskModel(row));
 
-				task.open();
+				task.open(null);
 			}
 		}
 

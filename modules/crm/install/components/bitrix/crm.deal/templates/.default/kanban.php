@@ -5,7 +5,6 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
@@ -253,12 +252,14 @@ else
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
+	$viewMode = ($arResult['KANBAN_VIEW_MODE'] ?? ViewMode::MODE_STAGES);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
 		array(
 			'ENTITY_TYPE' => $entityType,
-			'VIEW_MODE' => ($arResult['KANBAN_VIEW_MODE'] ?? ViewMode::MODE_STAGES),
+			'VIEW_MODE' => $viewMode,
+			'USE_ITEM_PLANNER' => ($viewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
 			'SHOW_ACTIVITY' => 'Y',
 			'EXTRA' => array(
 				'CATEGORY_ID' => $categoryID

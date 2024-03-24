@@ -76,7 +76,7 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 				$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
 				|| $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_ACCOMPLICE)
 			)
-			&& $this->user->getPermission(PermissionDictionary::TASK_RESPONSE_CHECKLIST_EDIT)
+			&& $this->user->getPermission(PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_EDIT)
 		)
 		{
 			return true;

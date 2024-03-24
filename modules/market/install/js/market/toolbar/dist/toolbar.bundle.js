@@ -5,7 +5,7 @@ this.BX = this.BX || {};
 	let _ = t => t,
 	  _t;
 	const Toolbar = {
-	  props: ['categories', 'menuInfo'],
+	  props: ['categories', 'menuInfo', 'marketAction'],
 	  data() {
 	    return {
 	      hoverCategory: 0,
@@ -292,6 +292,11 @@ this.BX = this.BX || {};
 	      return '';
 	    },
 	    openSubscriptionSlider: function () {
+	      if (this.marketAction.length > 0) {
+	        try {
+	          eval(this.marketAction);
+	        } catch (e) {}
+	      }
 	      top.BX.UI.InfoHelper.show(this.$root.marketSlider);
 	    },
 	    ...ui_vue3_pinia.mapActions(market_ratingStore.ratingStore, ['isActiveStar', 'getAppRating'])

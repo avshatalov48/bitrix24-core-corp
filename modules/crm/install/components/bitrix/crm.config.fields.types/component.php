@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -28,5 +32,4 @@ foreach($arTypes as $key => $ar)
 
 $this->IncludeComponentTemplate();
 
-$APPLICATION->AddChainItem(GetMessage('CRM_FIELDS_ENTITY_LIST'), $arResult['~ENTITY_LIST_URL']);
-?>
+$APPLICATION->AddChainItem(GetMessage('CRM_FIELDS_ENTITY_LIST'), $arResult['~ENTITY_LIST_URL'] ?? null);

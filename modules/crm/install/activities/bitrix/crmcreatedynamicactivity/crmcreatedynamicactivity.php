@@ -83,21 +83,14 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		$errorCollection = parent::internalExecute();
 
-		$fieldsValues = [];
-		foreach ($this->DynamicEntitiesFields as $fieldId => $fieldValue)
-		{
-			if (!CBPHelper::isEmptyValue($fieldValue))
-			{
-				$fieldsValues[$fieldId] = $fieldValue;
-			}
-		}
+		$fieldsValues = $this->externalizeDocumentFields();
 		$this->logDocumentFields($fieldsValues);
 
 		$documentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
 		try
 		{
 			$creationResult = static::getDocumentService()->CreateDocument($documentType, $fieldsValues);
-			if (CBPHelper::getBool($fieldsValues['BindToCurrentElement'] ?? false))
+			if (CBPHelper::getBool($this->DynamicEntitiesFields['BindToCurrentElement'] ?? false))
 			{
 				$moduleId = $this->getDocumentType()[0] ?? '';
 				if (is_int($creationResult) && $moduleId === 'crm')
@@ -132,6 +125,47 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 
 		return $errorCollection;
+	}
+
+	private function externalizeDocumentFields(): array
+	{
+		$documentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
+
+		$documentService = static::getDocumentService();
+		$documentFields = $documentService->getDocumentFields($documentType);
+		$documentFieldsAliasesMap = CBPDocument::getDocumentFieldsAliasesMap($documentFields);
+
+		$resultFields = [];
+		foreach ($this->DynamicEntitiesFields as $key => $value)
+		{
+			if (!isset($documentFields[$key]) && isset($documentFieldsAliasesMap[$key]))
+			{
+				$key = $documentFieldsAliasesMap[$key];
+			}
+
+			$property = $documentFields[$key] ?? null;
+
+			if ($property && !CBPHelper::isEmptyValue($value))
+			{
+				$fieldTypeObject = $documentService->getFieldTypeObject($documentType, $property);
+				if ($fieldTypeObject)
+				{
+					$fieldTypeObject->setDocumentId($this->getDocumentId());
+					$fieldTypeObject->setValue($value);
+					$value = $fieldTypeObject->externalizeValue(
+						\Bitrix\Bizproc\FieldType::VALUE_CONTEXT_DOCUMENT,
+						$fieldTypeObject->getValue()
+					);
+
+					if (isset($value))
+					{
+						$resultFields[$key] = $value;
+					}
+				}
+			}
+		}
+
+		return $resultFields;
 	}
 
 	private function logDocumentFields(array $fields)

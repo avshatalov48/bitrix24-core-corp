@@ -47,7 +47,7 @@ class ChecklistAddRule extends \Bitrix\Main\Access\Rule\AbstractRule
 				$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
 				|| $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_ACCOMPLICE)
 			)
-			&& $this->user->getPermission(PermissionDictionary::TASK_RESPONSE_CHECKLIST_ADD)
+			&& $this->user->getPermission(PermissionDictionary::TASK_ASSIGNEE_CHECKLIST_ADD)
 		)
 		{
 			return true;

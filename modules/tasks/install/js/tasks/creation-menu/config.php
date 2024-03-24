@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/creation-menu.bundle.js',
 	'rel' => [
 		'main.popup',
+		'ui.analytics',
 		'main.core',
 	],
 	'skip_core' => false,

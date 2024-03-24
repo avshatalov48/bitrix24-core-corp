@@ -12,6 +12,7 @@ use Bitrix\Disk\Internals\Rights\Table\TmpSimpleRight;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\MysqlCommonConnection;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
@@ -2074,13 +2075,24 @@ final class SimpleRightBuilder
 	 * Deletes all simple rights from subtree.
 	 * @return $this
 	 */
-	private function cleanTree()
+	private function cleanTree(): self
 	{
-		$this->connection->queryExecute("
-			DELETE r FROM b_disk_simple_right r
-				INNER JOIN b_disk_object_path p ON p.OBJECT_ID = r.OBJECT_ID
-			WHERE p.PARENT_ID =  {$this->objectId}
-		");
+		if ($this->connection instanceof MysqlCommonConnection)
+		{
+			$this->connection->queryExecute("
+				DELETE r FROM b_disk_simple_right r
+					INNER JOIN b_disk_object_path p ON p.OBJECT_ID = r.OBJECT_ID
+				WHERE p.PARENT_ID = {$this->objectId}
+			");
+		}
+		else
+		{
+			$this->connection->queryExecute("
+				DELETE FROM b_disk_simple_right r
+					USING b_disk_object_path p
+				WHERE p.OBJECT_ID = r.OBJECT_ID AND p.PARENT_ID = {$this->objectId}
+			");
+		}
 
 		return $this;
 	}

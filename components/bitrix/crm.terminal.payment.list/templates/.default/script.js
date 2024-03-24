@@ -94,14 +94,15 @@
 	      });
 	    }
 	  }, {
-	    key: "openSmsSettingsSlider",
-	    value: function openSmsSettingsSlider() {
+	    key: "openTerminalSettingsSlider",
+	    value: function openTerminalSettingsSlider(event, menuItem) {
 	      BX.SidePanel.Instance.open(this.settingsSliderUrl, {
-	        width: 700,
+	        width: 900,
 	        cacheable: false,
 	        allowChangeTitle: false,
 	        allowChangeHistory: false
 	      });
+	      menuItem.getMenuWindow().close();
 	    }
 	  }, {
 	    key: "openQrAuthPopup",
@@ -110,11 +111,12 @@
 	    }
 	  }, {
 	    key: "openHelpdesk",
-	    value: function openHelpdesk(event) {
+	    value: function openHelpdesk(event, menuItem) {
 	      if (top.BX.Helper) {
-	        top.BX.Helper.show("redirect=detail&code=17603024");
+	        top.BX.Helper.show('redirect=detail&code=17603024');
 	        event.preventDefault();
 	      }
+	      menuItem.getMenuWindow().close();
 	    }
 	  }, {
 	    key: "onGridUpdatedHandler",

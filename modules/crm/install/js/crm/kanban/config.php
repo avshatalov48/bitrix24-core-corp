@@ -33,7 +33,7 @@ return [
 		'ls',
 		'crm.kanban.sort',
 		'crm.kanban.restriction',
-		'crm.datetime',
+		'main.date',
 		'crm.toolbar-component',
 		'ui.tooltip',
 		'ui.tour',

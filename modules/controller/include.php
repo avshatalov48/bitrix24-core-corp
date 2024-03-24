@@ -1,11 +1,10 @@
 <?
-global $DB;
-$db_type = mb_strtolower($DB->type);
+
 CModule::AddAutoloadClasses(
 	"controller",
 	array(
 		"controller" => "install/index.php",
-		"CControllerAgent" => "classes/".$db_type."/controlleragent.php",
+		"CControllerAgent" => "classes/mysql/controlleragent.php",
 		"CControllerServerRequestTo" => "classes/general/controller.php",
 		"CControllerServerResponseFrom" => "classes/general/controller.php",
 		"CControllerServerRequestFrom" => "classes/general/controller.php",
@@ -14,10 +13,10 @@ CModule::AddAutoloadClasses(
 		"CControllerGroupSettings" => "classes/general/controllergroup.php",
 		"IControllerGroupOption" => "classes/general/controllergroup.php",
 		"CControllerLog" => "classes/general/controllerlog.php",
-		"CControllerMember" => "classes/".$db_type."/controllermember.php",
+		"CControllerMember" => "classes/mysql/controllermember.php",
 		"CControllerTask" => "classes/general/controllertask.php",
 		"CAllControllerCounter" => "classes/general/counter.php",
-		"CControllerCounter" => "classes/".$db_type."/counter.php",
+		"CControllerCounter" => "classes/mysql/counter.php",
 	)
 );
 

@@ -1,6 +1,4 @@
-import { Loc } from "main.core";
-import { DateTimeFormat } from "main.date";
-import { TimestampConverter, Factory } from "crm.datetime";
+import { DateTimeFormat, Timezone } from 'main.date';
 
 declare type DateTimeFormatOptions = {
 	withDayOfWeek: Boolean,
@@ -12,23 +10,26 @@ export default class DatetimeConverter
 	#timeFormat: string;
 	#shortDateFormat: string;
 	#fullDateFormat: string;
-	#datetime: ?Date = null;
+	#datetime: ?Date = null; // date object which absolute time will be the same as if it was in server timezone
 
 	/**
-	 * @param timestamp Timestamp in server timezone
+	 * @param timestamp Normal UTC timestamp, as it should be
 	 */
 	static createFromServerTimestamp(timestamp: Number): DatetimeConverter
 	{
-		const date = Factory.createFromTimestampInServerTimezone(timestamp);
+		const offset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
+
+		// make a date object which absolute time will match time of server (even though it has different timezone)
+		const date = new Date((timestamp + offset) * 1000);
 
 		return new DatetimeConverter(date);
 	}
 
 	constructor(datetime: Date)
 	{
-		this.#timeFormat = Loc.getMessage('CRM_TIMELINE_TIME_FORMAT');
-		this.#shortDateFormat = Loc.getMessage('CRM_TIMELINE_SHORT_DATE_FORMAT');
-		this.#fullDateFormat = Loc.getMessage('CRM_TIMELINE_FULL_DATE_FORMAT');
+		this.#timeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+		this.#shortDateFormat = DateTimeFormat.getFormat('DAY_SHORT_MONTH_FORMAT');
+		this.#fullDateFormat = DateTimeFormat.getFormat('MEDIUM_DATE_FORMAT');
 
 		this.#datetime = datetime;
 	}
@@ -39,8 +40,10 @@ export default class DatetimeConverter
 
 	toUserTime(): DatetimeConverter
 	{
-		const serverTimestamp = Math.floor(this.#datetime.getTime() / 1000);
-		this.#datetime = new Date(TimestampConverter.serverToUser(serverTimestamp) * 1000);
+		const timestampServer = Math.floor(this.#datetime.getTime() / 1000);
+
+		// make a date object which absolute time will match time of user (even though it has different timezone)
+		this.#datetime = new Date((timestampServer + Timezone.Offset.USER_TO_SERVER) * 1000);
 
 		return this;
 	}
@@ -84,7 +87,7 @@ export default class DatetimeConverter
 					['today', 'today'],
 					['tommorow', 'tommorow'],
 					['yesterday', 'yesterday'],
-					['', (this.#datetime.getFullYear() === (Factory.getUserNow()).getFullYear() ?  this.#shortDateFormat :  this.#fullDateFormat)]
+					['', (this.#datetime.getFullYear() === (Timezone.UserTime.getDate()).getFullYear() ?  this.#shortDateFormat :  this.#fullDateFormat)]
 				],
 				this.#datetime
 			).replaceAll('\\', '')
@@ -98,11 +101,11 @@ export default class DatetimeConverter
 
 	static getSiteDateFormat(): string
 	{
-		return DateTimeFormat.convertBitrixFormat(Loc.getMessage('FORMAT_DATE'));
+		return DateTimeFormat.getFormat('FORMAT_DATE');
 	}
 
 	static getSiteDateTimeFormat(): string
 	{
-		return DateTimeFormat.convertBitrixFormat(Loc.getMessage('FORMAT_DATETIME'));
+		return DateTimeFormat.getFormat('FORMAT_DATETIME');
 	}
 }

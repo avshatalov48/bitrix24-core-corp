@@ -2,23 +2,17 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\LostCalls;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ObjectException;
-use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
-use Bitrix\Main\ORM\Fields\ScalarField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\UI\Filter\DateType;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Voximplant\Model\StatisticMissedTable;
 use Bitrix\Voximplant\Integration\Report\Handler\Base;
 use Bitrix\Voximplant\StatisticTable;
-use CTimeZone;
 
 /**
  * Class LostCalls
@@ -35,10 +29,6 @@ class LostCalls extends Base implements IReportMultipleData
 	 * Prepares report data.
 	 *
 	 * @return array|mixed
-	 * @throws ArgumentException
-	 * @throws ObjectException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
 	 */
 	public function prepare()
 	{
@@ -54,13 +44,12 @@ class LostCalls extends Base implements IReportMultipleData
 	 * Creates a query to select data based on a filter.
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws ObjectException
-	 * @throws SystemException
 	 */
 	public function getQueryForReport(): Query
 	{
 		$filterParameters = $this->getFilterParameters();
+
+		$helper = Application::getConnection()->getSqlHelper();
 
 		$startDate = DateTime::createFromUserTime($filterParameters['TIME_PERIOD_from']);
 		$finishDate = DateTime::createFromUserTime($filterParameters['TIME_PERIOD_to']);
@@ -80,7 +69,7 @@ class LostCalls extends Base implements IReportMultipleData
 		$this->addIntervalByDatasel($subQuery, $filterParameters['TIME_PERIOD_datesel'], $dateDifference);
 		$subQuery->registerRuntimeField(new ExpressionField(
 			'LOST_CALLS_COUNT',
-			'(sum(if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 0, 1)))',
+			'SUM(CASE WHEN '.$helper->addDaysToDateTime(-1, '%s').' <= %s THEN 0 ELSE 1 END)',
 			['CALLBACK_CALL_START_DATE', 'CALL_START_DATE']
 		));
 
@@ -93,7 +82,7 @@ class LostCalls extends Base implements IReportMultipleData
 		$query->whereBetween('CALL_START_DATE', $startDate, $finishDate);
 		$query->registerRuntimeField(new ExpressionField(
 			'LOST_CALLS_COUNT',
-			'(sum(if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 0, 1)))',
+			'SUM(CASE WHEN '.$helper->addDaysToDateTime(-1, '%s').' <= %s THEN 0 ELSE 1 END)',
 			['CALLBACK_CALL_START_DATE', 'CALL_START_DATE']
 		));
 		$query->registerRuntimeField(new ReferenceField(
@@ -103,8 +92,8 @@ class LostCalls extends Base implements IReportMultipleData
 		));
 		$query->registerRuntimeField(new ExpressionField(
 			'LOST_CALLS_COUNT_COMPARE',
-			'if(%s = 0, null, %s - %s)',
-			['LOST_CALLS_COUNT', 'LOST_CALLS_COUNT', 'previous.LOST_CALLS_COUNT']
+			'(CASE WHEN %1$s = 0 THEN null ELSE %1$s - %2$s END)',
+			['LOST_CALLS_COUNT', 'previous.LOST_CALLS_COUNT']
 		));
 
 		return $query;
@@ -114,14 +103,13 @@ class LostCalls extends Base implements IReportMultipleData
 	 * @param $requestParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws ObjectException
-	 * @throws SystemException
 	 */
 	public function prepareEntityListFilter($requestParameters): Query
 	{
 		$missedQuery = StatisticMissedTable::query();
 		$fields = StatisticMissedTable::getEntity()->getScalarFields();
+
+		$helper = Application::getConnection()->getSqlHelper();
 
 		foreach ($fields as $field)
 		{
@@ -130,7 +118,7 @@ class LostCalls extends Base implements IReportMultipleData
 
 		$missedQuery->registerRuntimeField(new ExpressionField(
 			'UNANSWERED',
-			"if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 'N', 'Y')",
+			"CASE WHEN ".$helper->addDaysToDateTime(-1, '%s')." <= %s THEN 'N' ELSE 'Y' END",
 			['CALLBACK_CALL_START_DATE', 'CALL_START_DATE'])
 		);
 		$missedQuery->where('UNANSWERED', '=', 'Y');
@@ -164,12 +152,11 @@ class LostCalls extends Base implements IReportMultipleData
 	 * Converts data from a report handler for a grid
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ObjectException
 	 */
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData)
+		if (empty($calculatedData))
 		{
 			return [];
 		}

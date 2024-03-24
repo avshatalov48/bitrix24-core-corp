@@ -20,13 +20,6 @@ class ValueExtra implements Arrayable, \JsonSerializable
 		return $this;
 	}
 
-	public function isEqualTo(self $anotherValueExtra): bool
-	{
-		return (
-			$this->countryCode === $anotherValueExtra->countryCode
-		);
-	}
-
 	public function toArray(): array
 	{
 		return [

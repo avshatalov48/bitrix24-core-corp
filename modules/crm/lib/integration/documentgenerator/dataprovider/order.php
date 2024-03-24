@@ -126,7 +126,7 @@ class Order extends ProductsDataProvider
 	 */
 	public function getAssignedId()
 	{
-		return $this->data['RESPONSIBLE_ID'];
+		return $this->data['RESPONSIBLE_ID'] ?? null;
 	}
 
 	/**
@@ -158,14 +158,19 @@ class Order extends ProductsDataProvider
 	protected function getBuyerRequisiteId()
 	{
 		static $requisiteId = 0;
-		if($requisiteId > 0)
+
+		if ($requisiteId > 0)
 		{
 			return $requisiteId;
 		}
-		if($this->isLoaded())
+
+		if ($this->isLoaded())
 		{
 			$linkData = $this->getLinkData();
-			if($linkData['REQUISITE_ID'] > 0)
+			if (
+				isset($linkData['REQUISITE_ID'])
+				&& $linkData['REQUISITE_ID'] > 0
+			)
 			{
 				$requisiteId = $linkData['REQUISITE_ID'];
 			}
@@ -196,11 +201,15 @@ class Order extends ProductsDataProvider
 	{
 		$sellerBankDetailId = 0;
 
-		if($this->isLoaded())
+		if ($this->isLoaded())
 		{
 			$linkData = $this->getLinkData();
-			$sellerBankDetailId = $linkData['MC_BANK_DETAIL_ID'];
+			if (isset($linkData['MC_BANK_DETAIL_ID']))
+			{
+				$sellerBankDetailId = $linkData['MC_BANK_DETAIL_ID'];
+			}
 		}
+
 		return $sellerBankDetailId;
 	}
 
@@ -211,11 +220,15 @@ class Order extends ProductsDataProvider
 	{
 		$buyerBankDetailId = 0;
 
-		if($this->isLoaded())
+		if ($this->isLoaded())
 		{
 			$linkData = $this->getLinkData();
-			$buyerBankDetailId = $linkData['BANK_DETAIL_ID'];
+			if (isset($linkData['BANK_DETAIL_ID']))
+			{
+				$buyerBankDetailId = $linkData['BANK_DETAIL_ID'];
+			}
 		}
+
 		return $buyerBankDetailId;
 	}
 
@@ -258,7 +271,7 @@ class Order extends ProductsDataProvider
 
 	public function getCurrencyId()
 	{
-		return $this->data['CURRENCY'];
+		return $this->data['CURRENCY'] ?? null;
 	}
 
 	protected function calculateTotalFields()

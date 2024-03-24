@@ -133,7 +133,7 @@ class VoximplantReportPeriodCompareGridComponent extends \CBitrixComponent
 		$currentValueName = '';
 		$previousValueName = '';
 
-		switch ($this->filter['INCOMING'])
+		switch ($this->filter['INCOMING'] ?? 0)
 		{
 			case CallType::INCOMING:
 				$currentValueName = $previousValueName = Loc::getMessage('TELEPHONY_REPORT_PERIOD_COMPARE_INCOMING');

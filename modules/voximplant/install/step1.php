@@ -1,22 +1,27 @@
 <?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!check_bitrix_sessid())
+{
+	return;
+}
+
+use Bitrix\Main\Localization\Loc;
+
 
 /**
  * @global CMain $APPLICATION
  */
 
-if(!check_bitrix_sessid())
-{
-	return;
-}
-
-IncludeModuleLangFile(__FILE__);
-
 $ex = $APPLICATION->GetException();
-if($ex)
+if ($ex)
 {
-	CAdminMessage::ShowMessage(Array(
+	\CAdminMessage::ShowMessage(Array(
 		"TYPE" => "ERROR",
-		"MESSAGE" => GetMessage("MOD_INST_ERR"),
+		"MESSAGE" => Loc::getMessage("MOD_INST_ERR"),
 		"DETAILS" => $ex->GetString(),
 		"HTML" => true,
 	));
@@ -24,7 +29,7 @@ if($ex)
 
 <form action="<?=$APPLICATION->GetCurPage()?>">
 	<input type="hidden" name="lang" value="<?=LANG?>">
-	<input type="submit" name="" value="<?=GetMessage("MOD_BACK")?>">
+	<input type="submit" name="" value="<?=Loc::getMessage("MOD_BACK")?>">
 </form>
 
 <?php
@@ -43,15 +48,15 @@ else
 ?>
 	<div class="adm-info-message-wrap">
 		<div class="adm-info-message">
-			<div><?=GetMessage("VI_PUBLIC_PATH_DESC")?></div>
-			<div><?=GetMessage("VI_PUBLIC_PATH_DESC_2", Array('#LINK_START#' => '<a href="'.(in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=4869': 'http://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=6704').'" target="_blank">', '#LINK_END#' => '</a>'))?></div>
+			<div><?=Loc::getMessage("VI_PUBLIC_PATH_DESC")?></div>
+			<div><?=Loc::getMessage("VI_PUBLIC_PATH_DESC_2", Array('#LINK_START#' => '<a href="'.(in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=4869': 'http://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=6704').'" target="_blank">', '#LINK_END#' => '</a>'))?></div>
 		</div>
 	</div>
 	<br>
 	<form action="<?=$APPLICATION->GetCurPage()?>" name="form1" style="display: inline-block;">
 		<table cellpadding="3" cellspacing="0" border="0" width="0%" class="adm-workarea">
 		<tr>
-			<td><?=GetMessage("VI_PUBLIC_PATH")?></td>
+			<td><?=Loc::getMessage("VI_PUBLIC_PATH")?></td>
 			<td><input type="text" name="PUBLIC_URL" value="<?=$publicUrl?>" size="40"></td>
 		</tr>
 		</table>
@@ -62,7 +67,7 @@ else
 		<input type="hidden" name="id" value="voximplant">
 		<input type="hidden" name="install" value="Y">
 		<input type="hidden" name="step" value="2">
-		<input type="submit" name="inst" value="<?=GetMessage("MOD_INSTALL")?>">
+		<input type="submit" name="inst" value="<?=Loc::getMessage("MOD_INSTALL")?>">
 	</form>
 <?php
 }

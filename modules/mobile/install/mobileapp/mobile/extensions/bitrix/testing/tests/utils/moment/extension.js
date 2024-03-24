@@ -97,6 +97,84 @@
 			expect(thisWeek.inThisWeek).toBe(false);
 		});
 
+		test('inThisMinute should return true if the moment is in this minute', () => {
+			const thisMinute = new Moment('2023-10-25T10:00:01');
+
+			thisMinute.setNow(new Moment('2023-10-25T10:00:00'));
+			expect(thisMinute.inThisMinute).toBe(true);
+
+			thisMinute.setNow(new Moment('2023-10-25T10:00:01'));
+			expect(thisMinute.inThisMinute).toBe(true);
+
+			thisMinute.setNow(new Moment('2023-10-25T10:00:59'));
+			expect(thisMinute.inThisMinute).toBe(true);
+		});
+
+		test('inThisMinute should return false if the moment is outside of this minute', () => {
+			const thisMinute = new Moment('2023-10-25T10:00:00');
+
+			thisMinute.setNow(new Moment('2023-10-25T09:59:59'));
+			expect(thisMinute.inThisMinute).toBe(false);
+
+			thisMinute.setNow(new Moment('2022-10-25T11:01:00'));
+			expect(thisMinute.inThisMinute).toBe(false);
+
+			thisMinute.setNow(new Moment('2022-10-25T11:00:00'));
+			expect(thisMinute.inThisMinute).toBe(false);
+		});
+
+		test('inThisHour should return true if the moment is in this hour', () => {
+			const thisHour = new Moment('2023-10-25T10:01:00');
+
+			thisHour.setNow(new Moment('2023-10-25T10:00:00'));
+			expect(thisHour.inThisHour).toBe(true);
+
+			thisHour.setNow(new Moment('2023-10-25T10:40:00'));
+			expect(thisHour.inThisHour).toBe(true);
+
+			thisHour.setNow(new Moment('2023-10-25T10:59:59'));
+			expect(thisHour.inThisHour).toBe(true);
+		});
+
+		test('inThisHour should return false if the moment is outside of this hour', () => {
+			const thisHour = new Moment('2023-10-25T10:00:00');
+
+			thisHour.setNow(new Moment('2023-10-25T09:59:59'));
+			expect(thisHour.inThisHour).toBe(false);
+
+			thisHour.setNow(new Moment('2022-10-25T11:00:00'));
+			expect(thisHour.inThisHour).toBe(false);
+
+			thisHour.setNow(new Moment('2022-10-26T10:00:00'));
+			expect(thisHour.inThisHour).toBe(false);
+		});
+
+		test('inThisMonth should return true if the moment is in this month', () => {
+			const thisMonth = new Moment('2023-12-15T10:00:00');
+
+			thisMonth.setNow(new Moment('2023-12-31T10:00:00'));
+			expect(thisMonth.inThisMonth).toBe(true);
+
+			thisMonth.setNow(new Moment('2023-12-15T10:00:00'));
+			expect(thisMonth.inThisMonth).toBe(true);
+
+			thisMonth.setNow(new Moment('2023-12-01T10:00:00'));
+			expect(thisMonth.inThisMonth).toBe(true);
+		});
+
+		test('inThisMonth should return false if the moment is outside of this month', () => {
+			const thisWeek = new Moment('2023-11-30T10:00:00');
+
+			thisWeek.setNow(new Moment('2023-12-01T10:00:00'));
+			expect(thisWeek.inThisMonth).toBe(false);
+
+			thisWeek.setNow(new Moment('2023-10-31T10:00:00'));
+			expect(thisWeek.inThisMonth).toBe(false);
+
+			thisWeek.setNow(new Moment('2024-11-15T10:00:00'));
+			expect(thisWeek.inThisMonth).toBe(false);
+		});
+
 		test('inThisYear should return true if the moment is in this year', () => {
 			const thisYear = new Moment('2023-06-03T10:00:00');
 			thisYear.setNow(new Moment('2023-01-03T10:00:00'));
@@ -265,10 +343,30 @@
 		});
 
 		test('daysFromNow should return the number of days between the moment and now', () => {
-			const now = new Moment();
+			const now = new Moment('2023-06-03T11:00:00');
+			now.setNow(new Moment('2023-06-03T11:00:00'));
 			const moment = now.clone().addDays(7);
 
 			expect(moment.daysFromNow).toBe(7);
+		});
+
+		test('weeksFromNow should return the number of weeks between the moment and now', () => {
+			const now = new Moment('2023-06-03T11:00:00');
+			now.setNow(new Moment('2023-06-03T11:00:00'));
+
+			const weekAgo = now.clone().addDays(-7);
+			const twoDaysAgo = now.clone().addDays(-2);
+			const twoDays = now.clone().addDays(2);
+			const week = now.clone().addDays(7);
+			const tenDays = now.clone().addDays(10);
+			const twoWeeks = now.clone().addDays(14);
+
+			expect(weekAgo.weeksFromNow).toBe(1);
+			expect(twoDaysAgo.weeksFromNow).toBe(0);
+			expect(twoDays.weeksFromNow).toBe(0);
+			expect(week.weeksFromNow).toBe(1);
+			expect(tenDays.weeksFromNow).toBe(1);
+			expect(twoWeeks.weeksFromNow).toBe(2);
 		});
 
 		test('monthsFromNow should return the number of months between the moment and now', () => {
@@ -276,6 +374,19 @@
 			nextYear.setNow(new Moment('2023-06-03T10:00:00'));
 
 			expect(nextYear.monthsFromNow).toBe(12);
+		});
+
+		test('yearsFromNow should return the number of months between the moment and now', () => {
+			const now = new Moment('2023-06-03T10:00:00');
+			now.setNow(new Moment('2023-06-03T10:00:00'));
+
+			const lastYear = new Moment('2022-12-03T10:00:00');
+			const thisYear = new Moment('2023-06-03T10:00:00');
+			const nextYear = new Moment('2024-01-03T10:00:00');
+
+			expect(lastYear.yearsFromNow).toBe(1);
+			expect(thisYear.yearsFromNow).toBe(0);
+			expect(nextYear.yearsFromNow).toBe(1);
 		});
 
 		test('format should return a formatted string representation of the moment', () => {
@@ -394,12 +505,103 @@
 
 		test('startOfHour should return a new moment instance with start of the hour', () => {
 			const moment = new Moment('2023-06-03T10:30:45');
-			const startOfHourMoment = moment.startOfHour();
+			const startOfHourMoment = moment.startOfHour;
 
 			expect(startOfHourMoment.date.getHours()).toBe(10);
 			expect(startOfHourMoment.date.getMinutes()).toBe(0);
 			expect(startOfHourMoment.date.getSeconds()).toBe(0);
 			expect(startOfHourMoment.date.getMilliseconds()).toBe(0);
+		});
+
+		test('endOfHour should return a new moment instance with end of the hour', () => {
+			const moment = new Moment('2023-06-03T10:30:45');
+			const startOfHourMoment = moment.endOfHour;
+
+			expect(startOfHourMoment.date.getHours()).toBe(10);
+			expect(startOfHourMoment.date.getMinutes()).toBe(59);
+			expect(startOfHourMoment.date.getSeconds()).toBe(59);
+			expect(startOfHourMoment.date.getMilliseconds()).toBe(999);
+		});
+
+		test('startOfWeek should return a new moment instance with start of the week', () => {
+			const moment = new Moment('2023-11-15T10:30:45');
+			const startOfHourMoment = moment.startOfWeek;
+
+			expect(startOfHourMoment.date.getDate()).toBe(13);
+			expect(startOfHourMoment.date.getHours()).toBe(0);
+			expect(startOfHourMoment.date.getMinutes()).toBe(0);
+			expect(startOfHourMoment.date.getSeconds()).toBe(0);
+			expect(startOfHourMoment.date.getMilliseconds()).toBe(0);
+		});
+
+		test('endOfWeek should return a new moment instance with end of the week', () => {
+			const moment = new Moment('2023-11-15T10:30:45');
+			const startOfHourMoment = moment.endOfWeek;
+
+			expect(startOfHourMoment.date.getDate()).toBe(19);
+			expect(startOfHourMoment.date.getHours()).toBe(23);
+			expect(startOfHourMoment.date.getMinutes()).toBe(59);
+			expect(startOfHourMoment.date.getSeconds()).toBe(59);
+			expect(startOfHourMoment.date.getMilliseconds()).toBe(999);
+		});
+
+		test('startOfMonth should return a new moment instance with start of the month', () => {
+			const moment = new Moment('2023-11-15T10:30:45');
+			const startOfMonthMoment = moment.startOfMonth;
+
+			expect(startOfMonthMoment.date.getDate()).toBe(1);
+			expect(startOfMonthMoment.date.getHours()).toBe(0);
+			expect(startOfMonthMoment.date.getMinutes()).toBe(0);
+			expect(startOfMonthMoment.date.getSeconds()).toBe(0);
+			expect(startOfMonthMoment.date.getMilliseconds()).toBe(0);
+		});
+
+		test('endOfMonth should return a new moment instance with end of the month', () => {
+			const moment = new Moment('2023-11-15T10:30:45');
+			const endOfMonthMoment = moment.endOfMonth;
+
+			expect(endOfMonthMoment.date.getDate()).toBe(30);
+			expect(endOfMonthMoment.date.getHours()).toBe(23);
+			expect(endOfMonthMoment.date.getMinutes()).toBe(59);
+			expect(endOfMonthMoment.date.getSeconds()).toBe(59);
+			expect(endOfMonthMoment.date.getMilliseconds()).toBe(999);
+		});
+
+		test('startOfYear should return a new moment instance with start of the year', () => {
+			const moment = new Moment('2023-11-15T10:30:45');
+			const startOfYearMoment = moment.startOfYear;
+
+			expect(startOfYearMoment.date.getDate()).toBe(1);
+			expect(startOfYearMoment.date.getMonth()).toBe(0);
+			expect(startOfYearMoment.date.getHours()).toBe(0);
+			expect(startOfYearMoment.date.getMinutes()).toBe(0);
+			expect(startOfYearMoment.date.getSeconds()).toBe(0);
+			expect(startOfYearMoment.date.getMilliseconds()).toBe(0);
+		});
+
+		test('endOfYear should return a new moment instance with end of the year', () => {
+			const moment = new Moment('2023-11-15T10:30:45');
+			const endOfYearMoment = moment.endOfYear;
+
+			expect(endOfYearMoment.date.getDate()).toBe(31);
+			expect(endOfYearMoment.date.getMonth()).toBe(11);
+			expect(endOfYearMoment.date.getHours()).toBe(23);
+			expect(endOfYearMoment.date.getMinutes()).toBe(59);
+			expect(endOfYearMoment.date.getSeconds()).toBe(59);
+			expect(endOfYearMoment.date.getMilliseconds()).toBe(999);
+		});
+
+		test('daysInYear should return 366 for leap year and 365 for other years', () => {
+			const year1900 = new Moment('1900-01-01T00:00:00');
+			const year2000 = new Moment('2000-01-01T00:00:00');
+			const year2001 = new Moment('2001-01-01T00:00:00');
+			const year2004 = new Moment('2004-01-01T00:00:00');
+
+			expect(year2000.daysInYear).toBe(366);
+			expect(year2004.daysInYear).toBe(366);
+
+			expect(year1900.daysInYear).toBe(365);
+			expect(year2001.daysInYear).toBe(365);
 		});
 	});
 })();

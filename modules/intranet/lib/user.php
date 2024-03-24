@@ -167,7 +167,6 @@ class User
 {
 	private CurrentUser $currentUser;
 	private int $userId;
-	private ?array $fields;
 
 	/**
 	 * @throws ArgumentOutOfRangeException
@@ -180,6 +179,7 @@ class User
 		}
 		$this->currentUser = CurrentUser::get();
 		$this->userId = $userId;
+		$this->fields = null;
 	}
 
 	public function isIntranet(): bool
@@ -189,7 +189,24 @@ class User
 			return true;
 		}
 
-		return $this->hasAccessToDepartment();
+		return $this->hasDepartment();
+	}
+
+	private function hasDepartment(): bool
+	{
+		$fields = $this->getFields();
+
+		return isset($fields["UF_DEPARTMENT"])
+			&& (
+				(
+					is_array($fields["UF_DEPARTMENT"])
+					&& (int)$fields["UF_DEPARTMENT"][0] > 0
+				)
+				|| (
+					!is_array($fields["UF_DEPARTMENT"])
+					&& (int)$fields["UF_DEPARTMENT"] > 0
+				)
+			);
 	}
 
 	public function hasAccessToDepartment(): bool
@@ -202,7 +219,6 @@ class User
 			->whereLike('ACCESS_CODE', 'D%')
 			->whereNotLike('ACCESS_CODE', 'DR%')
 			->setLimit(1)
-			->setCacheTtl(3600)
 			->fetch();
 
 		return !($accessResult === false);
@@ -226,16 +242,9 @@ class User
 		}
 	}
 
-	private function getFields(): array
+	public function getFields(): array
 	{
-		if (is_array($this->fields))
-		{
-			return $this->fields;
-		}
-		else
-		{
-			$result = \CUser::GetById($this->userId)->fetch();
-			$this->fields = is_array($result) ? $result : null;
-		}
+		$result = \CUser::GetById($this->userId)->fetch();
+		return is_array($result) ? $result : [];
 	}
 }

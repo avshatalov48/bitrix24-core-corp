@@ -1,8 +1,6 @@
-import {Event, Loc, Tag, Dom} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-
-import {Backlog} from './backlog';
-
+import { Event, Loc, Tag, Dom } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Backlog } from './backlog';
 export class Header extends EventEmitter
 {
 	constructor(backlog: Backlog)

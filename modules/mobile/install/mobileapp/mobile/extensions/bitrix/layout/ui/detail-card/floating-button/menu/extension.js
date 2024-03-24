@@ -2,7 +2,6 @@
  * @module layout/ui/detail-card/floating-button/menu
  */
 jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, module) => {
-	const { Feature } = require('feature');
 	const { RecentGridView } = require('layout/ui/detail-card/floating-button/menu/recent/grid-view');
 	const { MenuRecentStorage } = require('layout/ui/detail-card/floating-button/menu/recent/storage');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
@@ -117,11 +116,6 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 
 		getGridViewRecentItems()
 		{
-			if (!Feature.isGridViewSupported())
-			{
-				return null;
-			}
-
 			const recentItems = this.getRecentItems();
 			if (recentItems.length < 3)
 			{

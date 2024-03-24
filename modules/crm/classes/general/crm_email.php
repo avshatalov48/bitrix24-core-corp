@@ -1613,7 +1613,11 @@ class CCrmEMail
 
 			if ($isIncome)
 			{
-				\Bitrix\Crm\Automation\Trigger\EmailTrigger::execute($activityFields['BINDINGS'], $activityFields);
+				\Bitrix\Crm\Automation\Trigger\EmailTrigger::execute(
+					bindings: $activityFields['BINDINGS'],
+					inputData: $activityFields,
+					useEntitySearch: false
+				);
 
 				$bindings = \CCrmActivity::GetBindings($activityId);
 				$logMessageController = Timeline\LogMessageController::getInstance();

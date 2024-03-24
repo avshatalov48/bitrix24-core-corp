@@ -215,10 +215,6 @@ class Library
 			'allow' => ['ua', 'pl'],
 			'deny' => [],
 		],
-		self::ID_EDNA_WHATSAPP_CONNECTOR => [
-			'allow' => ['ru', 'by', 'kz'],
-			'deny' => [],
-		],
 	];
 
 	public const ENABLE_SETSTATUSREADING = [

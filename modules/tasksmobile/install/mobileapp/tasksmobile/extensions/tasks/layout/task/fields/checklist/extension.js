@@ -2,7 +2,6 @@
  * @module tasks/layout/task/fields/checklist
  */
 jn.define('tasks/layout/task/fields/checklist', (require, exports, module) => {
-	const { ChecklistController } = require('tasks/checklist');
 	const { ChecklistPreview, ChecklistLegacy } = require('tasks/layout/checklist');
 
 	/**
@@ -10,36 +9,9 @@ jn.define('tasks/layout/task/fields/checklist', (require, exports, module) => {
 	 */
 	class FieldChecklist extends LayoutComponent
 	{
-		constructor(props)
-		{
-			super(props);
-
-			this.initChecklistField(props);
-			this.handleOnChange = this.handleOnChange.bind(this);
-		}
-
-		componentWillReceiveProps(props)
-		{
-			this.initChecklistField(props);
-		}
-
-		initChecklistField(props)
-		{
-			this.controller = new ChecklistController({ ...props, onChange: this.handleOnChange });
-
-			this.state = {
-				checklistsIds: this.controller.getChecklistsIds(),
-			};
-		}
-
 		isNewChecklist()
 		{
-			return Boolean(Application.storage.getObject('settings.task')?.taskNewChecklistActive);
-		}
-
-		handleOnChange(checklistsIds)
-		{
-			this.setState({ checklistsIds });
+			return Boolean(jnExtensionData.get('tasks:layout/task/fields/checklist')?.taskNewChecklistActive);
 		}
 
 		renderLegacyChecklist()
@@ -64,21 +36,15 @@ jn.define('tasks/layout/task/fields/checklist', (require, exports, module) => {
 
 		render()
 		{
-			const { style, isLoading } = this.props;
+			const { style, ...restProps } = this.props;
 
 			if (this.isNewChecklist())
 			{
 				return View(
 					{
-						style: {
-							width: '100%',
-							...style,
-						},
+						style,
 					},
-					new ChecklistPreview({
-						isLoading,
-						checklistController: this.controller,
-					}),
+					new ChecklistPreview(restProps),
 				);
 			}
 

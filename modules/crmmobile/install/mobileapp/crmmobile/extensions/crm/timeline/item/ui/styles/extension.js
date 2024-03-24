@@ -15,12 +15,17 @@ jn.define('crm/timeline/item/ui/styles', (require, exports, module) => {
 		 */
 		getByModel(model)
 		{
-			switch (true)
+			if (model.isPinned)
 			{
-				case model.isPinned: return this.PINNED;
-				case model.isScheduled: return this.SCHEDULED;
-				default: return this.DEFAULT;
+				return this.PINNED;
 			}
+
+			if (model.isScheduled)
+			{
+				return this.SCHEDULED;
+			}
+
+			return this.DEFAULT;
 		},
 	};
 
@@ -114,4 +119,3 @@ jn.define('crm/timeline/item/ui/styles', (require, exports, module) => {
 		isScopeMobile,
 	};
 });
-

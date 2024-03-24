@@ -146,7 +146,7 @@ BX.message({
 	TASKS_DECLINE : '<?php echo GetMessageJS('TASKS_DECLINE_TASK')?>',
 	TASKS_DECLINE_REASON : '<?php echo GetMessageJS('TASKS_DECLINE_REASON')?>',
 	TASKS_NO_TITLE : '<?php echo GetMessageJS('TASKS_NO_TITLE')?>',
-	TASKS_NO_RESPONSIBLE : '<?php echo GetMessageJS('TASKS_NO_RESPONSIBLE')?>',
+	TASKS_NO_RESPONSIBLE : '<?php echo Loc::getMessage('TASKS_NO_ASSIGNEE') ?>',
 	TASKS_PATH_TO_USER_PROFILE : '<?php echo CUtil::JSEscape($arParams['PATH_TO_USER_PROFILE'])?>',
 	TASKS_PATH_TO_TASK : '<?php echo CUtil::JSEscape($arParams['PATH_TO_TASKS_TASK'])?>',
 	PATH_TO_GROUP_TASKS : '<?php echo CUtil::JSEscape($arParams['PATH_TO_GROUP_TASKS'])?>',
@@ -173,12 +173,18 @@ BX.message({
 	<?php
 	foreach (array_keys($arResult['KNOWN_COLUMNS']) as $columnId)
 	{
-		$langKey = $columnId;
-		if ($langKey == 6)
+		$hasNewVersion = Loc::getMessage('TASKS_LIST_COLUMN_' . $columnId . '_MSGVER_1') ?? null;
+
+		if ($hasNewVersion)
 		{
-			$langKey = '6_MSGVER_1';
+			echo 'TASKS_LIST_COLUMN_' . $columnId . ": '"
+				. Loc::getMessage('TASKS_LIST_COLUMN_' . $columnId . '_MSGVER_1') . "',";
 		}
-		echo 'TASKS_LIST_COLUMN_' . $columnId . ": '" . GetMessageJS('TASKS_LIST_COLUMN_' . $langKey) . "',";
+		else
+		{
+			echo 'TASKS_LIST_COLUMN_' . $columnId . ": '"
+				. Loc::getMessage('TASKS_LIST_COLUMN_' . $columnId) . "',";
+		}
 	}
 	?>
 	TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET : '<?php echo GetMessageJS('TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET'); ?>',
@@ -336,7 +342,7 @@ if (
 
 					?>
 					<th style="<?php echo $columnWidthStr; ?>"
-						title="<?php echo ($column['ID'] == 6) ? GetMessage('TASKS_LIST_COLUMN_' . $column['ID'] . '_MSGVER_1') : GetMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?>"
+						title="<?php echo Loc::getMessage('TASKS_LIST_COLUMN_' . $column['ID'] . '_MSGVER_1') ?? Loc::getMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?>"
 						<?php echo $clsSort; ?>
 					>
 						<div class="task-head-cell-wrap" style="min-width:<?php echo $minColumnWidth; ?>px; <?php echo $columnWidthStr; ?>">
@@ -356,7 +362,7 @@ if (
 								?>
 							>
 								<span class="task-head-cell-sort-order"></span>
-								<span class="task-head-cell-title"><?php echo ($column['ID'] == 6) ? GetMessage('TASKS_LIST_COLUMN_' . $column['ID'] . '_MSGVER_1') : GetMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?></span>
+								<span class="task-head-cell-title"><?php echo Loc::getMessage('TASKS_LIST_COLUMN_' . $column['ID'] . '_MSGVER_1') ?? Loc::getMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?></span>
 						</div>
 					</th>
 					<?php

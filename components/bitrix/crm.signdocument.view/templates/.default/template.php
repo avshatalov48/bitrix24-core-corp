@@ -3,6 +3,7 @@
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -23,6 +24,7 @@ Extension::load([
 	"sidepanel",
 	"documentpreview",
 	"ui.icons.disk",
+	"sign.v2.document-send",
 ]);
 
 $renderRequisiteSection = function(?string $entityName, array $data): void {
@@ -85,16 +87,13 @@ $renderRequisiteSection = function(?string $entityName, array $data): void {
 		</div>
 	</div>
 	<div class="crm__document-view--sidebar-wrapper">
+		<?php if ($arResult['documentResendEnabled']): ?>
 		<div class="crm__document-view--sidebar crm__document-view--sidebar-channels">
 			<div class="crm__document-view--channels">
-				<?php $APPLICATION->includeComponent(
-					'bitrix:crm.channel.selector',
-					'',
-					$arResult['channelSelectorParameters'],
-					$this->getComponent()
-				);?>
+				<div class="crm__document-view--resend_widget"></div>
 			</div>
 		</div>
+		<?php endif; ?>
 
 		<div class="crm__document-view--sidebar --company-information">
 			<div class="crm__document-view--sidebar-section">
@@ -127,11 +126,24 @@ $renderRequisiteSection = function(?string $entityName, array $data): void {
 	</div>
 </div>
 <script>
+	BX.message(<?=\CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__))?>);
+
 	BX.ready(function(){
 		const params = <?=\CUtil::PhpToJSObject($arResult, false, false, true);?>;
 		params.pdfNode = document.querySelector('[data-role="pdf-viewer"]');
 
 		new BX.Crm.Component.SignDocumentView(params);
+
+		const documentSendClass = BX && BX.Sign && BX.Sign.V2 && BX.Sign.V2.DocumentSend
+		if (params.documentResendEnabled && typeof documentSendClass !== 'undefined')
+		{
+			const widgetPlaceholders = document.querySelectorAll('.crm__document-view--resend_widget');
+			widgetPlaceholders.forEach((widgetPlaceholder) => {
+				new BX.Crm.Component.SignDocumentViewSendWidget({
+					memberIds: params?.documentResendMembers ?? [],
+				}).renderTo(widgetPlaceholder);
+			});
+		}
 	});
 </script>
 </body>

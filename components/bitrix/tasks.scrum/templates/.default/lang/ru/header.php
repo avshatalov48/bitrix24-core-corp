@@ -137,6 +137,7 @@ $MESS["KANBAN_SORT_TITLE"] = "Новые задачи:";
 $MESS["KANBAN_SORT_DESC"] = "Сверху";
 $MESS["KANBAN_SORT_ASC"] = "Снизу";
 $MESS["KANBAN_SORT_ACTUAL"] = "По активности";
+$MESS["KANBAN_SORT_ACTUAL_MSGVER_1"] = "По активности";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Рекомендуется";
 
 $MESS['TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE'] = 'Подождите немного, теги скоро появятся';

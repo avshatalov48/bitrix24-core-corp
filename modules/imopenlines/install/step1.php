@@ -24,7 +24,7 @@ else
 <div class="adm-info-message-wrap">
 	<div class="adm-info-message">
 		<div><?=GetMessage("IMOPENLINES_PUBLIC_PATH_DESC")?></div>
-		<?/*<div><?=GetMessage("IMOPENLINES_PUBLIC_PATH_DESC_2", Array('#LINK_START#' => '<a href="'.(in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=4869': 'http://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=6704').'" target="_blank">', '#LINK_END#' => '</a>'))?></div>*/?>
+		<?/*<div><?=GetMessage("IMOPENLINES_PUBLIC_PATH_DESC_2", Array('#LINK_START#' => '<a href="'.(in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=4869': 'https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=6704').'" target="_blank">', '#LINK_END#' => '</a>'))?></div>*/?>
 		<div><?=GetMessage("IMOPENLINES_PUBLIC_PATH_DESC_2", Array('#LINK_START#' => '', '#LINK_END#' => ''))?></div>
 	</div>
 </div>

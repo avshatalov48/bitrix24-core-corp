@@ -196,8 +196,16 @@ class CrmField extends BaseLinkedEntitiesField
 	protected function getEntityTypes(): array
 	{
 		$entityTypes = array_flip(ElementType::getEntityTypeNames());
+
+		$displayParams = $this->getDisplayParams();
+		if (empty($displayParams) && !$this->isUserField())
+		{
+			//@todo add settings for field config
+			return array_keys($entityTypes);
+		}
+
 		$fieldSettings = (array)($this->getUserFieldParams()['SETTINGS'] ?? []);
-		$displayParams = array_merge($fieldSettings, $this->getDisplayParams());
+		$displayParams = array_merge($fieldSettings, $displayParams);
 
 		$crmEntityTypes = [];
 

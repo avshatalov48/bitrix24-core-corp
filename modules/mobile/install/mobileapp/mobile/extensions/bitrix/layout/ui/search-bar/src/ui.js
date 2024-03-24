@@ -3,7 +3,8 @@
  */
 jn.define('layout/ui/search-bar/ui', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const CloseIcon = () => Image({
+	const CloseIcon = (testId = '') => Image({
+		testId,
 		style: {
 			marginLeft: 13,
 			marginRight: 2,
@@ -87,7 +88,7 @@ jn.define('layout/ui/search-bar/ui', (require, exports, module) => {
 
 	const MINIMAL_SEARCH_LENGTH = 3;
 	const DEFAULT_ICON_BACKGROUND = AppTheme.colors.accentBrandBlue;
-	const ENTER_PRESSED_EVENT = Application.getApiVersion() > 44 ? 'clickEnter' : 'clickSearch';
+	const ENTER_PRESSED_EVENT = 'clickEnter';
 
 	module.exports = {
 		CloseIcon,
@@ -99,4 +100,3 @@ jn.define('layout/ui/search-bar/ui', (require, exports, module) => {
 		ENTER_PRESSED_EVENT,
 	};
 });
-

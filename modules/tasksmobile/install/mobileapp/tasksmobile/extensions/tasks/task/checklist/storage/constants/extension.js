@@ -3,7 +3,9 @@
  */
 (() => {
 	/** @class TaskChecklistStorageConstants */
-	jnexport([{
-		STORAGE_NAME: 'taskChecklistUploadFiles',
-	}, 'TaskChecklistStorageConstants']);
+	jnexport([
+		{
+			STORAGE_NAME: 'taskChecklistUploadFiles',
+		}, 'TaskChecklistStorageConstants',
+	]);
 })();

@@ -130,3 +130,12 @@
 	this.notify = Notify;
 	this.Notify = Notify;
 })();
+
+/**
+ * @module notify
+ */
+jn.define('notify', (require, exports, module) => {
+	module.exports = {
+		Notify: this.Notify,
+	};
+});

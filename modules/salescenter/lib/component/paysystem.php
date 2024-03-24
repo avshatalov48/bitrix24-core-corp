@@ -24,7 +24,8 @@ class PaySystem
 		array $paySystemList,
 		bool $isMainMode,
 		?int $titleLengthLimit = null,
-		?array $paySystemColor = null
+		?array $paySystemColor = null,
+		array $options = [],
 	): Result
 	{
 		$result = new Result();
@@ -177,6 +178,11 @@ class PaySystem
 		$paySystemItems = [];
 		foreach ($paySystemActions as $handler => $paySystem)
 		{
+			if ($handler === 'cash' && isset($options['hideCash']) && $options['hideCash'] === 'Y')
+			{
+				continue;
+			}
+
 			$queryParams = [
 				'lang' => LANGUAGE_ID,
 				'publicSidePanel' => 'Y',

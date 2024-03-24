@@ -127,19 +127,32 @@ class VisibilityManager
 	 */
 	public static function getUserFieldsAccessCodes(int $entityTypeID): array
 	{
+		$fields = self::loadUserFieldsAccessCodes($entityTypeID);
+
+		return self::prepareUserFieldsAccessCodes($fields);
+	}
+
+	public static function getUserFieldsAccessCodesAndData(int $entityTypeID): array
+	{
+		$fields = self::loadUserFieldsAccessCodes($entityTypeID);
+		$usersInfo = self::getUsersInfo($fields);
+
+		return self::prepareUserFieldsAccessCodes($fields, $usersInfo);
+	}
+
+	private static function loadUserFieldsAccessCodes(int $entityTypeID): array
+	{
 		if (!\CCrmOwnerType::IsEntity($entityTypeID))
 		{
 			throw new \Bitrix\Main\ArgumentException('Entity type id is not valid');
 		}
 
- 		if (!isset(self::$userFieldAccessCodes[$entityTypeID]))
+		if (!isset(self::$userFieldAccessCodes[$entityTypeID]))
 		{
 			self::$userFieldAccessCodes[$entityTypeID] = UserFieldPermissionTable::getUserFieldsAccessCodes($entityTypeID);
 		}
-		$fields = self::$userFieldAccessCodes[$entityTypeID];
-		$usersInfo = self::getUsersInfo($fields);
 
-		return self::prepareUserFieldsAccessCodes($fields, $usersInfo);
+		return self::$userFieldAccessCodes[$entityTypeID];
 	}
 
 	/**
@@ -147,7 +160,7 @@ class VisibilityManager
 	 * @param array $usersInfo
 	 * @return array
 	 */
-	private static function prepareUserFieldsAccessCodes(array $fields, array $usersInfo): array
+	private static function prepareUserFieldsAccessCodes(array $fields, ?array $usersInfo = null): array
 	{
 		$results = [];
 
@@ -155,9 +168,9 @@ class VisibilityManager
 		{
 			$fieldName = $field['FIELD_NAME'];
 			$accessCode = $field['ACCESS_CODE'];
-			if (isset($usersInfo[$accessCode]))
+			if (isset($usersInfo[$accessCode]) || is_null($usersInfo))
 			{
-				$results[$fieldName]['accessCodes'][$accessCode] = $usersInfo[$accessCode];
+				$results[$fieldName]['accessCodes'][$accessCode] = $usersInfo[$accessCode] ?? [];
 			}
 		}
 

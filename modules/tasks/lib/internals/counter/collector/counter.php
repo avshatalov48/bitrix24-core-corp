@@ -107,7 +107,7 @@ final class Counter
 					 * при обьединение задач по GROUP_ID (могут быть задачи с T.GROUP_ID = 0)
 					 * надо исключить обьединение таких задач по мнемонической группе @see Group::GROUP_MNEMONIC
 					 */
-					"AND IF (VG.TYPE_ID = ".Enum::resolveIdByName($type)." AND VG.GROUP_ID = ".Group::GROUP_MNEMONIC.", 'Y', 'N' ) = 'N'
+					"AND (NOT (VG.TYPE_ID = ".Enum::resolveIdByName($type)." AND VG.GROUP_ID = ".Group::GROUP_MNEMONIC . "))
 							AND VG.MEMBER_TYPE = TM.TYPE
 					LEFT JOIN (
 						 SELECT DISTINCT VG_0_T.GROUP_ID, VG_0_VG.USER_ID, VG_0_VG.MEMBER_TYPE, VG_0_VG.VIEWED_DATE

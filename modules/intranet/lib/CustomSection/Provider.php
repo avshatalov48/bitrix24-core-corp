@@ -2,11 +2,15 @@
 
 namespace Bitrix\Intranet\CustomSection;
 
+use Bitrix\Intranet\CustomSection\DataStructures\CustomSection;
+use Bitrix\Intranet\CustomSection\DataStructures\CustomSectionPage;
 use Bitrix\Intranet\CustomSection\Provider\Component;
 use Bitrix\Main\Web\Uri;
 
 abstract class Provider
 {
+	public const PAGE_SETTINGS_SEPARATOR = '~';
+
 	/**
 	 * Check if a custom section page with such $pageSettings should be displayed for the user with $userId
 	 *
@@ -53,4 +57,16 @@ abstract class Provider
 	 * @return Component|null
 	 */
 	abstract public function resolveComponent(string $pageSettings, Uri $url): ?Component;
+
+	/**
+	 * Returns an array of system (prescribed by the developer) pages
+	 *
+	 * @param CustomSection $section
+	 * @param bool $ignorePageAvailability if true, then all system pages will be included in the sample
+	 * @return CustomSectionPage[]
+	 */
+	public function getSystemPages(CustomSection $section, bool $ignorePageAvailability = false): array
+	{
+		return [];
+	}
 }

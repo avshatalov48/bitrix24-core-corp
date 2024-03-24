@@ -4,7 +4,6 @@
 jn.define('layout/ui/fields/project', (require, exports, module) => {
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
-	const { NotifyManager } = require('notify-manager');
 	const { InfoHelper } = require('layout/ui/info-helper');
 
 	const AppTheme = require('apptheme');
@@ -122,12 +121,10 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		async handleAdditionalFocusActions()
 		{
-			NotifyManager.showLoadingIndicator();
 			const projectsDisabled = await checkDisabledToolById('projects');
 
 			if (projectsDisabled)
 			{
-				NotifyManager.hideLoadingIndicatorWithoutFallback();
 				InfoHelper.openByCode('limit_projects_off');
 				this.removeFocus();
 
@@ -138,14 +135,12 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 			if (scrumDisabled)
 			{
-				NotifyManager.hideLoadingIndicatorWithoutFallback();
 				InfoHelper.openByCode('limit_tasks_scrum_off');
 				this.removeFocus();
 
 				return;
 			}
 
-			NotifyManager.hideLoadingIndicatorWithoutFallback();
 			this.openSelector();
 		}
 

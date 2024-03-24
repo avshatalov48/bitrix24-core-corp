@@ -160,7 +160,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		});
 
 		<?php
-		$sortFields = \Bitrix\Tasks\Ui\Controls\Column::getFieldsForSorting();
+		$sortFields = \Bitrix\Tasks\Ui\Controls\Column::getFieldsWithMessages('TASKS_BTN_SORT_');
 		?>
 
 		function onMenuItemClick(selectedItemType, selectedItem, menuItems)
@@ -242,9 +242,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 				}
 			},
 			items: [
-				<?php foreach($sortFields as $sortField):?>
+				<?php foreach($sortFields as $sortField => $langTitle):?>
 				{
-					html: '<?=GetMessageJS('TASKS_BTN_SORT_'.$sortField)?><?php if($sortField === "ACTIVITY_DATE"):?><span class="menu-popup-item-sort-field-label"><?=GetMessageJS('TASKS_BTN_SORT_RECOMMENDED_LABEL')?></span><?php endif;?>',
+					html: '<?=GetMessageJS($langTitle)?><?php if($sortField === "ACTIVITY_DATE"):?><span class="menu-popup-item-sort-field-label"><?=GetMessageJS('TASKS_BTN_SORT_RECOMMENDED_LABEL')?></span><?php endif;?>',
 					value: '<?=$sortField?>',
 					className: "menu-popup-item-sort-field menu-popup-item-none",
 					onclick: function(event, menuItem)
@@ -362,7 +362,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		};
 		<?php if ($arParams['SCOPE'] === 'tasks_gantt'): ?>
 		<?php
-			$pathToTask = $arParams['PATH_TO_TASKS'] ?? '';
+		$pathToTask = $arParams['PATH_TO_TASKS'] ?? '';
 		?>
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",

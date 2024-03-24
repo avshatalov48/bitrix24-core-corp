@@ -62,7 +62,9 @@ final class ProxySender extends MicroService\BaseSender
 		}
 		$file = new File($filePath);
 		$fileData = $file->open('r');
-		$data = [
+		unset($parameters['filePath']);
+
+		$data = $parameters + [
 			'BX_TYPE' => Client::getPortalType(),
 			'BX_LICENCE' => Client::getLicenseCode(),
 			'SERVER_NAME' => Client::getServerName(),

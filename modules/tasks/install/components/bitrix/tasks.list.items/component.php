@@ -86,7 +86,7 @@ if(is_array($arParams['~DATA_COLLECTION']))
 		{
 			if (
 				($dataItem['TASK']['TIME_ESTIMATE'] > 0)
-				&& ($arResult['ITEMS'][$index]['CURRENT_TASK_SPENT_TIME'] > $dataItem['TASK']['TIME_ESTIMATE']) // seems not to work
+				&& (($arResult['ITEMS'][$index]['CURRENT_TASK_SPENT_TIME'] ?? null) > $dataItem['TASK']['TIME_ESTIMATE']) // seems not to work
 			)
 			{
 				$arResult['ITEMS'][$index]['TASK_TIMER_OVERDUE'] = 'Y';

@@ -33,10 +33,6 @@ jn.define('selector/widget', (require, exports, module) => {
 			returnKey,
 		})
 		{
-			this.apiVersion = Application.getApiVersion();
-			this.isApiVersionGreaterThan44 = this.apiVersion >= 44;
-			this.isApiVersionGreaterThan45 = this.apiVersion >= 45;
-
 			this.returnKey = returnKey || DEFAULT_RETURN_KEY;
 			this.queryText = '';
 			this.isItemCreating = false;
@@ -117,7 +113,8 @@ jn.define('selector/widget', (require, exports, module) => {
 			if (this.createOptions.enableCreation)
 			{
 				text = this.searchOptions.searchPlaceholderWithCreation || BX.message(
-					'PROVIDER_SEARCH_CREATE_PLACEHOLDER');
+					'PROVIDER_SEARCH_CREATE_PLACEHOLDER',
+				);
 			}
 
 			if (!text)
@@ -142,10 +139,7 @@ jn.define('selector/widget', (require, exports, module) => {
 					.then((widget) => {
 						this.widget = widget;
 
-						if (this.isApiVersionGreaterThan45)
-						{
-							this.widget.setReturnKey(this.returnKey);
-						}
+						this.widget.setReturnKey(this.returnKey);
 
 						if (typeof this.widget.setPlaceholder === 'function')
 						{
@@ -195,11 +189,6 @@ jn.define('selector/widget', (require, exports, module) => {
 		 */
 		clickEnterListener({ text })
 		{
-			if (!this.isApiVersionGreaterThan45)
-			{
-				return;
-			}
-
 			Keyboard.dismiss();
 		}
 
@@ -415,7 +404,8 @@ jn.define('selector/widget', (require, exports, module) => {
 			if (this.createOptions.enableCreation)
 			{
 				return this.searchOptions.startTypingWithCreationText || BX.message(
-					'PROVIDER_WIDGET_START_TYPING_TO_CREATE');
+					'PROVIDER_WIDGET_START_TYPING_TO_CREATE',
+				);
 			}
 
 			return this.searchOptions.startTypingText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_SEARCH');
@@ -467,11 +457,6 @@ jn.define('selector/widget', (require, exports, module) => {
 			if (items.length === 0)
 			{
 				items.unshift(this.getEmptyResultButtonItem());
-			}
-
-			if (this.createOptions.enableCreation && !this.isApiVersionGreaterThan44)
-			{
-				items.unshift(this.getCreateButtonItem());
 			}
 
 			this.setItems(items);
@@ -641,19 +626,7 @@ jn.define('selector/widget', (require, exports, module) => {
 		{
 			this.isItemCreating = isItemCreating;
 
-			let items = this.currentItems;
-
-			if (!this.isApiVersionGreaterThan44)
-			{
-				items = items.map((item) => {
-					if (item.params && item.params.code === CREATE_BUTTON_CODE)
-					{
-						item.title = this.getCreateButtonItemTitle();
-					}
-
-					return item;
-				});
-			}
+			const items = this.currentItems;
 
 			this.setItems(items);
 		}

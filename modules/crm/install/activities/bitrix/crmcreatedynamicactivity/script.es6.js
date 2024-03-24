@@ -1,4 +1,4 @@
-import {Reflection, Type, Event, Dom, Tag, Text} from 'main.core';
+import { Reflection, Type, Event, Dom, Tag, Text } from 'main.core';
 
 const namespace = Reflection.namespace('BX.Crm.Activity');
 
@@ -14,7 +14,9 @@ type Property = {
 }
 
 type EntityTypeId = number;
-type FieldsMap = Object<string, Property>;
+type FieldId = string;
+type FieldsMap = Object<FieldId, Property>;
+type RawHTML = string;
 
 class CrmCreateDynamicActivity
 {
@@ -25,7 +27,9 @@ class CrmCreateDynamicActivity
 		documentType: [string, string, string],
 		fieldsMap: FieldsMap,
 	}>;
-	currentValues: Object<string, any> = {};
+
+	currentValues: Object<FieldId, any> = {};
+	renderedProperties: Object<FieldId, RawHTML> = {};
 
 	entitiesFieldsContainers = new Map();
 
@@ -33,7 +37,7 @@ class CrmCreateDynamicActivity
 		isRobot: boolean,
 		formName: string,
 		entitiesFieldsMap: Object<EntityTypeId, FieldsMap>,
-		currentValues: Object<string, any>,
+		currentValues: Object<FieldId, any>,
 	})
 	{
 		this.fieldsMapContainer = document.getElementById('fields-map-container');
@@ -64,7 +68,7 @@ class CrmCreateDynamicActivity
 			return 0;
 		}
 
-		return parseInt(this.entityTypeIdSelect.value)
+		return parseInt(this.entityTypeIdSelect.value, 10);
 	}
 
 	getBindFieldId(): string
@@ -90,9 +94,10 @@ class CrmCreateDynamicActivity
 
 	render(): void
 	{
-		if (this.entitiesFieldsMap.hasOwnProperty(this.currentEntityTypeId))
+		if (Object.hasOwn(this.entitiesFieldsMap, this.currentEntityTypeId))
 		{
 			const { fieldsMap } = this.entitiesFieldsMap[this.currentEntityTypeId];
+			this.loadRenderedFields();
 
 			for (const fieldId of Object.keys(fieldsMap))
 			{
@@ -101,7 +106,26 @@ class CrmCreateDynamicActivity
 		}
 	}
 
-	renderProperty(fieldId: string): HTMLElement
+	loadRenderedFields()
+	{
+		const { documentType, fieldsMap } = this.entitiesFieldsMap[this.currentEntityTypeId];
+
+		if (Type.isFunction(BX.Bizproc.FieldType.renderControlCollection))
+		{
+			this.renderedProperties = BX.Bizproc.FieldType.renderControlCollection(
+				documentType,
+				Object.entries(fieldsMap).map(([fieldId, field]) => ({
+					property: field,
+					fieldName: field.FieldName,
+					value: this.currentValues[fieldId],
+					controlId: fieldId,
+				})),
+				this.isRobot ? 'public' : 'designer',
+			);
+		}
+	}
+
+	renderProperty(fieldId: FieldId): HTMLElement
 	{
 		if (this.getBindFieldId() === fieldId)
 		{
@@ -125,12 +149,12 @@ class CrmCreateDynamicActivity
 
 		const bindField = fieldsMap[this.getBindFieldId()];
 		const bindFieldValue = (
-			this.currentValues.hasOwnProperty(this.getBindFieldId())
+			Object.hasOwn(this.currentValues, this.getBindFieldId())
 			&& (
 				this.currentValues[this.getBindFieldId()] === 'Y'
 				|| this.currentValues[this.getBindFieldId()] === true
 			)
-		)
+		);
 
 		return Tag.render`
 			<div class="bizproc-automation-popup-settings">
@@ -142,7 +166,7 @@ class CrmCreateDynamicActivity
 							name="${Text.encode(bindField.FieldName)}"
 							value="Y"
 							class="bizproc-automation-popup-chk"
-							${ bindFieldValue ? 'checked' : '' }
+							${bindFieldValue ? 'checked' : ''}
 						>
 						${Text.encode(bindField.Name)}
 					</label>
@@ -151,41 +175,45 @@ class CrmCreateDynamicActivity
 		`;
 	}
 
-	renderRobotProperty(fieldId: string): HTMLElement
+	renderRobotProperty(fieldId: FieldId): HTMLElement
 	{
 		const { documentType, fieldsMap } = this.entitiesFieldsMap[this.currentEntityTypeId];
 		const property = fieldsMap[fieldId];
+
+		const fallback = () => BX.Bizproc.FieldType.renderControlPublic(
+			documentType,
+			property,
+			property.FieldName,
+			this.currentValues[fieldId],
+		);
 
 		return Tag.render`
 			<div class="bizproc-automation-popup-settings">
 				<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
 					${Text.encode(property.Name)}:
 				</span>
-				${BX.Bizproc.FieldType.renderControlPublic(
-					documentType,
-					property,
-					property.FieldName,
-					this.currentValues[fieldId],
-				)}
+				${Type.isDomNode(this.renderedProperties[fieldId]) ? this.renderedProperties[fieldId] : fallback()}
 			</div>
 		`;
 	}
 
-	renderDesignerProperty(fieldId: string): HTMLElement
+	renderDesignerProperty(fieldId: FieldId): HTMLElement
 	{
 		const { documentType, fieldsMap } = this.entitiesFieldsMap[this.currentEntityTypeId];
 		const property = fieldsMap[fieldId];
+
+		const fallback = () => BX.Bizproc.FieldType.renderControlDesigner(
+			documentType,
+			property,
+			property.FieldName,
+			this.currentValues[fieldId],
+		);
 
 		return Tag.render`
 			<tr>
 				<td align="right" width="40%">${Text.encode(property.Name)}:</td>
 				<td width="60%">
-					${BX.Bizproc.FieldType.renderControlDesigner(
-						documentType,
-						property,
-						property.FieldName,
-						this.currentValues[fieldId],
-					)}
+					${Type.isDomNode(this.renderedProperties[fieldId]) ? this.renderedProperties[fieldId] : fallback()}
 				</td>
 			</tr>
 		`;

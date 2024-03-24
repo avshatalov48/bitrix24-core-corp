@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Integration\IM\Notification\UseCase;
 
 use Bitrix\Tasks\Integration\IM\Notification;
 use Bitrix\Tasks\Internals\Notification\Message;
+use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskObject;
 
 class TaskStatusChanged
@@ -33,7 +34,7 @@ class TaskStatusChanged
 			)
 		);
 
-		if ($taskCurrentStatus == \CTasks::STATE_DECLINED)
+		if ($taskCurrentStatus == Status::DECLINED)
 		{
 			$notification->addTemplate(
 				new Notification\Template(
@@ -52,13 +53,13 @@ class TaskStatusChanged
 		$messageKey = 'TASKS_TASK_STATUS_MESSAGE_' . $taskCurrentStatus;
 
 		if (
-			($taskCurrentStatus === \CTasks::STATE_NEW || $taskCurrentStatus === \CTasks::STATE_PENDING)
-			&& ($task->getRealStatus() === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+			($taskCurrentStatus === Status::NEW || $taskCurrentStatus === Status::PENDING)
+			&& ($task->getRealStatus() === Status::SUPPOSEDLY_COMPLETED)
 		)
 		{
 			$messageKey = 'TASKS_TASK_STATUS_MESSAGE_REDOED';
 		}
-		elseif ($taskCurrentStatus === \CTasks::STATE_PENDING && $task->getRealStatus() === \CTasks::STATE_DEFERRED)
+		elseif ($taskCurrentStatus === Status::PENDING && $task->getRealStatus() === Status::DEFERRED)
 		{
 			$messageKey = 'TASKS_TASK_STATUS_MESSAGE_1';
 		}

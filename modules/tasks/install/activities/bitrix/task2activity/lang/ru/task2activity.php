@@ -10,6 +10,7 @@ $MESS["BPSA_CREATED_BY_ERROR"] = "Не указан постановщик за�
 $MESS["BPTA1A_TASKGROUPID"] = "Задача в проекте (группе)";
 $MESS["BPTA1A_TASKCREATEDBY"] = "Постановщик";
 $MESS["BPTA1A_TASKASSIGNEDTO"] = "Ответственный";
+$MESS['BPTA1A_TASKASSIGNEDTO_V2'] = 'Исполнитель';
 $MESS["BPTA1A_TASKACTIVEFROM"] = "Начало";
 $MESS["BPTA1A_TASKACTIVETO"] = "Окончание";
 $MESS["BPTA1A_TASKDEADLINE"] = "Крайний срок";

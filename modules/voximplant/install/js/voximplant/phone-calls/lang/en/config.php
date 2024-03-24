@@ -89,3 +89,5 @@ $MESS["IM_PHONE_WAIT_ANSWER"] = "Waiting for reply";
 $MESS["IM_PHONE_WORK_PHONE"] = "Work Phone";
 $MESS["IM_PHONE_WRONG_NUMBER"] = "The phone number is incorrect.";
 $MESS["IM_PHONE_WRONG_NUMBER_DESC"] = "The phone number needs to be in international format.<br/> Example: +44 20 1234 5678";
+$MESS["VOXIMPLANT_WARN_CLOSE_CALL_VIEW"] = "Customers won't be able to reach you until you close the call pane.";
+$MESS["VOXIMPLANT_WARN_CLOSE_CALL_VIEW_ANOTHER_TAB"] = "Customers won't be able to reach you until you close the call pane in another browser tab.";

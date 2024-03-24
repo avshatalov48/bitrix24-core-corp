@@ -8,7 +8,6 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Filesystem, utils } = require('native/filesystem');
 	const { withCurrentDomain } = require('utils/url');
-	const { Feature } = require('feature');
 
 	const SupportedActions = {
 		OPEN: 'Document:Open',
@@ -180,19 +179,12 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 		{
 			url = withCurrentDomain(url);
 
-			if (Feature.isShareDialogSupportsFiles())
-			{
-				Notify.showIndicatorLoading();
+			Notify.showIndicatorLoading();
 
-				Filesystem.downloadFile(url).then((uri) => {
-					Notify.hideCurrentIndicator();
-					dialogs.showSharingDialog({ uri });
-				});
-			}
-			else
-			{
-				viewer.openDocument(url, `document.${ext}`);
-			}
+			Filesystem.downloadFile(url).then((uri) => {
+				Notify.hideCurrentIndicator();
+				dialogs.showSharingDialog({ uri });
+			});
 		}
 
 		/**

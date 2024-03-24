@@ -1,6 +1,8 @@
 <?php
 return [
 	"bundle" => [
-		"./src/list"
-	]
+		"./src/list",
+		"./src/corner",
+		"./src/indent",
+	],
 ];

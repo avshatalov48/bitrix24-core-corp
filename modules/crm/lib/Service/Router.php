@@ -28,6 +28,10 @@ class Router
 	public const LIST_VIEW_CALENDAR = EntityViewSettings::CALENDAR_VIEW_NAME;
 	public const LIST_VIEW_DEADLINES = EntityViewSettings::DEADLINES_VIEW_NAME;
 
+	private const SYSTEM_PAGE_CODES = [
+		\CCrmOwnerType::Activity => 'activity',
+	];
+
 	protected const GET_COMPONENT_NAME = 'c';
 	protected const GET_COMPONENT_PARAMETERS = 'cp';
 	protected const GET_COMPONENT_TEMPLATE = 'cpt';
@@ -159,7 +163,7 @@ class Router
 		return [
 			'bitrix:crm.quote.details' => 'type/' . \CCrmOwnerType::Quote . '/details/#ENTITY_ID#/',
 			'bitrix:crm.invoice.details' => 'type/' . \CCrmOwnerType::SmartInvoice . '/details/#ENTITY_ID#/',
-			'bitrix:crm.document.details' => 'type/' . \CCrmOwnerType::SmartDocument . '/details/#ENTITY_ID#/',
+			'bitrix:crm.document.details' => 'type/#ENTITY_TYPE_ID#/details/#ENTITY_ID#/',
 			'bitrix:crm.item.details' => 'type/#ENTITY_TYPE_ID#/details/#ENTITY_ID#/',
 			'bitrix:crm.item.kanban' => 'type/#entityTypeId#/kanban/category/#categoryId#/',
 			'bitrix:crm.type.detail' => 'type/detail/#entityTypeId#/',
@@ -177,7 +181,20 @@ class Router
 
 		if ($map === null)
 		{
-			$map = array_flip($this->getItemDetailComponentNamesMap());
+			$ignoredMapItems = [];
+			$map = [];
+			foreach ($this->getItemDetailComponentNamesMap() as $mapEntity => $mapComponentName)
+			{
+				if (!isset($map[$mapComponentName]) && !isset($ignoredMapItems[$mapComponentName]))
+				{
+					$map[$mapComponentName] = $mapEntity;
+				}
+				elseif (isset($map[$mapComponentName]))
+				{
+					unset($map[$mapComponentName]);
+					$ignoredMapItems[$mapComponentName] = true;
+				}
+			}
 		}
 
 		$entityTypeId = isset($map[$componentName]) ? (int)$map[$componentName] : \CCrmOwnerType::Undefined;
@@ -288,7 +305,12 @@ class Router
 			$requestUrl = false;
 		}
 		$componentParameters = [];
-		$componentName = \CComponentEngine::parseComponentPath(
+
+		$engine = new \CComponentEngine();
+		$engine->addGreedyPart('#ENTITY_TYPE_ID#');
+		$engine->setResolveCallback([self::class, 'resolveComponentEngineCallback']);
+
+		$componentName =  $engine->guessComponentPath(
 			$this->getRoot(),
 			$this->getUrlTemplates(),
 			$componentParameters,
@@ -355,15 +377,18 @@ class Router
 		$entityTypeId = (int)$entityTypeId;
 
 		if (
-			$entityTypeId === \CCrmOwnerType::SmartDocument
+			in_array($entityTypeId, [\CCrmOwnerType::SmartDocument, \CCrmOwnerType::SmartB2eDocument])
 			&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
 			&& in_array($componentName, ['bitrix:crm.item.list', 'bitrix:crm.item.kanban'])
 		)
 		{
+			$listUri = ($entityTypeId === \CCrmOwnerType::SmartB2eDocument ? '/sign/b2e/list/' : '/sign/list/');
+			$gridUri = ($entityTypeId === \CCrmOwnerType::SmartB2eDocument ? '/sign/b2e/' : '/sign/');
+
 			return new Uri(
 				$componentName === 'bitrix:crm.item.list'
-					? '/sign/list/'
-					: '/sign/'
+					? $listUri
+					: $gridUri
 			);
 		}
 
@@ -459,6 +484,21 @@ class Router
 		return $this->getItemListUrlWithOldRouting($entityTypeId, $categoryId);
 	}
 
+	public function getItemListUrlIntoCustomSection(string $customSectionCode, int $entityTypeId, ?int $categoryId = null): ?Uri
+	{
+		$pageCode = $this->getSystemPageCode($entityTypeId);
+		if (is_null($pageCode))
+		{
+			return null;
+		}
+
+		return match($entityTypeId)
+		{
+			\CCrmOwnerType::Activity => IntranetManager::getUrlForCustomSectionPage($customSectionCode, $pageCode),
+			default => null,
+		};
+	}
+
 	protected function getItemListUrlWithNewRouting(int $entityTypeId, int $categoryId = null): ?Uri
 	{
 		return $this->getUrlForTemplate(
@@ -508,6 +548,28 @@ class Router
 		}
 
 		return $this->getKanbanUrlWithOldRouting($entityTypeId, $categoryId);
+	}
+
+	public function getKanbanUrlIntoCustomSection(string $customSectionCode, int $entityTypeId, ?int $categoryId = null): ?Uri
+	{
+		$pageCode = $this->getSystemPageCode($entityTypeId);
+		if (is_null($pageCode))
+		{
+			return null;
+		}
+
+		return match($entityTypeId)
+		{
+			\CCrmOwnerType::Activity =>
+				new Uri(IntranetManager::getUrlForCustomSectionPage($customSectionCode, $pageCode) . 'kanban/')
+			,
+			default => null,
+		};
+	}
+
+	public function getSystemPageCode(int $entityTypeId): ?string
+	{
+		return static::SYSTEM_PAGE_CODES[$entityTypeId] ?? null;
 	}
 
 	protected function getKanbanUrlWithNewRouting(int $entityTypeId, int $categoryId = null): ?Uri
@@ -561,10 +623,20 @@ class Router
 			$template = Option::get(self::MODULE_ID, 'path_to_quote_deadlines');
 			return new Uri(\CComponentEngine::makePathFromTemplate($template));
 		}
-		else
+
+		return null;
+	}
+
+	public function getReportsUrl(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		if ($entityTypeId === \CCrmOwnerType::Activity)
 		{
-			return null;
+			$template = Option::get(self::MODULE_ID, 'path_to_activity_report');
+
+			return new Uri(\CComponentEngine::makePathFromTemplate($template));
 		}
+
+		return null;
 	}
 
 	protected function getKanbanActivityUrlWithNewRouting(int $entityTypeId, int $categoryId = null): ?Uri
@@ -1115,6 +1187,44 @@ class Router
 		\CUserOptions::SetOption('crm.navigation', 'index', $currentViews);
 	}
 
+	public function getCurrentListViewInCustomSection(int $entityTypeId, string $customSectionCode): string
+	{
+		$viewName = $this->getEntityViewNameInCustomSection($entityTypeId, $customSectionCode);
+		$currentViews = $this->loadCurrentViews();
+
+		$currentView = $currentViews[$viewName] ?? null;
+		if (is_null($currentView))
+		{
+			return $this->getDefaultListView($entityTypeId);
+		}
+
+		$view = mb_split(':', $currentView)[0];
+
+		// For compatibility
+		return mb_strtoupper($view);
+	}
+
+	public function setCurrentListViewInCustomSection(int $entityTypeId, string $customSectionCode, string $view): self
+	{
+		$viewName = $this->getEntityViewNameInCustomSection($entityTypeId, $customSectionCode);
+
+		$date = (new Date())->format('Ymd');
+
+		$currentViews = $this->loadCurrentViews();
+		$currentViews[$viewName] = "$view:$date";
+		$this->saveCurrentViews($currentViews);
+
+		return $this;
+	}
+
+	public function getEntityViewNameInCustomSection(int $entityTypeId, string $customSectionCode): string
+	{
+		$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$viewName = $entityName . '_' . $customSectionCode;
+
+		return mb_strtolower($viewName);
+	}
+
 	public function getAutomationUrlTemplate(int $entityTypeId): ?string
 	{
 		if ($entityTypeId === \CCrmOwnerType::Order)
@@ -1349,6 +1459,7 @@ class Router
 			\CCrmOwnerType::SmartInvoice => 'bitrix:crm.invoice.details',
 			\CCrmOwnerType::SmartDocument => 'bitrix:crm.document.details',
 			\CCrmOwnerType::CommonDynamicName => 'bitrix:crm.item.details',
+			\CCrmOwnerType::SmartB2eDocument => 'bitrix:crm.document.details',
 		];
 	}
 
@@ -1405,6 +1516,43 @@ class Router
 		}
 
 		return new Uri(SITE_DIR . 'services' . $contactCenter);
+	}
+
+	/**
+	 * @return false|string
+	 */
+	public static function resolveComponentEngineCallback(\CComponentEngine $engine, array $pageCandidates, array &$pageVariables)
+	{
+		$candidatesCount = count($pageCandidates);
+
+		if ($candidatesCount === 0)
+		{
+			return false;
+		}
+
+		if ($candidatesCount === 1)
+		{
+			$componentName = array_key_first($pageCandidates);
+			$pageVariables = $pageCandidates[$componentName];
+
+			return $componentName;
+		}
+
+		$router = Container::getInstance()->getRouter();
+		foreach ($pageCandidates as $componentName => $componentParams)
+		{
+			$entityTypeId = (int)($componentParams['ENTITY_TYPE_ID'] ?? \CCrmOwnerType::Undefined);
+			if ($componentName === $router->getItemDetailComponentName($entityTypeId))
+			{
+				$pageVariables = $componentParams;
+
+				return $componentName;
+			}
+		}
+		$componentName = array_key_first($pageCandidates);
+		$pageVariables = $pageCandidates[$componentName];
+
+		return $componentName;
 	}
 
 	private function getPortalType(): string

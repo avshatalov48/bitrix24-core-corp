@@ -65,6 +65,10 @@ abstract class ItemList extends Base
 			{
 				Service\Factory\SmartDocument::createTypeIfNotExists();
 			}
+			elseif ($entityTypeId === \CCrmOwnerType::SmartB2eDocument)
+			{
+				Service\Factory\SmartB2eDocument::createTypeIfNotExists();
+			}
 			$type = Service\Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
 		}
 		if (!$type)
@@ -195,7 +199,7 @@ abstract class ItemList extends Base
 
 	protected function getCategoryId(): ?int
 	{
-		return ($this->category ? $this->category->getId() : null);
+		return ($this->category?->getId());
 	}
 
 	protected function getToolbarParameters(): array
@@ -206,17 +210,30 @@ abstract class ItemList extends Base
 		$container = Service\Container::getInstance();
 		$dynamicTypesLimit = RestrictionManager::getDynamicTypesLimitRestriction();
 		$isTypeSettingsRestricted = $dynamicTypesLimit->isTypeSettingsRestricted($this->entityTypeId);
+
+		$isDefaultCategory = false;
 		$category = $this->category;
 		if (!$category && $this->factory->isCategoriesSupported())
 		{
 			$category = $this->factory->getDefaultCategory();
+			$isDefaultCategory = true;
 		}
 
 		$isEnabled = $container->getUserPermissions()->checkAddPermissions(
 			$this->entityTypeId,
-			$category ? $category->getId() : null
+			$category?->getId()
 		);
+
 		$addButtonParameters = $this->getAddButtonParameters(!$isEnabled);
+		if (!$isEnabled && $isDefaultCategory)
+		{
+			$availableCategory = $this->getFirstAvailableForAddCategory();
+			if ($availableCategory !== null)
+			{
+				$addButtonParameters = $this->getAddButtonParameters(false, $availableCategory->getId());
+			}
+		}
+
 		if ($isTypeSettingsRestricted)
 		{
 			$addButtonParameters['onclick'] = $isEnabled ? $dynamicTypesLimit->getShowFeatureJsHandler() : null;
@@ -246,7 +263,7 @@ abstract class ItemList extends Base
 					'dataset' => [
 						'role' => 'bx-crm-toolbar-categories-button',
 						'entity-type-id' => $this->factory->getEntityTypeId(),
-						'category-id' => $this->category ? $this->category->getId() : null,
+						'category-id' => $this->category?->getId(),
 						'toolbar-collapsed-icon' => defined('Bitrix\UI\Buttons\Icon::FUNNEL') ? Icon::FUNNEL : '',
 					],
 				];
@@ -319,6 +336,20 @@ abstract class ItemList extends Base
 		];
 
 		return array_merge(parent::getToolbarParameters(), $parameters);
+	}
+
+	private function getFirstAvailableForAddCategory(): ?Category
+	{
+		$availableCategories = $this->getAvailableForAddCategories();
+
+		return $availableCategories[0] ?? null;
+	}
+
+	private function getAvailableForAddCategories(): array
+	{
+		$categories = $this->factory->getCategories();
+
+		return array_values(array_filter($categories, [$this->userPermissions, 'canAddItemsInCategory']));
 	}
 
 	protected function getToolbarSettingsItems(): array
@@ -597,13 +628,13 @@ abstract class ItemList extends Base
 
 	abstract protected function getListViewType(): string;
 
-	protected function getAddButtonParameters(bool $isDisabled = false): array
+	protected function getAddButtonParameters(bool $isDisabled = false, int $forcedCategoryId = null): array
 	{
 		$link = Service\Container::getInstance()->getRouter()
 			->getItemDetailUrl(
 				$this->entityTypeId,
 				0,
-				$this->getCategoryId()
+				$forcedCategoryId ?? $this->getCategoryId(),
 			)
 			->getUri()
 		;
@@ -630,13 +661,40 @@ abstract class ItemList extends Base
 			$buttonTitle = Loc::getMessage('CRM_COMMON_ACTION_CREATE');
 		}
 
-		return [
+		$btnParameters = [
 			'color' => Buttons\Color::SUCCESS,
 			'text' => $buttonTitle,
 			'link' => $link,
 			'dataset' => $disabledButtonDataset,
 			'className' => $disabledButtonClass,
 		];
+		$event = new \Bitrix\Main\Event(
+			'crm',
+			'onGetComponentItemListAddBtnParameters',
+			[
+				'btnParameters' => $btnParameters,
+				'entityTypeId' => $this->entityTypeId,
+			]
+		);
+		$event->send();
+		$eventResults = $event->getResults();
+		foreach ($eventResults as $eventResult)
+		{
+			$parameters = $eventResult->getParameters();
+			if ($eventResult->getType() !== $eventResult::SUCCESS)
+			{
+				continue;
+			}
+			if (!is_array($parameters) || !is_string($parameters['link'] ?? null))
+			{
+				continue;
+			}
+			$btnParameters['link'] = $parameters['link'];
+
+			return $btnParameters;
+		}
+
+		return $btnParameters;
 	}
 
 	protected function isDeadlinesModeSupported(): bool

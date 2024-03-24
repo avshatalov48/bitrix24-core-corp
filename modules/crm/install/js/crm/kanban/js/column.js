@@ -1,8 +1,5 @@
+/* eslint-disable */
 (function() {
-
-	//"use strict";
-
-
 	BX.namespace("BX.CRM.Kanban");
 
 	/**
@@ -41,6 +38,22 @@
 		clickStatus: null,
 		cancelEditHandler: null,
 		blockSize: 20,
+		canLoadMoreItems: true,
+
+		getSubTitle: function()
+		{
+			const subTitle = BX.Kanban.Column.prototype.getSubTitle.apply(this);
+
+			if (
+				!this.getGrid().getTypeInfoParam('isQuickEditorEnabled')
+				&& !this.getGrid().getTypeInfoParam('showTotalPrice')
+			)
+			{
+				BX.Dom.addClass(subTitle, '--hidden');
+			}
+
+			return subTitle;
+		},
 
 		/**
 		 * Custom format method from BXcrm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards.Currency.
@@ -353,7 +366,7 @@
 					{
 						BX.Kanban.Utils.showErrorDialog(data.error, true);
 					}
-					else if (data.IS_SHOULD_UPDATE_CARD)
+					else if (data.isShouldUpdateCard)
 					{
 						const useAnimation = (!Array.isArray(forSend) || forSend.length <= 1);
 						void this.getGrid().loadNew(forSend, false, true, true, useAnimation);
@@ -377,6 +390,23 @@
 
 				this.render();
 			}
+		},
+
+		hasLoading: function()
+		{
+			if (!this.getGrid().getData().skipColumnCountCheck)
+			{
+				return BX.Kanban.Column.prototype.hasLoading.call(this);
+			}
+
+			if (!this.canLoadMoreItems)
+			{
+				this.showTotalCount();
+
+				return false;
+			}
+
+			return (BX.Kanban.Column.prototype.getItemsCount.call(this) > 0);
 		},
 
 		onDragDrop: function(itemNode, x, y)
@@ -1466,6 +1496,37 @@
 			{
 				item.layout.bodyContainer.children[0].style.backgroundColor = backgroundColor;
 			}
+		},
+
+		setLoadingInProgress: function(value = true)
+		{
+			this.loadingInProgress = value;
+		},
+
+		setLoadingMoreItem: function(value = true)
+		{
+			this.canLoadMoreItems = value;
+		},
+
+		showTotalCount: function()
+		{
+			if (BX.Dom.hasClass(this.layout.total, '--hidden'))
+			{
+				this.renderTitle();
+				BX.Dom.removeClass(this.layout.total, '--hidden');
+			}
+		},
+
+		getTotalItem: function()
+		{
+			const totalItem = BX.Kanban.Column.prototype.getTotalItem.call(this);
+
+			if (this.getGrid().getData().skipColumnCountCheck)
+			{
+				totalItem.classList.add('--hidden');
+			}
+
+			return totalItem;
 		},
 
 		cleanLayoutItems: function()

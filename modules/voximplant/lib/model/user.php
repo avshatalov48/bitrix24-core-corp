@@ -2,6 +2,7 @@
 
 namespace Bitrix\Voximplant\Model;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 
 /**
@@ -26,6 +27,8 @@ class UserTable extends \Bitrix\Main\UserTable
 	{
 		$result = parent::getMap();
 
+		$helper = Application::getConnection()->getSqlHelper();
+
 		$result[] = new ExpressionField(
 			'IS_BUSY',
 			'case when exists (
@@ -35,14 +38,14 @@ class UserTable extends \Bitrix\Main\UserTable
 					b_voximplant_call c
 					inner join b_voximplant_call_user cu on cu.CALL_ID = c.CALL_ID
 				where
-					c.LAST_PING > date_sub(now(), interval 7 minute) 
+					c.LAST_PING > '.$helper->addSecondsToDateTime(-7 * 60).' 
 					AND c.STATUS in (\'waiting\', \'connecting\', \'connected\')
 					AND cu.USER_ID = %s  
 					AND 
 						(
 							cu.STATUS = \'connected\'
 							OR
-							cu.INSERTED > date_sub(now(), interval 2 minute)
+							cu.INSERTED > '.$helper->addSecondsToDateTime(-2 * 60).'
 						)
 				) then \'Y\' else \'N\' end',
 			['ID'],

@@ -1,9 +1,6 @@
 <?php
 
 use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
-use Bitrix\Main\Loader;
 
 class CCrmProductRow extends CAllCrmProductRow
 {
@@ -51,11 +48,7 @@ class CCrmProductRow extends CAllCrmProductRow
 
 		$result = parent::SaveRows($ownerType, $ownerID, $arRows, $accountContext, $checkPerms, $regEvent, $syncOwner, $totalInfo);
 
-		if (
-			$result
-			&& Loader::includeModule('catalog')
-			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_DEAL_PRODUCT_RESERVE)
-		)
+		if ($result)
 		{
 			ProductRowReserves::processRows((string)$ownerType, (int)$ownerID, $arRows);
 		}

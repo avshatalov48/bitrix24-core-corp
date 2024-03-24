@@ -2,7 +2,6 @@
  * @module crm/timeline/ui/date-divider
  */
 jn.define('crm/timeline/ui/date-divider', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { Moment } = require('utils/date');

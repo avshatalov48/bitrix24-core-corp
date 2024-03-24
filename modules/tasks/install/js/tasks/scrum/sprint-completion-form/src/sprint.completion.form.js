@@ -238,7 +238,7 @@ export class SprintCompletionForm extends EventEmitter
 						</div>
 						<div class="tasks-scrum__side-panel-completion--info-content tasks-scrum__side-panel-completion--sprint-timing">
 							<div class="tasks-scrum__side-panel-completion--date-name-block">
-								<div>${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_START_LABEL')}</div>
+								<div>${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_START_LABEL_MSGVER_1')}</div>
 								<div>${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_END_LABEL')}</div>
 								${this.renderLabelPeriodDays(periodDays)}
 							</div>

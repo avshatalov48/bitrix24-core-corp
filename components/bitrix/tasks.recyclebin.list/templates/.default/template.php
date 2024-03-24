@@ -7,11 +7,24 @@ use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load('ui.design-tokens');
 
 Loc::loadMessages(__FILE__);
+
+$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
+if($isBitrix24Template)
+{
+	$this->SetViewTarget('below_pagetitle', 0);
+}
 ?>
 
 <div class="tasks-rec-list__toolbar">
 	<div class="tasks-rec-list__toolbar-item --float-left"><?= GetMessage('TASKS_RECYCLEBIN_FILE_LIFETIME'); ?></div>
 </div>
+
+<?
+if ($isBitrix24Template)
+{
+	$this->EndViewTarget();
+}
+?>
 
 <?php $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',

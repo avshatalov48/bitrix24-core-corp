@@ -48,6 +48,12 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	$service = $manager->createService('gds');
 	$service->setLanguage($languageCode);
 
+	$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
+	if ($supersetKey)
+	{
+		$limitManager->setSupersetKey($supersetKey);
+	}
+
 	if (!$manager->checkAccessKey($accessKey))
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'WRONG_KEY']);
@@ -56,7 +62,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'DISABLED']);
 	}
-	elseif (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimit())
+	elseif (!$limitManager->checkLimit())
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'LIMIT_EXCEEDED']);
 	}
@@ -112,6 +118,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	}
 	elseif (isset($_GET['data']))
 	{
+		$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 0;
 		$result = $service->getData($_GET['table'], $input);
 		if (isset($result['error']))
 		{
@@ -158,18 +165,32 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 					}
 				}
 
-				$concat_fields = [];
+				$group_fields = [];
 				foreach ($selectFields as $i => $fieldInfo)
 				{
-					if (isset($fieldInfo['CONCAT_GROUP_BY']))
+					if (isset($fieldInfo['GROUP_CONCAT']))
 					{
 						foreach ($selectFields as $j => $keyInfo)
 						{
-							if ($keyInfo['ID'] == $fieldInfo['CONCAT_KEY'])
+							if ($keyInfo['ID'] == $fieldInfo['GROUP_KEY'])
 							{
-								$concat_fields[$i] = [
-									'delimiter' => $fieldInfo['CONCAT_GROUP_BY'],
+								$group_fields[$i] = [
 									'unique_id' => $j,
+									'state' => new Bitrix\BIConnector\Aggregate\ConcatState($fieldInfo['GROUP_CONCAT']),
+								];
+								break;
+							}
+						}
+					}
+					elseif (isset($fieldInfo['GROUP_COUNT']))
+					{
+						foreach ($selectFields as $j => $keyInfo)
+						{
+							if ($keyInfo['ID'] == $fieldInfo['GROUP_KEY'])
+							{
+								$group_fields[$i] = [
+									'unique_id' => $j,
+									'state' => new Bitrix\BIConnector\Aggregate\CountState($fieldInfo['GROUP_COUNT'] === 'DISTINCT'),
 								];
 								break;
 							}
@@ -180,8 +201,9 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				//Cleanup
 				foreach ($result['schema'] as $i => $tableInfo)
 				{
-					unset($result['schema'][$i]['CONCAT_KEY']);
-					unset($result['schema'][$i]['CONCAT_GROUP_BY']);
+					unset($result['schema'][$i]['GROUP_KEY']);
+					unset($result['schema'][$i]['GROUP_CONCAT']);
+					unset($result['schema'][$i]['GROUP_COUNT']);
 					unset($result['schema'][$i]['IS_PRIMARY']);
 					if (!$tableInfo['AGGREGATION_TYPE'])
 					{
@@ -206,6 +228,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				$output_row = false;
 				while ($row = $res->fetch())
 				{
+					if ($limit && $count === $limit)
+					{
+						continue; //Avoid "Commands out of sync" error.
+					}
+
 					foreach ($result['onAfterFetch'] as $i => $callback)
 					{
 						$row[$i] = $callback($row[$i], $service::$dateFormats);
@@ -221,32 +248,31 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 						$primaryKey .= $row[$primaryIndex];
 					}
 
-					if ($primary && $concat_fields)
+					if ($primary && $group_fields)
 					{
 						if (!$output_row)
 						{
 							$output_row = $row;
-							foreach ($concat_fields as $i => $concatInfo)
+							foreach ($group_fields as $i => $groupInfo)
 							{
-								$concat_id = $row[$concatInfo['unique_id']];
-								$output_row[$i] = [
-									$concat_id => $row[$i]
-								];
+								$group_id = $row[$groupInfo['unique_id']];
+								$output_row[$i] = clone $groupInfo['state'];
+								$output_row[$i]->updateState($group_id, $row[$i]);
 							}
 						}
 						elseif ($primaryKey === $prevPrimaryKey)
 						{
-							foreach ($concat_fields as $i => $concatInfo)
+							foreach ($group_fields as $i => $groupInfo)
 							{
-								$concat_id = $row[$concatInfo['unique_id']];
-								$output_row[$i][$concat_id] = $row[$i];
+								$group_id = $row[$groupInfo['unique_id']];
+								$output_row[$i]->updateState($group_id, $row[$i]);
 							}
 						}
 						else
 						{
-							foreach ($concat_fields as $i => $concatInfo)
+							foreach ($group_fields as $i => $groupInfo)
 							{
-								$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
+								$output_row[$i] = $output_row[$i]->output();
 							}
 
 							if ($extraCount)
@@ -262,12 +288,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 							$comma = ',';
 
 							$output_row = $row;
-							foreach ($concat_fields as $i => $concatInfo)
+							foreach ($group_fields as $i => $groupInfo)
 							{
-								$concat_id = $row[$concatInfo['unique_id']];
-								$output_row[$i] = [
-									$concat_id => $row[$i]
-								];
+								$group_id = $row[$groupInfo['unique_id']];
+								$output_row[$i] = clone $groupInfo['state'];
+								$output_row[$i]->updateState($group_id, $row[$i]);
 							}
 						}
 						$prevPrimaryKey = $primaryKey;
@@ -288,11 +313,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 					}
 				}
 
-				if ($output_row)
+				if ($output_row && !($limit && $count === $limit))
 				{
-					foreach ($concat_fields as $i => $concatInfo)
+					foreach ($group_fields as $i => $groupInfo)
 					{
-						$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
+						$output_row[$i] = $output_row[$i]->output();
 					}
 
 					if ($extraCount)
@@ -310,7 +335,8 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				echo $out;
 				$size += strlen($out);
 
-				$isOverLimit = \Bitrix\BIConnector\LimitManager::getInstance()->fixLimit($count, $supersetKey);
+				$isOverLimit = $limitManager->fixLimit($count);
+
 				$manager->endQuery($logId, $count, $size, $isOverLimit);
 			}
 			else
@@ -337,6 +363,8 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		fclose($lockFile);
 		unlink($lockFileName);
 	}
+
+	\Bitrix\BIConnector\MemoryCache::expunge();
 }
 else
 {
@@ -345,5 +373,4 @@ else
 
 echo "\n";
 
-\Bitrix\BIConnector\MemoryCache::expunge();
 \Bitrix\Main\Application::getInstance()->terminate();

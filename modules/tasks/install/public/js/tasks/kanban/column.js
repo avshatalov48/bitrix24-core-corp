@@ -17,6 +17,7 @@
 		this.sortButton = null;
 
 		this.type = (options.type ? options.type : '');
+		this.viewStateName = options.viewStateName || 'kanban';
 	};
 
 	BX.Tasks.Kanban.Column.prototype = {
@@ -203,14 +204,14 @@
 		 */
 		handleAddColumnButtonClick: function(event)
 		{
-			var gridData = this.getGridData();
+			const gridData = this.getGridData();
 			// if no access, show access-query popup
 			if (
 				gridData.rights &&
 				gridData.rights.canAddColumn
 			)
 			{
-				var newColumn = this.getGrid().addColumn({
+				const newColumn = this.getGrid().addColumn({
 					id: 'kanban-new-column-' + BX.util.getRandomString(5),
 					type: 'BX.Tasks.Kanban.DraftColumn',
 					canSort: false,
@@ -234,7 +235,7 @@
 		 */
 		switchToEditMode: function()
 		{
-			var gridData = this.getGridData();
+			const gridData = this.getGridData();
 			// if no access, show access-query popup
 			if (
 				gridData.rights &&
@@ -256,7 +257,7 @@
 		 */
 		handleAddItemButtonClick: function(event)
 		{
-			var gridData = this.getGridData();
+			const gridData = this.getGridData();
 
 			if (gridData.addItemInSlider === true && BX.SidePanel.Instance)
 			{

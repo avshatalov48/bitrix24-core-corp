@@ -15,6 +15,7 @@ $MESS["TASKS_EXCEL_ID"] = "ID";
 $MESS["TASKS_EXCEL_TITLE"] = "Название";
 $MESS["TASKS_EXCEL_RESPONSIBLE_ID"] = "Ответственный";
 $MESS["TASKS_EXCEL_RESPONSIBLE_NAME"] = "Ответственный";
+$MESS['TASKS_EXCEL_ASSIGNEE_NAME'] = 'Исполнитель';
 $MESS["TASKS_EXCEL_CREATED_BY"] = "Постановщик";
 $MESS["TASKS_EXCEL_ORIGINATOR_NAME"] = "Постановщик";
 $MESS["TASKS_EXCEL_CREATED_DATE"] = "Дата создания";

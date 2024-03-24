@@ -661,6 +661,11 @@ class UserPermissions
 		return $this->checkReadPermissions($category->getEntityTypeId(), 0, $category->getId());
 	}
 
+	public function canAddItemsInCategory(Category $category): bool
+	{
+		return $this->checkAddPermissions($category->getEntityTypeId(), $category->getId());
+	}
+
 	public function canAddCategory(Category $category): bool
 	{
 		return $this->canWriteConfig();

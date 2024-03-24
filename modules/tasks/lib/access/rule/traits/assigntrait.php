@@ -178,7 +178,7 @@ trait AssignTrait
 			WHERE
 				GROUP_ID = '. $groupId .'
 				AND USER_ID IN ('. $userId .', '. $responsibleId .')
-				AND ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
+				AND ROLE IN (\''. implode("','", \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'\')
 		';
 
 		$res = $DB->query($sql);

@@ -70,6 +70,11 @@ jn.define('layout/ui/date-pill', (require, exports, module) => {
 			return this.props.fontSize ?? 12;
 		}
 
+		get fontWeight()
+		{
+			return this.props.fontWeight ?? 600;
+		}
+
 		get imageSize()
 		{
 			return this.props.imageSize ?? 12;
@@ -120,7 +125,7 @@ jn.define('layout/ui/date-pill', (require, exports, module) => {
 						text: this.formatDate(),
 						style: {
 							fontSize: this.fontSize,
-							fontWeight: '600',
+							fontWeight: this.fontWeight,
 							color: this.textColor,
 						},
 					}),

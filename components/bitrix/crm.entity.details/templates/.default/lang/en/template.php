@@ -42,3 +42,4 @@ $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_MESSAGE_MSGVER_1"] = "Are you sure you
 $MESS["CRM_ENT_DETAIL_QUOTE_DELETE_DIALOG_TITLE_MSGVER_1"] = "Delete estimate";
 $MESS["CRM_ENT_DETAIL_QUOTE_URL_COPIED_MSGVER_1"] = "Estimate link has been copied to the Clipboard.";
 $MESS["CRM_ENT_DETAIL_REST_BUTTON_2"] = "Market";
+$MESS["CRM_ENT_DETAIL_SIGN_PROCESS_BUTTON"] = "Signing progress";

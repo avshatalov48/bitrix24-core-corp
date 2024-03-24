@@ -16,6 +16,7 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_V2'] = "#MEMBERS#, задача 
 $MESS['COMMENT_POSTER_COMMENT_TASK_EXPIRED_SOON_NO_MEMBERS_V2'] = "Задача почти просрочена.\n#TASK_COMPLETE_START#Завершите задачу#TASK_COMPLETE_END# или #DEADLINE_CHANGE_START#передвиньте срок#DEADLINE_CHANGE_END#.";
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS'] = "#MEMBERS#, сообщите текущий статус задачи.";
+$MESS['COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS_MSGVER_1'] = "#MEMBERS#, сообщите текущий статус задачи.";
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_REDO'] = "Задача отправлена на доработку.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW'] = "#AUTHOR# возобновил(а) задачу.";
@@ -56,6 +57,7 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_GROUP_ID_V2'] = "Про�
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CREATED_BY'] = "#NEW_VALUE#, вы назначены постановщиком.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_RESPONSIBLE_ID'] = "#NEW_VALUE#, вы назначены ответственным.";
+$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ASSIGNEE'] = "#NEW_VALUE#, вы назначены исполнителем.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ACCOMPLICES'] = "#NEW_VALUE#, вы назначены соисполнителем.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS'] = "#NEW_VALUE#, вы добавлены наблюдателем.";
 
@@ -72,6 +74,7 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING'] = 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING_Y'] = "Включен";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING_N'] = "Выключен";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE'] = "Ответственный может изменять сроки задачи: #NEW_VALUE#";
+$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE_V2'] = 'Исполнитель может изменять сроки задачи: #NEW_VALUE#';
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE_Y'] = "Да";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE_N'] = "Нет";
 

@@ -318,7 +318,7 @@ class TimeLineManager
 
 		if (
 			is_null($message)
-			|| ResultTable::isResult($message->getId(), $this->taskRepository->getTask()->getId())
+			|| ResultTable::isResult($message->getId(), $this->taskRepository->getTask()?->getId())
 		)
 		{
 			return $this;

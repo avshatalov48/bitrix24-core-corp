@@ -3,18 +3,17 @@
 namespace Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased;
 
 
+use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParams;
 use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilder;
 use Bitrix\Crm\Counter\CounterQueryBuilder\DeadlineBased\DateFilters\DateFilter;
+use Bitrix\Crm\Counter\CounterQueryBuilder\QueryParts;
 use Bitrix\Crm\Counter\EntityCountableActivityTable;
-use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParams;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Crm\Counter\CounterQueryBuilder\QueryParts;
 
 final class CountableBased implements CounterQueryBuilder
 {

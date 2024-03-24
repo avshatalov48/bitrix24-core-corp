@@ -9,7 +9,7 @@ use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Replicator\Template\Option\Options;
+use Bitrix\Tasks\Replication\Template\Option\Options;
 
 class TemplateFieldHandler
 {
@@ -381,7 +381,7 @@ class TemplateFieldHandler
 			&& !array_key_exists('RESPONSIBLE_ID', $this->fields)
 		)
 		{
-			throw new TemplateFieldValidateException(Loc::getMessage("TASKS_BAD_RESPONSIBLE_ID"));
+			throw new TemplateFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_ID'));
 		}
 
 		if (!array_key_exists('RESPONSIBLE_ID', $this->fields))
@@ -415,14 +415,14 @@ class TemplateFieldHandler
 				$r = \CUser::GetByID($this->fields["RESPONSIBLE_ID"]);
 				if (!$r->Fetch())
 				{
-					throw new TemplateFieldValidateException(Loc::getMessage("TASKS_BAD_RESPONSIBLE_ID_EX"));
+					throw new TemplateFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_EX'));
 				}
 			}
 			else
 			{
 				if(!$this->templateId)
 				{
-					throw new TemplateFieldValidateException(Loc::getMessage("TASKS_BAD_RESPONSIBLE_ID"));
+					throw new TemplateFieldValidateException(Loc::getMessage('TASKS_BAD_ASSIGNEE_ID'));
 				}
 			}
 		}

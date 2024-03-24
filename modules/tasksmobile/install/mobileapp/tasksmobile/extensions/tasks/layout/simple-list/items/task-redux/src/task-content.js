@@ -5,22 +5,18 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { CounterView } = require('layout/ui/counter-view');
-	const { Avatar } = require('layout/ui/user/avatar');
+	const { ReduxAvatar } = require('layout/ui/user/avatar');
 	const { connect } = require('statemanager/redux/connect');
 	const { DeadlinePill } = require('tasks/layout/deadline-pill');
 	const { selectById, selectCounter, selectIsCompleted } = require('tasks/statemanager/redux/slices/tasks');
-	const { ConfigurableDateByTimeDeltaTokens } = require('utils/date');
+	const { Moment } = require('utils/date/moment');
+	const { DynamicDateFormatter } = require('utils/date/dynamic-date-formatter');
 	const { date, dayShortMonth, shortTime } = require('utils/date/formats');
 	const { withPressed } = require('utils/color');
-	const { get } = require('utils/object');
+	const { TaskStatus } = require('tasks/enum');
 
 	class TaskContent extends PureComponent
 	{
-		constructor(props)
-		{
-			super(props);
-		}
-
 		shouldComponentUpdate(nextProps, nextState)
 		{
 			if (this.props.id !== nextProps.id)
@@ -99,7 +95,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				},
 				Text({
 					testId: `${this.props.testId}_SECTION_TITLE`,
-					style: Styles.title(this.task?.isCompleted),
+					style: Styles.title(this.task?.isCompleted, this.task?.status),
 					text: this.task?.name || this.props.id,
 					numberOfLines: 2,
 					ellipsize: 'end',
@@ -155,15 +151,16 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				return null;
 			}
 
-			const formattedTime = ConfigurableDateByTimeDeltaTokens({
-				timestamp: this.task.activityDate,
-				deltas: {
-					day: shortTime(),
-					week: 'E',
-					year: dayShortMonth(),
+			const formatter = new DynamicDateFormatter({
+				config: {
+					[DynamicDateFormatter.periods.DAY]: shortTime(),
+					[DynamicDateFormatter.deltas.WEEK]: 'E',
+					[DynamicDateFormatter.periods.YEAR]: dayShortMonth(),
 				},
 				defaultFormat: date(),
 			});
+
+			const formattedTime = formatter.format(new Moment(this.task.activityDate * 1000));
 
 			return Text({
 				testId: `${this.props.testId}_LAST_ACTIVITY_DATE`,
@@ -224,7 +221,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 
 		renderResponsible()
 		{
-			return Avatar({
+			return ReduxAvatar({
 				id: this.task?.responsible,
 				testId: `${this.testId}_RESPONSIBLE`,
 			});
@@ -382,14 +379,14 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			marginBottom: 14,
 			flexGrow: 1,
 		}),
-		title: (isCompleted) => ({
+		title: (isCompleted, status) => ({
 			flex: 1,
 			fontWeight: '500',
 			fontSize: 16,
 			marginRight: 10,
 			marginBottom: -0.5,
-			color: isCompleted ? AppTheme.colors.base4 : AppTheme.colors.base1,
-			textDecorationLine: isCompleted ? 'line-through' : 'none',
+			color: isCompleted && status !== TaskStatus.SUPPOSEDLY_COMPLETED ? AppTheme.colors.base4 : AppTheme.colors.base1,
+			textDecorationLine: isCompleted && status !== TaskStatus.SUPPOSEDLY_COMPLETED ? 'line-through' : 'none',
 			marginTop: 0,
 		}),
 		iconSmall: {
@@ -455,6 +452,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			isRepeatable,
 			checklist,
 			activityDate,
+			status,
 		} = task;
 
 		return {
@@ -467,6 +465,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				isMuted,
 				isRepeatable,
 				checklist,
+				status,
 				activityDate: activityDate - (activityDate % 60),
 				counter: selectCounter(task),
 				isCompleted: selectIsCompleted(task),

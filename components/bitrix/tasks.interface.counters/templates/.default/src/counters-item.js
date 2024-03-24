@@ -1,5 +1,7 @@
 import { Tag, Event, Type, Loc, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { sendData } from "ui.analytics";
+import {Counters} from "./entry";
 
 export default class CountersItem
 {
@@ -149,10 +151,15 @@ export default class CountersItem
 	{
 		EventEmitter.emit('Tasks.Toolbar:onItem', {counter: this});
 
-		this.$container.classList.contains('--hover')
-			? this.unActive()
-			: this.active()
-		;
+		if (this.$container.classList.contains('--hover'))
+		{
+			this.unActive();
+		}
+		else
+		{
+			this.active();
+			this.sendAnalytics();
+		}
 	}
 
 	getPopupMenuItemContainer()
@@ -192,5 +199,52 @@ export default class CountersItem
 		}
 
 		return this.$container;
+	}
+
+	sendAnalytics()
+	{
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			type: 'task',
+			event: this.getAnalyticsEvent(),
+			c_section: this.getAnalyticsSection(),
+			c_element: this.getAnalyticsElement(),
+		});
+	}
+
+	getAnalyticsEvent()
+	{
+		if (Counters.counterTypes.expired.includes(this.type))
+		{
+			return 'overdue_counters_on';
+		}
+
+		return 'comments_counters_on';
+	}
+
+	getAnalyticsSection()
+	{
+		if (Counters.counterTypes.scrum.includes(this.type))
+		{
+			return 'scrum';
+		}
+
+		if (Counters.counterTypes.project.includes(this.type))
+		{
+			return 'project';
+		}
+
+		return 'tasks';
+	}
+
+	getAnalyticsElement()
+	{
+		if (Counters.counterTypes.expired.includes(this.type))
+		{
+			return 'overdue_counters_filter';
+		}
+
+		return 'comments_counters_filter';
 	}
 }

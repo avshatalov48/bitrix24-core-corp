@@ -52,6 +52,12 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
+		}
+
 		/**
 		 * @param string $selectSql
 		 * @param string $fromSql
@@ -107,6 +113,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						files.TYPE = ".ObjectTable::TYPE_FILE."
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
+					GROUP BY storage.MODULE_ID
 				) CNT_FILES
 			";
 		};
@@ -137,7 +144,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 				LEFT JOIN 
 				(
 					SELECT
-						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
+						SUM(COALESCE(preview_file.FILE_SIZE, 0)) + SUM(COALESCE(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
 						storage.MODULE_ID as MODULE_ID
 					FROM
@@ -149,6 +156,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						files.TYPE = ". ObjectTable::TYPE_FILE. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
+					GROUP BY storage.MODULE_ID
 				) CNT_PREVIEW
 					ON CNT_FILES.MODULE_ID = CNT_PREVIEW.MODULE_ID
 			";
@@ -166,7 +174,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		$buildAttachedSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
 		{
 			$selectSql .= "
-				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
+				, COALESCE(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
 			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
@@ -187,6 +195,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						files.TYPE = ".ObjectTable::TYPE_FILE."
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
+					GROUP BY storage.MODULE_ID
 				) CNT_ATTACH
 					ON CNT_FILES.MODULE_ID = CNT_ATTACH.MODULE_ID
 			";
@@ -204,7 +213,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		$buildExternalSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
 		{
 			$selectSql .= "
-				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
+				, COALESCE(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
 			$columns = array_merge($columns, [
 				'LINK_COUNT',
@@ -226,6 +235,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						AND link.TYPE != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
+					GROUP BY storage.MODULE_ID
 				) CNT_LINK
 					ON CNT_FILES.MODULE_ID = CNT_LINK.MODULE_ID
 			";
@@ -243,7 +253,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		$buildSharingSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
 		{
 			$selectSql .= "
-				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
+				, COALESCE(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
 			$columns = array_merge($columns, [
 				'SHARING_COUNT',
@@ -265,6 +275,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						AND sharing.STATUS = ". SharingTable::STATUS_IS_APPROVED. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
+					GROUP BY storage.MODULE_ID
 				) CNT_SHARING
 					ON CNT_FILES.MODULE_ID = CNT_SHARING.MODULE_ID
 			";
@@ -279,11 +290,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
+		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '') use ($prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
 			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
@@ -314,7 +325,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
-								ORDER BY NULL
+								{$prefSql}
 							) head ON head.OBJECT_ID = files.ID
 							LEFT JOIN b_disk_attached_object  attached
 								ON attached.OBJECT_ID  = ver.OBJECT_ID
@@ -324,7 +335,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND COALESCE(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						WHERE 
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
@@ -334,11 +345,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						GROUP BY 
 							files.ID,
 							storage.MODULE_ID
-						ORDER BY NULL
+						{$prefSql}
 					) src
 					GROUP BY
 						src.MODULE_ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FREE
 					ON CNT_FILES.MODULE_ID = CNT_FREE.MODULE_ID
 			";
@@ -411,8 +422,8 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 
 		VolumeTable::createTemporally();
 
-		$tableName = VolumeTable::getTableName();
-		$temporallyTableName = VolumeTable::getTemporallyName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
+		$temporallyTableName = $sqlHelper->quote(VolumeTable::getTemporallyName());
 
 		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
 		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
@@ -423,13 +434,13 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		{
 			$filterId = $this->getFilterId();
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$connection->queryExecute("
-				UPDATE 
-					{$tableName} destinationTbl, 
-					({$temporallyDataSource}) sourceQuery 
-				SET {$columnList} 
-				WHERE destinationTbl.ID = {$filterId}
-			");
+			$querySql = $sqlHelper->prepareCorrelatedUpdate(
+				$tableName, 'destinationTbl',
+				$columnList,
+				"({$temporallyDataSource}) sourceQuery",
+				"destinationTbl.ID = {$filterId}"
+			);
+			$connection->queryExecute($querySql);
 		}
 		else
 		{
@@ -711,6 +722,9 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	protected function prepareUserFieldQuery($entityClass, array $userField, array $relation = null)
 	{
 		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+		/** @global \CDatabase $DB */
+		global $DB;
 
 		/** @var Main\ORM\Data\DataManager $entityClass */
 		$ufName = $entityClass::getUfId();
@@ -735,6 +749,12 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			$relationGroupBySql = 'GROUP BY '. implode(', ', $relationGroupBy);
 			$relationGroupSelectSql = ', '. implode(', ', $relationGroupSelect);
 			$relationSql = ' INNER JOIN '. $relation['table']. ' REL on REL.'. $relation['relation'] .' = ufsrc.VALUE_ID ';
+		}
+
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
 		}
 
 		$querySql = '';
@@ -777,7 +797,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = files.FILE_ID 
 							) flsrc
 							{$relationGroupBySql}
-							ORDER BY NULL
+							{$prefSql}
 						";
 						break;
 					}
@@ -815,7 +835,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = versions.FILE_ID
 							) flsrc
 							{$relationGroupBySql}
-							ORDER BY NULL
+							{$prefSql}
 						";
 						break;
 					}
@@ -844,7 +864,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										AND ufsrc.FIELD_ID = '{$ufId}'
 							) flsrc
 							{$relationGroupBySql}
-							ORDER BY NULL
+							{$prefSql}
 						";
 						break;
 					}
@@ -880,8 +900,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 									{$utsEntityTableName} ufsrc
 									{$relationSql}
 									INNER JOIN b_disk_attached_object attached
-										ON attached.ID = cast(ufsrc.{$ufEntityTableFieldName} as UNSIGNED)
-										and ufsrc.{$ufEntityTableFieldName} REGEXP '^[0-9]+$'
+										ON attached.ID = ufsrc.{$ufEntityTableFieldName}
 									INNER JOIN b_disk_object files
 										ON files.ID = attached.OBJECT_ID 
 										AND files.ID = files.REAL_OBJECT_ID
@@ -890,7 +909,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = files.FILE_ID 
 							) flsrc
 							{$relationGroupBySql}
-							ORDER BY NULL
+							{$prefSql}
 						";
 						break;
 					}
@@ -915,8 +934,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 									{$utsEntityTableName} ufsrc
 									{$relationSql}
 									INNER JOIN b_disk_attached_object attached
-										ON attached.ID = cast(ufsrc.{$ufEntityTableFieldName} as UNSIGNED)
-										and ufsrc.{$ufEntityTableFieldName} REGEXP '^[0-9]+$'
+										ON attached.ID = ufsrc.{$ufEntityTableFieldName}
 									INNER JOIN b_disk_version versions
 										ON versions.ID = attached.VERSION_ID 
 									INNER JOIN b_disk_object files
@@ -928,7 +946,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = versions.FILE_ID 
 							) flsrc
 							{$relationGroupBySql}
-							ORDER BY NULL
+							{$prefSql}
 						";
 						break;
 					}
@@ -953,11 +971,10 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 									{$utsEntityTableName} ufsrc
 									{$relationSql}
 									INNER JOIN b_file f
-										ON f.ID = cast(ufsrc.{$ufEntityTableFieldName} as UNSIGNED)
-										and ufsrc.{$ufEntityTableFieldName} REGEXP '^[0-9]+$'
+										ON f.ID = ufsrc.{$ufEntityTableFieldName}
 							) flsrc
 							{$relationGroupBySql}
-							ORDER BY NULL
+							{$prefSql}
 						";
 						break;
 					}

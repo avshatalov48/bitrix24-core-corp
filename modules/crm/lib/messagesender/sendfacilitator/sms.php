@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentException;
 final class Sms extends SendFacilitator
 {
 	private ?string $messageBody = null;
+	private ?string $messageTemplate = null;
 
 	public function __construct(Channel $channel)
 	{
@@ -33,12 +34,26 @@ final class Sms extends SendFacilitator
 		return $this;
 	}
 
+	public function setMessageTemplate(string $template): self
+	{
+		$this->messageTemplate = $template;
+
+		return $this;
+	}
+
 	protected function prepareMessageOptions(): array
 	{
-		return [
+		$options = [
 			'SENDER_ID' => $this->channel->getId(),
 			'MESSAGE_FROM' => $this->getFrom()->getId(),
 			'MESSAGE_BODY' => $this->messageBody,
 		];
+
+		if (!empty($this->messageTemplate))
+		{
+			$options['MESSAGE_TEMPLATE'] = $this->messageTemplate;
+		}
+
+		return $options;
 	}
 }

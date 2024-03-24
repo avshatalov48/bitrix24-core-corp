@@ -1,6 +1,8 @@
 .bx-crm-ai-merge-fields {
 	--layout-border-radius: 16px 16px 0 0;
+	--layout-border-radius-all: 16px 16px 16px 16px;
 }
+
 
 .bx-crm-ai-merge-fields {
 	background-color: rgba(255, 255, 255, 0.40);
@@ -9,11 +11,19 @@
 	border-radius: var(--layout-border-radius);
 }
 
+.bx-crm-ai-merge-fields.hidden-footer {
+	border-radius: var(--layout-border-radius-all);
+}
+
 .bx-crm-ai-merge-fields-layout {
 	display: flex;
 	height: calc(100vh - 175px);
 	overflow-y: scroll;
 	scrollbar-color: #FFF #FFF;
+}
+
+.bx-crm-ai-merge-fields-layout.hidden-footer {
+	height: calc(100vh - 130px);
 }
 
 .bx-crm-ai-merge-fields-layout::-webkit-scrollbar {

@@ -2,6 +2,7 @@
 include('InAppNotifier');
 
 (() => {
+	const { TaskStatus } = jn.require('tasks/enum');
 	const pathToExtension = '/bitrix/mobileapp/tasksmobile/extensions/tasks/task/taskcard/';
 	const platform = Application.getPlatform();
 
@@ -1034,7 +1035,7 @@ include('InAppNotifier');
 			});
 
 			this.updateTask({
-				status: Task.statusList.completed,
+				status: TaskStatus.COMPLETED,
 				activityDate: Date.now(),
 			});
 			this.redrawTaskPopupMenu();
@@ -1058,7 +1059,7 @@ include('InAppNotifier');
 			});
 
 			this.updateTask({
-				status: Task.statusList.pending,
+				status: TaskStatus.PENDING,
 				activityDate: Date.now(),
 			});
 			this.redrawTaskPopupMenu();
@@ -1081,7 +1082,7 @@ include('InAppNotifier');
 				canRenew: false,
 			});
 
-			this.updateTask({status: Task.statusList.inprogress});
+			this.updateTask({ status: TaskStatus.IN_PROGRESS });
 			this.redrawTaskPopupMenu();
 			this.sendOnItemActionStatusWebEvent();
 
@@ -1102,7 +1103,7 @@ include('InAppNotifier');
 				canRenew: false,
 			});
 
-			this.updateTask({status: Task.statusList.pending});
+			this.updateTask({ status: TaskStatus.PENDING });
 			this.redrawTaskPopupMenu();
 			this.sendOnItemActionStatusWebEvent();
 
@@ -1123,7 +1124,7 @@ include('InAppNotifier');
 				canRenew: false,
 			});
 
-			this.updateTask({status: Task.statusList.inprogress});
+			this.updateTask({ status: TaskStatus.IN_PROGRESS });
 			this.redrawTaskPopupMenu();
 			this.sendOnItemActionStatusWebEvent();
 
@@ -1144,7 +1145,7 @@ include('InAppNotifier');
 				canRenew: false,
 			});
 
-			this.updateTask({status: Task.statusList.pending});
+			this.updateTask({ status: TaskStatus.PENDING });
 			this.redrawTaskPopupMenu();
 			this.sendOnItemActionStatusWebEvent();
 
@@ -1164,7 +1165,7 @@ include('InAppNotifier');
 			});
 
 			this.updateTask({
-				status: Task.statusList.pending,
+				status: TaskStatus.PENDING,
 				activityDate: Date.now(),
 			});
 			this.redrawTaskPopupMenu();
@@ -1182,7 +1183,7 @@ include('InAppNotifier');
 			if (!this.task.isResultRequired || this.task.isOpenResultExists)
 			{
 				this.updateTask({
-					status: Task.statusList.completed,
+					status: TaskStatus.COMPLETED,
 					activityDate: Date.now(),
 				});
 				this.redrawTaskPopupMenu();

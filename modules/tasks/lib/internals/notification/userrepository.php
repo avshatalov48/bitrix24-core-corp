@@ -20,7 +20,7 @@ class UserRepository implements UserRepositoryInterface
 	 */
 	public function getRecepients(TaskObject $task, User $sender, array $optional = []): array
 	{
-		$recepients = [];
+		$recipientIds = [];
 
 		foreach ($this->getParticipants($task, $optional) as $id)
 		{
@@ -29,19 +29,20 @@ class UserRepository implements UserRepositoryInterface
 				continue;
 			}
 
-			if ((int)$id === $sender->getId() && !$this->isSpawnedByAgent($optional))
+			if (
+				(int)$id === $sender->getId()
+				&& !$this->isSpawnedByAgent($optional)
+				&& !$this->isSpawnedByWorkFlow($optional)
+				&& !$this->isOccurredUserIdSet()
+			)
 			{
 				continue;
 			}
 
-			$recepient = $this->getUserById((int)$id);
-			if ($recepient)
-			{
-				$recepients[] = $recepient;
-			}
+			$recipientIds[] = (int)$id;
 		}
 
-		return $recepients;
+		return $this->getUsersByIds(array_unique($recipientIds));
 	}
 
 	public function getSender(TaskObject $task, array $optional = []): ?User
@@ -51,9 +52,9 @@ class UserRepository implements UserRepositoryInterface
 			return $this->getUserById((int)$optional['AUTHOR_ID']);
 		}
 
-		if(\Bitrix\Tasks\Util\User::getOccurAsId() && is_int(\Bitrix\Tasks\Util\User::getOccurAsId()))
+		if($this->isOccurredUserIdSet())
 		{
-			$senderId = \Bitrix\Tasks\Util\User::getOccurAsId();
+			$senderId = (int)\Bitrix\Tasks\Util\User::getOccurAsId();
 			return $this->getUserById($senderId);
 		}
 
@@ -85,8 +86,13 @@ class UserRepository implements UserRepositoryInterface
 		);
 	}
 
-	public function getUserById(int $userId): ?User
+	public function getUserById(?int $userId): ?User
 	{
+		if ($userId === null)
+		{
+			return null;
+		}
+
 		if (isset($this->cache[$userId]))
 		{
 			return $this->cache[$userId];
@@ -131,6 +137,62 @@ class UserRepository implements UserRepositoryInterface
 		return $user;
 	}
 
+	public function getUsersByIds(array $userIds): array
+	{
+		if (empty($userIds))
+		{
+			return [];
+		}
+
+		$unCachedUserIds = $this->extractUnCachedUserIds($userIds);
+		if (empty($unCachedUserIds))
+		{
+			$cachedUserIds = $this->extractCachedUserIds($userIds);
+			return array_map(fn (int $userId): User => $this->cache[$userId], $cachedUserIds);
+		}
+
+		$users = UserTable::query()
+			->whereIn('ID', $unCachedUserIds)
+			->setSelect([
+				'ID',
+				'NAME',
+				'LAST_NAME',
+				'SECOND_NAME',
+				'EMAIL',
+				'EXTERNAL_AUTH_ID',
+				'PERSONAL_GENDER',
+				'NOTIFICATION_LANGUAGE_ID'
+			])
+			->exec()
+			->fetchCollection()
+		;
+
+		if (!$users)
+		{
+			return [];
+		}
+
+		$userIds = [];
+		foreach ($users as $user)
+		{
+			$userIds[] = $user->getId();
+			$this->cache[$user->getId()] = new User(
+				$user->getId(),
+				$user->getName(),
+				$user->getNotificationLanguageId(),
+				[
+					'gender' => $user->getPersonalGender(),
+					'last_name' => $user->getLastName(),
+					'second_name' => $user->getSecondName(),
+					'email' => $user->getEmail(),
+					'external_auth_id' => $user->getExternalAuthId(),
+				]
+			);
+		}
+
+		return array_map(fn (int $userId): User => $this->cache[$userId], $userIds);
+	}
+
 	public function getUserTimeZoneOffset(int $userId): int
 	{
 		if (isset($this->timeZoneCache[$userId]))
@@ -171,5 +233,42 @@ class UserRepository implements UserRepositoryInterface
 		}
 
 		return false;
+	}
+
+	private function isSpawnedByWorkFlow(array $params): bool
+	{
+		if (
+			isset($params['SPAWNED_BY_WORKFLOW']) &&
+			($params['SPAWNED_BY_WORKFLOW'] === true || $params['SPAWNED_BY_WORKFLOW'] === 'Y')
+		)
+		{
+			return true;
+		}
+
+		if (
+			isset($params['spawned_by_workflow']) &&
+			($params['spawned_by_workflow'] === true || $params['spawned_by_workflow'] === 'Y')
+		)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function isOccurredUserIdSet(): bool
+	{
+		$occurredUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
+		return $occurredUserId && is_int($occurredUserId);
+	}
+
+	private function extractCachedUserIds(array $userIds): array
+	{
+		return array_filter($userIds, fn (int $userId): bool => isset($this->cache[$userId]));
+	}
+
+	private function extractUnCachedUserIds(array $userIds): array
+	{
+		return array_filter($userIds, fn (int $userId): bool => !isset($this->cache[$userId]));
 	}
 }

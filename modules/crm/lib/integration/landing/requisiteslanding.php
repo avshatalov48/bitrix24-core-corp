@@ -46,11 +46,6 @@ class RequisitesLanding
 
 	protected function findConnectedSite(): void
 	{
-		if (!$this->isEnabled())
-		{
-			return;
-		}
-
 		if ($this->siteId === null)
 		{
 			Landing\Rights::setOff();
@@ -73,10 +68,7 @@ class RequisitesLanding
 
 	protected function findConnectedLanding(): void
 	{
-		if (
-			!$this->isEnabled()
-			|| !$this->isSiteConnected()
-		)
+		if (!$this->isSiteConnected())
 		{
 			return;
 		}
@@ -133,11 +125,6 @@ class RequisitesLanding
 
 	protected function connectSite(): bool
 	{
-		if (!$this->isEnabled())
-		{
-			return false;
-		}
-
 		if ($this->isSiteConnected())
 		{
 			return true;
@@ -203,10 +190,7 @@ class RequisitesLanding
 
 	protected function addLandingToConnectedSite(): bool
 	{
-		if (
-			!$this->isEnabled()
-			|| !$this->isSiteConnected()
-		)
+		if (!$this->isSiteConnected())
 		{
 			return false;
 		}

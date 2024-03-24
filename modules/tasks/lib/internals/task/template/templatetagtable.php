@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Internals\Task\Template;
 
 use Bitrix\Main\Entity\Validator\Length;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Main\UserTable;
@@ -66,6 +67,10 @@ class TemplateTagTable extends TaskDataManager
 				'data_type' => UserTable::class,
 				'reference' => array('=this.USER_ID' => 'ref.ID')
 			),
+			(new ExpressionField(
+				'MAX_ID',
+				'MAX(%s)', ['ID']
+			)),
 		);
 	}
 

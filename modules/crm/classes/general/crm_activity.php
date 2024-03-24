@@ -5,8 +5,10 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\FastSearch;
 use Bitrix\Crm\Activity\FillActLightCounter;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
+use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\Provider\Eventable\PingOffset;
 use Bitrix\Crm\Activity\Provider\Eventable\PingQueue;
 use Bitrix\Crm\Automation\Trigger\ResourceBookingTrigger;
@@ -23,8 +25,6 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Crm\Activity\FastSearch;
-use Bitrix\Crm\Activity\Provider;
 
 class CAllCrmActivity
 {
@@ -5597,7 +5597,7 @@ class CAllCrmActivity
 			}
 			unset($arBinding);
 		}
-		
+
 		return true;
 	}
 	public static function GetActivityType(&$arFields)
@@ -7998,16 +7998,16 @@ class CCrmActivityType
 
 	public static function PrepareListItems()
 	{
-		$desctiptions = self::GetAllDescriptions();
+		$descriptions = self::GetAllDescriptions();
 
-		return CCrmEnumeration::PrepareListItems($desctiptions, array(self::Undefined));
+		return CCrmEnumeration::PrepareListItems($descriptions, [self::Undefined]);
 	}
 
 	public static function PrepareFilterItems()
 	{
-		$desctiptions = self::GetAllDescriptions();
+		$descriptions = self::GetAllDescriptions();
 
-		return CCrmEnumeration::PrepareFilterItems($desctiptions, array(self::Undefined));
+		return CCrmEnumeration::PrepareFilterItems($descriptions, [self::Undefined]);
 	}
 }
 
@@ -8047,7 +8047,9 @@ class CCrmActivityStatus
 	public static function PrepareListItems($typeID)
 	{
 		//$typeID = intval($typeID); //RESERVED
-		return CCrmEnumeration::PrepareListItems(self::GetAllDescriptions(), array(self::Undefined));
+		$descriptions = self::GetAllDescriptions();
+
+		return CCrmEnumeration::PrepareListItems($descriptions, [self::Undefined]);
 	}
 }
 
@@ -8217,7 +8219,9 @@ class CCrmActivityNotifyType
 
 	public static function PrepareListItems()
 	{
-		return CCrmEnumeration::PrepareListItems(self::GetAllDescriptions(), array(self::None));
+		$descriptions = self::GetAllDescriptions();
+
+		return CCrmEnumeration::PrepareListItems($descriptions, [self::None]);
 	}
 
 	public static function ResolveDescription($notifyTypeID)

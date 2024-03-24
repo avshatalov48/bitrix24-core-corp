@@ -32,6 +32,11 @@ class Favorite
 	 */
 	public function isInFavorite(int $taskId): bool
 	{
+		if ($taskId <= 0)
+		{
+			return false;
+		}
+
 		$inFavorite = FavoriteTable::check([
 			'TASK_ID' => $taskId,
 			'USER_ID' => $this->userId

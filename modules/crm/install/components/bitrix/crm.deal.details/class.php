@@ -514,6 +514,7 @@ class CCrmDealDetailsComponent
 			{
 				// hide conversion to smart document from interface
 				$config->deleteItemByEntityTypeId(CCrmOwnerType::SmartDocument);
+				$config->deleteItemByEntityTypeId(CCrmOwnerType::SmartB2eDocument);
 			}
 
 			$this->arResult['CONVERSION_CONFIG'] = $config;

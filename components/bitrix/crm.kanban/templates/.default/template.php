@@ -95,13 +95,12 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 
 $entityTypeId = (int) $arParams['ENTITY_TYPE_INT'];
 
-if (CounterSettings::getInstance()->isEnabled())
+$isActivityLimitIsExceeded = (bool) ($data['activityLimitIsExceeded'] ?? false);
+
+$showActivity = 'false';
+if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 {
 	$showActivity = isset($arParams['SHOW_ACTIVITY']) && $arParams['SHOW_ACTIVITY'] === 'Y' ? 'true' : 'false';
-}
-else
-{
-	$showActivity = 'false';
 }
 ?>
 
@@ -212,6 +211,8 @@ else
 							entityTypeInt: "<?= $entityTypeId ?>",
 							typeInfo: <?= \CUtil::PhpToJSObject($arParams['ENTITY_TYPE_INFO'])?>,
 							viewMode: "<?= \CUtil::JSEscape($arParams['VIEW_MODE'])?>",
+							useItemPlanner: <?= ($arResult['USE_ITEM_PLANNER'] ? 'true' : 'false') ?>,
+							skipColumnCountCheck: <?= ($arResult['SKIP_COLUMN_COUNT_CHECK'] ? 'true' : 'false') ?>,
 							isDynamicEntity: <?= ($arParams['IS_DYNAMIC_ENTITY'] ? 'true' : 'false') ?>,
 							entityPath: "<?= \CUtil::JSEscape($arParams['ENTITY_PATH'])?>",
 							editorConfigId: "<?= \CUtil::JSEscape($arParams['EDITOR_CONFIG_ID'])?>",
@@ -278,6 +279,7 @@ else
 								addItemNotPermittedByTariff: <?= !($arParams['EXTRA']['ADD_ITEM_PERMITTED_BY_TARIFF'] ?? true) ? 'true' : 'false' ?>,
 							},
 							showErrorCounterByActivityResponsible: <?= $arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] ? 'true' : 'false' ?>,
+							isActivityLimitIsExceeded: <?= $isActivityLimitIsExceeded ? 'true' : 'false' ?>,
 						}
 				}
 			);

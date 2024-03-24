@@ -20,10 +20,11 @@ class Address extends HashDataProvider
 	public function getFields()
 	{
 		$fields = [];
-		foreach($this->getAddressFields() as $placeholder)
+		foreach ($this->getAddressFields() as $placeholder)
 		{
 			$fields[$placeholder] = ['TITLE' => EntityAddress::getLabel($placeholder, $this->getTypeId())];
 		}
+
 		$fields['TYPE'] = [
 			'TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_ADDRESS_TYPE_TITLE'),
 			'VALUE' => function() {
@@ -56,12 +57,7 @@ class Address extends HashDataProvider
 	 */
 	protected function getTypeId()
 	{
-		if(isset($this->options['TYPE_ID']))
-		{
-			return $this->options['TYPE_ID'];
-		}
-
-		return null;
+		return $this->options['TYPE_ID'] ?? null;
 	}
 
 	/**
@@ -87,6 +83,6 @@ class Address extends HashDataProvider
 	 */
 	protected function getCountryId()
 	{
-		return $this->options['COUNTRY_ID'];
+		return $this->options['COUNTRY_ID'] ?? null;
 	}
 }

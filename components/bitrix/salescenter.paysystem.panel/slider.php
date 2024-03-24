@@ -40,6 +40,7 @@ $APPLICATION->IncludeComponent(
 				'paypal' => '#243B80',
 				'liqpay' => '#7AB72B',
 			],
+			'HIDE_CASH' => $request->get('hideCash'),
 		],
 		'USE_UI_TOOLBAR' => 'Y',
 		'USE_UI_TOOLBAR_MARGIN' => false,

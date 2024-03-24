@@ -127,7 +127,28 @@ class DealStageHistory
 					'JOIN' => 'INNER JOIN b_biconnector_dictionary_data DR ON DR.DICTIONARY_ID = ' . \Bitrix\BIConnector\Dictionary::USER_DEPARTMENT . ' AND DR.VALUE_ID = DSH.RESPONSIBLE_ID',
 					'LEFT_JOIN' => 'LEFT JOIN b_biconnector_dictionary_data DR ON DR.DICTIONARY_ID = ' . \Bitrix\BIConnector\Dictionary::USER_DEPARTMENT . ' AND DR.VALUE_ID = DSH.RESPONSIBLE_ID',
 				],
-				//TODO:CATEGORY_ID INT (18) UNSIGNED NULL,
+				//CATEGORY_ID INT (18) UNSIGNED NULL,
+				'CATEGORY_ID' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'DSH.CATEGORY_ID',
+					'FIELD_TYPE' => 'int',
+				],
+				'CATEGORY_NAME' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'if(DSH.CATEGORY_ID is null, null, concat_ws(\' \', ifnull(DC.NAME, \'' . $helper->forSql(static::getDefaultCategoryName($languageId)) . '\')))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'DC',
+					'JOIN' => 'INNER JOIN b_crm_deal_category DC ON DC.ID = DSH.CATEGORY_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_deal_category DC ON DC.ID = DSH.CATEGORY_ID',
+				],
+				'CATEGORY' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'if(DSH.CATEGORY_ID is null, null, concat_ws(\' \', concat(\'[\', DSH.CATEGORY_ID, \']\'), ifnull(DC.NAME, \'' . $helper->forSql(static::getDefaultCategoryName($languageId)) . '\')))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'DC',
+					'JOIN' => 'INNER JOIN b_crm_deal_category DC ON DC.ID = DSH.CATEGORY_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_deal_category DC ON DC.ID = DSH.CATEGORY_ID',
+				],
 				//STAGE_SEMANTIC_ID VARCHAR(3) NULL,
 				'STAGE_SEMANTIC_ID' => [
 					'IS_METRIC' => 'N', // 'Y'
@@ -167,7 +188,7 @@ class DealStageHistory
 
 		if (\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
 		{
-			$result['crm_deal']['DICTIONARY'] = [
+			$result['crm_deal_stage_history']['DICTIONARY'] = [
 				\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT,
 			];
 		}
@@ -189,5 +210,23 @@ class DealStageHistory
 			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['CRM_BIC_DSH_FIELD_' . $fieldCode . '_FULL'] ?? '';
 		}
 		unset($fieldInfo);
+	}
+
+	/**
+	 * Returns default deal category label.
+	 *
+	 * @param string $languageId Interface language identifier.
+	 *
+	 * @return string
+	 */
+	protected static function getDefaultCategoryName($languageId)
+	{
+		$name = \Bitrix\Main\Config\Option::get('crm', 'default_deal_category_name', '', '');
+		if ($name === '')
+		{
+			$messages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/lib/category/dealcategory.php', $languageId);
+			$name = $messages['CRM_DEAL_CATEGORY_DEFAULT'];
+		}
+		return $name;
 	}
 }

@@ -215,7 +215,7 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 				var spotlight = new BX.SpotLight({
 					id: 'tasks_simple_counters',
 					targetElement: targetElement,
-					content: '<?= \CUtil::jsEscape(GetMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS'))?>',
+					content: '<?= \CUtil::jsEscape(GetMessage('TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_MSGVER_1'))?>',
 					targetVertex: 'middle-left',
 					left: 24,
 					autoSave: true,

@@ -58,7 +58,7 @@ if (empty($arResult['PAGE']))
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED')?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED' . $arResult['LOC_REGION_POSTFIX'])?>
 					</div>
 					<div class="imconnector-field-box-content">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CHANGE_ANY_TIME')?>
@@ -103,7 +103,7 @@ if (empty($arResult['PAGE']))
 						?>
 						<div class="imconnector-field-box-content">
 							<div class="imconnector-field-box-content-text-light">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_SUBTITLE') ?>
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_SUBTITLE' . $arResult['LOC_REGION_POSTFIX']) ?>
 							</div>
 							<ul class="imconnector-field-box-content-text-items">
 								<li class="imconnector-field-box-content-text-item">
@@ -169,7 +169,7 @@ else
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_TITLE')?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_TITLE' . $arResult['LOC_REGION_POSTFIX'])?>
 					</div>
 					<div class="imconnector-field-box-content">
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_STEP_NEW', [
@@ -183,10 +183,10 @@ else
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED')?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED' . $arResult['LOC_REGION_POSTFIX'])?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_FINAL_FORM_DESCRIPTION')?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_FINAL_FORM_DESCRIPTION' . $arResult['LOC_REGION_POSTFIX'])?>
 					</div>
 					<?php
 				}
@@ -218,7 +218,7 @@ else
 					>
 					<div class="imconnector-step-text">
 						<label for="imconnector-whatsappbyedna-sender-id">
-							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_SENDER_ID')?>
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_SENDER_ID' . $arResult['LOC_REGION_POSTFIX'])?>
 						</label>
 					</div>
 					<input

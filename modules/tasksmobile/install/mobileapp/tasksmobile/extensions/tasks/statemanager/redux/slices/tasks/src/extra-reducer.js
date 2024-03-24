@@ -5,7 +5,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 	const { TaskFilter } = require('tasks/filter/task');
 	const { tasksAdapter } = require('tasks/statemanager/redux/slices/tasks/meta');
 	const { TaskModel } = require('tasks/statemanager/redux/slices/tasks/model/task');
-	const { TaskStatus } = require('tasks/statemanager/redux/slices/tasks/model/task/status');
+	const { TaskStatus } = require('tasks/enum');
 	const { selectIsExpired } = require('tasks/statemanager/redux/slices/tasks/selector');
 	const { isEqual } = require('utils/object');
 

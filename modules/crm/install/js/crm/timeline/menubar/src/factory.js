@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import Context from './context';
 import Item from './item';
 import Call from './items/call';
@@ -7,7 +8,8 @@ import Email from './items/email';
 import GoToChat from './items/gotochat/gotochat';
 import Market from './items/market';
 import Meeting from './items/meeting';
-import RestPlacement from './items/restplacement';
+import RestPlacementWithLayout from './items/restplacement/withlayout';
+import RestPlacementWithSlider from './items/restplacement/withslider';
 import Sharing from './items/sharing';
 import Sms from './items/sms';
 import Task from './items/task';
@@ -72,7 +74,14 @@ export default class Factory
 
 		if (!item && id.startsWith('activity_rest_'))
 		{
-			item = new RestPlacement();
+			if (Type.isPlainObject(settings) && Type.isBoolean(settings.useBuiltInInterface) && settings.useBuiltInInterface)
+			{
+				item = new RestPlacementWithLayout();
+			}
+			else
+			{
+				item = new RestPlacementWithSlider();
+			}
 		}
 
 		if (item)

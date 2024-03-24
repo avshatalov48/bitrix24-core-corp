@@ -1,6 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
 /** @var array $arParams */
 /** @var array $arResult */
@@ -177,7 +178,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 	{
 		$menuItems[] = array(
 			"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
-			"URL" => "/marketplace/category/tasks/",
+			"URL" => \Bitrix\Tasks\Integration\Market\Router::getCategoryPath('tasks'),
 			"ID" => "view_apps",
 		);
 	}
@@ -388,7 +389,7 @@ if ($arParams['SHOW_FILTER_BAR'] === 'Y')
 		<div class="task-top-panel-righttop" id="task-new-item">
 			<form id="task-new-item-form" action="">
 			<span class="task-top-panel-create-container">
-				<input type="text" autocomplete="off" placeholder="<?=GetMessage("TASKS_RESPONSIBLE")?>"
+				<input type="text" autocomplete="off" placeholder="<?= Loc::getMessage('TASKS_ASSIGNEE') ?>"
 					tabindex="3" id="task-new-item-responsible" name="task-new-item-responsible"
 					value="<?
 					echo tasksFormatName(

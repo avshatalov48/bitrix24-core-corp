@@ -21,6 +21,7 @@ use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\TimelineType;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -482,7 +483,16 @@ final class Task extends Base
 			$handler = TaskHandler::getHandler($executorId);
 			try
 			{
-				$handler->update($taskId, $updateData);
+				$task = $handler->update($taskId, $updateData);
+
+				if (
+					$task !== false
+					&& $task->isCompleted()
+					&& ($updateData['STATUS'] ?? null) === TaskActivityStatus::TASKS_STATE_COMPLETED
+				)
+				{
+					self::onTaskComplete((int)($activity['OWNER_TYPE_ID'] ?? null));
+				}
 			}
 			catch (\Exception $exception)
 			{
@@ -491,6 +501,25 @@ final class Task extends Base
 		}
 
 		return $result;
+	}
+
+	private static function onTaskComplete(int $ownerTypeId): void
+	{
+		$ownerName = strtolower(\CCrmOwnerType::ResolveName($ownerTypeId));
+
+		if (empty($ownerName))
+		{
+			return;
+		}
+
+		$analyticsEvent = new AnalyticsEvent('task_complete', 'tasks', 'task_operations');
+		$analyticsEvent
+			->setType('task')
+			->setElement('complete_button')
+			->setSection('crm')
+			->setSubSection($ownerName)
+			->send()
+		;
 	}
 
 	// public function updateEndTime(array $timelineParams): void

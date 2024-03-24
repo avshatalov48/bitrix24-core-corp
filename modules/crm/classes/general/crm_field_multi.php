@@ -598,7 +598,47 @@ class CCrmFieldMulti
 		$values = $storage->get($owner);
 		Multifield\Assembler::updateCollectionByArray($values, $arFieldData);
 
-		$storage->save($owner, $values);
+		$result = $storage->save($owner, $values);
+		if ($result->isSuccess())
+		{
+			// just in case, since this is a critical place.
+			// usually 'values' should be actual even after save, since they are synced with changes
+			$valuesAfterSave = $storage->get($owner);
+
+			$dbResult = self::GetListEx(
+				[],
+				[
+					'=ENTITY_ID' => $entityId,
+					'=ELEMENT_ID' => $elementId,
+				],
+				false,
+				false,
+				['ID']
+			);
+
+			$duplicateIds = [];
+			while ($row = $dbResult->Fetch())
+			{
+				$id = (int)($row['ID'] ?? 0);
+				if ($id <= 0)
+				{
+					continue;
+				}
+
+				// if Collection doesn't have this field, it means it's a duplicate of another field that's bound to this item
+				if (!$valuesAfterSave->getById($id))
+				{
+					$duplicateIds[$id] = $id;
+				}
+			}
+
+			if (!empty($duplicateIds))
+			{
+				// since Collection don't allow duplicates addition, save will not cover duplicates manipulation
+				// and since we want to remove duplicates anyway, lets delete them
+				$this->saveBulk($entityId, $elementId, [], [], $duplicateIds);
+			}
+		}
 
 		return true;
 	}

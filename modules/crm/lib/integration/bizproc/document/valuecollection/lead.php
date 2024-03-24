@@ -37,7 +37,7 @@ class Lead extends Base
 			],
 			false,
 			false,
-			['*', 'UF_*']
+			['*']
 		);
 
 

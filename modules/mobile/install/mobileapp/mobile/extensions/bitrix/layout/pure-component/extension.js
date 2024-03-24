@@ -6,7 +6,7 @@ jn.define('layout/pure-component', (require, exports, module) => {
 	const { log } = require('layout/pure-component/logger');
 
 	const { PURE_COMPONENT_DEBUG = false } = this;
-	const isBeta = Application.getApiVersion() >= 44 && Application.isBeta();
+	const isBeta = Application.isBeta();
 
 	/**
 	 * @class PureComponent

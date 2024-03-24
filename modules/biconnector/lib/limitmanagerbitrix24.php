@@ -1,5 +1,10 @@
 <?php
+
 namespace Bitrix\BIConnector;
+
+use Bitrix\Bitrix24;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\DateTime;
 
 class LimitManagerBitrix24 extends LimitManager
 {
@@ -7,46 +12,37 @@ class LimitManagerBitrix24 extends LimitManager
 	 * Called on data export end.
 	 *
 	 * @param int $rowsCount How many data rows was exported.
-	 * @param string $supersetKey Check for alternate limits.
-	 *
-	 * @return bool
+	 * @return bool Limit was exceeded or not.
 	 */
-	public function fixLimit($rowsCount, $supersetKey = '')
+	public function fixLimit(int $rowsCount): bool
 	{
-		$isSuperset = false;
-		if ($supersetKey)
-		{
-			$configParams = \Bitrix\Main\Config\Configuration::getValue('biconnector');
-			$isSuperset = isset($configParams['superset_key']) && $configParams['superset_key'] === $supersetKey;
-		}
-
-		$limit = $this->getLimit($isSuperset);
+		$limit = $this->getLimit();
 		if ($limit > 0 && $rowsCount > $limit)
 		{
-			\Bitrix\Main\Config\Option::set('biconnector', 'last_limit_ts', time());
-			$limitTimestamp = (int)\Bitrix\Main\Config\Option::get('biconnector', 'over_limit_ts');
-			if ($limitTimestamp <= 0)
+			$this->setLastOverLimitDate();
+			$firstOverLimitDate = $this->getFirstOverLimitDate();
+			if (!$firstOverLimitDate)
 			{
-				\Bitrix\Main\Config\Option::set('biconnector', 'over_limit_ts', time());
+				$this->setFirstOverLimitDate();
 			}
-			elseif (static::GRACE_PERIOD_DAYS * 86400 < (time() - $limitTimestamp))
+			elseif (new DateTime() > $firstOverLimitDate->add("{$this->getGracePeriodDays()} days"))
 			{
-				$disabled = \Bitrix\Main\Config\Option::get('biconnector', 'disable_data_connection');
-				if ($disabled !== 'Y')
+				if (!$this->isDataConnectionDisabled())
 				{
-					\Bitrix\Main\Config\Option::set('biconnector', 'disable_data_connection', 'Y');
+					$this->setDisabledDataConnection();
 				}
 			}
+
 			return true;
 		}
 		else
 		{
-			$lastLimitTimestamp = (int)\Bitrix\Main\Config\Option::get('biconnector', 'last_limit_ts');
-			if (static::AUTO_RELEASE_DAYS * 86400 < (time() - $lastLimitTimestamp))
+			$lastOverLimitDate = $this->getLastOverLimitDate();
+			if (new DateTime() > $lastOverLimitDate?->add($this->getAutoReleaseDays() * 24 . ' hours'))
 			{
-				\Bitrix\Main\Config\Option::delete('biconnector', [ 'name' => 'last_limit_ts' ]);
-				\Bitrix\Main\Config\Option::delete('biconnector', [ 'name' => 'over_limit_ts' ]);
+				$this->clearOverLimitTimestamps();
 			}
+
 			return false;
 		}
 	}
@@ -55,27 +51,24 @@ class LimitManagerBitrix24 extends LimitManager
 	 * Returns maximum allowed records count.
 	 * 0 - unlimited.
 	 *
-	 * @param bool $isSuperset Check for alternate limits.
-	 *
 	 * @return int
 	 */
-	public function getLimit($isSuperset = false)
+	public function getLimit(): int
 	{
-		$variableName = $isSuperset ? 'biconnector_limit_superset' : 'biconnector_limit';
-		$limit = (int)\Bitrix\Bitrix24\Feature::getVariable($variableName);
+		$variableName = $this->isSuperset() ? 'biconnector_limit_superset' : 'biconnector_limit';
 
-		return $limit;
+		return (int)Bitrix24\Feature::getVariable($variableName);
 	}
 
 	/**
 	 * Returns a date when data export will be disabled.
 	 *
-	 * @return \Bitrix\Main\Type\Date
+	 * @return DateTime
 	 */
-	public function getLimitDate()
+	public function getLimitDate(): DateTime
 	{
-		$limitTimestamp = (int)\Bitrix\Main\Config\Option::get('biconnector', 'over_limit_ts');
-		$date = \Bitrix\Main\Type\Date::createFromTimestamp($limitTimestamp + static::GRACE_PERIOD_DAYS * 86400);
+		$date = $this->getFirstOverLimitDate();
+		$date?->add("{$this->getGracePeriodDays()} day");
 
 		return $date;
 	}
@@ -85,11 +78,9 @@ class LimitManagerBitrix24 extends LimitManager
 	 *
 	 * @return bool
 	 */
-	public function checkLimitWarning()
+	public function checkLimitWarning(): bool
 	{
-		$overLimitTime = \Bitrix\Main\Config\Option::get('biconnector', 'over_limit_ts');
-
-		return ($overLimitTime <= 0);
+		return $this->getFirstOverLimitDate() === null;
 	}
 
 	/**
@@ -97,24 +88,25 @@ class LimitManagerBitrix24 extends LimitManager
 	 *
 	 * @return bool
 	 */
-	public function checkLimit()
+	public function checkLimit(): bool
 	{
-		$disabled = \Bitrix\Main\Config\Option::get('biconnector', 'disable_data_connection');
-
-		return ($disabled !== 'Y');
+		return !$this->isDataConnectionDisabled();
 	}
 
 	/**
 	 * Event OnAfterSetOption_~controller_group_name handler.
 	 *
 	 * @param \Bitrix\Main\Event $event Event parameters.
-	 *
 	 * @return void
 	 */
-	public function licenseChange(\Bitrix\Main\Event $event)
+	public function licenseChange(\Bitrix\Main\Event $event): void
 	{
-		\Bitrix\Main\Config\Option::delete('biconnector', [ 'name' => 'last_limit_ts' ]);
-		\Bitrix\Main\Config\Option::delete('biconnector', [ 'name' => 'over_limit_ts' ]);
-		\Bitrix\Main\Config\Option::delete('biconnector', [ 'name' => 'disable_data_connection' ]);
+		Option::delete('biconnector', ['name' => self::FIRST_OVER_LIMIT_OPTION_NAME]);
+		Option::delete('biconnector', ['name' => self::LAST_OVER_LIMIT_OPTION_NAME]);
+		Option::delete('biconnector', ['name' => self::LOCK_OPTION_NAME]);
+		Option::delete('biconnector', ['name' => self::FIRST_OVER_LIMIT_OPTION_NAME_SUPERSET]);
+		Option::delete('biconnector', ['name' => self::LAST_OVER_LIMIT_OPTION_NAME_SUPERSET]);
+		Option::delete('biconnector', ['name' => self::LOCK_OPTION_NAME_SUPERSET]);
+		Option::delete('biconnector', ['name' => self::LOCK_DATE_OPTION_NAME_SUPERSET]);
 	}
 }

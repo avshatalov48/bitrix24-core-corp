@@ -3,7 +3,6 @@
 
 	const AppTheme = require('apptheme');
 	const colorUtils = require('utils/color');
-	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
@@ -35,7 +34,7 @@
 
 		isEnabled()
 		{
-			return (apiVersion >= 34);
+			return true;
 		}
 
 		showForList()
@@ -51,10 +50,7 @@
 
 		hideForList()
 		{
-			if (this.isEnabled())
-			{
-				dialogs.hideSpinnerIndicator();
-			}
+			dialogs.hideSpinnerIndicator();
 		}
 
 		showForTitle()

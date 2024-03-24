@@ -517,7 +517,7 @@ final class TypeFile
 				o.FILE_ID = f.ID 
 				AND o.ID = o.REAL_OBJECT_ID
 				AND o.TYPE = ". \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE. " 
-				AND ifnull(o.TYPE_FILE , 0) IN(0, ". self::KNOWN. ", ". self::UNKNOWN. ")
+				AND COALESCE(o.TYPE_FILE , 0) IN(0, ". self::KNOWN. ", ". self::UNKNOWN. ")
 				AND {$startFileId} <= o.ID 
 				AND o.ID < {$startFileId} + {$maxNumberRowsUpdate}
 		";

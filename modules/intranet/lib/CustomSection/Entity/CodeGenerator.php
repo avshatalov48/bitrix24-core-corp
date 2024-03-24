@@ -8,6 +8,8 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Data\Result;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Security\Random;
+use Bitrix\Main\SystemException;
+use Closure;
 
 class CodeGenerator
 {
@@ -18,6 +20,11 @@ class CodeGenerator
 	protected $dataManager;
 	/** @var StringField */
 	protected $codeField;
+
+	protected ?Closure $uniqueCheckCallback = null;
+	protected bool $useOnlyUniqueCheckCallback = false;
+	protected array $uniqueCheckFilter = [];
+	protected bool $useOnlyUniqueCheckFilter = false;
 
 	/**
 	 * CodeGenerator constructor.
@@ -122,6 +129,7 @@ class CodeGenerator
 	 * @param string $code
 	 *
 	 * @return bool
+	 * @throws SystemException
 	 */
 	public function isCodeValid(string $code): bool
 	{
@@ -130,15 +138,94 @@ class CodeGenerator
 
 	protected function isCodeUnique(string $code): bool
 	{
-		$count = $this->dataManager::getCount([
-			'=' . $this->codeField->getName() => $code,
-		]);
+		$filter = $this->getPreparedFilter($code);
+		$count = $this->dataManager::getCount($filter);
 
-		return ($count <= 0);
+		$uniqueCheckCallbackResult = true;
+		if (!is_null($this->uniqueCheckCallback))
+		{
+			$uniqueCheckCallbackResult = ($this->uniqueCheckCallback)($code);
+			if ($this->useOnlyUniqueCheckCallback)
+			{
+				return $uniqueCheckCallbackResult;
+			}
+		}
+
+		return ($count <= 0 && $uniqueCheckCallbackResult);
+	}
+
+	protected function getPreparedFilter($code): array
+	{
+		$filter = ['=' . $this->codeField->getName() => $code];
+
+		if ($this->useOnlyUniqueCheckFilter)
+		{
+			return $this->uniqueCheckFilter;
+		}
+
+		return array_merge($filter, $this->uniqueCheckFilter);
 	}
 
 	protected function isCodeShouldBeUnique(): bool
 	{
 		return $this->codeField->isUnique();
+	}
+
+	/**
+	 * Set additional callback to check uniqueness code
+	 *
+	 * @param Closure|null $uniqueCheckCallback
+	 * @return $this
+	 */
+	public function setUniqueCheckCallback(?Closure $uniqueCheckCallback): self
+	{
+		$this->uniqueCheckCallback = $uniqueCheckCallback;
+
+		return $this;
+	}
+
+	public function getUniqueCheckCallback(): ?Closure
+	{
+		return $this->uniqueCheckCallback;
+	}
+
+	public function setUseOnlyUniqueCheckCallback(bool $isUse): self
+	{
+		$this->useOnlyUniqueCheckCallback = $isUse;
+
+		return $this;
+	}
+
+	/**
+	 * Set an additional filter that will be taken into account
+	 * when fetching data using $this->dataManager to check the uniqueness of the code
+	 *
+	 * @param array $uniqueCheckFilter
+	 * @return $this
+	 */
+	public function setUniqueCheckFilter(array $uniqueCheckFilter): self
+	{
+		$this->uniqueCheckFilter = $uniqueCheckFilter;
+
+		return $this;
+	}
+
+	public function getUniqueCheckFilter(): array
+	{
+		return $this->uniqueCheckFilter;
+	}
+
+	/**
+	 * If true, then when checking the uniqueness of the code, only the filter set in $uniqueCheckFilter will be taken into account.
+	 * Default $uniqueCheckFilter = []
+	 *
+	 * @param bool $isUse
+	 * @return $this
+	 */
+	public function setUseOnlyUniqueCheckFilter(bool $isUse): self
+	{
+		$this->useOnlyUniqueCheckFilter = $isUse;
+
+		return $this;
 	}
 }

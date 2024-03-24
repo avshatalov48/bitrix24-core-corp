@@ -436,7 +436,7 @@ class TimelineBindingTable  extends Entity\DataManager
 		if(!empty($typeIDs))
 		{
 			$typeSql = implode(',', $typeIDs);
-			$connection->queryExecute("
+			\Bitrix\Crm\DbHelper::queryByDbType("
 				DELETE b1 FROM b_crm_timeline_bind b1 
 				INNER JOIN b_crm_timeline_bind b2 ON
 					b2.OWNER_ID = b1.OWNER_ID AND 
@@ -447,18 +447,36 @@ class TimelineBindingTable  extends Entity\DataManager
 					t.TYPE_ID IN ({$typeSql})	
 				WHERE 
 					b1.ENTITY_TYPE_ID = {$targEntityTypeID} AND 
-					b1.ENTITY_ID = {$targEntityID}"
+					b1.ENTITY_ID = {$targEntityID}",
+				"DELETE FROM b_crm_timeline_bind b1
+ 				USING b_crm_timeline_bind b2, b_crm_timeline t 
+				WHERE
+					b2.OWNER_ID = b1.OWNER_ID AND
+					b2.ENTITY_TYPE_ID = {$srcEntityTypeID} AND 
+					b2.ENTITY_ID = {$srcEntityID} AND
+					t.ID = b2.OWNER_ID AND
+					t.TYPE_ID IN ({$typeSql}) AND
+					b1.ENTITY_TYPE_ID = {$targEntityTypeID} AND 
+					b1.ENTITY_ID = {$targEntityID}",
 			);
 		}
 		else
 		{
-			$connection->queryExecute("
+			\Bitrix\Crm\DbHelper::queryByDbType("
 				DELETE b1 FROM b_crm_timeline_bind b1 
 				INNER JOIN b_crm_timeline_bind b2 ON
 					b2.OWNER_ID = b1.OWNER_ID AND 
 					b2.ENTITY_TYPE_ID = {$srcEntityTypeID} AND 
 					b2.ENTITY_ID = {$srcEntityID} 
 				WHERE 
+					b1.ENTITY_TYPE_ID = {$targEntityTypeID} AND 
+					b1.ENTITY_ID = {$targEntityID}",
+				"DELETE FROM b_crm_timeline_bind b1 
+				USING b_crm_timeline_bind b2
+				WHERE 
+					b2.OWNER_ID = b1.OWNER_ID AND 
+					b2.ENTITY_TYPE_ID = {$srcEntityTypeID} AND 
+					b2.ENTITY_ID = {$srcEntityID} AND 
 					b1.ENTITY_TYPE_ID = {$targEntityTypeID} AND 
 					b1.ENTITY_ID = {$targEntityID}"
 			);

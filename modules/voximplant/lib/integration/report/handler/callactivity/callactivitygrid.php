@@ -2,11 +2,8 @@
 
 namespace Bitrix\Voximplant\Integration\Report\Handler\CallActivity;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
-use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Voximplant\Integration\Report\CallType;
@@ -22,7 +19,7 @@ class CallActivityGrid extends CallActivity implements IReportMultipleData
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}
@@ -76,9 +73,6 @@ class CallActivityGrid extends CallActivity implements IReportMultipleData
 
 	/**
 	 * @return array|mixed
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
 	 */
 	public function prepare()
 	{
@@ -109,8 +103,6 @@ class CallActivityGrid extends CallActivity implements IReportMultipleData
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws ArgumentException
-	 * @throws SystemException
 	 */
 	public function getQueryForReport($startDate, $finishDate, $filterParameters): Query
 	{

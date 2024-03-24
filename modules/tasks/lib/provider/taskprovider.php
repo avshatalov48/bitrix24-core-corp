@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Provider;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Access\Model\UserModel;
@@ -193,7 +194,6 @@ class TaskProvider
 			->setOrder($arOrder)
 			->setGroupBy($arGroup)
 			->setWhere($arFilter)
-			->setDistinct((bool)($arParams['DISTINCT'] ?? null))
 		;
 
 		if ($this->arParams['MAKE_ACCESS_FILTER'] ?? null)
@@ -1016,6 +1016,7 @@ class TaskProvider
 
 	private function makeArFields(bool $isCount = false): self
 	{
+		$helper = Application::getConnection()->getSqlHelper();
 		$this->arFields = [
 			"ID" => "T.ID",
 			"TITLE" => "T.TITLE",
@@ -1028,8 +1029,7 @@ class TaskProvider
 			"STATUS" => "
 				CASE
 					WHEN
-						T.DEADLINE < DATE_ADD(". $this->db->CurrentTimeFunction() .", INTERVAL ".
-				Counter\Deadline::getDeadlineTimeLimit()." SECOND)
+						T.DEADLINE < {$helper->addSecondsToDateTime($this->db->CurrentTimeFunction(), Counter\Deadline::getDeadlineTimeLimit())}
 						AND T.DEADLINE >= ". $this->db->CurrentTimeFunction() ."
 						AND T.STATUS != '4'
 						AND T.STATUS != '5'

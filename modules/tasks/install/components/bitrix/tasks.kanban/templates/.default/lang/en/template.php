@@ -16,6 +16,7 @@ $MESS["KANBAN_POPUP_P_TITLE"] = "Planner";
 $MESS["KANBAN_QUICK_TASK"] = "Quick task";
 $MESS["KANBAN_QUICK_TASK_ITEM_INFO"] = "Press <span>Enter</span> to create";
 $MESS["KANBAN_SORT_ACTUAL"] = "By activity state";
+$MESS["KANBAN_SORT_ACTUAL_MSGVER_1"] = "By last active date";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Recommended";
 $MESS["KANBAN_SORT_ASC"] = "Bottom";
 $MESS["KANBAN_SORT_DESC"] = "Top";

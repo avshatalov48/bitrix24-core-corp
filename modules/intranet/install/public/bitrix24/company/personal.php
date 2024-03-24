@@ -41,11 +41,11 @@ if ($GLOBALS["USER"]->CanDoOperation("edit_all_users"))
 GetGlobalID();
 $componentDateTimeFormat = CModule::IncludeModule("intranet") ? CIntranetUtils::getCurrentDateTimeFormat() : "";
 
-$APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
+$params = [
 	"ITEM_DETAIL_COUNT"	=>	"32",
 	"ITEM_MAIN_COUNT"	=>	"6",
 	"DATE_TIME_FORMAT" => $componentDateTimeFormat,
-	"DATE_TIME_FORMAT_WITHOUT_YEAR" => (CModule::IncludeModule("intranet") ? CIntranetUtils::getCurrentDateTimeFormat(array('woYear' => true)) : ""),
+	"DATE_TIME_FORMAT_WITHOUT_YEAR" => (CModule::IncludeModule("intranet") ? CIntranetUtils::getCurrentDateTimeFormat(['woYear' => true]) : ""),
 	"NAME_TEMPLATE" => "",
 	"PATH_TO_GROUP" => "/workgroups/group/#group_id#/",
 	"PATH_TO_GROUP_SUBSCRIBE" => "/workgroups/group/#group_id#/subscribe/",
@@ -79,64 +79,64 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 	"SHOW_RATING" => "",
 	"RATING_TYPE" => "",
 	"GROUP_THUMBNAIL_SIZE" => 100,
-	"USER_FIELDS_MAIN" => array(
+	"USER_FIELDS_MAIN" => [
 		0 => "PERSONAL_BIRTHDAY",
 		1 => "WORK_POSITION",
 		2 => "WORK_COMPANY",
 		3 => "SECOND_NAME",
-	),
-	"USER_PROPERTY_MAIN" => array(
+	],
+	"USER_PROPERTY_MAIN" => [
 		0 => "UF_DEPARTMENT",
-	),
-	"USER_FIELDS_CONTACT" => array(
+	],
+	"USER_FIELDS_CONTACT" => [
 		0 => "EMAIL",
 		1 => "PERSONAL_WWW",
 		2 => "PERSONAL_MOBILE",
 		3 => "WORK_PHONE",
-	),
-	"USER_PROPERTY_CONTACT" => array(
+	],
+	"USER_PROPERTY_CONTACT" => [
 		0 => "UF_PHONE_INNER",
 		1 => "UF_SKYPE",
 		2 => "UF_TWITTER",
 		3 => "UF_FACEBOOK",
 		4 => "UF_LINKEDIN",
 		5 => "UF_XING",
-	),
-	"USER_FIELDS_PERSONAL" => array(
+	],
+	"USER_FIELDS_PERSONAL" => [
 		0 => "TIME_ZONE",
 		1 => "PERSONAL_CITY",
-	),
-	"USER_PROPERTY_PERSONAL" => array(
+	],
+	"USER_PROPERTY_PERSONAL" => [
 		0 => "UF_SKILLS",
 		1 => "UF_INTERESTS",
 		2 => "UF_WEB_SITES",
-	),
+	],
 	"AJAX_LONG_TIMEOUT" => "60",
 	"EDITABLE_FIELDS" => $arEditableFields,
 	"SHOW_YEAR" => "M",
-	"USER_FIELDS_SEARCH_SIMPLE" => array(
+	"USER_FIELDS_SEARCH_SIMPLE" => [
 		0 => "PERSONAL_GENDER",
 		1 => "PERSONAL_CITY",
-	),
-	"USER_PROPERTIES_SEARCH_SIMPLE" => array(
-	),
-	"USER_FIELDS_SEARCH_ADV" => array(
+	],
+	"USER_PROPERTIES_SEARCH_SIMPLE" => [
+	],
+	"USER_FIELDS_SEARCH_ADV" => [
 		0 => "PERSONAL_GENDER",
 		1 => "PERSONAL_CITY",
-	),
-	"USER_PROPERTIES_SEARCH_ADV" => array(
-	),
-	"SONET_USER_FIELDS_LIST" => array(
+	],
+	"USER_PROPERTIES_SEARCH_ADV" => [
+	],
+	"SONET_USER_FIELDS_LIST" => [
 		0 => "PERSONAL_BIRTHDAY",
 		1 => "PERSONAL_GENDER",
 		2 => "PERSONAL_CITY",
-	),
-	"SONET_USER_PROPERTY_LIST" => array(
-	),
-	"SONET_USER_FIELDS_SEARCHABLE" => array(
-	),
-	"SONET_USER_PROPERTY_SEARCHABLE" => array(
-	),
+	],
+	"SONET_USER_PROPERTY_LIST" => [
+	],
+	"SONET_USER_FIELDS_SEARCHABLE" => [
+	],
+	"SONET_USER_PROPERTY_SEARCHABLE" => [
+	],
 	"BLOG_GROUP_ID" => Ids::getBlogId(),
 	"BLOG_COMMENT_AJAX_POST" => "Y",
 	"BLOG_ALLOW_POST_CODE" => "N",
@@ -205,7 +205,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 	"PHOTO_JPEG_QUALITY" => "90",
 	"BLOG_COMMENT_ALLOW_VIDEO" => "Y",
 	"BLOG_COMMENT_ALLOW_IMAGE_UPLOAD" => "Y",
-	"SEF_URL_TEMPLATES"	=>	array(
+	"SEF_URL_TEMPLATES"	=>	[
 		"index"	=>	"index.php",
 		"user"	=>	"user/#user_id#/",
 		"user_friends"	=>	"user/#user_id#/friends/",
@@ -243,11 +243,13 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 		"user_tasks_view" => "user/#user_id#/tasks/view/#action#/#view_id#/",
 		"user_security" => "user/#user_id#/security/",
 		"user_passwords" => "user/#user_id#/passwords/",
-	),
+	],
 	"LOG_THUMBNAIL_SIZE" => 100,
 	"LOG_COMMENT_THUMBNAIL_SIZE" => 100,
 	"LOG_NEW_TEMPLATE" => "Y"
-	)
-);?>
+];
+
+$APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", $params);
+?>
 
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

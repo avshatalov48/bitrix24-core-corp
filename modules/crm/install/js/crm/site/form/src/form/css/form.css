@@ -98,8 +98,26 @@
 	border-bottom: 1px solid var(--b24-text-color);
 }
 
+.b24-form .b24-form-sign-abuse {
+	display: inline-flex;
+	align-items: center;
+}
+
+.b24-form-sign-abuse-popup {
+	padding: 12px;
+	text-align: start;
+}
+
+.b24-form .b24-window-scrollable:has(.b24-form-sign-abuse-popup) {
+	padding-bottom: 0;
+}
+
 .b24-form .b24-form-sign-abuse-link:hover {
 	opacity: 0.7;
+}
+
+.b24-form .b24-form-sign-abuse-link:focus {
+	color: var(--b24-text-color) !important;
 }
 
 .b24-form .b24-form-sign-abuse-help {

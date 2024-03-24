@@ -158,7 +158,9 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 					},
 					BBCodeText({
 						style: styles.addPhone,
-						value: `[COLOR=${AppTheme.colors.accentMainWarning}][URL="#"]${Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_ADD_PHONE_TO_CLIENT')}[/URL][/COLOR]`,
+						value: `[COLOR=${AppTheme.colors.accentMainWarning}][URL="#"]${Loc.getMessage(
+							'M_CRM_TIMELINE_SCHEDULER_SMS_ADD_PHONE_TO_CLIENT',
+						)}[/URL][/COLOR]`,
 						onLinkClick: this.props.onAddPhone,
 						linksUnderline: false,
 					}),
@@ -244,4 +246,3 @@ jn.define('crm/timeline/scheduler/providers/sms/clients-selector', (require, exp
 
 	module.exports = { ClientsSelector };
 });
-

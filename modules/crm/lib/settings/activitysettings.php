@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Settings;
 use Bitrix\Main;
+
 class ActivitySettings
 {
 	const VIEW_LIST = 1;
@@ -135,6 +136,7 @@ class ActivitySettings
 		return true;
 		//return $this->enableRecycleBin->get();
 	}
+
 	/**
 	 * Enable deletion to recycle bin.
 	 * @param bool $enabled Enabled Flag.

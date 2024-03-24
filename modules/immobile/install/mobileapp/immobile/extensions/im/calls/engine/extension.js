@@ -190,6 +190,8 @@
 			const callId = callFields.ID;
 			const timestamp = pushParams.PARAMS.ts;
 			const timeAgo = Date.now() / 1000 - timestamp;
+			const provider = callFields.PROVIDER;
+
 			console.log('timeAgo:', timeAgo);
 			this._onUnknownCallPing(callId, timeAgo, pingTTLPush).then((result) => {
 				if (result && this.calls[callId])
@@ -198,6 +200,7 @@
 						callId,
 						video: isVideo,
 						autoAnswer: true,
+						provider,
 					}], 'calls');
 				}
 			}).catch((err) => console.error(err));
@@ -245,23 +248,29 @@
 			const callId = nativeCall.params.call.ID;
 			const timestamp = nativeCall.params.ts;
 			const timeAgo = Date.now() / 1000 - timestamp;
+			const provider = nativeCall.params.call.PROVIDER
+
 			if (timeAgo > 15)
 			{
 				console.error('Call originated too long time ago');
 			}
 
+			/*
 			if (this.calls[callId])
+
 			{
 				console.error(`Call ${callId} is already known`);
 
 				return;
 			}
+			 */
 
-			this._instantiateCall(nativeCall.params.call, nativeCall.params.connectionData, nativeCall.params.users, nativeCall.params.logToken);
+			this._instantiateCall(nativeCall.params.call, nativeCall.params.connectionData, nativeCall.params.users, nativeCall.params.logToken, nativeCall.params.userData);
 			BX.postComponentEvent('CallEvents::incomingCall', [{
 				callId,
 				video: isVideo,
 				isNative: true,
+				provider,
 			}], 'calls');
 		}
 
@@ -353,6 +362,7 @@
 						}
 					}
 
+					CallUtil.setUserData(createCallResponse.userData);
 					const callFactory = this._getCallFactory(callFields.PROVIDER);
 					const call = callFactory.createCall({
 						id: parseInt(callFields.ID, 10),
@@ -360,6 +370,7 @@
 						instanceId: this.getUuidv4(),
 						direction: BX.Call.Direction.Outgoing,
 						users: createCallResponse.users,
+						userData: CallUtil.getCurrentUserName(),
 						videoEnabled: (config.videoEnabled === true),
 						enableMicAutoParameters: (config.enableMicAutoParameters !== false),
 						associatedEntity: callFields.ASSOCIATED_ENTITY,
@@ -430,7 +441,7 @@
 						});
 					}
 					resolve({
-						call: this._instantiateCall(data.call, data.connectionData, data.users, data.logToken),
+						call: this._instantiateCall(data.call, data.connectionData, data.users, data.logToken, data.userData),
 						isNew: false,
 					});
 				}).catch((error) => {
@@ -610,6 +621,7 @@
 			}
 			else
 			{
+				CallUtil.setUserData(params.userData);
 				const callFactory = this._getCallFactory(callFields.PROVIDER);
 				call = callFactory.createCall({
 					id: callId,
@@ -619,6 +631,7 @@
 					callFromMobile: params.isLegacyMobile === true,
 					direction: BX.Call.Direction.Incoming,
 					users: params.users,
+					userData: CallUtil.getCurrentUserName(),
 					initiatorId: params.senderId,
 					associatedEntity: callFields.ASSOCIATED_ENTITY,
 					type: callFields.TYPE,
@@ -690,7 +703,7 @@
 			});
 		}
 
-		_instantiateCall(callFields, connectionData, users, logToken)
+		_instantiateCall(callFields, connectionData, users, logToken, userData)
 		{
 			if (this.calls[callFields.ID])
 			{
@@ -699,6 +712,7 @@
 				return this.calls[callFields.ID];
 			}
 
+			CallUtil.setUserData(userData);
 			const callFactory = this._getCallFactory(callFields.PROVIDER);
 			const call = callFactory.createCall({
 				id: parseInt(callFields.ID, 10),
@@ -708,6 +722,7 @@
 				parentId: callFields.PARENT_ID,
 				direction: callFields.INITIATOR_ID == env.userId ? BX.Call.Direction.Outgoing : BX.Call.Direction.Incoming,
 				users,
+				userData: CallUtil.getCurrentUserName(),
 				associatedEntity: callFields.ASSOCIATED_ENTITY,
 				type: callFields.TYPE,
 				startDate: callFields.START_DATE,
@@ -782,6 +797,7 @@
 		_onCallLeave(e)
 		{
 			console.warn('CallEngine.CallEvents::leave', e.callId);
+
 			const call = this.calls[e.callId];
 			if (call && !(call instanceof CallStub) && callEngine._isCallSupported(call))
 			{
@@ -986,6 +1002,11 @@
 			{
 				this.userData[userId] = userData[userId];
 			}
+		}
+
+		getCurrentUserName()
+		{
+			return this.userData[env.userId]?.name || env?.userId || '';
 		}
 
 		getDateForLog()

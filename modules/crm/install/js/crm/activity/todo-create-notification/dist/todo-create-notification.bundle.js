@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,main_core_events,main_popup,crm_activity_todoEditor,ui_buttons,crm_activity_todoNotificationSkip,crm_activity_todoNotificationSkipMenu) {
@@ -21,8 +22,10 @@ this.BX.Crm = this.BX.Crm || {};
 	var _toDoEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toDoEditor");
 	var _skipProvider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("skipProvider");
 	var _skipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("skipMenu");
+	var _sliderIsMinimizing = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sliderIsMinimizing");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _getSliderInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSliderInstance");
+	var _isSliderMinimizeAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSliderMinimizeAvailable");
 	var _onCloseSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCloseSlider");
 	var _onEntityUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEntityUpdate");
 	var _onEntityDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEntityDelete");
@@ -109,6 +112,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _onCloseSlider, {
 	      value: _onCloseSlider2
 	    });
+	    Object.defineProperty(this, _isSliderMinimizeAvailable, {
+	      value: _isSliderMinimizeAvailable2
+	    });
 	    Object.defineProperty(this, _getSliderInstance, {
 	      value: _getSliderInstance2
 	    });
@@ -163,6 +169,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _sliderIsMinimizing, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = params.entityTypeId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = params.entityId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId] = params.entityStageId;
@@ -201,7 +211,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  return null;
 	}
+	function _isSliderMinimizeAvailable2() {
+	  return Object.hasOwn(BX.SidePanel.Slider.prototype, 'minimize') && Object.hasOwn(BX.SidePanel.Slider.prototype, 'isMinimizing');
+	}
 	function _onCloseSlider2(event) {
+	  var _sliderEvent$getSlide;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _allowCloseSlider)[_allowCloseSlider] || babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped]) {
 	    return;
 	  }
@@ -221,6 +235,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return; // element has final stage
 	  }
 
+	  babelHelpers.classPrivateFieldLooseBase(this, _sliderIsMinimizing)[_sliderIsMinimizing] = babelHelpers.classPrivateFieldLooseBase(this, _isSliderMinimizeAvailable)[_isSliderMinimizeAvailable]() && ((_sliderEvent$getSlide = sliderEvent.getSlider()) == null ? void 0 : _sliderEvent$getSlide.isMinimizing());
 	  sliderEvent.denyAction();
 	  setTimeout(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _showTodoCreationNotification)[_showTodoCreationNotification]();
@@ -330,9 +345,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  (_babelHelpers$classPr26 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr26.close();
 	}
 	function _closeSlider2() {
-	  var _babelHelpers$classPr27;
+	  var _babelHelpers$classPr28;
 	  babelHelpers.classPrivateFieldLooseBase(this, _allowCloseSlider)[_allowCloseSlider] = true;
-	  (_babelHelpers$classPr27 = babelHelpers.classPrivateFieldLooseBase(this, _getSliderInstance)[_getSliderInstance]()) == null ? void 0 : _babelHelpers$classPr27.close();
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isSliderMinimizeAvailable)[_isSliderMinimizeAvailable]() && babelHelpers.classPrivateFieldLooseBase(this, _sliderIsMinimizing)[_sliderIsMinimizing]) {
+	    var _babelHelpers$classPr27;
+	    (_babelHelpers$classPr27 = babelHelpers.classPrivateFieldLooseBase(this, _getSliderInstance)[_getSliderInstance]()) == null ? void 0 : _babelHelpers$classPr27.minimize();
+	    return;
+	  }
+	  (_babelHelpers$classPr28 = babelHelpers.classPrivateFieldLooseBase(this, _getSliderInstance)[_getSliderInstance]()) == null ? void 0 : _babelHelpers$classPr28.close();
 	}
 	function _showTodoCreationNotification2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {

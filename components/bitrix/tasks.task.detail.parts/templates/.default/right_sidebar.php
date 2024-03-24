@@ -1,4 +1,7 @@
-<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<?php
+use Bitrix\Main\Localization\Loc;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 ?>
@@ -38,15 +41,15 @@ if ($arResult['DEFER_LOAD'] === 'Y')
 								?><img src="<?=(isset($arResult["TASK"]["CREATED_BY_PHOTO"]) && $arResult["TASK"]["CREATED_BY_PHOTO"] <> '' ? $arResult["TASK"]["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
 							?></a>
 							<div class="task-detail-info-user-info">
-								<div class="task-detail-info-user-name"><a href="<?php 
+								<div class="task-detail-info-user-name"><a href="<?php
 								echo CComponentEngine::MakePathFromTemplate(
-									$arParams["PATH_TO_USER_PROFILE"], 
-									array("user_id" => $arResult["TASK"]["CREATED_BY"]))?>" target="_top"><?php 
+									$arParams["PATH_TO_USER_PROFILE"],
+									array("user_id" => $arResult["TASK"]["CREATED_BY"]))?>" target="_top"><?php
 								echo tasksFormatName(
-									$arResult["TASK"]["CREATED_BY_NAME"], 
-									$arResult["TASK"]["CREATED_BY_LAST_NAME"], 
-									$arResult["TASK"]["CREATED_BY_LOGIN"], 
-									$arResult["TASK"]["CREATED_BY_SECOND_NAME"], 
+									$arResult["TASK"]["CREATED_BY_NAME"],
+									$arResult["TASK"]["CREATED_BY_LAST_NAME"],
+									$arResult["TASK"]["CREATED_BY_LOGIN"],
+									$arResult["TASK"]["CREATED_BY_SECOND_NAME"],
 									$arParams["NAME_TEMPLATE"],
 									false);
 									?></a></div>
@@ -63,7 +66,7 @@ if ($arResult['DEFER_LOAD'] === 'Y')
 				<div class="task-detail-info-users-inner">
 					<div class="task-detail-info-users-title"
 						><span><?php
-							echo GetMessage("TASKS_RESPONSIBLE");
+							echo Loc::getMessage('TASKS_ASSIGNEE');
 						?></span></div>
 					<div class="task-detail-info-users-list">
 						<div class="task-detail-info-user">
@@ -71,20 +74,20 @@ if ($arResult['DEFER_LOAD'] === 'Y')
 								?><img src="<?=(isset($arResult["TASK"]["RESPONSIBLE_PHOTO"]) && $arResult["TASK"]["RESPONSIBLE_PHOTO"] <> '' ? $arResult["TASK"]["RESPONSIBLE_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
 							?></a>
 							<div class="task-detail-info-user-info">
-								<div class="task-detail-info-user-name"><a href="<?php 
+								<div class="task-detail-info-user-name"><a href="<?php
 									echo CComponentEngine::MakePathFromTemplate(
-										$arParams["PATH_TO_USER_PROFILE"], 
+										$arParams["PATH_TO_USER_PROFILE"],
 										array("user_id" => $arResult["TASK"]["RESPONSIBLE_ID"]))
-										?>" target="_top"><?php 
+										?>" target="_top"><?php
 									echo tasksFormatName(
-										$arResult["TASK"]["RESPONSIBLE_NAME"], 
-										$arResult["TASK"]["RESPONSIBLE_LAST_NAME"], 
-										$arResult["TASK"]["RESPONSIBLE_LOGIN"], 
-										$arResult["TASK"]["RESPONSIBLE_SECOND_NAME"], 
+										$arResult["TASK"]["RESPONSIBLE_NAME"],
+										$arResult["TASK"]["RESPONSIBLE_LAST_NAME"],
+										$arResult["TASK"]["RESPONSIBLE_LOGIN"],
+										$arResult["TASK"]["RESPONSIBLE_SECOND_NAME"],
 										$arParams["NAME_TEMPLATE"],
 										false);
 									?></a></div>
-								<?php if ($arResult["TASK"]["RESPONSIBLE_WORK_POSITION"]):?><div class="task-detail-info-user-position"><?php 
+								<?php if ($arResult["TASK"]["RESPONSIBLE_WORK_POSITION"]):?><div class="task-detail-info-user-position"><?php
 								echo $arResult["TASK"]["RESPONSIBLE_WORK_POSITION"]?><?php else:?><div class="task-detail-info-user-position-empty"><?php endif?></div>
 							</div>
 						</div>
@@ -153,8 +156,8 @@ else
 					)
 				);
 				BX.bind(
-					BX("task-detail-info-auditors-add"), 
-					"click", 
+					BX("task-detail-info-auditors-add"),
+					"click",
 					tasksDetailPartsNS.getMembersAddChangeFunction(
 						'AUDITORS',
 						BX("task-detail-info-auditors-add"),
@@ -168,8 +171,8 @@ else
 			if (BX("task-detail-info-assistants-add"))
 			{
 				BX.bind(
-					BX("task-detail-info-assistants-change"), 
-					"click", 
+					BX("task-detail-info-assistants-change"),
+					"click",
 					tasksDetailPartsNS.getMembersAddChangeFunction(
 						'ACCOMPLICES',
 						BX("task-detail-info-assistants-change"),
@@ -179,8 +182,8 @@ else
 					)
 				);
 				BX.bind(
-					BX("task-detail-info-assistants-add"), 
-					"click", 
+					BX("task-detail-info-assistants-add"),
+					"click",
 					tasksDetailPartsNS.getMembersAddChangeFunction(
 						'ACCOMPLICES',
 						BX("task-detail-info-assistants-add"),
@@ -214,7 +217,7 @@ else
 							$bSkipJsMenu = true;
 
 						tasksRenderJSON($arResult["TASK"], $arResult["TASK"]["CHILDREN_COUNT"],
-							$arPaths, true, true, true, $arParams["NAME_TEMPLATE"], 
+							$arPaths, true, true, true, $arParams["NAME_TEMPLATE"],
 							$arAdditionalFields = array(), $bSkipJsMenu
 						);
 					?>);
@@ -242,15 +245,15 @@ else
 										?><img src="<?=(isset($arResult["TASK"]["CREATED_BY_PHOTO"]) && $arResult["TASK"]["CREATED_BY_PHOTO"] <> '' ? $arResult["TASK"]["CREATED_BY_PHOTO"] : "/bitrix/images/1.gif")?>" width="30" height="30"><?
 									?></a>
 									<div class="task-detail-info-user-info">
-										<div class="task-detail-info-user-name"><a href="<?php 
+										<div class="task-detail-info-user-name"><a href="<?php
 										echo CComponentEngine::MakePathFromTemplate(
-											$arParams["PATH_TO_USER_PROFILE"], 
-											array("user_id" => $arResult["TASK"]["CREATED_BY"]))?>" target="_top"><?php 
+											$arParams["PATH_TO_USER_PROFILE"],
+											array("user_id" => $arResult["TASK"]["CREATED_BY"]))?>" target="_top"><?php
 										echo tasksFormatName(
-											$arResult["TASK"]["CREATED_BY_NAME"], 
-											$arResult["TASK"]["CREATED_BY_LAST_NAME"], 
-											$arResult["TASK"]["CREATED_BY_LOGIN"], 
-											$arResult["TASK"]["CREATED_BY_SECOND_NAME"], 
+											$arResult["TASK"]["CREATED_BY_NAME"],
+											$arResult["TASK"]["CREATED_BY_LAST_NAME"],
+											$arResult["TASK"]["CREATED_BY_LOGIN"],
+											$arResult["TASK"]["CREATED_BY_SECOND_NAME"],
 											$arParams["NAME_TEMPLATE"],
 											false);
 											?></a></div>
@@ -284,12 +287,12 @@ else
 							}
 							?>
 							><span><?php
-								echo GetMessage("TASKS_RESPONSIBLE");
+								echo Loc::getMessage('TASKS_ASSIGNEE');
 							?></span><?php
 							if ($arResult['ALLOWED_ACTIONS']['ACTION_EDIT'])
 							{
-								?><a class="webform-field-action-link" 
-									id="task-detail-responsible-change" 
+								?><a class="webform-field-action-link"
+									id="task-detail-responsible-change"
 									href="javascript:void(0);"><?php echo GetMessage("TASKS_SIDEBAR_CHANGE");
 								?></a><?php
 							}
@@ -312,16 +315,16 @@ else
 								<div class="task-detail-info-user-info">
 									<div class="task-detail-info-user-name">
 										<?if(intval($arResult["TASK"]["RESPONSIBLE_ID"])):?>
-											<a href="<?php 
+											<a href="<?php
 												echo CComponentEngine::MakePathFromTemplate(
-													$arParams["PATH_TO_USER_PROFILE"], 
+													$arParams["PATH_TO_USER_PROFILE"],
 													array("user_id" => $arResult["TASK"]["RESPONSIBLE_ID"]))
-													?>" target="_top"><?php 
+													?>" target="_top"><?php
 												echo tasksFormatName(
-													$arResult["TASK"]["RESPONSIBLE_NAME"], 
-													$arResult["TASK"]["RESPONSIBLE_LAST_NAME"], 
-													$arResult["TASK"]["RESPONSIBLE_LOGIN"], 
-													$arResult["TASK"]["RESPONSIBLE_SECOND_NAME"], 
+													$arResult["TASK"]["RESPONSIBLE_NAME"],
+													$arResult["TASK"]["RESPONSIBLE_LAST_NAME"],
+													$arResult["TASK"]["RESPONSIBLE_LOGIN"],
+													$arResult["TASK"]["RESPONSIBLE_SECOND_NAME"],
 													$arParams["NAME_TEMPLATE"],
 													false);
 												?></a>
@@ -331,7 +334,7 @@ else
 									</div>
 
 									<?if(intval($arResult["TASK"]["RESPONSIBLE_ID"])):?>
-										<?php if ($arResult["TASK"]["RESPONSIBLE_WORK_POSITION"]):?><div class="task-detail-info-user-position"><?php 
+										<?php if ($arResult["TASK"]["RESPONSIBLE_WORK_POSITION"]):?><div class="task-detail-info-user-position"><?php
 										echo $arResult["TASK"]["RESPONSIBLE_WORK_POSITION"]?><?php else:?><div class="task-detail-info-user-position-empty"><?php endif?></div>
 									<?endif?>
 								</div>
@@ -420,14 +423,14 @@ else
 												|| $arResult['ALLOWED_ACTIONS']['ACTION_CHANGE_DEADLINE']
 											)
 											{
-												?>webform-field-action-link" 
+												?>webform-field-action-link"
 												onclick="
 												BX.calendar({
-													node: this, 
-													field: 'task-deadline-hidden', 
-													form: '', 
-													bTime: true, 
-													//currentTime: Math.round((new Date()) / 1000) - (new Date()).getTimezoneOffset()*60, 
+													node: this,
+													field: 'task-deadline-hidden',
+													form: '',
+													bTime: true,
+													//currentTime: Math.round((new Date()) / 1000) - (new Date()).getTimezoneOffset()*60,
 													value: BX.CJSTask.ui.getInputDateTimeValue(BX('task-deadline-hidden')),
 													bHideTimebar: false,
 													callback_after: function(value) {
@@ -440,7 +443,7 @@ else
 											{
 												echo '"';
 											};
-											?> 
+											?>
 											id="task-detail-deadline"
 											style="display:inline; line-height:19px;"><?php
 
@@ -462,12 +465,12 @@ else
 											|| $arResult['ALLOWED_ACTIONS']['ACTION_CHANGE_DEADLINE']
 										)
 										{
-											?><input type="text" style="display:none;" id="task-deadline-hidden" 
+											?><input type="text" style="display:none;" id="task-deadline-hidden"
 												value="<?php echo $arResult["TASK"]["DEADLINE"]?>"
-												data-default-hour="<?=intval($arParams['COMPANY_WORKTIME']['END']['H'])?>" 
+												data-default-hour="<?=intval($arParams['COMPANY_WORKTIME']['END']['H'])?>"
 												data-default-minute="<?=intval($arParams['COMPANY_WORKTIME']['END']['M'])?>"
 
-											/><span class="task-deadline-delete"<?php if (!$arResult["TASK"]["DEADLINE"]):?>style="display: none;"<?php endif?> 
+											/><span class="task-deadline-delete"<?php if (!$arResult["TASK"]["DEADLINE"]):?>style="display: none;"<?php endif?>
 												onclick="tasksDetailPartsNS.ClearDeadline(<?php echo $arResult["TASK"]["ID"]?>, this)"><?php
 										}
 									?></td>
@@ -485,7 +488,7 @@ else
 									<tr>
 										<td class="task-detail-info-layout-name" style=""><?php echo GetMessage('TASKS_SIDEBAR_TIME_ESTIMATE'); ?>:</td>
 										<td class="task-detail-info-layout-value">
-											<span 
+											<span
 												id="task-detail-estimate-time-<?php echo (int) $arResult['TASK']['ID']; ?>"
 												class=""><?php
 
@@ -506,7 +509,7 @@ else
 									<tr>
 										<td class="task-detail-info-layout-name" style=""><?php echo GetMessage('TASKS_SIDEBAR_TIME_SPENT'); ?>:</td>
 										<td class="task-detail-info-layout-value">
-											<span class="" 
+											<span class=""
 												id="task-detail-spent-time-<?php echo (int) $arResult['TASK']['ID']; ?>"
 												style="display:inline; line-height:19px;"><?php
 
@@ -650,7 +653,7 @@ else
 												onclick="SetReport(<?php echo $arResult["TASK"]["ID"]?>, true)"
 												href="javascript: void(0);"><?php
 													echo GetMessage("TASKS_SIDEBAR_IN_REPORT_YES");
-											?></a><a class="webform-field-action-link<?php if($arResult["TASK"]["ADD_IN_REPORT"] != "Y"):?> selected<?php endif?> task-detail-report-no" 
+											?></a><a class="webform-field-action-link<?php if($arResult["TASK"]["ADD_IN_REPORT"] != "Y"):?> selected<?php endif?> task-detail-report-no"
 												id="task-detail-report-no"
 												onclick="SetReport(<?php echo $arResult["TASK"]["ID"]?>, false)"
 												href="javascript: void(0);"><?php
@@ -726,7 +729,7 @@ else
 							><span><?php echo GetMessage("TASKS_SIDEBAR_ACCOMPLICES"); ?></span><?php
 							if ($arResult['ALLOWED_ACTIONS']['ACTION_EDIT'])
 							{
-								?><a class="webform-field-action-link" 
+								?><a class="webform-field-action-link"
 									id="task-detail-info-assistants-change" href=""><?php
 										echo GetMessage("TASKS_EDIT_TASK");
 								?></a><?php
@@ -739,15 +742,15 @@ else
 									while($arAccomplice = $rsAccomplices->GetNext()):
 							?>
 							<div class="task-detail-info-user">
-								<div class="task-detail-info-user-name"><a href="<?php 
+								<div class="task-detail-info-user-name"><a href="<?php
 									echo CComponentEngine::MakePathFromTemplate(
-										$arParams["PATH_TO_USER_PROFILE"], 
-										array("user_id" => $arAccomplice["ID"]))?>"><?php 
+										$arParams["PATH_TO_USER_PROFILE"],
+										array("user_id" => $arAccomplice["ID"]))?>"><?php
 									echo tasksFormatName(
-										$arAccomplice["NAME"], 
-										$arAccomplice["LAST_NAME"], 
-										$arAccomplice["LOGIN"], 
-										$arAccomplice["SECOND_NAME"], 
+										$arAccomplice["NAME"],
+										$arAccomplice["LAST_NAME"],
+										$arAccomplice["LOGIN"],
+										$arAccomplice["SECOND_NAME"],
 										$arParams["NAME_TEMPLATE"],
 										false
 										)?></a></div>
@@ -773,7 +776,7 @@ else
 							?></span><?php
 							if ($arResult['ALLOWED_ACTIONS']['ACTION_EDIT'])
 							{
-								?><a class="webform-field-action-link" 
+								?><a class="webform-field-action-link"
 									id="task-detail-info-auditors-change" href=""><?php
 									echo GetMessage("TASKS_EDIT_TASK");
 								?></a><?php
@@ -790,15 +793,15 @@ else
 									?>
 									>
 									<?if(is_array($arParams['DISPLAY_DATA']) && in_array('STOP_WATCH', $arParams['DISPLAY_DATA'])):?>
-										<span  
-											class="webform-field-action-link" 
+										<span
+											class="webform-field-action-link"
 											href="javascript:void(0);"
 											onclick="
 												if (confirm(BX.message('TASKS_SIDEBAR_STOP_WATCH_CONFIRM')))
 													tasksDetailPartsNS.stopWatch(<?php echo (int) $arResult['TASK']['ID']; ?>);
 											"
 											><?php
-												echo GetMessage("TASKS_SIDEBAR_STOP_WATCH");
+												echo GetMessage("TASKS_SIDEBAR_STOP_WATCH_MSGVER_1");
 										?></span>
 									<?endif?>
 								</div><?php
@@ -814,15 +817,15 @@ else
 									$htmlId = ' id="task-detail-info-user-auditor-' . (int) $arAuditor['ID'] . '-container" ';
 									?>
 									<div class="task-detail-info-user" <?php echo $htmlId; ?>>
-										<div class="task-detail-info-user-name"><a href="<?php 
+										<div class="task-detail-info-user-name"><a href="<?php
 											echo CComponentEngine::MakePathFromTemplate(
-												$arParams["PATH_TO_USER_PROFILE"], 
-												array("user_id" => $arAuditor["ID"]))?>"><?php 
+												$arParams["PATH_TO_USER_PROFILE"],
+												array("user_id" => $arAuditor["ID"]))?>"><?php
 											echo tasksFormatName(
-												$arAuditor["NAME"], 
-												$arAuditor["LAST_NAME"], 
-												$arAuditor["LOGIN"], 
-												$arAuditor["SECOND_NAME"], 
+												$arAuditor["NAME"],
+												$arAuditor["LAST_NAME"],
+												$arAuditor["LOGIN"],
+												$arAuditor["SECOND_NAME"],
 												$arParams["NAME_TEMPLATE"],
 												false
 												)?></a></div>
@@ -860,7 +863,7 @@ else
 					else
 					{
 						?>
-						<div id="task-detail-info-start-watch-block" 
+						<div id="task-detail-info-start-watch-block"
 							class="task-detail-info-users-link"
 							<?php
 							if (in_array($arResult['LOGGED_IN_USER'], $arResult["TASK"]["AUDITORS"]))
@@ -868,9 +871,9 @@ else
 								?> style="display:none;"<?php
 							}
 							?>
-							><a id="task-detail-info-start-watch" 
+							><a id="task-detail-info-start-watch"
 								class="webform-field-action-link"
-								onclick="tasksDetailPartsNS.startWatch(<?php echo (int) $arResult['TASK']['ID']; ?>);" 
+								onclick="tasksDetailPartsNS.startWatch(<?php echo (int) $arResult['TASK']['ID']; ?>);"
 								href="javascript:void(0);"><?php
 									echo GetMessage('TASKS_SIDEBAR_START_WATCH');
 							?></a

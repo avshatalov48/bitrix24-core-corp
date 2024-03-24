@@ -3,6 +3,7 @@ import { EventEmitter } from 'main.core.events';
 import { MenuManager } from "main.popup";
 import WithEditor from "./witheditor";
 import { Guide } from "ui.tour";
+import { TourManager, TourInterface } from 'crm.tour-manager';
 import Context from "../context";
 import { DialogNew } from 'calendar.sharing.interface';
 import { ConditionChecker, Types as SenderTypes, OpenLineCodes } from 'crm.messagesender';
@@ -730,16 +731,37 @@ export default class Sharing extends WithEditor
 
 	payAttentionToNewFeature()
 	{
+		TourManager.getInstance().registerWithLaunch(this.#getTour());
+	}
+
+	#getTour(): TourInterface
+	{
 		const guide = this.getGuide();
 		const pulsar = this.getPulsar();
 
-		setTimeout(() => {
-			guide.showNextStep();
-			pulsar.show();
-		}, 1000);
+		return new class SharingTour implements TourInterface
+		{
+			canShow(): boolean
+			{
+				return true;
+			}
+
+			show(): void
+			{
+				setTimeout(() => {
+					guide.showNextStep();
+					pulsar.show();
+				}, 1000);
+			}
+
+			getGuide(): Guide
+			{
+				return guide;
+			}
+		}();
 	}
 
-	getGuide()
+	getGuide(): Guide
 	{
 		const guide = new Guide({
 			simpleMode: true,
@@ -766,7 +788,7 @@ export default class Sharing extends WithEditor
 		return guide;
 	}
 
-	getPulsar()
+	getPulsar(): BX.SpotLight
 	{
 		const pulsar = new BX.SpotLight({
 			targetElement: this.DOM.menuBarItem,

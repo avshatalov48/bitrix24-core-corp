@@ -293,7 +293,7 @@ class ObjectTable extends DataManager
 			'HAS_SEARCH_INDEX' => array(
 				'data_type' => 'boolean',
 				'expression'  => [
-					'IF(%%TABLE_ALIAS.SEARCH_INDEX IS NOT NULL, TRUE, FALSE)'
+					'CASE WHEN %%TABLE_ALIAS.SEARCH_INDEX IS NOT NULL THEN TRUE ELSE FALSE END'
 				],
 			),
 			'TRACKED_OBJECT' => array(

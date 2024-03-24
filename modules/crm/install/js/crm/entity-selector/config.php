@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Main\Loader;
 
 if (!Loader::includeModule('crm'))
@@ -36,6 +37,12 @@ return [
 							'avatar' => CountryProvider::getIconByCode(CountryProvider::GLOBAL_COUNTRY_CODE),
 						],
 					],
+				],
+			],
+			[
+				'id' => PlaceholderProvider::ENTITY_ID,
+				'options' => [
+					'dynamicLoad' => true,
 				],
 			],
 		],

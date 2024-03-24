@@ -20,25 +20,24 @@ final class SupersetController
 		$this->dashboardRepository = new DashboardRepository($this->integrator);
 	}
 
-
 	public function getDashboardRepository(): DashboardRepository
 	{
 		return $this->dashboardRepository;
 	}
 
-
-
 	/**
-	 * @return string status of superset startup
+	 * Calls on every BI-constructor page hit and call superset if it's need to up
+	 *
+	 * @return void
 	 */
-	public function startupSuperset(): string
+	public function initSuperset(): void
 	{
-		return SupersetInitializer::startupSuperset();
-	}
+		if (SupersetInitializer::isSupersetActive())
+		{
+			return;
+		}
 
-	public function createSuperset(): string
-	{
-		return SupersetInitializer::createSuperset();
+		SupersetInitializer::createSuperset();
 	}
 
 	public function isSupersetEnabled(): bool
@@ -55,5 +54,10 @@ final class SupersetController
 		}
 
 		return $response->getData();
+	}
+
+	public function isExternalServiceAvailable(): bool
+	{
+		return $this->integrator->ping();
 	}
 }

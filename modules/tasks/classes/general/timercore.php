@@ -6,6 +6,8 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Main\Application;
+
 /**
  * This class is for internal use only, it can be changed any way without
  * notifications. Use CTaskTimerManager instead.
@@ -50,10 +52,12 @@ final class CTaskTimerCore
 		if ($arData === false)		// there is no timer in DB?
 		{
 			// create it
-			$DB->query(
-				"INSERT IGNORE INTO b_tasks_timer (USER_ID, TASK_ID, TIMER_STARTED_AT, TIMER_ACCUMULATOR) 
-				VALUES ($userId, $taskId, $ts, 0)"
+			$sql = Application::getConnection()->getSqlHelper()->getInsertIgnore(
+				'b_tasks_timer',
+				' (USER_ID, TASK_ID, TIMER_STARTED_AT, TIMER_ACCUMULATOR)',
+				" VALUES ({$userId}, {$taskId}, {$ts}, 0)"
 			);
+			$DB->query($sql);
 
 			$arData = self::get($userId);
 		}

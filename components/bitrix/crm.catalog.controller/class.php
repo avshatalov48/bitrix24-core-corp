@@ -253,6 +253,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 		{
 			$this->urlBuilder->setSeparateIblockList();
 			$params = static::getViewModeParams();
+			$this->iblockListMixed = $this->urlBuilder->isIblockListMixed();
 		}
 		$this->urlBuilder->setUrlParams($params);
 

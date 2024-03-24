@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Internals\Project;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\ExpressionField;
@@ -137,6 +138,7 @@ class Provider
 	 */
 	public function getPrimaryProjectsQuery(array $select): Query
 	{
+		$helper = Application::getConnection()->getSqlHelper();
 		$query = WorkgroupTable::query();
 		$query
 			->setSelect($this->prepareQuerySelect($select))
@@ -159,7 +161,7 @@ class Provider
 			)
 			->registerRuntimeField(
 				null,
-				new ExpressionField('ACTIVITY_DATE', 'IFNULL(%s, %s)', ['PLA.ACTIVITY_DATE', 'DATE_UPDATE'])
+				new ExpressionField('ACTIVITY_DATE', $helper->getIsNullFunction('%s', '%s'), ['PLA.ACTIVITY_DATE', 'DATE_UPDATE'])
 			)
 			->registerRuntimeField(
 				new Reference(

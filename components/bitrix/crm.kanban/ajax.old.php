@@ -6,7 +6,7 @@
  * Please, use new ajax.php class for new features
  */
 
-use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Crm\Service\Container;
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -31,6 +31,8 @@ $version = $request->get('version');
 $force = $request->get('force');
 $onlyItems = $request->get('onlyItems');
 $viewMode = $request->get('viewMode');
+$useItemPlanner = $request->get('useItemPlanner');
+$skipColumnsCountCheck = $request->get('skipColumnCountCheck');
 $result = null;
 
 //get one or more items
@@ -52,6 +54,8 @@ if ($action == 'get' && (!empty($id) || $minId))
 			'EXTRA' => $extra,
 			'ONLY_ITEMS' => ($onlyItems ?? 'N'),
 			'VIEW_MODE' => $viewMode,
+			'USE_ITEM_PLANNER' => $useItemPlanner,
+			'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
 		]
 	);
 }
@@ -63,6 +67,8 @@ elseif ($action == 'get')
 		'ENTITY_TYPE' => $type,
 		'EXTRA' => $extra,
 		'VIEW_MODE' => $viewMode,
+		'USE_ITEM_PLANNER' => $useItemPlanner,
+		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
 	));
 }
 //get next page
@@ -76,6 +82,8 @@ elseif ($action == 'page' && !empty($column))
 		'EXTRA' => $extra,
 		'ONLY_ITEMS' => ($onlyItems ?? 'N'),
 		'VIEW_MODE' => $viewMode,
+		'USE_ITEM_PLANNER' => $useItemPlanner,
+		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
 	));
 }
 //change stage
@@ -86,6 +94,8 @@ elseif ($action == 'status' && !empty($id) && !empty($newState))
 		'ENTITY_TYPE' => $type,
 		'EXTRA' => $extra,
 		'VIEW_MODE' => $viewMode,
+		'USE_ITEM_PLANNER' => $useItemPlanner,
+		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
 	);
 	// in version 2 we don't need in items
 	if ($version == 2)
@@ -117,6 +127,8 @@ elseif ($version == 2)
 		'EMPTY_RESULT' => 'Y',
 		'EXTRA' => $extra,
 		'VIEW_MODE' => $viewMode,
+		'USE_ITEM_PLANNER' => $useItemPlanner,
+		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
 	));
 }
 else
@@ -130,6 +142,9 @@ if ($version == 2)
 	if (isset($result['ITEMS']['columns']))
 	{
 		$result['ITEMS']['dropzones'] = array();
+
+		$isCrmAdmin = Container::getInstance()->getUserPermissions()->canWriteConfig();
+
 		foreach ($result['ITEMS']['columns'] as $k => &$column)
 		{
 			if ($column['dropzone'] || $column['alwaysShowInDropzone'])
@@ -165,7 +180,7 @@ if ($version == 2)
 					'total' => (int) $column['count'],
 					'color' => $column['color'],
 					'name' => htmlspecialcharsback($column['name']),
-					'canSort' => !($column['type'] == 'WIN'),
+					'canSort' => ($isCrmAdmin && $column['type'] === 'PROGRESS'),
 					'canAddItem' => $column['canAddItem'],
 					'data' => array(
 						'sort' => $column['sort'],

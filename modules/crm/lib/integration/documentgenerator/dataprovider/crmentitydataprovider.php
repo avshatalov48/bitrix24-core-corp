@@ -713,21 +713,22 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	 */
 	public function getUserFieldValue($placeholder = null)
 	{
-		$value = null;
-		if(!$placeholder || !isset($this->fields[$placeholder]))
+		if (!$placeholder || !isset($this->fields[$placeholder]))
 		{
-			return $value;
+			return null;
 		}
+
 		$field = $this->userFieldDescriptions[$placeholder];
 
 		$value = $field['VALUE'];
-		if(!$value && $field['USER_TYPE_ID'] != 'boolean')
+		if (!$value && $field['USER_TYPE_ID'] !== 'boolean')
 		{
 			return $value;
 		}
-		if($field['USER_TYPE_ID'] == 'file')
+
+		if ($field['USER_TYPE_ID'] === 'file')
 		{
-			if(is_array($value))
+			if (is_array($value))
 			{
 				$value = \CFile::GetPath(reset($value));
 			}
@@ -736,16 +737,16 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				$value = \CFile::GetPath($value);
 			}
 		}
-		elseif($field['USER_TYPE_ID'] == 'enumeration')
+		elseif ($field['USER_TYPE_ID'] === 'enumeration')
 		{
-			if(!isset($field['DATA']))
+			if (!isset($field['DATA']))
 			{
 				$value = null;
 			}
-			elseif(is_array($value))
+			elseif (is_array($value))
 			{
 				$result = [];
-				foreach($value as $item)
+				foreach ($value as $item)
 				{
 					$result[] = $field['DATA'][$item];
 				}
@@ -756,10 +757,10 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				$value = $field['DATA'][$value];
 			}
 		}
-		elseif($field['USER_TYPE_ID'] == 'money')
+		elseif ($field['USER_TYPE_ID'] === 'money')
 		{
 			$result = null;
-			if(!is_array($value))
+			if (!is_array($value))
 			{
 				$parts = explode('|', $value);
 				$result = new Money($parts[0], ['CURRENCY_ID' => $parts[1]]);
@@ -775,9 +776,9 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			}
 			$value = $result;
 		}
-		elseif($field['USER_TYPE_ID'] == 'boolean')
+		elseif ($field['USER_TYPE_ID'] === 'boolean')
 		{
-			if($value)
+			if ($value)
 			{
 				$value = DataProviderManager::getInstance()->getLangPhraseValue($this, 'UF_TYPE_BOOLEAN_YES');
 			}
@@ -786,14 +787,14 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				$value = DataProviderManager::getInstance()->getLangPhraseValue($this, 'UF_TYPE_BOOLEAN_NO');
 			}
 		}
-		elseif($field['USER_TYPE_ID'] == 'address')
+		elseif ($field['USER_TYPE_ID'] === 'address')
 		{
 			$result = [];
-			if(is_array($value))
+			if (is_array($value))
 			{
-				foreach($value as $val)
+				foreach ($value as $val)
 				{
-					if(mb_strpos($val, '|') !== false)
+					if (mb_strpos($val, '|') !== false)
 					{
 						$array = explode('|', $val);
 						$val = $array[0];
@@ -803,19 +804,20 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			}
 			else
 			{
-				if(mb_strpos($value, '|') !== false)
+				if (mb_strpos($value, '|') !== false)
 				{
 					$array = explode('|', $value);
 					$value = $array[0];
 				}
 				$result = $value;
 			}
+
 			$value = $result;
 		}
-		elseif($field['USER_TYPE_ID'] == 'iblock_element')
+		elseif ($field['USER_TYPE_ID'] === 'iblock_element')
 		{
 			$value = null;
-			if(Loader::includeModule('iblock') && !empty($field['VALUE']))
+			if (Loader::includeModule('iblock') && !empty($field['VALUE']))
 			{
 				$value = [];
 				$elements = ElementTable::getList([
@@ -828,26 +830,29 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				}
 			}
 		}
-		elseif($field['USER_TYPE_ID'] == 'crm' && is_array($value))
+		elseif ($field['USER_TYPE_ID'] === 'crm' && is_array($value))
 		{
-			if($field['MULTIPLE'] === 'Y' && $this->fields[$placeholder]['PROVIDER'] && $this->fields[$placeholder]['PROVIDER'] === DataProvider\ArrayDataProvider::class)
+			if ($field['MULTIPLE'] === 'Y' && $this->fields[$placeholder]['PROVIDER'] && $this->fields[$placeholder]['PROVIDER'] === DataProvider\ArrayDataProvider::class)
 			{
 				$result = [];
-				foreach($value as $val)
+				foreach ($value as $val)
 				{
-					if(!is_numeric($val))
+					if (!is_numeric($val))
 					{
 						[, $val] = explode('_', $val);
 					}
-					$val = intval($val);
-					if($val > 0)
+
+					$val = (int)($val ?? 0);
+					if ($val > 0)
 					{
 						$provider = DataProviderManager::getInstance()->getDataProvider(
 							$this->fields[$placeholder]['OPTIONS']['ITEM_PROVIDER'],
 							$val,
 							$this->fields[$placeholder]['OPTIONS']['ITEM_OPTIONS'],
-							$this);
-						if($provider)
+							$this
+						);
+
+						if ($provider)
 						{
 							$result[] = $provider;
 						}
@@ -860,22 +865,22 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				$value = reset($value);
 			}
 		}
-		elseif($field['USER_TYPE_ID'] === 'employee' && is_array($value))
+		elseif ($field['USER_TYPE_ID'] === 'employee' && is_array($value))
 		{
-			if($field['MULTIPLE'] === 'Y' && $this->fields[$placeholder]['PROVIDER'] && $this->fields[$placeholder]['PROVIDER'] === DataProvider\ArrayDataProvider::class)
+			if ($field['MULTIPLE'] === 'Y' && $this->fields[$placeholder]['PROVIDER'] && $this->fields[$placeholder]['PROVIDER'] === DataProvider\ArrayDataProvider::class)
 			{
 				$result = [];
-				foreach($value as $val)
+				foreach ($value as $val)
 				{
-					$val = intval($val);
-					if($val > 0)
+					$val = (int)($val ?? 0);
+					if ($val > 0)
 					{
 						$provider = DataProviderManager::getInstance()->getDataProvider(
 							$this->fields[$placeholder]['OPTIONS']['ITEM_PROVIDER'],
 							$val,
 							$this->fields[$placeholder]['OPTIONS']['ITEM_OPTIONS'],
 							$this);
-						if($provider)
+						if ($provider)
 						{
 							$result[] = $provider;
 						}
@@ -1132,26 +1137,30 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	 */
 	public function getRequisiteId()
 	{
-		if($this->requisiteIds === null)
+		if ($this->requisiteIds === null)
 		{
 			$this->requisiteIds = '';
-			if($this->isLoaded())
+			if ($this->isLoaded())
 			{
 				$requisiteId = false;
-				if(isset($this->data['REQUISITE']) && $this->data['REQUISITE'] instanceof DataProvider)
+				if (isset($this->data['REQUISITE']) && $this->data['REQUISITE'] instanceof DataProvider)
 				{
 					$requisite = $this->data['REQUISITE'];
 					/** @var DataProvider $requisite */
 					$requisiteId = $requisite->getSource();
 				}
-				elseif(!empty($this->getOptions()['VALUES']['REQUISITE']))
+				elseif (!empty($this->getOptions()['VALUES']['REQUISITE']))
 				{
-					$requisiteId = $this->getOptions()['VALUES']['REQUISITE'];
+					$requisiteId = $this->getOptions()['VALUES']['REQUISITE'] ?? false;
 				}
 				else
 				{
 					$linkData = $this->getLinkData();
-					if(is_array($linkData) && $linkData['REQUISITE_ID'] > 0)
+					if (
+						is_array($linkData)
+						&& isset($linkData['REQUISITE_ID'])
+						&& $linkData['REQUISITE_ID'] > 0
+					)
 					{
 						$requisiteId = $linkData['REQUISITE_ID'];
 					}
@@ -1159,21 +1168,24 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 				$entityTypeId = \CCrmOwnerType::Company;
 				$entityId = $this->getCompanyId();
-				if(!$entityId)
+				if (!$entityId)
 				{
 					$entityId = $this->getContactId();
 					$entityTypeId = \CCrmOwnerType::Contact;
 				}
+
 				while ($entityId instanceof CrmEntityDataProvider)
 				{
 					$entityId = $entityId->getSource();
 				}
+
 				if (!is_numeric($entityId))
 				{
 					$entityId = 0;
 				}
+
 				$entityId = (int)$entityId;
-				if($entityId > 0)
+				if ($entityId > 0)
 				{
 					/** @var EntityRequisite $entityRequisite */
 					$entityRequisite = EntityRequisite::getSingleInstance();
@@ -1232,61 +1244,63 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	 */
 	public function getBankDetailId()
 	{
-		if($this->bankDetailIds === null)
+		if ($this->bankDetailIds === null && $this->isLoaded())
 		{
-			if($this->isLoaded())
-			{
-				$bankDetailId = null;
-				if(isset($this->data['BANK_DETAIL']) && $this->data['BANK_DETAIL'] instanceof DataProvider)
-				{
-					$bankDetail = $this->data['BANK_DETAIL'];
-					/** @var DataProvider $bankDetail */
-					$bankDetailId = $bankDetail->getSource();
-				}
-				elseif(!empty($this->getOptions()['VALUES']['BANK_DETAIL']))
-				{
-					$bankDetailId = $this->getOptions()['VALUES']['BANK_DETAIL'];
-				}
-				else
-				{
-					$linkData = $this->getLinkData();
-					if (is_array($linkData))
-					{
-						$bankDetailId = $linkData['BANK_DETAIL_ID'];
-					}
-				}
+			$bankDetailId = null;
 
-				$requisiteId = DataProviderManager::getInstance()->getValueFromList($this->getRequisiteId(), true);
-				if(!is_array($requisiteId) && $requisiteId > 0)
+			if (isset($this->data['BANK_DETAIL']) && $this->data['BANK_DETAIL'] instanceof DataProvider)
+			{
+				$bankDetail = $this->data['BANK_DETAIL'];
+
+				/** @var DataProvider $bankDetail */
+				$bankDetailId = $bankDetail->getSource();
+			}
+			elseif (!empty($this->getOptions()['VALUES']['BANK_DETAIL']))
+			{
+				$bankDetailId = $this->getOptions()['VALUES']['BANK_DETAIL'] ?? null;
+			}
+			else
+			{
+				$linkData = $this->getLinkData();
+				if (is_array($linkData))
 				{
-					$bankDetails = EntityBankDetail::getSingleInstance()->getList([
-						'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
-						'filter' => [
-							'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
-							'=ENTITY_ID' => $requisiteId
-						],
-						'select' => ['ID', 'NAME'],
-					])->fetchAll();
-					if($bankDetails)
+					$bankDetailId = $linkData['BANK_DETAIL_ID'] ?? null;
+				}
+			}
+
+			$requisiteId = DataProviderManager::getInstance()
+				->getValueFromList($this->getRequisiteId(), true)
+			;
+			if (!is_array($requisiteId) && $requisiteId > 0)
+			{
+				$bankDetails = EntityBankDetail::getSingleInstance()?->getList([
+					'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
+					'filter' => [
+						'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+						'=ENTITY_ID' => $requisiteId
+					],
+					'select' => ['ID', 'NAME'],
+				])->fetchAll();
+				if ($bankDetails)
+				{
+					if (count($bankDetails) === 1)
 					{
-						if(count($bankDetails) == 1)
+						$this->bankDetailIds = (int)$bankDetails[0]['ID'];
+					}
+					else
+					{
+						$this->bankDetailIds = [];
+
+						foreach ($bankDetails as $bankDetail)
 						{
-							$this->bankDetailIds = (int)$bankDetails[0]['ID'];
-						}
-						else
-						{
-							$this->bankDetailIds = [];
-							foreach($bankDetails as $bankDetail)
+							$this->bankDetailIds[$bankDetail['ID']] = [
+								'VALUE' => $bankDetail['ID'],
+								'TITLE' => $bankDetail['NAME'],
+								'SELECTED' => false,
+							];
+							if ($bankDetailId && $bankDetailId == $bankDetail['ID'])
 							{
-								$this->bankDetailIds[$bankDetail['ID']] = [
-									'VALUE' => $bankDetail['ID'],
-									'TITLE' => $bankDetail['NAME'],
-									'SELECTED' => false,
-								];
-								if($bankDetailId && $bankDetailId == $bankDetail['ID'])
-								{
-									$this->bankDetailIds[$bankDetail['ID']]['SELECTED'] = true;
-								}
+								$this->bankDetailIds[$bankDetail['ID']]['SELECTED'] = true;
 							}
 						}
 					}
@@ -1643,8 +1657,8 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					foreach($fields as $value)
 					{
 						if(
-							(!empty($valueType) && $value['VALUE_TYPE'] == $valueType) ||
-							(empty($valueType))
+							(!empty($valueType) && $value['VALUE_TYPE'] == $valueType)
+							|| (empty($valueType))
 						)
 						{
 							$result[] = $value['VALUE'];
@@ -1755,7 +1769,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			$company = CompanyTable::getById($companyId)->fetch();
 			if ($company)
 			{
-				$result = $company['TITLE'];
+				$result = $company['TITLE'] ?? null;
 			}
 		}
 
@@ -2160,6 +2174,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	public function getLangPhrasesPath()
 	{
 		Loc::loadLanguageFile(__FILE__);
+
 		return Path::getDirectory(Path::normalize(__FILE__)).'/../phrases';
 	}
 

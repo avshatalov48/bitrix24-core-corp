@@ -567,7 +567,7 @@ class IBlockElementProperty
 		$field["filterable"] = "";
 	}
 
-	protected static function prepareValueView($value, $defaultType = '', array &$valueView)
+	protected static function prepareValueView($value, $defaultType, array &$valueView)
 	{
 		$parts = explode('_', $value);
 		if(count($parts) > 1)

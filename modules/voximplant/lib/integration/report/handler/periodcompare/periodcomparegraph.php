@@ -14,12 +14,11 @@ class PeriodCompareGraph extends PeriodCompare implements IReportMultipleData
 	 * Converts data from a report handler for a grid
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ObjectException
 	 */
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData)
+		if (empty($calculatedData))
 		{
 			return [];
 		}

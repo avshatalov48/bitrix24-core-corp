@@ -313,7 +313,10 @@ export class DashboardManager
 
 	static openSettingPeriodSlider(dashboardId: number = null)
 	{
-		const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.setting/slider.php';
+		const componentLink = dashboardId === null
+			? '/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php'
+			: '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.setting/slider.php'
+		;
 
 		const sliderLink = new Uri(componentLink);
 		if (dashboardId !== null)

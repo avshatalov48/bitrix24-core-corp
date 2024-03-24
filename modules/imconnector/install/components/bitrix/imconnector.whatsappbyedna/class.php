@@ -59,6 +59,16 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 		$this->arResult['HELPDESK_CODE'] = 'redirect=detail&code=14214014';
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
+
+
+		if (\Bitrix\MessageService\Providers\Edna\RegionHelper::isInternational())
+		{
+			$this->arResult['LOC_REGION_POSTFIX'] = '_IO';
+		}
+		else
+		{
+			$this->arResult['LOC_REGION_POSTFIX'] = '';
+		}
 	}
 
 	/**

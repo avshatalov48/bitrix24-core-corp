@@ -17,8 +17,8 @@ jn.define('crm/entity-chat-opener', (require, exports, module) => {
 	const { Type: CoreType } = require('type');
 
 	/**
-	* @class EntityChatOpener
-	*/
+	 * @class EntityChatOpener
+	 */
 	class EntityChatOpener
 	{
 		/**
@@ -131,11 +131,11 @@ jn.define('crm/entity-chat-opener', (require, exports, module) => {
 			return new Promise((resolve, reject) => {
 				EntityChatOpener.getChatId(entityTypeId, entityId, useLoadingIndicator)
 					.then(
-						chatId => {
+						(chatId) => {
 							EntityChatOpener.openById(chatId);
 							resolve();
 						},
-						error => {
+						(error) => {
 							console.error(error);
 							reject(error);
 						},

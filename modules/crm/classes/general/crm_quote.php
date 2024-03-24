@@ -195,6 +195,10 @@ class CAllCrmQuote
 		if (!isset($arFields['ASSIGNED_BY_ID']) || (int)$arFields['ASSIGNED_BY_ID'] <= 0)
 			$arFields['ASSIGNED_BY_ID'] = $iUserId;
 
+		$arFields['CREATED_BY_ID'] = (int)($arFields['CREATED_BY_ID'] ?? 0);
+		$arFields['MODIFY_BY_ID'] = (int)($arFields['MODIFY_BY_ID'] ?? 0);
+		$arFields['ASSIGNED_BY_ID'] = (int)($arFields['ASSIGNED_BY_ID'] ?? 0);
+
 		// person type
 		if (!isset($arFields['PERSON_TYPE_ID']) || intval($arFields['PERSON_TYPE_ID']) <= 0)
 		{

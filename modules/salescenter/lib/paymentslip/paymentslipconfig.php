@@ -16,6 +16,7 @@ final class PaymentSlipConfig
 {
 	private const OPTION_SELECTED_SMS_SERVICE = 'PAYMENT_SLIP_SELECTED_SMS_SERVICE';
 	private const OPTION_SENDING_ENABLED = 'PAYMENT_SLIP_SENDING_ENABLED';
+	private const TERMINAL_PAYMENT_SYSTEMS_COLLAPSED = 'terminal_payment_systems_collapsed';
 
 	public static function getConfigInstance(): self
 	{
@@ -39,6 +40,16 @@ final class PaymentSlipConfig
 	public function isSendingEnabled(): bool
 	{
 		return Option::get('salescenter', self::OPTION_SENDING_ENABLED, 'Y') === 'Y';
+	}
+
+	public function setCollapsed(bool $status): void
+	{
+		\CUserOptions::SetOption('salescenter', self::TERMINAL_PAYMENT_SYSTEMS_COLLAPSED, $status ? 'Y' : 'N');
+	}
+
+	public function isCollapsed(): bool
+	{
+		return \CUserOptions::GetOption('salescenter', self::TERMINAL_PAYMENT_SYSTEMS_COLLAPSED, 'N') === 'Y';
 	}
 
 	public function getSelectedSmsServiceId(): ?string

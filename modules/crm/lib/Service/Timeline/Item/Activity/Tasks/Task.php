@@ -157,7 +157,7 @@ class Task extends Activity
 		{
 			$contentBlockObject = new EditableDate();
 			$contentBlockObject
-				->setReadonly(!$this->isScheduled())
+				->setReadonly(!$this->isScheduled() || !$this->hasUpdatePermission())
 				->setStyle(EditableDate::STYLE_PILL)
 				->setDate($deadline)
 				->setAction($action)
@@ -234,7 +234,7 @@ class Task extends Activity
 			$type
 		);
 
-		$openButtonObject->setAction($this->getTaskAction($task));
+		$openButtonObject->setAction($this->getTaskAction($task, 'view_button'));
 
 		return $openButtonObject;
 	}
@@ -248,7 +248,7 @@ class Task extends Activity
 
 		$action = new JsEvent('Task:Ping');
 		$action->addActionParamInt('taskId', $task->getId());
-		$action->setAnalytics(new Analytics(['scenario' => 'task_ping'], $this->analyticsHit));
+//		$action->setAnalytics(new Analytics(['scenario' => 'task_ping'], $this->analyticsHit));
 		$pingButtonObject->setAction($action);
 
 		return $pingButtonObject;

@@ -53,12 +53,12 @@ else
 ?>
 <style>
 	.dashboard-header {
-		--forward-icon: url("<?=$templateFolder . '/images/forward.svg'?>");
-		--more-icon: url("<?=$templateFolder . '/images/more.svg'?>");
+		--forward-icon: url("<?= $templateFolder . '/images/forward.svg' ?>");
+		--more-icon: url("<?= $templateFolder . '/images/more.svg' ?>");
 	}
 
 	.dashboard-header-logo-svg-url {
-		background-image: url("<?=$biBuilderLogo?>");
+		background-image: url("<?= $biBuilderLogo ?>");
 	}
 
 	.icon-forward i {
@@ -76,10 +76,10 @@ else
 			<div class="dashboard-header-logo">
 				<div class="dashboard-header-logo-svg dashboard-header-logo-svg-url"></div>
 			</div>
-			<div class="dashboard-header-title"><?=$dashboardTitle?></div>
+			<div class="dashboard-header-title"><?= $dashboardTitle ?></div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" disabled="disabled" class="ui-btn ui-btn-default ui-btn-round dashboard-header-buttons-edit disabled"><?=Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT')?></button>
+			<button id="edit-btn" disabled="disabled" class="ui-btn ui-btn-default ui-btn-round dashboard-header-buttons-edit disabled"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
 			<div id="more-btn" disabled="disabled" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more disabled"><i></i></div>
 		</div>
 	</div>
@@ -90,12 +90,13 @@ else
 
 <script>
 	BX.ready(() => {
-		BX.message(<?=Json::encode(Loc::loadLanguageFile(__FILE__))?>);
+		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 			container: document.querySelector('.biconnector-dashboard__loader'),
-			dashboardId: <?=(int)$arResult['DASHBOARD_ID']?>,
-			status: '<?=\CUtil::JSEscape($arResult['DASHBOARD_STATUS'])?>',
+			dashboardId: <?= (int)$arResult['DASHBOARD_ID'] ?>,
+			status: '<?= \CUtil::JSEscape($arResult['DASHBOARD_STATUS']) ?>',
+			isSupersetAvailable: <?= \CUtil::PhpToJSObject($arResult['IS_SUPERSET_AVAILABLE'] ?? true) ?>,
 		})
 	});
 </script>

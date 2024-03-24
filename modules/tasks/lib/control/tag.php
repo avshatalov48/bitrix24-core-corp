@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Control;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlHelper;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -21,10 +22,13 @@ class Tag
 	public const TASK_TAGS_CACHE = 'task';
 	public const GROUP_TAGS_CACHE = 'group';
 
+	private $userId;
+
 	private static array $storage = [];
 
-	public function __construct(private int $userId = 0)
+	public function __construct(int $userId = 0)
 	{
+		$this->userId = $userId;
 	}
 
 	/**
@@ -248,6 +252,11 @@ class Tag
 	 */
 	public function linkTags(int $taskId, array $tagIds): void
 	{
+		if (empty($tagIds))
+		{
+			return;
+		}
+
 		$existingTags = LabelTable::getList([
 			'select' => [
 				'ID',
@@ -257,7 +266,7 @@ class Tag
 			],
 		])->fetchAll();
 
-		$existingTagIds = array_map(function (array $el): int {
+		$existingTagIds = array_map(static function (array $el): int {
 			return (int)$el['ID'];
 		}, $existingTags);
 
@@ -526,7 +535,11 @@ class Tag
 
 		$implode = implode(',', $implode);
 
-		$sql = 'INSERT IGNORE INTO ' . LabelTable::getTableName() . " (`NAME`, `GROUP_ID`) VALUES {$implode}";
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			LabelTable::getTableName(),
+			' (NAME, GROUP_ID)',
+			" VALUES {$implode}"
+		);
 		Application::getConnection()->query($sql);
 
 		$idRows = LabelTable::getList([
@@ -573,7 +586,11 @@ class Tag
 
 		$implode = implode(',', $implode);
 
-		$sql = 'INSERT IGNORE INTO ' . LabelTable::getTableName() . " (`NAME`, `USER_ID`) VALUES {$implode}";
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			LabelTable::getTableName(),
+			' (NAME, USER_ID)',
+			" VALUES {$implode}"
+		);
 		Application::getConnection()->query($sql);
 
 		$idRows = LabelTable::getList([
@@ -717,7 +734,11 @@ class Tag
 		}
 		$implode = implode(',', $implode);
 
-		$sql = 'INSERT IGNORE INTO ' . LabelTable::getRelationTable() . " (`TASK_ID`, `TAG_ID`) VALUES {$implode}";
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			LabelTable::getRelationTable(),
+			' (TASK_ID, TAG_ID)',
+			" VALUES {$implode}"
+		);
 		Application::getConnection()->query($sql);
 	}
 
@@ -778,7 +799,11 @@ class Tag
 		}
 		$implode = implode(',', $implode);
 
-		$sql = 'INSERT IGNORE INTO ' . LabelTable::getRelationTable() . " (`TASK_ID`, `TAG_ID`) VALUES {$implode}";
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			LabelTable::getRelationTable(),
+			' (TASK_ID, TAG_ID)',
+			" VALUES {$implode}"
+		);
 		Application::getConnection()->query($sql);
 	}
 
@@ -965,5 +990,10 @@ class Tag
 		}
 
 		return false;
+	}
+
+	private function getSqlHelper(): SqlHelper
+	{
+		return Application::getConnection()->getSqlHelper();
 	}
 }

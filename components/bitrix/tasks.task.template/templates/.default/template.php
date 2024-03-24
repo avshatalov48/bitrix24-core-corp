@@ -292,7 +292,7 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			/*<input class="js-id-task-template-edit-multitask-flag" type="hidden" name="<?=$inputPrefix?>[MULTITASK]" value="<?=htmlspecialcharsbx($template['MULTITASK'])?>" />*/
 			$blocks['STATIC']['MAIN'] = array(
 				'CODE' => 'SE_RESPONSIBLE',
-				'TITLE' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_RESPONSIBLE'),
+				'TITLE' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ASSIGNEE'),
 				'HTML' => ob_get_clean(),
 				'TOGGLE' => array(
 					array(
@@ -480,8 +480,8 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					array(
 						'CODE' => 'ALLOW_CHANGE_DEADLINE',
 						'VALUE' => $template['ALLOW_CHANGE_DEADLINE'],
-						'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ALLOW_CHANGE_DEADLINE'),
-						'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_ALLOW_CHANGE_DEADLINE'),
+						'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ALLOW_CHANGE_DEADLINE_ASSIGNEE'),
+						'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_ALLOW_CHANGE_DEADLINE_ASSIGNEE'),
 					),
 					array(
 						'CODE' => 'MATCH_WORK_TIME',
@@ -497,7 +497,7 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 						'CODE' => 'TASK_CONTROL',
 						'VALUE' => $template['TASK_CONTROL'],
 						'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TASK_CONTROL_V2'),
-						'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_TASK_CONTROL_V2'),
+						'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_TASK_CONTROL_ASSIGNEE'),
 					),
 				);
 
@@ -514,26 +514,6 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 						'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TPARAM_TYPE'),
 						'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_TPARAM_TYPE'),
 					);
-				}
-
-				$users = Util::getOption('propagate_to_sub_templates_users');
-				if ($users && in_array($arParams['USER_ID'], unserialize($users, ['allowed_classes' => false])))
-				{
-					$templates = Util::getOption('propagate_to_sub_templates');
-					if ($templates)
-					{
-						$templates = unserialize($templates, ['allowed_classes' => false]);
-						$value = (in_array($arParams['ID'], $templates));
-
-						$options[] = [
-							'CODE' => 'PROPAGATE_TO_SUB_TEMPLATES',
-							'YES_VALUE' => '1',
-							'NO_VALUE' => '0',
-							'VALUE' => $value,
-							'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_PROPAGATE_TO_SUB_TEMPLATES'),
-							'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_PROPAGATE_TO_SUB_TEMPLATES'),
-						];
-					}
 				}
 				?>
 

@@ -35,7 +35,7 @@ jn.define('crm/product-grid/services/reserve-quantity-actualizer', (require, exp
 				{
 					productRow.setField('QUANTITY', productRow.getLatestActualizedQuantity());
 					ReserveQuantityActualizer.notify(
-						Loc.getMessage('PRODUCT_GRID_SERVICE_RQA_WARNING_LESS_QUANTITY_THEN_DEDUCTED')
+						Loc.getMessage('PRODUCT_GRID_SERVICE_RQA_WARNING_LESS_QUANTITY_THEN_DEDUCTED'),
 					);
 				}
 			}
@@ -74,20 +74,17 @@ jn.define('crm/product-grid/services/reserve-quantity-actualizer', (require, exp
 					result.inputReserveQuantity = quantity;
 				}
 			}
-			else
+			else if (quantity < productRow.getInputReserveQuantity())
 			{
-				if (quantity < productRow.getInputReserveQuantity())
+				if (availableQuantity < productRow.getInputReserveQuantity())
 				{
-					if (availableQuantity < productRow.getInputReserveQuantity())
-					{
-						result.inputReserveQuantity = availableQuantity;
-						result.message = ReserveQuantityActualizer.getWarningLessQuantityThenReserved();
-					}
-					else
-					{
-						result.inputReserveQuantity = quantity;
-						result.message = ReserveQuantityActualizer.getWarningLessQuantityWithDeductedThenReserved();
-					}
+					result.inputReserveQuantity = availableQuantity;
+					result.message = ReserveQuantityActualizer.getWarningLessQuantityThenReserved();
+				}
+				else
+				{
+					result.inputReserveQuantity = quantity;
+					result.message = ReserveQuantityActualizer.getWarningLessQuantityWithDeductedThenReserved();
 				}
 			}
 

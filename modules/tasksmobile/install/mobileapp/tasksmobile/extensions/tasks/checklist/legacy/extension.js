@@ -1384,8 +1384,8 @@ jn.define('tasks/checklist/legacy', (require, exports, module) => {
 		{
 			const fileSize = file.SIZE || CheckListFilesList.getFileSize(file.size);
 			const fileType = (file.EXTENSION
-					? CheckListFilesList.getTypeByFileExtension(file.EXTENSION)
-					: CheckListFilesList.getTypeByFileName(file.NAME || file.name)
+				? CheckListFilesList.getTypeByFileExtension(file.EXTENSION)
+				: CheckListFilesList.getTypeByFileName(file.NAME || file.name)
 			);
 			const preparedItem = {
 				id: String(file.ID || file.id),
@@ -1426,8 +1426,8 @@ jn.define('tasks/checklist/legacy', (require, exports, module) => {
 			{
 				const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/disk/';
 				const iconName = (file.EXTENSION
-						? CheckListFilesList.getIconByFileExtension(file.EXTENSION)
-						: CheckListFilesList.getIconByFileName(file.NAME || file.name)
+					? CheckListFilesList.getIconByFileExtension(file.EXTENSION)
+					: CheckListFilesList.getIconByFileName(file.NAME || file.name)
 				);
 
 				preparedItem.imageUrl = `${pathToExtension}/images/${iconName}`;

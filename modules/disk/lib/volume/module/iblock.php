@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Main\DB;
 use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\VolumeTable;
@@ -61,6 +62,12 @@ class Iblock extends Volume\Module\Module
 		elseif (isset($filter['=IBLOCK_ID']))
 		{
 			$includeIblockIds[] = $filter['@IBLOCK_ID'];
+		}
+
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
 		}
 
 		$groupSelectSql = '';
@@ -135,7 +142,7 @@ class Iblock extends Volume\Module\Module
 						{$filterIblockSql}
 					GROUP BY
 						iblock.ID
-					ORDER BY NULL
+					{$prefSql}
 				)
 				/*-- section --*/
 				UNION
@@ -155,7 +162,7 @@ class Iblock extends Volume\Module\Module
 						{$filterSectionSql}
 					GROUP BY
 						section.IBLOCK_ID
-					ORDER BY NULL
+					{$prefSql}
 				)
 				UNION
 				(
@@ -174,7 +181,7 @@ class Iblock extends Volume\Module\Module
 						{$filterSectionSql}
 					GROUP BY
 						section.IBLOCK_ID
-					ORDER BY NULL
+					{$prefSql}
 				)
 				/*-- element --*/
 				UNION
@@ -194,7 +201,7 @@ class Iblock extends Volume\Module\Module
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
-					ORDER BY NULL
+					{$prefSql}
 				)
 				UNION
 				(
@@ -213,7 +220,7 @@ class Iblock extends Volume\Module\Module
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
-					ORDER BY NULL
+					{$prefSql}
 				)
 				/*-- property --*/
 				UNION
@@ -241,12 +248,12 @@ class Iblock extends Volume\Module\Module
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
-					ORDER BY NULL
+					{$prefSql}
 				)
 				{$entityUserFieldSource}
 			) src
 			{$groupBySql}
-			ORDER BY NULL
+			{$prefSql}
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
@@ -263,7 +270,7 @@ class Iblock extends Volume\Module\Module
 			$this->getSelect()
 		);
 
-		$tableName = VolumeTable::getTableName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

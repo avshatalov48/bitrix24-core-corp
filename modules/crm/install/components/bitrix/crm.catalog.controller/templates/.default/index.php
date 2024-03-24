@@ -15,6 +15,7 @@ $APPLICATION->IncludeComponent(
 		'IBLOCK_ID' => $arResult['IBLOCK_ID'],
 		'URL_BUILDER' => $arResult['URL_BUILDER'],
 		'USE_NEW_CARD' => $arResult['USE_NEW_CARD'],
+		'LIST_MODE' => $arResult['URL_BUILDER']->getListMode(),
 	],
 	$component,
 	['HIDE_ICONS' => 'Y']

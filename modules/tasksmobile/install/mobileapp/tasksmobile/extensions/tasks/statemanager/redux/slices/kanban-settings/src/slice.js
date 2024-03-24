@@ -1,8 +1,7 @@
 /**
  * @module tasks/statemanager/redux/slices/kanban-settings/src/slice
  */
-jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require, exports, module) =>
-{
+jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { createSlice } = require('statemanager/redux/toolkit');
 

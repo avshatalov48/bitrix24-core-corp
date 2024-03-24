@@ -6,6 +6,7 @@ return [
 		'reload/listeners',
 		'selector/recipient',
 		'tasks:task',
+		'tasks:enum',
 		'tasks:task/checklist',
 		'user/list',
 	],

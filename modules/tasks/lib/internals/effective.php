@@ -521,10 +521,11 @@ class Effective
 		{
 			$groupBy = 'DATE';
 		}
+		$helper = static::getHelper();
 		$expressions = [
 			'EFFECTIVE' => new Entity\ExpressionField('EFFECTIVE', 'AVG(EFFECTIVE)'),
-			'DATE' => new Entity\ExpressionField('DATE', 'DATE(DATETIME)'),
-			'HOUR' => new Entity\ExpressionField('HOUR', 'DATE_FORMAT(DATETIME, "%%Y-%%m-%%d %%H:00:01")')
+			'DATE' => new Entity\ExpressionField('DATE', $helper->getDatetimeToDateFunction('DATETIME')),
+			'HOUR' => new Entity\ExpressionField('HOUR', $helper->formatDate('%%Y-%%m-%%d %%H:00:01', 'DATETIME'))
 		];
 		$select = [$expressions['EFFECTIVE'], $expressions[$groupBy]];
 		$group = [$groupBy];
@@ -643,10 +644,11 @@ class Effective
 	 */
 	private static function getInProgressTasksCountForNow($userId, $groupId = 0)
 	{
+		$helper = static::getHelper();
 		$expressions = [
 			'COUNT' => new Entity\ExpressionField('COUNT', 'COUNT(%s)', 'ID'),
-			'DATE' => new Entity\ExpressionField('DATE', 'DATE(%s)', 'CLOSED_DATE'),
-			'NOW' => new Main\DB\SqlExpression('DATE(NOW())')
+			'DATE' => new Entity\ExpressionField('DATE', $helper->getDatetimeToDateFunction('%s'), 'CLOSED_DATE'),
+			'NOW' => new Main\DB\SqlExpression($helper->getCurrentDateFunction())
 		];
 
 		$query = new Query(TaskTable::getEntity());
@@ -819,7 +821,6 @@ class Effective
 			->where(($userId? Query::filter()->where('USER_ID', $userId) : []))
 			->where(($groupId? Query::filter()->where('GROUP_ID', $groupId) : []))
 			->where('IS_VIOLATION', 'Y')
-			->where('T.RESPONSIBLE_ID', '>', 0)
 			->where(
 				Query::filter()
 					->where('DATETIME', '<=', $dateTo)
@@ -1029,7 +1030,6 @@ class Effective
 			->where(($userId? Query::filter()->where('USER_ID', $userId) : []))
 			->where((!empty($groupIds) ? Query::filter()->whereIn('GROUP_ID', $groupIds) : []))
 			->where('IS_VIOLATION', 'Y')
-			->where('T.RESPONSIBLE_ID', '>', 0)
 			->where(
 				Query::filter()
 					->where('DATETIME', '<=', $dateTo)
@@ -1116,5 +1116,10 @@ class Effective
 		}
 
 		return $count;
+	}
+
+	private static function getHelper(): Main\DB\SqlHelper
+	{
+		return Application::getConnection()->getSqlHelper();
 	}
 }

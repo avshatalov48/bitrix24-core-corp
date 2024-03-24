@@ -246,11 +246,6 @@ class Key extends Controller
 						'=KEY_ID' => $item['ID'],
 					]
 				);
-				LogTable::deleteByFilter(
-					[
-						'=KEY_ID' => $item['ID'],
-					]
-				);
 
 				$deleteResult = KeyTable::delete($item['ID']);
 				if (!$deleteResult->isSuccess())

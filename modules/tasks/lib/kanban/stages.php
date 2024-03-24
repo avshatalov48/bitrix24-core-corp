@@ -469,8 +469,8 @@ class StagesTable extends DataManager
 				$connection = Application::getConnection();
 				$sql = 'UPDATE '
 					. '`' . Task::getTableName() . '` '
-					. 'SET `STAGE_ID`=' . ($newStageId) . ' '
-					. 'WHERE `STAGE_ID`=0 AND `GROUP_ID`=' . $entityId . ';';
+					. 'SET STAGE_ID=' . ($newStageId) . ' '
+					. 'WHERE STAGE_ID=0 AND GROUP_ID=' . $entityId . ';';
 				$connection->query($sql);
 			}
 		}

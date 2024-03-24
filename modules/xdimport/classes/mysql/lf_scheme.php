@@ -50,7 +50,7 @@ class CXDILFScheme extends CAllXDILFScheme
 
 			if (
 				$ID > 0 
-				&& $arFields["ACTIVE"] == "Y" 
+				&& ($arFields["ACTIVE"] ?? null) == "Y"
 				&& $arFields["AUTO"] == "Y"
 			)
 			{

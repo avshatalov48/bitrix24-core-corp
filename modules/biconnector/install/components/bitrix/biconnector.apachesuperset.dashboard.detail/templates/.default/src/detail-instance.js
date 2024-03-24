@@ -14,6 +14,7 @@ export class DetailInstance
 {
 	#dashboardManager: DashboardManager;
 	#dashboardNode: HTMLElement;
+	#frameNode: HTMLElement;
 	#editBtn: HTMLElement;
 
 	#embeddedParams: DashboardEmbeddedParameters;
@@ -32,31 +33,50 @@ export class DetailInstance
 		}
 		this.#dashboardManager = new DashboardManager();
 		this.#isExportEnabled = config.isExportEnabled === 'Y';
+		this.#embeddedParams = config.dashboardEmbeddedParams;
 
-		const frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
-
-		this.#initFrame(frameNode, config.dashboardEmbeddedParams);
+		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
+		this.#subscribeEvents();
 		this.#initHeaderButtons();
+
+		if (BX.BIConnector.LimitLockPopup)
+		{
+			this.#disableEditButton();
+			Event.unbindAll(this.#editBtn);
+		}
+		else
+		{
+			this.#initFrame(this.#embeddedParams);
+		}
 
 		if (this.#embeddedParams.sourceDashboard)
 		{
 			this.#onEditButtonClick();
 		}
+	}
 
+	#subscribeEvents()
+	{
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelect', (event) => {
-			Dom.clean(frameNode);
-			this.#initFrame(frameNode, event.data.credentials);
+			this.#embeddedParams = event.data.credentials;
+			Dom.clean(this.#frameNode);
+			this.#initFrame(event.data.credentials);
 			this.#initHeaderButtons();
+		});
+
+		EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', (event) => {
+			this.#initFrame(this.#embeddedParams);
+			this.#initHeaderButtons();
+			this.#enableEditButton();
 		});
 	}
 
-	#initFrame(frameNode: HTMLElement, embeddedParams: DashboardEmbeddedParameters)
+	#initFrame(embeddedParams: DashboardEmbeddedParameters)
 	{
-		this.#embeddedParams = embeddedParams;
 		const dashboardParams = {
 			id: embeddedParams.uuid, // given by the Superset embedding UI
 			supersetDomain: embeddedParams.supersetDomain,
-			mountPoint: frameNode, // any html element that can contain an iframe
+			mountPoint: this.#frameNode, // any html element that can contain an iframe
 			fetchGuestToken: embeddedParams.guestToken,
 			debug: true,
 			dashboardUiConfig: { // dashboard UI config: hideTitle, hideTab, ...etc.
@@ -142,14 +162,24 @@ export class DetailInstance
 
 	#muteEditButton()
 	{
-		this.#editBtn.setAttribute('disabled', 'true');
+		this.#disableEditButton();
 		Dom.addClass(this.#editBtn, 'ui-btn-wait');
 	}
 
 	#unmuteEditButton()
 	{
-		this.#editBtn.removeAttribute('disabled');
+		this.#enableEditButton();
 		Dom.removeClass(this.#editBtn, 'ui-btn-wait');
+	}
+
+	#disableEditButton()
+	{
+		this.#editBtn.setAttribute('disabled', 'true');
+	}
+
+	#enableEditButton()
+	{
+		this.#editBtn.removeAttribute('disabled');
 	}
 
 	#initMoreMenu()

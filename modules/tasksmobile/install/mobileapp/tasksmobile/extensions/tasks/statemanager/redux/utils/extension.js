@@ -1,8 +1,7 @@
 /**
  * @module tasks/statemanager/redux/utils
  */
-jn.define('tasks/statemanager/redux/utils', (require, exports, module) =>
-{
+jn.define('tasks/statemanager/redux/utils', (require, exports, module) => {
 	function stringifyWithKeysSort(input)
 	{
 		if (input === null)

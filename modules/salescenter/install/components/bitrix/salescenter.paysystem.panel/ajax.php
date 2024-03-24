@@ -92,6 +92,7 @@ class SalesCenterPaySystemPanelAjaxController extends Main\Engine\Controller
 		$salesCenterPaySystemPanelComponent = new \SalesCenterPaySystemPanel();
 		$salesCenterPaySystemPanelComponent->initComponent('bitrix:salescenter.paysystem.panel');
 		$salesCenterPaySystemPanelComponent->onPrepareComponentParams($params);
+		$salesCenterPaySystemPanelComponent->arParams = $salesCenterPaySystemPanelComponent->onPrepareComponentParams($params);
 
 		$arResult = $salesCenterPaySystemPanelComponent->prepareResult();
 

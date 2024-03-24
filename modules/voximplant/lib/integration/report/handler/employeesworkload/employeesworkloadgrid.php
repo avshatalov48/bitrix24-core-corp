@@ -17,7 +17,7 @@ class EmployeesWorkloadGrid extends EmployeesWorkload implements IReportMultiple
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData['report'])
+		if (empty($calculatedData['report']))
 		{
 			return [];
 		}
@@ -78,8 +78,6 @@ class EmployeesWorkloadGrid extends EmployeesWorkload implements IReportMultiple
 	 * @param $filterParameters
 	 *
 	 * @return Query
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function getQueryForReport($startDate, $finishDate, $previousStartDate, $previousFinishDate, $filterParameters): Query
 	{

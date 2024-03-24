@@ -61,6 +61,7 @@ class ProviderManager
 			StoreDocument::getId() => StoreDocument::className(),
 			Document::getId() => Document::className(),
 			SignDocument::getId() => SignDocument::className(),
+			SignB2eDocument::getId() => SignB2eDocument::className(),
 			Payment::getId() => Payment::className(),
 			ConfigurableRestApp::getId() => ConfigurableRestApp::className(),
 			CalendarSharing::getId() => CalendarSharing::className(),

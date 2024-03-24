@@ -6,7 +6,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
-	const { dateTime: dateTimeSvg, clip, clock: clockSvg } = require('assets/common');
+	const { dateTimeOutline: dateTimeOutlineSvg, clipOutline, clockOutline: clockOutlineSvg } = require('assets/common');
 	const AppTheme = require('apptheme');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { ResponsibleSelector } = require('crm/timeline/services/responsible-selector');
@@ -21,6 +21,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 	const { withCurrentDomain } = require('utils/url');
 	const { ItemSelector } = require('layout/ui/item-selector');
 	const { DatePill } = require('layout/ui/date-pill');
+	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/crmmobile/extensions/crm/timeline/item/ui/user-avatar/default-avatar.png';
 	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/user.png';
@@ -141,7 +142,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 			{
 				const workTimeMoment = new WorkTimeMoment();
 				deadline = workTimeMoment.getNextWorkingDay(3).moment;
-				deadline = deadline.addHours(1).startOfHour();
+				deadline = deadline.addHours(1).startOfHour;
 			}
 
 			return deadline;
@@ -245,7 +246,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 				{
 					style: {
 						paddingHorizontal: isAndroid ? 16 : 12,
-						display: this.state.files.length === 0 ? 'none' : 'flex',
+						display: 'none',
 						paddingBottom: 12,
 					},
 				},
@@ -299,7 +300,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						{
 							tintColor: AppTheme.colors.base4,
 							svg: {
-								content: clockSvg(),
+								content: clockOutlineSvg(),
 							},
 							style: {
 								width: 24,
@@ -341,11 +342,11 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 				Image({
 					tintColor: AppTheme.colors.base4,
 					svg: {
-						content: dateTimeSvg(),
+						content: dateTimeOutlineSvg(),
 					},
 					style: {
-						width: 24,
-						height: 24,
+						width: 14.67,
+						height: 14.73,
 						alignSelf: 'center',
 					},
 				}),
@@ -356,14 +357,15 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 							flexDirection: 'row',
 							justifyContent: 'center',
 							alignItems: 'center',
-							marginLeft: 4,
+							marginLeft: 9,
 						},
 					},
 					new DatePill({
-						textColor: AppTheme.colors.base1,
+						textColor: AppTheme.colors.base3,
 						backgroundColor: AppTheme.colors.bgContentTertiary,
 						fontSize: 14,
 						imageSize: 14,
+						fontWeight: 500,
 						isReadonly: false,
 						value: this.deadline.timestamp,
 						withTime: true,
@@ -378,8 +380,6 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 		renderBottom()
 		{
-			const { user } = this.state;
-
 			if (!this.deadline)
 			{
 				return null;
@@ -391,7 +391,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						alignItems: 'center',
 						flexDirection: 'row',
 						justifyContent: 'space-between',
-						paddingHorizontal: isAndroid ? 16 : 12,
+						paddingHorizontal: 16,
 						paddingBottom: 14,
 					},
 				},
@@ -403,8 +403,6 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						},
 					},
 					this.renderAttachButton(),
-					this.renderMenuButton(),
-					user && this.renderVerticalSeparator(),
 					this.renderResponsibleButton(),
 				),
 			);
@@ -422,6 +420,8 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 		renderAttachButton()
 		{
+			const attachedFilesCount = this.state.files.length;
+
 			return View(
 				{
 					style: {
@@ -430,19 +430,63 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						alignItems: 'center',
 						paddingHorizontal: 8,
 						paddingVertical: 4,
+						flexDirection: 'row',
 					},
 					testId: 'TimelineProviderActivityAttachButton',
-					onClick: () => this.fileFieldRef && this.fileFieldRef.openFilePicker(),
+					onClick: () => {
+						if (this.fileFieldRef)
+						{
+							if (attachedFilesCount === 0)
+							{
+								this.fileFieldRef.openFilePicker();
+							}
+							else
+							{
+								this.fileFieldRef.onOpenAttachmentList();
+							}
+						}
+					},
 				},
+				View(
+					{
+						testId: 'TimelineProviderActivityAttachButtonCounter',
+						style: {
+							borderRadius: 500,
+							backgroundColor: AppTheme.colors.accentBrandBlue,
+							position: attachedFilesCount === 0 ? 'relative' : 'absolute',
+							display: attachedFilesCount === 0 ? 'none' : 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							minWidth: 16,
+							height: 16,
+							paddingHorizontal: 3,
+							paddingVertical: 0,
+							top: 0,
+							right: -12,
+							marginRight: 12,
+						},
+					},
+					Text(
+						{
+							style: {
+								color: AppTheme.colors.baseWhiteFixed,
+								fontSize: 11,
+								fontWeight: 500,
+								textAlign: 'center',
+							},
+							text: attachedFilesCount.toString(),
+						},
+					),
+				),
 				Image({
 					style: {
-						width: 17,
-						height: 19,
+						width: 26,
+						height: 27,
 					},
-					tintColor: AppTheme.colors.base4,
+					tintColor: AppTheme.colors.base3,
 					resizeMode: 'contain',
 					svg: {
-						content: clip,
+						content: clipOutline(),
 					},
 				}),
 			);
@@ -477,9 +521,22 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 				return null;
 			}
 
-			if (user.imageUrl === (currentDomain + DEFAULT_SELECTOR_AVATAR))
+			let userAvatar = null;
+			if (user.imageUrl)
 			{
-				user.imageUrl = DEFAULT_AVATAR;
+				userAvatar = Image({
+					style: {
+						width: 26,
+						height: 26,
+						borderRadius: 500,
+					},
+					resizeMode: 'contain',
+					uri: withCurrentDomain(user.imageUrl),
+				});
+			}
+			else
+			{
+				userAvatar = EmptyAvatar({ id: user.userId, name: user.title, size: 26 });
 			}
 
 			return View(
@@ -494,15 +551,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					},
 					onClick: this.openResponsibleUserSelector,
 				},
-				Image({
-					style: {
-						width: 29,
-						height: 29,
-						borderRadius: 11,
-					},
-					resizeMode: 'contain',
-					uri: withCurrentDomain(user.imageUrl || DEFAULT_AVATAR),
-				}),
+				userAvatar,
 			);
 		}
 
@@ -552,7 +601,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						style: { flexDirection: 'row' },
 					},
 					ToolbarIcon({
-						svg: clip,
+						svg: clipOutline(),
 						width: 17,
 						height: 19,
 						onClick: () => {

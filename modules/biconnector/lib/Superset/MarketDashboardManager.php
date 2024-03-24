@@ -8,10 +8,12 @@ use Bitrix\BIConnector\Superset\UI\DashboardManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Rest;
 use Bitrix\Rest\AppTable;
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Rest\Marketplace\Application;
 
 final class MarketDashboardManager
@@ -19,6 +21,7 @@ final class MarketDashboardManager
 	private const SYSTEM_DASHBOARDS_TAG = 'bi_system_dashboard';
 	public const MARKET_COLLECTION_ID = 'bi_constructor_dashboards';
 	private const DASHBOARD_EXPORT_ENABLED_OPTION_NAME = 'bi_constructor_dashboard_export_enabled';
+	private const DASHBOARD_EXPORT_FEATURE_NAME = 'bi_constructor_export';
 
 	private static ?MarketDashboardManager $instance = null;
 	private ProxyIntegrator $integrator;
@@ -43,13 +46,14 @@ final class MarketDashboardManager
 	 * 1) If it is a clean installing of partner's dashboard - there is no row in dashboard table, method adds it.
 	 * Type is MARKET in this case.
 	 *
-	 * 2) If it is an installing of system dashboards - some of them are already preloaded - there are rows in dashboard
+	 * 2) If it is an installing of system dashboards - all of them are already preloaded - there are rows in dashboard
 	 * table. Method updates this row - it fills EXTERNAL_ID field. Type is SYSTEM in this case.
 	 *
-	 * 3) If it is an updating dashboard - row is already filled properly, no more actions required.
+	 * 3) If it is an updating dashboard - uuid of dashboard can be changed due to dependency uuid from app id. In this
+	 * case we need to update EXTERNAL_ID of the row and delete dashboard with old uuid.
 	 *
 	 * @param string $filePath Path to archive with dashboard to send to superset.
-	 * @param Event $event
+	 * @param Event $event Event with APP_ID parameter.
 	 * @return Result
 	 */
 	public function handleInstallMarketDashboard(string $filePath, Event $event): Result
@@ -62,30 +66,11 @@ final class MarketDashboardManager
 		$appCode = $appRow['CODE'];
 
 		$result = new Result();
-		$response = $this->integrator->importDashboard($filePath);
+		$response = $this->integrator->importDashboard($filePath, $appCode);
 		if ($response->hasErrors())
 		{
-			$row = SupersetDashboardTable::getList([
-				'select' => ['ID'],
-				'filter' => [
-					'=APP_ID' => $appCode,
-				],
-			])->fetch();
-
-			if ($row !== false)
-			{
-				$dashboard = SupersetDashboardTable::getByPrimary($row['ID'])->fetchObject();
-				$dashboard->setStatus(SupersetDashboardTable::DASHBOARD_STATUS_FAILED);
-
-				DashboardManager::notifyDashboardStatus(
-					(int)$row['ID'],
-					SupersetDashboardTable::DASHBOARD_STATUS_FAILED
-				);
-
-				$dashboard->save();
-			}
-
-			$result->addErrors($response->getErrors());
+			$this->handleUnsuccessfulInstall($appCode);
+			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
 
 			return $result;
 		}
@@ -96,53 +81,75 @@ final class MarketDashboardManager
 			$type = SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM;
 		}
 
-		$dashboards = $response->getData()['dashboards'];
-		if (is_array($dashboards))
+		$externalDashboards = $response->getData()['dashboards'];
+		if (!is_array($externalDashboards))
 		{
-			$isCleanInstall = true;
-			$isUpdateRow = false;
-			$row = SupersetDashboardTable::getList([
-				'select' => ['ID', 'APP_ID', 'EXTERNAL_ID', 'STATUS'],
-				'filter' => ['=APP_ID' => $appCode],
-			])->fetch();
-			if ($row !== false)
-			{
-				$isCleanInstall = false;
-
-				if (!isset($row['EXTERNAL_ID']) || $row['STATUS'] === SupersetDashboardTable::DASHBOARD_STATUS_FAILED)
-				{
-					$isUpdateRow = true;
-				}
-			}
-
-			foreach ($dashboards as $dashboard)
-			{
-				if ($isCleanInstall)
-				{
-					SupersetDashboardTable::add([
-						'EXTERNAL_ID' => $dashboard['id'],
-						'TITLE' => $dashboard['dashboard_title'],
-						'TYPE' => $type,
-						'APP_ID' => $appCode,
-						'STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_READY,
-					]);
-				}
-				elseif ($isUpdateRow)
-				{
-					SupersetDashboardTable::update((int)$row['ID'], [
-						'EXTERNAL_ID' => $dashboard['id'],
-						'TITLE' => $dashboard['dashboard_title'],
-						'TYPE' => $type,
-						'APP_ID' => $appCode,
-						'STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_READY
-					]);
-				}
-
-				DashboardManager::notifyDashboardStatus((int)$row['ID'], SupersetDashboardTable::DASHBOARD_STATUS_READY);
-			}
+			return $result;
 		}
 
+		$dashboard = SupersetDashboardTable::getList([
+			'select' => ['ID', 'APP_ID', 'EXTERNAL_ID', 'STATUS'],
+			'filter' => ['=APP_ID' => $appCode],
+			'limit' => 1,
+		])
+			->fetchObject()
+		;
+
+		if (!$dashboard)
+		{
+			$dashboard = SupersetDashboardTable::createObject();
+		}
+
+		$externalDashboard = current($externalDashboards);
+		if (
+			$dashboard->getExternalId() > 0
+			&& $dashboard->getExternalId() !== (int)$externalDashboard['id']
+		)
+		{
+			$this->integrator->deleteDashboard([$dashboard->getExternalId()]);
+		}
+
+		$dashboard
+			->setExternalId((int)$externalDashboard['id'])
+			->setTitle($externalDashboard['dashboard_title'])
+			->setType($type)
+			->setAppId($appCode)
+			->setStatus(SupersetDashboardTable::DASHBOARD_STATUS_READY)
+			->save()
+		;
+
+		DashboardManager::notifyDashboardStatus($dashboard->getId(), SupersetDashboardTable::DASHBOARD_STATUS_READY);
+
 		return $result;
+	}
+
+	/**
+	 * Sets status F to dashboard that was installed/updated unsuccessfully.
+	 *
+	 * @param string $appCode AppCode of dashboard.
+	 * @return void
+	 */
+	private function handleUnsuccessfulInstall(string $appCode): void
+	{
+		$row = SupersetDashboardTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=APP_ID' => $appCode,
+			],
+		])->fetch();
+
+		if ($row !== false)
+		{
+			$dashboard = SupersetDashboardTable::getByPrimary($row['ID'])->fetchObject();
+			$dashboard->setStatus(SupersetDashboardTable::DASHBOARD_STATUS_FAILED);
+
+			DashboardManager::notifyDashboardStatus(
+				(int)$row['ID'],
+				SupersetDashboardTable::DASHBOARD_STATUS_FAILED
+			);
+
+			$dashboard->save();
+		}
 	}
 
 	/**
@@ -174,7 +181,7 @@ final class MarketDashboardManager
 		$response = $this->integrator->importDataset($filePath);
 		if ($response->hasErrors())
 		{
-			$result->addErrors($response->getErrors());
+			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
 		}
 
 		return $result;
@@ -256,7 +263,7 @@ final class MarketDashboardManager
 			$response = $this->integrator->deleteDashboard([$originalExternalDashboardId]);
 			if ($response->hasErrors())
 			{
-				$result->addErrors($response->getErrors());
+				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_DELETE_PROXY')));
 
 				return $result;
 			}
@@ -423,6 +430,23 @@ final class MarketDashboardManager
 	 */
 	public function isExportEnabled(): bool
 	{
-		return Option::get('biconnector', self::DASHBOARD_EXPORT_ENABLED_OPTION_NAME, 'N') === 'Y';
+		if (Option::get('biconnector', self::DASHBOARD_EXPORT_ENABLED_OPTION_NAME, 'N') === 'Y')
+		{
+			return true;
+		}
+
+		global $USER;
+
+		if (Loader::includeModule('bitrix24'))
+		{
+			if (isset($USER) && $USER instanceof \CUser)
+			{
+				$isAdmin = $USER->isAdmin() || \CBitrix24::IsPortalAdmin($USER->getId());
+
+				return $isAdmin && Feature::isFeatureEnabled(self::DASHBOARD_EXPORT_FEATURE_NAME);
+			}
+		}
+
+		return false;
 	}
 }

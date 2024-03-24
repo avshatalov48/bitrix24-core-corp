@@ -120,7 +120,7 @@ class Installed extends BaseTemplate
 		$publishedApps = [];
 		if (!empty($appCodes)) {
 			$appsBuy = Client::getBuy($appCodes);
-			$this->result['TOTAL_APPS'] = NumberApps::get($appsBuy);
+			$this->setAdditionalInfo($appsBuy);
 			if (isset($appsBuy['ITEMS']) && is_array($appsBuy['ITEMS'])) {
 				foreach ($appsBuy['ITEMS'] as $key => $app) {
 					$publishedApps[] = $this->result['APPS'][$key]['CODE'];
@@ -147,14 +147,15 @@ class Installed extends BaseTemplate
 					$this->result['APPS'][$key]['REVIEWS_NUMBER'] = $app['REVIEWS_NUMBER'] ?? null;
 					$this->result['APPS'][$key]['NUM_INSTALLS'] = $app['NUM_INSTALLS'] ?? null;
 					$this->result['APPS'][$key]['HOLD_INSTALL_BY_TRIAL'] = (isset($app['HOLD_INSTALL_BY_TRIAL']) && $app['HOLD_INSTALL_BY_TRIAL'] === 'Y') ? 'Y' : 'N';
+					$this->result['APPS'][$key]['ADDITIONAL_ACTION'] = $app['ADDITIONAL_ACTION'] ?? '';
+					$this->result['APPS'][$key]['ADDITIONAL_ACTION_DEL'] = $app['ADDITIONAL_ACTION_DEL'] ?? '';
 				}
 			}
 		}
 
 		if (empty($appCodes)) {
 			$response = Transport::instance()->call(Transport::METHOD_TOTAL_APPS);
-			$this->result['TOTAL_APPS'] = NumberApps::get($response);
-			$this->result['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
+			$this->setAdditionalInfo($response);
 		}
 
 		$unpublishedApps = array_diff($appCodes, $publishedApps);
@@ -167,7 +168,7 @@ class Installed extends BaseTemplate
 				$appItem['REST_ACCESS_HELPER_CODE'] = Access::getHelperCode(Access::ACTION_INSTALL, Access::ENTITY_TYPE_APP, $appItem);
 			}
 
-			$appItem['BUTTONS'] = Action::list($appItem);
+			$appItem['BUTTONS'] = Action::getButtons($appItem);
 
 			if (isset($appItem['BUTTONS'][Action::UPDATE])) {
 				$appItem['INSTALL_INFO'] = Action::getJsAppData($appItem);
@@ -186,6 +187,14 @@ class Installed extends BaseTemplate
 		unset($appItem);
 
 		$this->result['APPS'] = array_values($this->result['APPS']);
+	}
+
+	private function setAdditionalInfo($response)
+	{
+		$this->result['TOTAL_APPS'] = NumberApps::get($response);
+		$this->result['SHOW_MARKET_ICON'] = $response['SHOW_MARKET_ICON'];
+		$this->result['ADDITIONAL_CONTENT'] = $response['ADDITIONAL_CONTENT'] ?? '';
+		$this->result['ADDITIONAL_MARKET_ACTION'] = $response['ADDITIONAL_MARKET_ACTION'] ?? '';
 	}
 
 	private function getFilterTags(): array

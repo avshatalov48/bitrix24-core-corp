@@ -1,6 +1,6 @@
 <?php
 
-require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
@@ -14,13 +14,16 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 			'DASHBOARD_ID' => $request->get('DASHBOARD_ID'),
 		],
-		'USE_PADDING' => false,
+
 		'CLOSE_AFTER_SAVE' => true,
 		'RELOAD_GRID_AFTER_SAVE' => true,
 		'IS_TOOL_PANEL_ALWAYS_VISIBLE' => true,
 		'ENABLE_MODE_TOGGLE' => false,
+
+		'USE_BACKGROUND_CONTENT' => false,
+		'USE_PADDING' => false,
 		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 
-require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php');

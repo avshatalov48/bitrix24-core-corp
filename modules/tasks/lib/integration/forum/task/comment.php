@@ -12,11 +12,13 @@ namespace Bitrix\Tasks\Integration\Forum\Task;
 
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Disk\Uf\ForumMessageConnector;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Comments;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\CRM\Timeline;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\IM;
@@ -567,11 +569,8 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 		$arData['PARAMS'] = (isset($arData['PARAMS']) && is_array($arData['PARAMS']) ? $arData['PARAMS'] : []);
 
-		$aux = (isset($arData['PARAMS']['AUX']) && $arData['PARAMS']['AUX'] == "Y");
-		$isFileVersionUpdateComment = (
-			isset($arData['PARAMS']['UF_FORUM_MESSAGE_VER'])
-			&& !empty($arData['PARAMS']['UF_FORUM_MESSAGE_VER'])
-		);
+		$aux = (isset($arData['PARAMS']['AUX']) && $arData['PARAMS']['AUX'] === "Y");
+		$isFileVersionUpdateComment = !empty($arData['PARAMS']['UF_FORUM_MESSAGE_VER']);
 		$messageId  = $arData['MESSAGE_ID'];
 		$strMessage = (string) ($arData['PARAMS']['POST_MESSAGE'] ?? '');
 
@@ -603,14 +602,16 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 		$occurAsUserId = static::getOccurAsId($messageAuthorId);
 		$messageEditDateTimeStamp = MakeTimeStamp($messageEditDate, CSite::GetDateFormat()) - \CTimeZone::getOffset();
-
-		if (
-			isset($arData['MESSAGE']['SERVICE_DATA'])
+		$isResult = isset($arData['MESSAGE']['SERVICE_DATA'])
 			&& $arData['MESSAGE']['SERVICE_DATA'] === ResultManager::COMMENT_SERVICE_DATA
-		)
+		;
+
+		if ($isResult)
 		{
 			(new ResultManager(User::getId()))->createFromComment((int)$messageId);
 		}
+
+		self::sendAnalyticsAfterCommentAdd((int)$messageAuthorId, $isResult, $aux);
 
 		TaskTable::update($taskId, ['ACTIVITY_DATE' => DateTime::createFromTimestamp($messageEditDateTimeStamp)]);
 
@@ -882,7 +883,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				'AUX_DATA' => (is_array($arData['AUX_DATA']) ? serialize($arData['AUX_DATA']) : $arData['AUX_DATA']),
 			]);
 
-			$isPingComment = ($commentReader->isContainCodes(['COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS']) ? 'Y' : 'N');
+			$isPingComment = ($commentReader->isContainCodes(['COMMENT_POSTER_COMMENT_TASK_PINGED_STATUS_MSGVER_1']) ? 'Y' : 'N');
 			$arData['PARAMS']['IS_PING_COMMENT'] = $isPingComment;
 		}
 
@@ -918,7 +919,8 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			[
 				'TASK_ID' => (int) $taskId,
 				'USER_ID' => (int) $occurAsUserId,
-				'SERVICE_TYPE' => $commentType
+				'SERVICE_TYPE' => $commentType,
+				'GROUP_ID' => $arTask['GROUP_ID'] ?? null,
 			]
 		);
 
@@ -1925,5 +1927,20 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		;
 
 		self::$fileAttachments = $query->exec()->fetchCollection()->getIdList();
+	}
+
+	private static function sendAnalyticsAfterCommentAdd(int $userId, bool $isResult, bool $aux): void
+	{
+		if ($aux)
+		{
+			return;
+		}
+
+		$analytics = Analytics::getInstance($userId);
+
+		$isResult
+			? $analytics->onStatusSummaryAdd()
+			: $analytics->onCommentAdd()
+		;
 	}
 }

@@ -1035,17 +1035,20 @@ BX.Tasks.Kanban.Grid.prototype = {
 			{
 				if (data && !data.error)
 				{
+					this.analytics('task_create', 'quick_button', 'success');
 					promise.fulfill(data);
 				}
 				else if (data)
 				{
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+					this.analytics('task_create', 'quick_button', 'error');
 					promise.reject(data.error);
 				}
 			}.bind(this),
 			function(error)
 			{
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				this.analytics('task_create', 'quick_button', 'error');
 				promise.reject("Error: " + error);
 			}.bind(this)
 		);
@@ -2158,7 +2161,65 @@ BX.Tasks.Kanban.Grid.prototype = {
 			block: 'center',
 			inline: 'nearest'
 		});
-	}
+	},
+
+	analytics: function (event, element, status = null)
+	{
+		const analyticsData = {
+			tool: 'tasks',
+			category: 'task_operations',
+			event: event,
+			type: 'task',
+			c_section: this.getSectionTypeForAnalytics(),
+			c_element: element,
+			c_sub_section: this.getKanbanTypeForAnalytics(),
+		};
+		if (status)
+		{
+			analyticsData.status = status;
+		}
+
+		if (BX.UI.Analytics)
+		{
+			BX.UI.Analytics.sendData(analyticsData);
+		}
+		else
+		{
+			BX.Runtime.loadExtension('ui.analytics').then(() => {
+				BX.UI.Analytics.sendData(analyticsData);
+			});
+		}
+	},
+
+	getSectionTypeForAnalytics: function ()
+	{
+		if (this.isScrumGrid())
+		{
+			return 'scrum';
+		}
+
+		if (this.getGroupId())
+		{
+			return 'project';
+		}
+
+		return 'tasks';
+	},
+
+	getKanbanTypeForAnalytics: function ()
+	{
+		const type = this.getData().kanbanType;
+
+		switch (type)
+		{
+			case 'TL':
+				return 'deadline';
+			case 'P':
+				return 'planner';
+			default:
+				return 'kanban';
+		}
+	},
 };
 
 

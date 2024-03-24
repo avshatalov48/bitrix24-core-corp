@@ -15,8 +15,17 @@ jn.define('tasks/enum', (require, exports, module) => {
 		PERIOD_OVER_TWO_WEEKS: 'PERIOD6',
 	};
 
+	const TaskStatus = {
+		PENDING: 2,
+		IN_PROGRESS: 3,
+		SUPPOSEDLY_COMPLETED: 4,
+		COMPLETED: 5,
+		DEFERRED: 6,
+	};
+
 	module.exports = {
 		ViewMode,
 		DeadlinePeriod,
+		TaskStatus,
 	};
 });

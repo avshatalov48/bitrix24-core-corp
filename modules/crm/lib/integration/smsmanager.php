@@ -602,6 +602,7 @@ class SmsManager implements ICanSendMessage
 	 *     SENDER_ID: ?string,
 	 *     MESSAGE_FROM: ?string,
 	 *     MESSAGE_BODY: string,
+	 *     MESSAGE_TEMPLATE: ?string,
 	 *     ACTIVITY_PROVIDER_TYPE_ID: int,
 	 * } $options
 	 */
@@ -611,7 +612,7 @@ class SmsManager implements ICanSendMessage
 			? MessageService\Sender\SmsManager::getSenderById($options['SENDER_ID'])
 			: MessageService\Sender\SmsManager::getUsableSender();
 
-		return [
+		$fields = [
 			'SENDER_ID' => $sender->getId(),
 			'MESSAGE_FROM' => $options['MESSAGE_FROM'] ?? $sender->getFirstFromList(),
 			'MESSAGE_BODY' => $options['MESSAGE_BODY'],
@@ -632,5 +633,12 @@ class SmsManager implements ICanSendMessage
 				]
 			),
 		];
+
+		if (!empty($options['MESSAGE_TEMPLATE']))
+		{
+			$fields['MESSAGE_TEMPLATE'] = $options['MESSAGE_TEMPLATE'];
+		}
+
+		return $fields;
 	}
 }

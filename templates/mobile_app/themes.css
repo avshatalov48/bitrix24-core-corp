@@ -19,6 +19,8 @@
 	--accent-extra-purple-rgb: 193, 95, 210;
 	--accent-main-alert: #FF5752;
 	--accent-main-alert-rgb: 255, 87, 82;
+	--accent-main-copilot: #8E52EC;
+	--accent-main-copilot-rgb: 142, 82, 236;
 	--accent-main-links: #2066B0;
 	--accent-main-links-rgb: 32, 102, 176;
 	--accent-main-primary: #00A2E8;
@@ -35,6 +37,8 @@
 	--accent-soft-blue2-rgb: 229, 249, 255;
 	--accent-soft-blue3: #ECFAFE;
 	--accent-soft-blue3-rgb: 236, 250, 254;
+	--accent-soft-copilot: #F7F3FD;
+	--accent-soft-copilot-rgb: 247, 243, 253;
 	--accent-soft-element-blue1: #00789E;
 	--accent-soft-element-blue1-rgb: 0, 120, 158;
 	--accent-soft-element-green1: #688800;
@@ -139,6 +143,8 @@
 	--chat-other-base1_1-rgb: 51, 51, 51;
 	--chat-other-base1_2: #3333334D;
 	--chat-other-base1_2-rgb: 51, 51, 51;
+	--chat-other-copilot: #F5EEFF;
+	--chat-other-copilot-rgb: 245, 238, 255;
 	--chat-other-invert1: #FFFFFF;
 	--chat-other-invert1-rgb: 255, 255, 255;
 	--chat-other-message1: #FFFFFF;
@@ -165,6 +171,8 @@
 	--chat-overall-pattern1_2-rgb: 255, 255, 255;
 	--chat-overall-tech: #00000033;
 	--chat-overall-tech-rgb: 0, 0, 0;
+	--chat-overall-tech2: #00000033;
+	--chat-overall-tech2-rgb: 0, 0, 0;
 	--graphics-base1: #FFFFFF;
 	--graphics-base1-rgb: 255, 255, 255;
 	--graphics-base2: #BDC1C6;
@@ -204,6 +212,8 @@
 	--accent-extra-purple-rgb: 137, 102, 181;
 	--accent-main-alert: #CE4845;
 	--accent-main-alert-rgb: 206, 72, 69;
+	--accent-main-copilot: #9966EA;
+	--accent-main-copilot-rgb: 153, 102, 234;
 	--accent-main-links: #3BA5E1;
 	--accent-main-links-rgb: 59, 165, 225;
 	--accent-main-primary: #0089D3;
@@ -220,6 +230,8 @@
 	--accent-soft-blue2-rgb: 28, 45, 55;
 	--accent-soft-blue3: #1A2A33;
 	--accent-soft-blue3-rgb: 26, 42, 51;
+	--accent-soft-copilot: #342D4B;
+	--accent-soft-copilot-rgb: 52, 45, 75;
 	--accent-soft-element-blue1: #2392C4;
 	--accent-soft-element-blue1-rgb: 35, 146, 196;
 	--accent-soft-element-green1: #9FC037;
@@ -324,6 +336,8 @@
 	--chat-other-base1_1-rgb: 248, 248, 248;
 	--chat-other-base1_2: #F8F8F84D;
 	--chat-other-base1_2-rgb: 248, 248, 248;
+	--chat-other-copilot: #2B2135;
+	--chat-other-copilot-rgb: 43, 33, 53;
 	--chat-other-invert1: #54595F;
 	--chat-other-invert1-rgb: 84, 89, 95;
 	--chat-other-message1: #2B2E32;
@@ -350,6 +364,8 @@
 	--chat-overall-pattern1_2-rgb: 65, 32, 67;
 	--chat-overall-tech: #2B2E3266;
 	--chat-overall-tech-rgb: 43, 46, 50;
+	--chat-overall-tech2: #07070799;
+	--chat-overall-tech2-rgb: 7, 7, 7;
 	--graphics-base1: #6A737F;
 	--graphics-base1-rgb: 106, 115, 127;
 	--graphics-base2: #BDC1C6;

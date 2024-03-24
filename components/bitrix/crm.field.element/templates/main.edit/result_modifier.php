@@ -1,14 +1,17 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\UserField\DataModifiers;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
-use Bitrix\Crm\UserField\DataModifiers;
 use Bitrix\Main\Text\HtmlFilter;
 
 if(!Loader::includeModule('crm'))
@@ -290,16 +293,20 @@ else if($component->isMobileMode())
 		{
 			$companies = CCrmCompany::GetListEx(
 				['TITLE' => 'ASC'],
-				['ID' => $values['COMPANY']]
+				['ID' => $values['COMPANY']],
+				false,
+				false,
+				[
+					'ID',
+					'TITLE',
+				]
 			);
-			while($company = $companies->Fetch())
+			while ($company = $companies->Fetch())
 			{
-				$arResult['value']['COMPANY']['items'][$company['ID']] = [
+				$companyId = $company['ID'];
+				$arResult['value']['COMPANY']['items'][$companyId] = [
 					'ENTITY_TITLE' => $company['TITLE'],
-					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
-						CCrmOwnerType::Company,
-						$company['ID']
-					),
+					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $companyId),
 				];
 			}
 		}
@@ -313,13 +320,20 @@ else if($component->isMobileMode())
 		{
 			$deals = CCrmDeal::GetListEx(
 				['TITLE' => 'ASC'],
-				['ID' => $values['DEAL']]
+				['ID' => $values['DEAL']],
+				false,
+				false,
+				[
+					'ID',
+					'TITLE',
+				]
 			);
-			while($deal = $deals->Fetch())
+			while ($deal = $deals->Fetch())
 			{
-				$arResult['value']['DEAL']['items'][$deal['ID']] = [
+				$dealId = $deal['ID'];
+				$arResult['value']['DEAL']['items'][$dealId] = [
 					'ENTITY_TITLE' => $deal['TITLE'],
-					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $deal['ID']),
+					'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $dealId),
 				];
 			}
 		}

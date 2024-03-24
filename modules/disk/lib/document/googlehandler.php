@@ -12,6 +12,7 @@ use Bitrix\Disk\TypeFile;
 use Bitrix\Main\IO;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 
@@ -106,7 +107,7 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 	 */
 	public function getUrlForAuthorizeInTokenService($mode = 'modal')
 	{
-		if(!Loader::includeModule('socialservices'))
+		if (!Loader::includeModule('socialservices'))
 		{
 			$this->errorCollection[] = new Error(
 				Loc::getMessage('DISK_GOOGLE_HANDLER_ERROR_NOT_INSTALLED_SOCSERV'), self::ERROR_NOT_INSTALLED_SOCSERV
@@ -114,8 +115,8 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 			return false;
 		}
 
-		$socGoogleOAuth = new \CSocServGoogleOAuth($this->userId);
-		if($mode === 'opener')
+		$socGoogleOAuth = $this->getOAuthService();
+		if ($mode === 'opener')
 		{
 			return $socGoogleOAuth->getUrl(
 				'opener',
@@ -127,11 +128,17 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 		return $socGoogleOAuth->getUrl('modal', $this->getScopes());
 	}
 
+	protected function getScopesForRemove(): array
+	{
+		return [];
+	}
+
 	protected function getScopes(): array
 	{
-		return array(
-			'https://www.googleapis.com/auth/drive'
-		);
+		return [
+			'https://www.googleapis.com/auth/drive',
+			'https://www.googleapis.com/auth/drive.file',
+		];
 	}
 
 	protected function getOAuthServiceClass(): string

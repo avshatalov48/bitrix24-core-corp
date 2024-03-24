@@ -182,7 +182,7 @@ if ($isBitrix24Template)
 			'items' => [
 				[
 					'text' => Loc::getMessage('TASKS_PROJECTS_SCRUM_MIGRATION'),
-					'href' => '/marketplace/?tag[]=migrator&tag[]=tasks',
+					'href' => \Bitrix\Tasks\Integration\Market\Router::getBasePath().'?tag[]=migrator&tag[]=tasks',
 					'onclick' => new JsCode('arguments[1].getMenuWindow().close();'),
 				],
 			],
@@ -274,6 +274,8 @@ if ($arResult['isScrumList'] && is_array($stub) && count($stub) > 2)
 	$asanaIcon = $templateFolder. '/images/tasks-projects-asana.svg';
 	$trelloIcon = $templateFolder. '/images/tasks-projects-trello.svg';
 
+	$marketPath = \Bitrix\Tasks\Integration\Market\Router::getBasePath();
+
 	$stub = <<<HTML
 		<div class="tasks-scrum__transfer--contant">
 			<div class="tasks-scrum__transfer--title">{$stub['title']}</div>
@@ -297,7 +299,7 @@ if ($arResult['isScrumList'] && is_array($stub) && count($stub) > 2)
 					</div>
 				</div>
 				<div class="tasks-scrum__transfer--btn-block">
-					<a href="/marketplace/?tag[]=migrator&tag[]=tasks" class="ui-btn ui-btn-primary ui-btn-round">
+					<a href="{$marketPath}?tag[]=migrator&tag[]=tasks" class="ui-btn ui-btn-primary ui-btn-round">
 						{$stub['migrationButton']}
 					</a>
 				</div>

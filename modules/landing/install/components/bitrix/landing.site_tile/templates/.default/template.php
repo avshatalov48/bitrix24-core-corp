@@ -18,6 +18,7 @@ Extension::load([
 	'sidepanel',
 	'main.qrcode',
 	'ui.dialogs.messagebox',
+	'ui.hint',
 ]);
 
 //todo: when no site has been created yet, we display a banner but simply without a button
@@ -156,7 +157,7 @@ $isAjax = $component->isAjax();
 		if ($arParams['TYPE'] === 'PAGE')
 		{
 			$title = Loc::getMessage('LANDING_SITE_TILE_DEV_HELP');
-			$text = Loc::getMessage('LANDING_SITE_TILE_DEV_ORDER');
+			$text = Loc::getMessage('LANDING_SITE_TILE_DEV_ORDER_MSGVER_1');
 			$buttonText = Loc::getMessage('LANDING_SITE_TILE_DEV_BTN');
 		}
 		else
@@ -352,5 +353,7 @@ $isAjax = $component->isAjax();
 			}
 		});
 		<?endif;?>
+
+		BX.UI.Hint.init(BX('landing-sites'));
 	});
 </script>

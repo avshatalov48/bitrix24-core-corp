@@ -1515,7 +1515,10 @@ GanttProject.prototype.onItemMenuClose = function(popupWindow, event)
 GanttProject.prototype.onItemMouseOver = function(event)
 {
 	if (!this.chart.allowRowHover)
+	{
 		return;
+	}
+
 	BX.addClass(this.layout.item, "task-gantt-item-tree-hover");
 	BX.addClass(this.layout.row, "task-gantt-timeline-row-hover");
 };
@@ -1523,7 +1526,10 @@ GanttProject.prototype.onItemMouseOver = function(event)
 GanttProject.prototype.onItemMouseOut = function(event)
 {
 	if (!this.chart.allowRowHover)
+	{
 		return;
+	}
+
 	BX.removeClass(this.layout.item, "task-gantt-item-tree-hover");
 	BX.removeClass(this.layout.row, "task-gantt-timeline-row-hover");
 };
@@ -1531,14 +1537,19 @@ GanttProject.prototype.onItemMouseOut = function(event)
 GanttProject.prototype.onRowMouseOver = function(event)
 {
 	if (!this.chart.allowRowHover)
+	{
 		return;
+	}
+
 	BX.addClass(this.layout.row, "task-gantt-timeline-row-hover");
 };
 
 GanttProject.prototype.onRowMouseOut = function(event)
 {
 	if (!this.chart.allowRowHover)
+	{
 		return;
+	}
 
 	BX.removeClass(this.layout.row, "task-gantt-timeline-row-hover");
 };
@@ -1547,7 +1558,9 @@ GanttProject.prototype.onRowContextMenu = function(event)
 {
 	event = event || window.event;
 	if (this.menuItems.length < 1 || event.ctrlKey)
+	{
 		return;
+	}
 
 	BX.TaskQuickInfo.hide();
 
@@ -2091,7 +2104,7 @@ GanttTask.prototype.setDateCompleted = function(date)
 	else if (BX.Tasks.Date.isDate(date))
 	{
 		this.dateCompleted = BX.GanttChart.convertDateToUTC(date);
-		if (this.status == "completed")
+		if (this.status === "completed")
 		{
 			if (!this.isRealDateEnd && this.dateCompleted <= this.dateStart)
 			{
@@ -2229,7 +2242,9 @@ GanttTask.prototype.getTimeline = function(params)
 GanttTask.prototype.setMenuItems = function(menuItems)
 {
 	if (BX.type.isArray(menuItems))
+	{
 		this.menuItems = menuItems;
+	}
 };
 
 GanttTask.prototype.setStatus = function(status)
@@ -2937,16 +2952,21 @@ GanttTask.prototype.onFoldingClick = function(event)
 
 GanttTask.prototype.onItemNameClick = function(event)
 {
+	debugger
 	event = event || window.event;
 
 	if (!BX.GanttChart.isLeftClick(event))
+	{
 		return;
+	}
 
 	if (!this.chart.settings.disableItemNameClickHandler && BX.type.isFunction(this.details))
 	{
 		this.details({ event : event });
 		BX.PreventDefault(event);
 	}
+
+	this.analytics('task_view', 'title_click');
 };
 
 GanttTask.prototype.onItemMenuClick = function(event)
@@ -3929,6 +3949,30 @@ GanttTask.prototype.matchWorkingTime = function(startDate, endDate, duration)
 
 	this.redraw();
 };
+
+GanttTask.prototype.analytics = function (event, element)
+{
+	const analyticsData = {
+		tool: 'tasks',
+		category: 'task_operations',
+		event: event,
+		type: 'task',
+		c_section: this.isGroup() ? 'project' : 'tasks',
+		c_element: element,
+		c_sub_section: 'gantt',
+	};
+
+	if (BX.UI.Analytics)
+	{
+		BX.UI.Analytics.sendData(analyticsData);
+	}
+	else
+	{
+		BX.Runtime.loadExtension('ui.analytics').then(() => {
+			BX.UI.Analytics.sendData(analyticsData);
+		});
+	}
+}
 
 /**
  *

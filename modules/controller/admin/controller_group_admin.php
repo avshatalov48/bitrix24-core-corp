@@ -71,7 +71,10 @@ if ($USER->CanDoOperation("controller_group_manage") && $lAdmin->EditAction())
 			$lAdmin->AddUpdateError(GetMessage("CTRLR_GR_AD_ERR1")." #".$ID.": ".$e->GetString(), $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
+		else
+		{
+			$DB->Commit();
+		}
 	}
 }
 
@@ -102,7 +105,10 @@ if ($arID && $USER->CanDoOperation("controller_group_manage"))
 				$DB->Rollback();
 				$lAdmin->AddGroupError(GetMessage("CTRLR_GR_AD_ERR2").":".$e->GetString(), $ID);
 			}
-			$DB->Commit();
+			else
+			{
+				$DB->Commit();
+			}
 			break;
 		}
 	}

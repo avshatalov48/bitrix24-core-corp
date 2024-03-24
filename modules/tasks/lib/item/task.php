@@ -61,6 +61,10 @@ final class Task extends \Bitrix\Tasks\Item
 		return Util\UserField\Task::getClass();
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Tasks\Control\Task::update()
+	 */
 	public function save($settings = array())
 	{
 		$parentTaskId = (isset($this->values['PARENT_ID']))
@@ -680,6 +684,10 @@ final class Task extends \Bitrix\Tasks\Item
 	}
 
 	/**
+	 * @deprecated
+	 * @see \Bitrix\Tasks\Control\Task::update()
+	 * @see \CTaskItem::complete()
+	 *
 	 * Set task status to 'completed' or 'awaiting approval'
 	 *
 	 * @param array $params

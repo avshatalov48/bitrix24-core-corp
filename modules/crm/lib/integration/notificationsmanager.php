@@ -252,6 +252,7 @@ class NotificationsManager implements ICanSendMessage
 	 *     PLACEHOLDERS: Array<string, mixed>,
 	 *     LANGUAGE_ID: ?string,
 	 *     ACTIVITY_PROVIDER_TYPE_ID: ?int,
+	 *     MESSAGE_TEMPLATE: ?string,
 	 * } $options
 	 */
 	public static function makeMessageFields(array $options, array $commonOptions): array
@@ -288,6 +289,11 @@ class NotificationsManager implements ICanSendMessage
 				]
 			),
 		];
+
+		if (!empty($options['MESSAGE_TEMPLATE']))
+		{
+			$result['MESSAGE_TEMPLATE'] = $options['MESSAGE_TEMPLATE'];
+		}
 
 		if (
 			NotificationsPromoManager::isPromoSession()

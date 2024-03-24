@@ -1,9 +1,10 @@
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { ajax, Dom, Type } from 'main.core';
+import { ajax as Ajax, Dom, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { rest as Rest } from 'rest.client';
 import { UI } from 'ui.notification';
 import { Menu } from './components/layout/menu';
+import { sendData } from 'ui.analytics';
 
 declare type AnimationParams = {
 	target: string,
@@ -102,12 +103,17 @@ export class Action
 					actionData: this.#actionParams,
 				});
 
-				ajax.runAction(
+				const ajaxConfig = {
+					data: this.#prepareRunActionParams(this.#actionParams),
+				};
+				if (this.#analytics)
+				{
+					ajaxConfig.analytics = this.#analytics;
+				}
+
+				Ajax.runAction(
 					this.#value,
-					{
-						data: this.#prepareRunActionParams(this.#actionParams),
-						analyticsLabel: this.#analytics,
-					},
+					ajaxConfig
 				).then(
 					(response) =>
 					{
@@ -425,29 +431,23 @@ export class Action
 		{
 			return false;
 		}
+
 		if (!AnimationTarget.hasOwnProperty(this.#animation.target))
 		{
 			return false;
 		}
-		if (!AnimationType.hasOwnProperty(this.#animation.type))
-		{
-			return false;
-		}
 
-		return true;
+		return AnimationType.hasOwnProperty(this.#animation.type);
 	}
 
 	#sendAnalytics()
 	{
 		if (this.#analytics && this.#analytics.hit)
 		{
-			ajax.runAction(
-				this.#analytics.hit,
-				{
-					data: {},
-					analyticsLabel: this.#analytics,
-				},
-			);
+			const clonedAnalytics = {...this.#analytics};
+			delete clonedAnalytics.hit;
+
+			sendData(clonedAnalytics);
 		}
 	}
 }

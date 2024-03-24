@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Catalog;
+use Bitrix\Catalog\Restriction\ToolAvailabilityManager;
 use Bitrix\Crm;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\OrderSettings;
@@ -364,6 +365,15 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 			if ($this->checkRequiredModules())
 			{
+				if (
+					$menuItemId === 'menu_catalog_store'
+					&& !ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
+				)
+				{
+					unset($this->listMenuItems[$menuItemId]);
+					continue;
+				}
+
 				if (
 					Loader::includeModule('intranet') // TODO: erase this code row after remove public files from intranet wizard 'portal'
 				)

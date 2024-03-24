@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -42,7 +45,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 				<input class="filter-textbox" type="text" name="F_TITLE" id="filter-field-title" value="<?php echo htmlspecialcharsbx($arParams["ADV_FILTER"]["F_TITLE"])?>" />
 			</div>
 			<div class="filter-field">
-				<label class="filter-field-title" for="filter-field-responsible"><?php echo GetMessage("TASKS_RESPONSIBLE")?></label>
+				<label class="filter-field-title" for="filter-field-responsible"><?php echo Loc::getMessage('TASKS_ASSIGNEE') ?></label>
 				<?php
 					$userName = "";
 					if (intval($arParams["ADV_FILTER"]["F_RESPONSIBLE"]) > 0)

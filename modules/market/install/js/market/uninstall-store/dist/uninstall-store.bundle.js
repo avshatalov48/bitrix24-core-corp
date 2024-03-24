@@ -8,13 +8,17 @@ this.BX = this.BX || {};
 	    appCode: '',
 	    uninstallNodes: {},
 	    popupDelete: null,
-	    refreshUri: ''
+	    refreshUri: '',
+	    action: ''
 	  }),
 	  actions: {
 	    setNodesInfo(appCode, node) {
 	      this.uninstallNodes[appCode] = node;
 	    },
-	    deleteApp: function (event, appCode, refreshUri) {
+	    setDeleteActionInfo(action) {
+	      this.action = action;
+	    },
+	    deleteAction: function (appCode, refreshUri) {
 	      this.refreshUri = refreshUri != null ? refreshUri : '';
 	      if (this.uninstallConfirmShown) {
 	        return;
@@ -86,6 +90,11 @@ this.BX = this.BX || {};
 	          })]);
 	          this.popupDelete.adjustPosition();
 	        } else {
+	          if (this.action.length > 0) {
+	            try {
+	              eval(this.action);
+	            } catch (e) {}
+	          }
 	          this.popupDelete.close();
 	          this.uninstallConfirmShown = false;
 	          if (!!result.sliderUrl) {

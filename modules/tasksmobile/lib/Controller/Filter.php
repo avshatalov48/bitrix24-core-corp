@@ -51,23 +51,33 @@ class Filter extends Controller
 	{
 		/** @var \Bitrix\Tasks\Helper\Filter $filterInstance */
 		$filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($this->getCurrentUser()->getId(), $groupId);
-		$presets = $filterInstance->getAllPresets();
+
+		$presets = $filterInstance->getPresets();
+		$allPresets = $filterInstance->getAllPresets();
+		foreach ($allPresets as $key => $preset)
+		{
+			if (!isset($preset['default']) && isset($presets[$key]))
+			{
+				$allPresets[$key]['default'] = $presets[$key]['default'];
+			}
+		}
+
 		unset(
-			$presets[Options::DEFAULT_FILTER],
-			$presets[Options::TMP_FILTER]
+			$allPresets[Options::DEFAULT_FILTER],
+			$allPresets[Options::TMP_FILTER]
 		);
 
-		$presets = array_map(
+		$allPresets = array_map(
 			static fn (string $key) => [
 				'id' => $key,
-				'name' => (string)$presets[$key]['name'],
-				'default' => (bool)$presets[$key]['default'],
+				'name' => (string)$allPresets[$key]['name'],
+				'default' => (bool)$allPresets[$key]['default'],
 			],
-			array_keys($presets)
+			array_keys($allPresets)
 		);
 
 		return [
-			'presets' => $presets,
+			'presets' => $allPresets,
 			'counters' => [],
 		];
 	}

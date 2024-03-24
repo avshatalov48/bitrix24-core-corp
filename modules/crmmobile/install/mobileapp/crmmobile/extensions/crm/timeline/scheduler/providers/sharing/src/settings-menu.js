@@ -2,7 +2,6 @@
  * @module crm/timeline/scheduler/providers/sharing/settings-menu
  */
 jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Type: CrmType } = require('crm/type');
@@ -57,7 +56,7 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 				{
 					id: 'sharing_receiver',
 					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_RECEIVER'),
-					subtitle: this.communicationName + ' (' + this.toPhoneValue + ')',
+					subtitle: `${this.communicationName} (${this.toPhoneValue})`,
 					onClickCallback: () => {
 						this.openContactSelector();
 

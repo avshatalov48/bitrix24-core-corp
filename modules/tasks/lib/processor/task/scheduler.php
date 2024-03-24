@@ -89,7 +89,7 @@ final class Scheduler extends \Bitrix\Tasks\Processor
 				$impact = $this->getImpactById($next['ID']);
 
 				$processorSettings = array();
-				if($impact->getId() == $id) // root impact is being processed
+				if($impact?->getId() == $id) // root impact is being processed
 				{
 					$processorSettings['MODE'] = ($settings['MODE'] ?? null);
 				}

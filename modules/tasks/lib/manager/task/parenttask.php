@@ -32,6 +32,10 @@ final class ParentTask extends \Bitrix\Tasks\Manager
 
 			$data[static::getLegacyFieldName()] = $toSave;
 		}
+//		elseif (array_key_exists(self::getLegacyFieldName(), $data, true))
+//		{
+//			$data[self::getLegacyFieldName()] =
+//		}
 	}
 
 	// old data struct to new data struct

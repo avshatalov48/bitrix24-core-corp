@@ -119,12 +119,10 @@ class TemplateMember
 			);
 		}
 
-		$sql = "
-			INSERT IGNORE INTO ". TemplateMemberTable::getTableName() ."
-			(`USER_ID`, `TEMPLATE_ID`, `TYPE`)
-			VALUES
-			(". implode("),(", $insertRows) .")
-		";
+		$sql = $this->getInsertIgnore(
+			'(USER_ID, TEMPLATE_ID, TYPE)',
+			"VALUES (" . implode("),(", $insertRows) . ")"
+		);
 
 		Application::getConnection()->query($sql);
 	}

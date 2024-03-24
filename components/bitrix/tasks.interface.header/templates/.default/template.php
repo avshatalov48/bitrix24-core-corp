@@ -1,5 +1,9 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 $APPLICATION->SetAdditionalCSS("template_styles.css");
 
 if (!isset($arParams['MENU_GROUP_ID']))
@@ -49,7 +53,7 @@ if (!isset($arParams['MENU_GROUP_ID']))
 
 $showQuickForm = $arParams['SHOW_QUICK_FORM'] === "Y" && \Bitrix\Tasks\Util\Restriction::canManageTask();
 
-if ($arParams['SHOW_FILTER'] == 'Y')
+if ($arParams['SHOW_FILTER'] === 'Y')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.filter',
@@ -126,7 +130,7 @@ if ($arParams['SHOW_FILTER'] == 'Y')
 
 <?php
 
-if ($arParams['SHOW_QUICK_FORM'] == 'Y')
+if ($arParams['SHOW_QUICK_FORM'] === 'Y')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.quick.form',

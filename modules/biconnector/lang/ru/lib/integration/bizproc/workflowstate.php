@@ -1,0 +1,50 @@
+<?php
+
+$MESS['BP_BIC_WF_STATE_TABLE'] = "Бизнес-процесс";
+
+$MESS['BP_BIC_WF_STATE_MODULE_LISTS'] = 'Списки';
+$MESS['BP_BIC_WF_STATE_MODULE_RPA'] = 'RPA';
+$MESS['BP_BIC_WF_STATE_MODULE_CRM'] = 'CRM';
+$MESS['BP_BIC_WF_STATE_MODULE_TASKS'] = 'Задачи и Проекты';
+$MESS['BP_BIC_WF_STATE_MODULE_DISK'] = 'Файлы';
+
+$MESS['BP_BIC_WF_STATE_FIELD_ID'] = 'Уникальный ключ';
+//$MESS['BP_BIC_WF_STATE_FIELD_ID_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_STARTED_BY_ID'] = 'Идентификатор автора';
+$MESS['BP_BIC_WF_STATE_FIELD_STARTED_BY_ID_FULL'] = 'Идентификатор пользователя, запустившего процесс';
+$MESS['BP_BIC_WF_STATE_FIELD_STARTED_BY_NAME'] = 'Имя автора';
+$MESS['BP_BIC_WF_STATE_FIELD_STARTED_BY_NAME_FULL'] = 'Имя пользователя, запустившего процесс';
+$MESS['BP_BIC_WF_STATE_FIELD_STARTED_BY'] = 'Автор';
+$MESS['BP_BIC_WF_STATE_FIELD_STARTED_BY_FULL'] = 'Идентификатор и имя пользователя, запустившего процесс';
+$MESS['BP_BIC_WF_STATE_FIELD_STARTED'] = 'Дата и время запуска';
+//$MESS['BP_BIC_WF_STATE_FIELD_STARTED_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_COMPLETED'] = 'Статус завершения';
+$MESS['BP_BIC_WF_STATE_FIELD_COMPLETED_FULL'] = 'Y - завершен, N - выполняется';
+$MESS['BP_BIC_WF_STATE_FIELD_DOCUMENT_ID'] = 'Идентификатор документа';
+//$MESS['BP_BIC_WF_STATE_FIELD_DOCUMENT_ID_FULL'] = '';
+//$MESS['BP_BIC_WF_STATE_FIELD_OTHER_DURATION'] = 'Время промежуточных этапов';
+//$MESS['BP_BIC_WF_STATE_FIELD_OTHER_DURATION_FULL'] = 'Время, затраченное на выполнение промежуточных этапов';
+$MESS['BP_BIC_WF_STATE_FIELD_DURATION'] = 'Время выполнения';
+$MESS['BP_BIC_WF_STATE_FIELD_DURATION_FULL'] = 'Время, затраченное на выполнение процесса, в секундах';
+//$MESS['BP_BIC_WF_STATE_FIELD_TASKS_DURATION'] = 'Время выполнения';
+//$MESS['BP_BIC_WF_STATE_FIELD_TASKS_DURATION_FULL'] = 'Время выполнения процесса';
+$MESS['BP_BIC_WF_STATE_FIELD_START_DURATION'] = 'Время запуска';
+$MESS['BP_BIC_WF_STATE_FIELD_START_DURATION_FULL'] = 'Время, затраченное на запуск';
+$MESS['BP_BIC_WF_STATE_FIELD_WORKFLOW_TEMPLATE_ID'] = 'Идентификатор шаблона';
+//$MESS['BP_BIC_WF_STATE_FIELD_WORKFLOW_TEMPLATE_ID_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_WORKFLOW_TEMPLATE_NAME'] = 'Название шаблона';
+//$MESS['BP_BIC_WF_STATE_FIELD_WORKFLOW_TEMPLATE_NAME_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_MODULE_ID'] = 'Идентификатор модуля';
+//$MESS['BP_BIC_WF_STATE_FIELD_MODULE_ID_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_MODULE_ID_NAME'] = 'Название модуля';
+//$MESS['BP_BIC_WF_STATE_FIELD_MODULE_ID_NAME_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_ENTITY_ID'] = 'Идентификатор типа элемента';
+//$MESS['BP_BIC_WF_STATE_FIELD_ENTITY_ID_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_ENTITY_ID_NAME'] = 'Название типа элемента';
+//$MESS['BP_BIC_WF_STATE_FIELD_ENTITY_ID_NAME_FULL'] = '';
+$MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_ID'] = 'Идентификатор автора шаблона';
+$MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_ID_FULL'] = 'Идентификатор пользователя, редактировавшего шаблон';
+$MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_NAME'] = 'Имя автора шаблона';
+$MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_NAME_FULL'] = 'Имя пользователя, редактировавшего шаблон';
+$MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY'] = 'Автор шаблона';
+$MESS['BP_BIC_WF_STATE_FIELD_MODIFIED_BY_FULL'] = 'Идентификатор и имя пользователя, редактировавшего шаблон';

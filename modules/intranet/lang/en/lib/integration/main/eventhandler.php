@@ -1,2 +1,3 @@
 <?php
 $MESS["MAIN_MAIL_CALLBACK_LIMIT_NOTIFICATION_MSGVER1"] = "The number of emails sent from #EMAIL# has reached the limit specified by the email service. When it happens, Bitrix24 activates its own limit: you can send up to #LIMIT# emails per day. To send more emails, please contact your email service's helpdesk to increase the limit. Once the issue has been resolved, change the daily limit in Bitrix24's sender settings.";
+$MESS["MAIN_MAIL_CALLBACK_LIMIT_NOTIFICATION_MSGVER2"] = "The address #EMAIL# has been temporarily limited to #LIMIT# email messages per day. [URL=#HELPDESK_LINK#]Learn more[/URL]";

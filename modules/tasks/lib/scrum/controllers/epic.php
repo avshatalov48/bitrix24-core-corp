@@ -907,7 +907,7 @@ class Epic extends Controller
 			],
 			[
 				'id' => 'RESPONSIBLE',
-				'name' => Loc::getMessage('TASKS_SCRUM_TASKS_GRID_RESPONSIBLE'),
+				'name' => Loc::getMessage('TASKS_SCRUM_TASKS_GRID_ASSIGNEE'),
 				'default' => true,
 			],
 		];

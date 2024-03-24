@@ -1,12 +1,18 @@
 <?php
 $MESS["TASK_RESPONSE_EDIT"] 					= "Ответственный: редактирование задачи";
+$MESS['TASK_ASSIGNEE_EDIT'] 					= 'Исполнитель: редактирование задачи';
 $MESS["TASK_RESPONSE_DELEGATE"] 				= "Ответственный: делегирование задачи";
+$MESS['TASK_ASSIGNEE_DELEGATE'] 				= "Исполнитель: делегирование задачи";
 $MESS["TASK_RESPONSE_ASSIGN"] 					= "Ответственный: добавление соисполнителя";
+$MESS['TASK_ASSIGNEE_ASSIGN'] 					= 'Исполнитель: добавление соисполнителя';
 $MESS["TASK_RESPONSE_CHECKLIST_EDIT"] 			= "Ответственный: редактирование чек-листа";
+$MESS['TASK_ASSIGNEE_CHECKLIST_EDIT'] 			= 'Исполнитель: редактирование чек-листа';
 $MESS["TASK_RESPONSE_CHECKLIST_ADD"] 			= "Ответственный: добавление новых пунктов в чек-листы";
+$MESS['TASK_ASSIGNEE_CHECKLIST_ADD'] 			= 'Исполнитель: добавление новых пунктов в чек-листы';
 $MESS["TASK_CLOSED_DIRECTOR_EDIT"] 				= "Постановщик: редактирование задачи после завершения";
 $MESS["TASK_DIRECTOR_DELETE"] 					= "Постановщик: удаление задач";
 $MESS["TASK_RESPONSE_CHANGE_RESPONSIBLE"] 		= "Ответственный за задачу: смена ответственного";
+$MESS['TASK_ASSIGNEE_CHANGE_RESPONSIBLE'] 		= 'Исполнитель: смена исполнителя';
 
 $MESS["TASK_DEPARTMENT_DIRECT"] 				= "Постановка задач сотрудникам своего отдела";
 $MESS["TASK_DEPARTMENT_MANAGER_DIRECT"] 		= "Постановка задач начальнику своего отдела";

@@ -189,14 +189,15 @@ class CrmBuyerGroupsEdit extends \CBitrixComponent
 
 		$id = 0;
 		$groupEntity = new \CGroup();
-		
+
 		if ($this->isNewGroup())
 		{
+			unset($group['ID']);
 			$group['IS_SYSTEM'] = 'N';
 			$group['USER_ID'] = [];
 
 			$result = $groupEntity->add($group);
-			
+
 			if ($result)
 			{
 				$id = $result;
@@ -205,13 +206,13 @@ class CrmBuyerGroupsEdit extends \CBitrixComponent
 		else
 		{
 			$result = $groupEntity->update($group['ID'], array_diff_key($group, ['ID' => true]));
-			
+
 			if ($result)
 			{
 				$id = $group['ID'];
 			}
 		}
-		
+
 		if (!$result)
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error($groupEntity->LAST_ERROR);

@@ -80,18 +80,8 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				placeholder: moneyStub.formattedAmount,
 				label: `${Loc.getMessage('PRODUCT_GRID_CONTROL_PRICING_PRICE')}, ${money.formattedCurrency}`,
 				onChange: debounce((field) => {
-					if (field.value === '')
-					{
-						return;
-					}
 					handleChange(field);
 				}, 300),
-				onBlur: (field) => {
-					if (field.value === '')
-					{
-						handleChange(field);
-					}
-				},
 				onClick: () => this.notifyPriceDisabled(),
 				testId: 'productGridPriceField',
 			});
@@ -131,18 +121,8 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				labelAlign: 'center',
 				textAlign: 'center',
 				onChange: debounce((field) => {
-					if (field.value === '')
-					{
-						return;
-					}
 					handleChange(field);
 				}, 300),
-				onBlur: (field) => {
-					if (field.value === '')
-					{
-						handleChange(field);
-					}
-				},
 				testId: 'productGridQuantityField',
 			});
 		}
@@ -174,18 +154,8 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				keyboardType: 'decimal-pad',
 				label: Loc.getMessage('PRODUCT_GRID_CONTROL_PRICING_DISCOUNT'),
 				onChange: debounce((field) => {
-					if (field.value === '')
-					{
-						return;
-					}
 					handleChange(field);
 				}, 300),
-				onBlur: (field) => {
-					if (field.value === '')
-					{
-						handleChange(field);
-					}
-				},
 				onClick: () => this.notifyDiscountDisabled(),
 				rightBlock: (field) => DiscountTypeSwitch({
 					disabled,
@@ -266,18 +236,8 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				textAlign: 'right',
 				disabled: !this.isDiscountFieldEditable(),
 				onChange: debounce((field) => {
-					if (field.value === '')
-					{
-						return;
-					}
 					handleChange(field);
 				}, 300),
-				onBlur: (field) => {
-					if (field.value === '')
-					{
-						handleChange(field);
-					}
-				},
 				testId: 'productGridTotalSumField',
 			});
 		}
@@ -538,4 +498,3 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 
 	module.exports = { ProductPricing };
 });
-

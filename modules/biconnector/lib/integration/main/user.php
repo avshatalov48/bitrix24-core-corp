@@ -64,7 +64,7 @@ class User
 
 		if (\Bitrix\BIConnector\DictionaryManager::isAvailable(\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT))
 		{
-			$result['crm_deal']['DICTIONARY'] = [
+			$result['user']['DICTIONARY'] = [
 				\Bitrix\BIConnector\Dictionary::USER_DEPARTMENT,
 			];
 		}

@@ -215,8 +215,8 @@ class Deal
 				],
 				*/
 				'CRM_PRODUCT_ID' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'P.ID',
 					'FIELD_TYPE' => 'int',
@@ -225,8 +225,8 @@ class Deal
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'D\' AND P.OWNER_ID = D.ID',
 				],
 				'CRM_PRODUCT' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat_ws(\' \', concat(\'[\', P.ID, \']\'), nullif(P.PRODUCT_NAME, \'\'))',
 					'FIELD_TYPE' => 'string',
@@ -235,8 +235,8 @@ class Deal
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'D\' AND P.OWNER_ID = D.ID',
 				],
 				'CRM_PRODUCT_COUNT' => [
-					'CONCAT_GROUP_BY' => ', ',
-					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'GROUP_CONCAT' => ', ',
+					'GROUP_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'TRIM(TRAILING \'.\' FROM (TRIM(TRAILING \'0\' FROM P.QUANTITY)))',
 					'FIELD_TYPE' => 'string',
@@ -411,7 +411,28 @@ class Deal
 					'FIELD_NAME' => 'D.LOCATION_ID',
 					'FIELD_TYPE' => 'int',
 				],
-				//TODO:WEBFORM_ID INT (18) UNSIGNED DEFAULT NULL,
+				//WEBFORM_ID INT (18) UNSIGNED DEFAULT NULL,
+				'WEBFORM_ID' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'D.WEBFORM_ID',
+					'FIELD_TYPE' => 'int',
+				],
+				'WEBFORM_NAME' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'WF.NAME',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'WF',
+					'JOIN' => 'INNER JOIN b_crm_webform WF ON WF.ID = D.WEBFORM_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_webform WF ON WF.ID = D.WEBFORM_ID',
+				],
+				'WEBFORM' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'if(D.WEBFORM_ID is null, null, concat_ws(\' \', concat(\'[\', D.WEBFORM_ID, \']\'), nullif(WF.NAME, \'\')))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'WF',
+					'JOIN' => 'INNER JOIN b_crm_webform WF ON WF.ID = D.WEBFORM_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_webform WF ON WF.ID = D.WEBFORM_ID',
+				],
 				//SOURCE_ID VARCHAR (50) DEFAULT NULL,
 				'SOURCE_ID' => [
 					'IS_METRIC' => 'Y',
@@ -461,6 +482,36 @@ class Deal
 				],
 				//TODO:SEARCH_CONTENT MEDIUMTEXT NULL,
 				//TODO:ORDER_STAGE VARCHAR(255)DEFAULT NULL,
+				//MOVED_BY_ID INT UNSIGNED DEFAULT NULL,
+				'MOVED_BY_ID' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'D.MOVED_BY_ID',
+					'FIELD_TYPE' => 'int',
+				],
+				'MOVED_BY_NAME' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'if(D.MOVED_BY_ID is null, null, concat_ws(\' \', nullif(UMV.NAME, \'\'), nullif(UMV.LAST_NAME, \'\')))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'UMV',
+					'JOIN' => 'INNER JOIN b_user UMV ON UMV.ID = D.MOVED_BY_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_user UMV ON UMV.ID = D.MOVED_BY_ID',
+				],
+				'MOVED_BY' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'if(D.MOVED_BY_ID is null, null, concat_ws(\' \', concat(\'[\', D.MOVED_BY_ID, \']\'), nullif(UMV.NAME, \'\'), nullif(UMV.LAST_NAME, \'\')))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'UMV',
+					'JOIN' => 'INNER JOIN b_user UMV ON UMV.ID = D.MOVED_BY_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_user UMV ON UMV.ID = D.MOVED_BY_ID',
+				],
+				//MOVED_TIME DATETIME NULL,
+				'MOVED_TIME' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'D.MOVED_TIME',
+					'FIELD_TYPE' => 'datetime',
+				],
+				//LAST_ACTIVITY_BY INT UNSIGNED NOT NULL DEFAULT 0,
+				//LAST_ACTIVITY_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				'UTM_SOURCE' => [
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'UTM_S.VALUE',

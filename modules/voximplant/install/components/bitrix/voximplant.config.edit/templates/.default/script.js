@@ -374,7 +374,7 @@
 			BX.addCustomEvent(window["FILE_INPUT_" + curId], 'onDeleteFile', function (id)
 			{
 				BX.hide(BX(curId + 'default'));
-				BX(curId + 'notice').innerHTML = BX.message("VI_CONFIG_EDIT_DOWNLOAD_TUNE_TIP");
+				BX(curId + 'notice').innerHTML = BX.message("VI_CONFIG_EDIT_DOWNLOAD_TUNE_TIP_MSGVER_1");
 				var player = BX.Fileman.PlayerManager.getPlayerById(curId + "player");
 				player.setSource(defaultMelody.replace("#LANG_ID#", BX("config_edit_form").elements["MELODY_LANG"].value));
 				window["FILE_INPUT_" + curId].INPUT.disabled = false;

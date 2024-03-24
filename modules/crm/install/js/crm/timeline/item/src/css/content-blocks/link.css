@@ -1,0 +1,37 @@
+.crm-timeline__card_link {
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-link-primary-base);
+	text-decoration: underline !important;
+	text-decoration-color: transparent !important;
+	cursor: pointer;
+	transition: var(--crm-timeline__transition-hover);
+	word-break: break-all;
+}
+
+.crm-timeline__card_link.--bold {
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.crm-timeline__card_link:hover {
+	transition-duration: unset;
+}
+
+.crm-timeline__card_link.--size-xs {
+	font-size: var(--ui-font-size-xs);
+}
+
+.crm-timeline__card_link.--size-sm {
+	font-size: var(--ui-font-size-sm);
+}
+
+.crm-timeline__card_link.--size-md {
+	font-size: var(--ui-font-size-md);
+}
+
+.crm-timeline__card_link.--size-lg {
+	font-size: var(--ui-font-size-lg);
+}
+
+.crm-timeline__card_link.--size-xl {
+	font-size: var(--ui-font-size-xl);
+}

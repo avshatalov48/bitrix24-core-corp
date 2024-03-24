@@ -3,17 +3,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
+/** @var CMain $APPLICATION */
+/** @var CBitrixComponent $component */
+/** @var string $templateFolder */
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
-use Bitrix\Tasks\Grid\Scope\Scope;
 use Bitrix\Tasks\Integration\Recyclebin\Task;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\UI\ScopeDictionary;
@@ -74,7 +77,7 @@ $APPLICATION->SetPageProperty(
 	"{$bodyClass} page-one-column transparent-workarea"
 );
 
-if (($arParams['CONTEXT'] ?? '') !== Scope::SPACES)
+if ($arResult['CONTEXT'] !== Context::getSpaces())
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
@@ -142,21 +145,25 @@ if (
 	&& !empty($arResult['ERROR']['FATAL'])
 ):
 	foreach ($arResult['ERROR']['FATAL'] as $error):
-		echo ShowError($error['MESSAGE']);
+		ShowError($error['MESSAGE']);
 	endforeach;
 
 	return;
 endif
 ?>
 
-<? if (
+<?php
+if (
 	isset($arResult['ERROR']['WARNING'])
 	&& is_array($arResult['ERROR']['WARNING'])
 ): ?>
-	<? foreach ($arResult['ERROR']['WARNING'] as $error): ?>
-		<?=ShowError($error['MESSAGE'])?>
-	<? endforeach ?>
-<? endif ?>
+	<?php
+	foreach ($arResult['ERROR']['WARNING'] as $error): ?>
+		<?php ShowError($error['MESSAGE'])?>
+	<?php
+	endforeach ?>
+<?php
+endif ?>
 
 
 
@@ -193,7 +200,7 @@ $rowCountHtml = str_replace(
 		GetMessage('TASKS_SHOW_ROW_COUNT'),
 		$arParams['USER_ID'],
 		$arParams['GROUP_ID'],
-		\CUtil::PhpToJSObject($arParams['PROVIDER_PARAMETERS'])
+		CUtil::PhpToJSObject($arParams['PROVIDER_PARAMETERS'])
 	],
 	'<div id="%prefix%_row_count_wrapper" class="tasks-list-row-count-wrapper">%all%: 
 		<a id="%prefix%_row_count" onclick="BX.Tasks.GridActions.getTotalCount(\'%prefix%\', %userid%, %groupid%, %parameters%)">

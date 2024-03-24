@@ -38,17 +38,21 @@ final class TmpSimpleRight
 	 */
 	public static function fillDescendants($objectId, $sessionId)
 	{
-		$pathTableName = ObjectPathTable::getTableName();
 		$connection = Application::getConnection();
-		$sessionId = (int)$sessionId;
+		$helper = $connection->getSqlHelper();
 
+		$pathTableName = $helper->quote(ObjectPathTable::getTableName());
+		$sessionId = (int)$sessionId;
 		$objectId = (int)$objectId;
-		$connection->queryExecute("
-			INSERT IGNORE INTO b_disk_tmp_simple_right (OBJECT_ID, ACCESS_CODE, SESSION_ID)
-			SELECT path.OBJECT_ID, sright.ACCESS_CODE, {$sessionId} FROM {$pathTableName} path
-				INNER JOIN b_disk_tmp_simple_right sright ON sright.OBJECT_ID = path.PARENT_ID
-			WHERE path.PARENT_ID = {$objectId} AND sright.SESSION_ID = {$sessionId}
-		");
+
+		$sql = $helper->getInsertIgnore(
+			'b_disk_tmp_simple_right',
+			' (OBJECT_ID, ACCESS_CODE, SESSION_ID) ',
+			"SELECT path.OBJECT_ID, sright.ACCESS_CODE, {$sessionId} 
+				FROM {$pathTableName} path INNER JOIN b_disk_tmp_simple_right sright ON sright.OBJECT_ID = path.PARENT_ID
+				WHERE path.PARENT_ID = {$objectId} AND sright.SESSION_ID = {$sessionId}"
+		);
+		$connection->queryExecute($sql);
 	}
 
 	public static function moveToOriginalSimpleRights($sessionId)

@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Tasks;
 
-use Bitrix\Tasks\Grid\Scope\ScopeFactory;
-use Bitrix\Tasks\Grid\ScopeInterface;
+use Bitrix\Tasks\Grid\Scope\ScopeStrategyFactory;
+use Bitrix\Tasks\Grid\ScopeStrategyInterface;
 
 /**
  * Class Grid
@@ -11,11 +11,15 @@ use Bitrix\Tasks\Grid\ScopeInterface;
  */
 abstract class Grid
 {
+	protected array $rows = [];
+	protected array $parameters = [];
 	protected array $headers = [];
-	protected ?ScopeInterface $scope = null;
+	protected ?ScopeStrategyInterface $scopeStrategy = null;
 
-	public function __construct(protected array $rows = [], protected array $parameters = [])
+	public function __construct(array $rows = [], array $parameters = [])
 	{
+		$this->rows = $rows;
+		$this->parameters = $parameters;
 	}
 
 	abstract public function prepareHeaders(): array;
@@ -47,14 +51,24 @@ abstract class Grid
 		$this->parameters = $parameters;
 	}
 
-	public function setScope(?string $scope): static
+	public function setScopeStrategy(?string $scopeStrategy): static
 	{
-		$this->scope = ScopeFactory::getScope((string)$scope, $this);
+		$this->scopeStrategy = ScopeStrategyFactory::getStrategy((string)$scopeStrategy);
 		return $this;
 	}
 
-	public function isInScope(): bool
+	protected function applyScopeStrategy(): static
 	{
-		return !is_null($this->scope);
+		if ($this->isInScope())
+		{
+			$this->headers = $this->scopeStrategy->apply($this->headers);
+		}
+
+		return $this;
+	}
+
+	private function isInScope(): bool
+	{
+		return !is_null($this->scopeStrategy);
 	}
 }

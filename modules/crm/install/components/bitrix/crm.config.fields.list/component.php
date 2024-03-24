@@ -111,11 +111,15 @@ if(
 		$CACHE_MANAGER->ClearByTag('crm_fields_list_'.$arResult['ENTITY_ID']);
 	}
 
-	if($_POST['action_all_rows_'.$arResult['GRID_ID']] == 'Y' && $_POST['action_button_'.$arResult['GRID_ID']] == 'delete')
+	$actionAllRows = ($_POST['action_all_rows_' . $arResult['GRID_ID']] ?? null);
+	$actionButton = ($_POST['action_button_'.$arResult['GRID_ID']] ?? null);
+	if ($actionAllRows === 'Y' && $actionButton === 'delete')
 	{
 		$arFields = $CCrmFields->GetFields();
-		foreach($arFields as $ID => $arField)
-			$CCrmFields->DeleteField($arField['ID']);
+		foreach ($arFields as $field)
+		{
+			$CCrmFields->DeleteField($field['ID']);
+		}
 
 		//Clear components cache
 		$CACHE_MANAGER->ClearByTag('crm_fields_list_'.$arResult['ENTITY_ID']);

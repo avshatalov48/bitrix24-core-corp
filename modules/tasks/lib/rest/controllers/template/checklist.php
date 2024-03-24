@@ -30,7 +30,7 @@ class Checklist extends Base
 	/**
 	 * @return array
 	 */
-	public function getAutoWiredParameters()
+	public function getAutoWiredParameters(): array
 	{
 		return [
 			new ExactParameter(

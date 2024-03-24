@@ -79,9 +79,18 @@ abstract class DocumentHandler implements IErrorable
 			{
 				$this->oauthService->getEntityOAuth()->addScope($scope);
 			}
+			foreach ($this->getScopesForRemove() as $scope)
+			{
+				$this->oauthService->getEntityOAuth()->removeScope($scope);
+			}
 		}
 
 		return $this->oauthService;
+	}
+
+	protected function getScopesForRemove(): array
+	{
+		return [];
 	}
 
 	protected function getScopes(): array

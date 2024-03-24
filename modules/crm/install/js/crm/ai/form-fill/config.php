@@ -17,6 +17,7 @@ return [
 		'main.core',
 		'ui.buttons',
 		'crm.ai.call',
+		'crm.ai.slider',
 	],
 	'skip_core' => false,
 ];

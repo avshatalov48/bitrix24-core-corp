@@ -21,7 +21,7 @@ class CallDynamicsGraph extends Base implements IReportMultipleData
 	public function getMultipleData()
 	{
 		$calculatedData = $this->getCalculatedData();
-		if (!$calculatedData)
+		if (empty($calculatedData))
 		{
 			return [];
 		}
@@ -90,10 +90,6 @@ class CallDynamicsGraph extends Base implements IReportMultipleData
 	 * Prepares report data.
 	 *
 	 * @return array|mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function prepare()
 	{
@@ -109,9 +105,6 @@ class CallDynamicsGraph extends Base implements IReportMultipleData
 	 * Creates a query to select data based on a filter.
 	 *
 	 * @return Query
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getQueryForReport(): Query
 	{
@@ -129,7 +122,7 @@ class CallDynamicsGraph extends Base implements IReportMultipleData
 
 		$this->addDateWithGrouping($subQuery, true);
 		$subQuery->addSelect('PREVIOUS_DATE');
-		if ($filterParameters['PORTAL_USER_ID'])
+		if (!empty($filterParameters['PORTAL_USER_ID']))
 		{
 			$subQuery->addSelect('PORTAL_USER_ID');
 		}
@@ -146,7 +139,7 @@ class CallDynamicsGraph extends Base implements IReportMultipleData
 		$query = StatisticTable::query();
 
 		$this->addDateWithGrouping($query, true);
-		if ($filterParameters['PORTAL_USER_ID'])
+		if (!empty($filterParameters['PORTAL_USER_ID']))
 		{
 			$query->addSelect('PORTAL_USER_ID');
 		}

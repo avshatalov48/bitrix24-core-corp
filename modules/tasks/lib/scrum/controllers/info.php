@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Scrum\Controllers;
 
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Integration\Market\Router;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\User;
@@ -41,6 +42,11 @@ class Info extends Controller
 				'utm_content' => 'widget',
 			],
 		];
+	}
+
+	public function getMarketPathAction()
+	{
+		return Router::getBasePath();
 	}
 
 	public function saveAnalyticsLabelAction()

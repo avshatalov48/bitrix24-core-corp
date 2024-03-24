@@ -1,10 +1,12 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage xdimport
  * @copyright 2001-2012 Bitrix
  */
+
 namespace Bitrix\XDImport\Integration\Socialnetwork;
 
 use Bitrix\Main\Event;
@@ -21,13 +23,13 @@ Loc::loadMessages(__FILE__);
 
 class LogComment
 {
-	const EVENT_ID_DATA_COMMENT = 'data_comment';
+	public const EVENT_ID_DATA_COMMENT = 'data_comment';
 
-	public static function getEventIdList()
+	public static function getEventIdList(): array
 	{
-		return array(
+		return [
 			self::EVENT_ID_DATA_COMMENT
-		);
+		];
 	}
 
 	/**
@@ -36,18 +38,18 @@ class LogComment
 	 * @param Event $event Event from LogIndex::setIndex().
 	 * @return EventResult
 	 */
-	public static function onIndexGetContent(Event $event)
+	public static function onIndexGetContent(Event $event): EventResult
 	{
 		$result = new EventResult(
 			EventResult::UNDEFINED,
-			array(),
+			[],
 			'xdimport'
 		);
 
 		$eventId = $event->getParameter('eventId');
 		$itemId = $event->getParameter('itemId');
 
-		if (!in_array($eventId, self::getEventIdList()))
+		if (!in_array($eventId, self::getEventIdList(), true))
 		{
 			return $result;
 		}
@@ -56,12 +58,12 @@ class LogComment
 
 		if ((int)$itemId > 0)
 		{
-			$res = \Bitrix\Socialnetwork\LogCommentTable::getList(array(
-				'filter' => array(
-					'=ID' => $itemId
-				),
-				'select' => array('USER_ID', 'MESSAGE', 'UF_SONET_COM_URL_PRV')
-			));
+			$res = \Bitrix\Socialnetwork\LogCommentTable::getList([
+				'filter' => [
+					'=ID' => $itemId,
+				],
+				'select' => [ 'USER_ID', 'MESSAGE', 'UF_SONET_COM_URL_PRV' ],
+			]);
 
 			if ($commentFields = $res->fetch())
 			{
@@ -87,9 +89,9 @@ class LogComment
 
 		$result = new EventResult(
 			EventResult::SUCCESS,
-			array(
+			[
 				'content' => $content,
-			),
+			],
 			'xdimport'
 		);
 
@@ -131,7 +133,7 @@ class LogComment
 		$mentionedUserIdList = array_filter(
 			$mentionedUserIdList,
 			static function ($userId) use ($authorId) {
-				return (int)$userId !== (int)$authorId;
+				return (int)$userId !== $authorId;
 			}
 		);
 
@@ -164,11 +166,11 @@ class LogComment
 
 		$currentUserId = (int)$USER->getId();
 
-		$commentProvider = Livefeed\Provider::init(array(
+		$commentProvider = Livefeed\Provider::init([
 			'ENTITY_TYPE' => Livefeed\Provider::DATA_ENTITY_TYPE_LOG_COMMENT,
 			'LOG_ID' => $logId,
-			'CLONE_DISK_OBJECTS' => false
-		));
+			'CLONE_DISK_OBJECTS' => false,
+		]);
 
 		if (!$commentProvider)
 		{
@@ -186,7 +188,7 @@ class LogComment
 		return $result;
 	}
 
-	protected static function sendNotification(array $params = [])
+	protected static function sendNotification(array $params = []): array
 	{
 		$result = [];
 
@@ -204,7 +206,12 @@ class LogComment
 			return $result;
 		}
 
-		$userIdList = (isset($params['userIdList']) && is_array($params['userIdList']) ? $params['userIdList'] : []);
+		$userIdList = (
+			isset($params['userIdList'])
+			&& is_array($params['userIdList'])
+				? $params['userIdList']
+				: []
+		);
 		$userIdList = self::processUserList($userIdList);
 		if (empty($userIdList))
 		{
@@ -279,14 +286,18 @@ class LogComment
 
 			$postUrl = $provider->getLiveFeedUrl();
 
+			$message = '';
+			$messageOut = '';
+			$messagePush = '';
 			$notifySubTag = '';
+
 			switch ($type)
 			{
 				case 'mention':
 					$notifySubTag = 'XDIMPORT|COMMENT_MENTION|' . $logId . '|' . $userId;
-					$message = ($authorGenderSuffix === 'F' ? 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE_F' : 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE');
-					$messageOut = ($authorGenderSuffix === 'F' ? 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE_OUT_F' : 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE_OUT');
-					$messagePush = ($authorGenderSuffix === 'F' ? 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE_PUSH_F' : 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE_PUSH');
+					$message = ($authorGenderSuffix === 'F' ? 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE2_F' : 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE2');
+					$messageOut = ($authorGenderSuffix === 'F' ? 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE2_OUT_F' : 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE2_OUT');
+					$messagePush = ($authorGenderSuffix === 'F' ? 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE2_PUSH_F' : 'XDIMPORT_COMMENT_MENTION_NOTIFICATION_MESSAGE2_PUSH');
 					break;
 				default:
 			}
@@ -331,7 +342,7 @@ class LogComment
 		return $result;
 	}
 
-	protected static function processUserList(array $userIdList = [])
+	protected static function processUserList(array $userIdList = []): array
 	{
 		$userIdList = array_map(
 			static function ($userId) {
@@ -477,7 +488,7 @@ class LogComment
 			return $result;
 		}
 
-		if (strpos($imageResized['src'], 'http') !== 0)
+		if (mb_strpos($imageResized['src'], 'http') !== 0)
 		{
 			$imageResized['src'] = \Bitrix\Im\Common::getPublicDomain() . $imageResized['src'];
 		}

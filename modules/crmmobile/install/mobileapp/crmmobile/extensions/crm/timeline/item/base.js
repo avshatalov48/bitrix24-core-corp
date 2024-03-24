@@ -313,4 +313,3 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 
 	module.exports = { TimelineItemBase };
 });
-

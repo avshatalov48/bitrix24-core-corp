@@ -33,7 +33,7 @@ class TaskCreated
 
 		if ($responsible instanceof User)
 		{
-			$description .= Loc::getMessage('TASKS_MESSAGE_RESPONSIBLE_ID', null, $recepient->getLang());
+			$description .= "\r\n" . Loc::getMessage('TASKS_MESSAGE_ASSIGNEE_ID', null, $recepient->getLang());
 			$description .= ': '. $responsible->toString($nameTemplate) . "\r\n";
 		}
 

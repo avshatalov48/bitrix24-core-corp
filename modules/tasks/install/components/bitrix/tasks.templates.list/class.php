@@ -297,7 +297,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 			'RESPONSIBLE' => [
 				'id'       => 'RESPONSIBLE',
-				'name'     => Loc::getMessage('TASKS_TEMPLATE_RESPONSIBLE_ID'),
+				'name'     => Loc::getMessage('TASKS_TEMPLATE_ASSIGNEE'),
 				'params'   => ['multiple' => 'Y'],
 				'type'     => 'custom_entity',
 				'selector' => array(
@@ -453,7 +453,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			],
 			'TASKS_TEMPLATE_RESPONSIBLE_ID' => [
 				'id'       => 'TASKS_TEMPLATE_RESPONSIBLE_ID',
-				'name'     => GetMessage('TASKS_TEMPLATE_RESPONSIBLE_ID'),
+				'name'     => Loc::getMessage('TASKS_TEMPLATE_ASSIGNEE'),
 				'editable' => false,
 				'default'  => true,
 				'sort'     => 'responsible_last_name'

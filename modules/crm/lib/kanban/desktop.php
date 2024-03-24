@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Kanban;
 
 
 use Bitrix\Crm\Kanban;
-use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main\Web\Uri;
 
 class Desktop extends Kanban
@@ -16,7 +15,7 @@ class Desktop extends Kanban
 	 */
 	protected function isDropZone(array $status = []): bool
 	{
-		if (\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($this->viewMode))
+		if ($this->viewMode === ViewMode::MODE_DEADLINES)
 		{
 			return false;
 		}

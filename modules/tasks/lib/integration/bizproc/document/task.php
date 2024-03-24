@@ -206,7 +206,7 @@ class Task implements \IBPWorkflowDocument
 				],
 			],
 			'RESPONSIBLE_ID' => [
-				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_RESPONSIBLE_ID'),
+				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_ASSIGNEE_ID'),
 				'Type' => 'user',
 				//'Editable' => true
 			],
@@ -343,7 +343,7 @@ class Task implements \IBPWorkflowDocument
 				'Type' => 'select',
 				'Options' => [
 					'O' => Loc::getMessage('TASKS_BP_DOCUMENT_MEMBER_ROLE_O'),
-					'R' => Loc::getMessage('TASKS_BP_DOCUMENT_MEMBER_ROLE_R'),
+					'R' => Loc::getMessage('TASKS_BP_DOCUMENT_MEMBER_ROLE_R_V2'),
 					'A' => Loc::getMessage('TASKS_BP_DOCUMENT_MEMBER_ROLE_A'),
 					'U' => Loc::getMessage('TASKS_BP_DOCUMENT_MEMBER_ROLE_U'),
 				]
@@ -563,6 +563,28 @@ class Task implements \IBPWorkflowDocument
 		{
 			$fields['PRIORITY'] = $fields['IS_IMPORTANT'] === 'Y' ? Priority::HIGH : Priority::AVERAGE;
 			unset($fields['IS_IMPORTANT']);
+		}
+
+		if (is_array($fields['TAGS'] ?? null))
+		{
+			$preparedTags = [];
+			foreach ($fields['TAGS'] as $tag)
+			{
+				if (is_numeric($tag))
+				{
+					$preparedTags[] = (string)$tag;
+				}
+				elseif (is_string($tag))
+				{
+					$preparedTags[] = $tag;
+				}
+			}
+
+			$fields['TAGS'] = $preparedTags;
+		}
+		else
+		{
+			unset($fields['TAGS']);
 		}
 
 		$documentFields = self::getDocumentFields(null);

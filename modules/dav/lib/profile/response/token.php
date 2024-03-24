@@ -65,7 +65,7 @@ class Token extends Base
 
 
 	/**
-	 * @return \CAllUser|\CUser Return current object user property.
+	 * @return \CUser Return current object user property.
 	 */
 	public function getUser()
 	{
@@ -74,7 +74,7 @@ class Token extends Base
 
 	/**
 	 * Set $user to current user property
-	 * @param \CAllUser|\CUser $user Object of user.
+	 * @param \CUser $user Object of user.
 	 * @return void
 	 */
 	public function setUser($user)

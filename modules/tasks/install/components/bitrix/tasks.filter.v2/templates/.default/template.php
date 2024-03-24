@@ -175,7 +175,7 @@ BX.ready(function(){
 				<input class="filter-textbox" type="text" name="F_TITLE" id="filter-field-title" value="<?php echo htmlspecialcharsbx($arParams["ADV_FILTER"]["F_TITLE"])?>" />
 			</div>
 			<div class="filter-field">
-				<label class="filter-field-title" for="filter-field-responsible"><?php echo GetMessage("TASKS_RESPONSIBLE")?></label>
+				<label class="filter-field-title" for="filter-field-responsible"><?php echo \Bitrix\Main\Localization\Loc::getMessage('TASKS_NO_ASSIGNEE') ?></label>
 				<?php
 					$userName = "";
 					if (intval($arParams["ADV_FILTER"]["F_RESPONSIBLE"]) > 0)

@@ -90,7 +90,12 @@ final class Task extends Base
 		return new Engine\AutoWire\ExactParameter(
 			CTaskItem::class,
 			'task',
-			static function ($className, $id) {
+			function ($className, $id) {
+				if (($id = (int)$id) <= 0)
+				{
+					$this->addError(new Error('wrong task id'));
+					return null;
+				}
 				return new $className($id, Engine\CurrentUser::get()->getId());
 			}
 		);
@@ -1572,14 +1577,8 @@ final class Task extends Base
 			return $tasks;
 		}
 
-		// tmp fix
-		$tagsResult = LabelTable::query()
-			->setSelect(['ID', 'NAME'])
-			->addSelect('TASK_TAG.TASK_ID', 'TASK_ID')
-			->whereIn('TASK_TAG.TASK_ID', $taskIds)
-			->exec();
 		$tags = [];
-		// $tagsResult = CTaskTags::GetList([], ['TASK_ID' => $taskIds]);
+		$tagsResult = CTaskTags::GetList([], ['TASK_ID' => $taskIds]);
 		while ($tag = $tagsResult->fetch())
 		{
 			$tags[$tag['TASK_ID']][$tag['ID']] = [

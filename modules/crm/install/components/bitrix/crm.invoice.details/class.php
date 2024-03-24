@@ -132,7 +132,7 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 			return (string)Loc::getMessage('CRM_INVOICE_DETAILS_COMPONENT_TITLE_COPY');
 		}
 
-		if($this->item->isNew())
+		if($this->isNewItem())
 		{
 			return (string)Loc::getMessage('CRM_INVOICE_DETAILS_COMPONENT_TITLE_NEW');
 		}
@@ -205,7 +205,7 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 		$data = $this->calculateDefaultDataValues($data);
 		$result = parent::saveAction($data);
 
-		if (!$this->getErrors() && $this->item && !$this->item->isNew())
+		if (!$this->getErrors() && $this->item && !$this->isNewItem())
 		{
 			\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->enqueueItemScheduledDocumentsForActualization(
 				\Bitrix\Crm\ItemIdentifier::createByItem($this->item),
@@ -232,5 +232,10 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 				->fillDeadlinesDefaultValues($data, $deadlineStage);
 		}
 		return $data;
+	}
+
+	public function isNewItem(): bool
+	{
+		return $this->item->isNew();
 	}
 }

@@ -109,4 +109,3 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 
 	module.exports = { TimeTracking };
 });
-

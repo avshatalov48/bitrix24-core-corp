@@ -3,6 +3,7 @@ $MESS['TASKS_TEMPLATE_ID'] = "ID";
 $MESS['TASKS_TEMPLATE_TITLE'] = "Название";
 
 $MESS['TASKS_TEMPLATE_RESPONSIBLE_ID'] = "Ответственный";
+$MESS['TASKS_TEMPLATE_ASSIGNEE'] = 'Исполнитель';
 $MESS['TASKS_TEMPLATE_CREATED_BY'] = "Постановщик";
 $MESS['TASKS_TEMPLATE_GROUP_ID'] = "Группа";
 $MESS['TASKS_TEMPLATE_TAGS'] = "Теги";

@@ -14,6 +14,7 @@ import Item from '../../item';
 import './gotochat.css';
 import ServicesConfig from './services-config';
 import Tour from './tour';
+import { TourManager } from 'crm.tour-manager';
 import { Channel, ChatService, Config, Entity, OpenLinesList } from './types';
 
 const MENU_ITEM_STUB_ID = 'stub';
@@ -47,7 +48,7 @@ export default class GoToChat extends Item
 	#region: ?string = null;
 	#isTourViewed: boolean = false;
 	#entityEditor: ?BX.Crm.EntityEditor = null;
-	contactCenterUrl: string = '';
+	marketplaceUrl: string = '';
 	#userSelectorDialog: ?BX.UI.EntitySelector.Dialog = null;
 	#clientSelector: ?ClientSelector = null;
 
@@ -66,12 +67,6 @@ export default class GoToChat extends Item
 	initializeLayout()
 	{
 		super.initializeLayout();
-
-		if (!this.#isTourViewed)
-		{
-			Tour.show();
-		}
-
 		this.#subscribeToReceiversChanges();
 	}
 
@@ -142,14 +137,14 @@ export default class GoToChat extends Item
 			channels,
 			communications,
 			openLineItems,
-			contactCenterUrl,
+			marketplaceUrl,
 		} = data;
 
 		this.currentChannelId = currentChannelId;
 		this.channels = channels;
 		this.communications = communications;
 		this.openLineItems = openLineItems;
-		this.contactCenterUrl = contactCenterUrl;
+		this.marketplaceUrl = marketplaceUrl;
 
 		this.#setCommunicationsParams();
 		this.#setChannelDefaultPhoneId();
@@ -1018,7 +1013,7 @@ export default class GoToChat extends Item
 				id: 'connectOtherSender',
 				text: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_OTHER_SENDER_SERVICE'),
 				className: DEFAULT_MENU_ITEM_CLASS,
-				onclick: () => BX.SidePanel.Instance.open(this.contactCenterUrl),
+				onclick: () => BX.SidePanel.Instance.open(this.marketplaceUrl),
 			},
 		];
 	}
@@ -1093,6 +1088,14 @@ export default class GoToChat extends Item
 		if (this.loader)
 		{
 			void this.loader.hide();
+		}
+	}
+
+	showTour()
+	{
+		if (!this.#isTourViewed && !BX.Crm.EntityEditor.getDefault().isNew())
+		{
+			TourManager.getInstance().registerWithLaunch(new Tour());
 		}
 	}
 }

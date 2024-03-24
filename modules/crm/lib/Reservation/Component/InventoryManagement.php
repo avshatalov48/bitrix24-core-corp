@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Reservation\Component;
 
+use Bitrix\Crm\Order\OrderDealSynchronizer\Products\BasketXmlId;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Catalog;
@@ -178,6 +179,10 @@ final class InventoryManagement
 				{
 					$xmlId = $basketItem->getField('XML_ID');
 				}
+			}
+			if (!$xmlId)
+			{
+				$xmlId =  BasketXmlId::getXmlIdFromRowId((int)$product['ID']);
 			}
 
 			$entityBuilder->addProduct(

@@ -272,7 +272,7 @@ class CrmCompanies extends CrmEntity
 		{
 			$filter = [
 				'SEARCH_CONTENT' => $search,
-				'%TITLE' => $search,
+				'?TITLE' => $search,
 				'@CATEGORY_ID' => 0,
 				'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
 			];

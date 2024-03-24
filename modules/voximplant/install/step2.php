@@ -1,17 +1,20 @@
 <?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-/**
- * @global CMain $APPLICATION
- */
-
-use Bitrix\Main\Config\Option;
-
-if(!check_bitrix_sessid())
+if (!check_bitrix_sessid())
 {
 	return;
 }
 
-IncludeModuleLangFile(__FILE__);
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
+
+/**
+ * @global CMain $APPLICATION
+ */
 
 function checkIsLocalUrl(string $url): bool
 {
@@ -31,40 +34,40 @@ function checkIsLocalUrl(string $url): bool
 $ex = $APPLICATION->GetException();
 if ($ex)
 {
-	CAdminMessage::ShowMessage(Array(
+	\CAdminMessage::ShowMessage(Array(
 		'TYPE' => 'ERROR',
-		'MESSAGE' => GetMessage('MOD_INST_ERR'),
+		'MESSAGE' => Loc::getMessage('MOD_INST_ERR'),
 		'DETAILS' => $ex->GetString(),
 		'HTML' => true,
 	));
 }
 else
 {
-	CAdminMessage::ShowNote(GetMessage('MOD_INST_OK'));
+	\CAdminMessage::ShowNote(Loc::getMessage('MOD_INST_OK'));
 
 	$portalUrl = Option::get('voximplant', 'portal_url');
 	$errorMessageList = [];
 	if ($portalUrl === '')
 	{
-		$errorMessageList[] = GetMessage('VOXIMPLANT_PUBLIC_URL_EMPTY_ERROR');
+		$errorMessageList[] = Loc::getMessage('VOXIMPLANT_PUBLIC_URL_EMPTY_ERROR');
 	}
 	else
 	{
 		if (mb_strpos($portalUrl, 'http://') === false && mb_strpos($portalUrl, 'https://') === false)
 		{
-			$errorMessageList[] = GetMessage('VOXIMPLANT_PUBLIC_URL_WITHOUT_PROTOCOL_ERROR');
+			$errorMessageList[] = Loc::getMessage('VOXIMPLANT_PUBLIC_URL_WITHOUT_PROTOCOL_ERROR');
 		}
 
 		if (checkIsLocalUrl($portalUrl))
 		{
-			$errorMessageList[] = GetMessage('VOXIMPLANT_PUBLIC_URL_LOCAL_ERROR');
+			$errorMessageList[] = Loc::getMessage('VOXIMPLANT_PUBLIC_URL_LOCAL_ERROR');
 		}
 	}
 
 	foreach ($errorMessageList as $errorMessage)
 	{
 		?>
-			<b><?=GetMessage('MOD_INST_ERR')?></b>
+			<b><?=Loc::getMessage('MOD_INST_ERR')?></b>
 			<br>
 			<b style="color:red"><?=$errorMessage?></b>
 		<?php
@@ -75,5 +78,5 @@ else
 <br>
 <form action="<?=$APPLICATION->GetCurPage()?>">
 	<input type="hidden" name="lang" value="<?=LANG?>">
-	<input type="submit" name="" value="<?=GetMessage('MOD_BACK')?>">
+	<input type="submit" name="" value="<?=Loc::getMessage('MOD_BACK')?>">
 </form>

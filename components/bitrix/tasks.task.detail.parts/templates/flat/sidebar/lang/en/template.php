@@ -1,7 +1,4 @@
 <?php
-$MESS["ERROR_TASKS_CHANGE_DEADLINE_COUNT_OVER"] = "You cannot change deadline";
-$MESS["ERROR_TASKS_CHANGE_DEADLINE_MAXTIME_OVER"] = "Furthest possible deadline is #DEADLINE#";
-$MESS["ERROR_TASKS_CHANGE_DEADLINE_NULL"] = "You cannot delete deadline";
 $MESS["TASKS_SIDEBAR_ACCOMPLICES"] = "Participants";
 $MESS["TASKS_SIDEBAR_ADD_ACCOMPLICES"] = "Add Participants";
 $MESS["TASKS_SIDEBAR_ADD_AUDITORS"] = "Add Observers";
@@ -34,10 +31,12 @@ $MESS["TASKS_SIDEBAR_TIME_SPENT_IN_LOGS"] = "Duration";
 $MESS["TASKS_TASK_EPIC"] = "Epic";
 $MESS["TASKS_TTDP_TEMPLATE_COPY_CURRENT_URL"] = "Copy task link to the Clipboard";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ACCOMPLICES"] = "Participants";
+$MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ASSIGNEE"] = "Assignee";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_AUDITORS"] = "Observers";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ENTER_AUDITOR"] = "observe";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR"] = "don't watch";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_CONFIRM"] = "You may be unable to view the task if you are no longer an observer. Do you want to remove your observer role?";
+$MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_MSGVER_1"] = "unfollow";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR"] = "Created by";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE"] = "Responsible person";
 $MESS["TASK_RESULT_SIDEBAR_HINT"] = "Task status summary is required";

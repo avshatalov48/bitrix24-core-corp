@@ -7,11 +7,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
-use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\IconController;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Section\EntityEditorSection;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\EntityEditorController;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\SettingsComponentController;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\DashboardPeriodFilterField;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\PeriodFilterField;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\SettingsPanel;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Errorable;
+use Bitrix\Main\ErrorableImplementation;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -25,9 +34,17 @@ Loader::includeModule("biconnector");
 
 class ApacheSupersetDashboardSettingComponent
 	extends CBitrixComponent
-	implements Controllerable
+	implements Controllerable, Errorable
 {
+	use ErrorableImplementation;
+
 	private ?Dashboard $dashboard;
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->errorCollection = new ErrorCollection();
+	}
 
 	public function configureActions()
 	{
@@ -42,75 +59,8 @@ class ApacheSupersetDashboardSettingComponent
 	public function onPrepareComponentParams($arParams)
 	{
 		$arParams['DASHBOARD_ID'] = (int)($arParams['DASHBOARD_ID'] ?? 0);
-		$arParams['OPEN_LOGIN_POPUP'] = (bool)$arParams['OPEN_LOGIN_POPUP'] ?? false;
-		$arParams['CODE'] = $arParams['CODE'] ?? '';
 
 		return parent::onPrepareComponentParams($arParams);
-	}
-
-	public function saveAction(array $data): Result
-	{
-		$result = new Result();
-		$checkingResult = $this->checkAccess();
-		if (!$checkingResult->isSuccess())
-		{
-			return $checkingResult;
-		}
-
-		$startTime = null;
-		$endTime = null;
-		if ($data['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_RANGE)
-		{
-			$startTime = new Date($data['DATE_FILTER_START']);
-			$endTime = new Date($data['DATE_FILTER_END']);
-		}
-
-		$period = EmbeddedFilter\DateTime::getDefaultPeriod();
-		if (EmbeddedFilter\DateTime::isAvailablePeriod($data['FILTER_PERIOD']))
-		{
-			$period = $data['FILTER_PERIOD'];
-		}
-
-		$dashboardId = (int)$this->arParams['DASHBOARD_ID'];
-		if ($dashboardId > 0)
-		{
-			$this->initDashboard();
-			if (!$this->dashboard)
-			{
-				$result->addError(new Error('Dashboard was not found'));
-
-				return $result;
-			}
-
-			$dashboardObject = $this->dashboard->getOrmObject();
-
-			$dashboardObject->setDateFilterStart($startTime);
-			$dashboardObject->setDateFilterEnd($endTime);
-			$dashboardObject->setFilterPeriod($period);
-
-			return $dashboardObject->save();
-		}
-
-		Option::set('biconnector', EmbeddedFilter\DateTime::CONFIG_PERIOD_OPTION_NAME, $period);
-		if ($startTime !== null)
-		{
-			Option::set('biconnector', EmbeddedFilter\DateTime::CONFIG_DATE_START_OPTION_NAME, $startTime->toString());
-		}
-		else
-		{
-			Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_DATE_START_OPTION_NAME]);
-		}
-
-		if ($endTime !== null)
-		{
-			Option::set('biconnector', EmbeddedFilter\DateTime::CONFIG_DATE_END_OPTION_NAME, $endTime->toString());
-		}
-		else
-		{
-			Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_DATE_END_OPTION_NAME]);
-		}
-
-		return $result;
 	}
 
 	public function executeComponent()
@@ -129,7 +79,15 @@ class ApacheSupersetDashboardSettingComponent
 		}
 
 		$this->initDashboard();
-		$this->arResult['FORM_PARAMETERS'] = $this->getFormParameters();
+		if ($this->dashboard === null)
+		{
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_DASHBOARD_NOT_FOUND');
+			$this->includeComponentTemplate();
+
+			return;
+		}
+
+		$this->initSettingsPanel();
 		$this->arResult['TITLE'] = $this->getTitle();
 
 		Toolbar::addButton(
@@ -148,6 +106,42 @@ class ApacheSupersetDashboardSettingComponent
 		$this->includeComponentTemplate();
 	}
 
+	private function initSettingsPanel(): void
+	{
+		$ajaxData = [
+			'COMPONENT_NAME' => $this->getName(),
+			'ACTION_NAME' => 'save',
+			'SIGNED_PARAMETERS' => $this->getSignedParameters(),
+		];
+
+		$settingsPanel =
+			(new SettingsPanel('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS'))
+			->addController(
+				$this->getController(),
+				new IconController('ICON_CONTROLLER')
+			)
+			->addSection($this->getFilterSection())
+			->setAjaxData($ajaxData)
+		;
+
+		if (isset($this->arParams['DASHBOARD_ID']))
+		{
+			$settingsPanel->setEntityId($this->arParams['DASHBOARD_ID']);
+		}
+
+		$this->arResult['SETTINGS_PANEL'] = $settingsPanel;
+	}
+
+	private function getController(): EntityEditorController
+	{
+		return
+			(new SettingsComponentController('SETTING_COMPONENT_CONTROLLER'))
+			->setConfig([
+				'dashboardAnalyticInfo' => $this->getDashboardInfo(),
+			])
+		;
+	}
+
 	private function checkAccess(): Result
 	{
 		$result = new Result();
@@ -156,13 +150,6 @@ class ApacheSupersetDashboardSettingComponent
 			!Loader::includeModule('bitrix24')
 			|| !Feature::isFeatureEnabled('bi_constructor')
 		)
-		{
-			$result->addError(new Error(Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_FEATURE_UNAVAILABLE')));
-
-			return $result;
-		}
-
-		if (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
 		{
 			$result->addError(new Error(Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_FEATURE_UNAVAILABLE')));
 
@@ -178,119 +165,30 @@ class ApacheSupersetDashboardSettingComponent
 		$this->dashboard = $superset->getDashboardRepository()->getById((int)$this->arParams['DASHBOARD_ID']);
 	}
 
-	private function getFormParameters(): array
+	private function getFilterSection(): EntityEditorSection
 	{
-		return [
-			'GUID' => 'BICONNECTOR_SUPERSET_SETTINGS',
-			'INITIAL_MODE' => 'edit',
-			'ENTITY_ID' => $this->arParams['ID'] ?? null,
-			'ENTITY_TYPE_NAME' => 'dashboardSettings',
-			'ENTITY_FIELDS' => $this->getEntityFields(),
-			'ENTITY_CONFIG' => $this->getEntityConfig(),
-			'ENTITY_DATA' => $this->getEntityData(),
-			'ENTITY_CONTROLLERS' => $this->getEntityControllers(),
-			'ENABLE_PAGE_TITLE_CONTROLS' => true,
-			'ENABLE_COMMON_CONFIGURATION_UPDATE' => true,
-			'ENABLE_PERSONAL_CONFIGURATION_UPDATE' => true,
-			'ENABLE_SECTION_DRAG_DROP' => false,
-			'ENABLE_CONFIG_CONTROL' => false,
-			'ENABLE_FIELD_DRAG_DROP' => false,
-			'ENABLE_FIELDS_CONTEXT_MENU' => false,
-			'IS_IDENTIFIABLE_ENTITY' => false,
-			'ENABLE_MODE_TOGGLE' => false,
-			'COMPONENT_AJAX_DATA' => [
-				'COMPONENT_NAME' => $this->getName(),
-				'ACTION_NAME' => 'save',
-				'SIGNED_PARAMETERS' => $this->getSignedParameters(),
-			],
-		];
+		$dateFilterSection = new EntityEditorSection('DASHBOARD_FILTER');
+		if ($this->dashboard !== null)
+		{
+			$dateFilterSection->addField(new DashboardPeriodFilterField(
+				id: 'DASHBOARD_FILTER',
+				dashboard: $this->dashboard,
+			));
+		}
+		else
+		{
+			$dateFilterSection->addField(new PeriodFilterField('DASHBOARD_FILTER'));
+		}
+
+		return $dateFilterSection;
 	}
 
 	private function getTitle(): string
 	{
-		return Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_TITLE');
-	}
-
-	private function getEntityConfig(): array
-	{
-		return [
-			[
-				'title' => Loc::getMessage('SUPERSET_DASHBOARD_SETTINGS_TITLE_DATE_FILTER'),
-				'name' => 'filter',
-				'type' => 'section',
-				'enableTitle' => false,
-				'elements' => [
-					['name' => 'FILTER_PERIOD'],
-				],
-				'data' => [
-					'isChangeable' => false,
-					'isRemovable' => false,
-				],
-			],
-		];
-	}
-
-	private function getEntityFields(): array
-	{
-		return [
-			$this->getDateFilterField(),
-		];
-	}
-
-	private function getDateFilterField(): array
-	{
-		$periods = [
-			EmbeddedFilter\DateTime::PERIOD_WEEK,
-			EmbeddedFilter\DateTime::PERIOD_MONTH,
-			EmbeddedFilter\DateTime::PERIOD_QUARTER,
-			EmbeddedFilter\DateTime::PERIOD_HALF_YEAR,
-			EmbeddedFilter\DateTime::PERIOD_YEAR,
-			EmbeddedFilter\DateTime::PERIOD_RANGE,
-		];
-
-		$items = [];
-		foreach ($periods as $period)
-		{
-			$items[] = [
-				'NAME' => EmbeddedFilter\DateTime::getPeriodName($period),
-				'VALUE' => $period,
-			];
-		}
-
-		return [
-			'id' => 'FILTER_PERIOD',
-			'title' => '',
-			'name' => 'FILTER_PERIOD',
-			'type' => 'timePeriod',
-			'data' => [
-				'items' => $items,
-				'dateStartFieldName' => 'DATE_FILTER_START',
-				'dateEndFieldName' => 'DATE_FILTER_END',
-			],
-			'isDragEnabled' => false,
-		];
-	}
-
-	private function getEntityData(): array
-	{
-		if ($this->dashboard)
-		{
-			$filter = new EmbeddedFilter\DateTime($this->dashboard);
-
-			$dateStart = $filter->getDateStart();
-			$dateEnd = $filter->getDateEnd();
-			$filterPeriod = $filter->getPeriod();
-		}
-
-		$dateStart ??= EmbeddedFilter\DateTime::getDefaultDateStart();
-		$dateEnd ??= EmbeddedFilter\DateTime::getDefaultDateEnd();
-		$filterPeriod ??= EmbeddedFilter\DateTime::getDefaultPeriod();
-
-		return [
-			'DATE_FILTER_START' => $dateStart,
-			'DATE_FILTER_END' => $dateEnd,
-			'FILTER_PERIOD' => $filterPeriod,
-		];
+		return Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_TITLE')
+			. ': '
+			. $this->dashboard->getTitle()
+		;
 	}
 
 	private function getDashboardInfo(): ?array
@@ -307,16 +205,81 @@ class ApacheSupersetDashboardSettingComponent
 		];
 	}
 
-	private function getEntityControllers(): array
+	public function saveAction(array $data): ?array
 	{
+		$checkingResult = $this->checkAccess();
+		if (!$checkingResult->isSuccess())
+		{
+			$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS'));
+			$this->errorCollection->setError($error);
+
+			return null;
+		}
+
+		$dashboardId = (int)$this->arParams['DASHBOARD_ID'];
+		if ($dashboardId === 0)
+		{
+			$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_INVALID_DASHBOARD'));
+			$this->errorCollection->setError($error);
+
+			return null;
+		}
+
+		$this->initDashboard();
+		if (!$this->dashboard)
+		{
+			$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_INVALID_DASHBOARD'));
+			$this->errorCollection->setError($error);
+
+			return null;
+		}
+
+		$dashboardObject = $this->dashboard->getOrmObject();
+
+		if ($data['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_DEFAULT)
+		{
+			$dashboardObject->setDateFilterStart(null);
+			$dashboardObject->setDateFilterEnd(null);
+			$dashboardObject->setFilterPeriod(null);
+			$dashboardObject->save();
+
+			return ['FILTER_PERIOD' => EmbeddedFilter\DateTime::PERIOD_DEFAULT];
+		}
+
+		$startTime = null;
+		$endTime = null;
+		if ($data['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_RANGE)
+		{
+			try
+			{
+				$startTime = new Date($data['DATE_FILTER_START']);
+				$endTime = new Date($data['DATE_FILTER_END']);
+			}
+			catch (\Bitrix\Main\ObjectException)
+			{
+				$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_INVALID_RANGE'));
+				$this->errorCollection->setError($error);
+
+				return null;
+			}
+		}
+
+		$period = EmbeddedFilter\DateTime::getDefaultPeriod();
+		$innerPeriod = $data['FILTER_PERIOD'] ?? '';
+		if (is_string($innerPeriod) && EmbeddedFilter\DateTime::isAvailablePeriod($innerPeriod))
+		{
+			$period = $innerPeriod;
+		}
+
+		$dashboardObject->setDateFilterStart($startTime);
+		$dashboardObject->setDateFilterEnd($endTime);
+		$dashboardObject->setFilterPeriod($period);
+		$dashboardObject->save();
+
 		return [
-			[
-				'name' => 'SETTING_COMPONENT_CONTROLLER',
-				'type' => 'settingComponentController',
-				'config' => [
-					'dashboardAnalyticInfo' => $this->getDashboardInfo(),
-				],
-			],
+			'FILTER_PERIOD' => $period,
+			'DATE_FILTER_START' => $startTime,
+			'DATE_FILTER_END' => $endTime,
 		];
 	}
 }

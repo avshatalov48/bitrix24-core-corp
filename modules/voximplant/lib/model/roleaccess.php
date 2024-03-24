@@ -63,14 +63,9 @@ class RoleAccessTable extends Base
 	 */
 	public static function truncate()
 	{
-		$connection = Application::getConnection();
-		$entity = self::getEntity();
+		Application::getConnection()->truncateTable(self::getTableName());
 
-		$sql = "TRUNCATE TABLE ".$entity->getDBTableName();
-		$connection->queryExecute($sql);
-
-		$result = new Entity\DeleteResult();
-		return $result;
+		return new Entity\DeleteResult();
 	}
 
 	/**

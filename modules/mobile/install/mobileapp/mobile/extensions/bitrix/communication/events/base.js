@@ -2,7 +2,6 @@
  * @module communication/events/base
  */
 jn.define('communication/events/base', (require, exports, module) => {
-
 	const { inAppUrl } = require('in-app-url');
 	const { isEmpty } = require('utils/object');
 
@@ -11,7 +10,6 @@ jn.define('communication/events/base', (require, exports, module) => {
 		constructor(props)
 		{
 			this.props = props;
-			this.isApiVersionGreaterThan45 = Application.getApiVersion() >= 45;
 		}
 
 		open()
@@ -43,5 +41,4 @@ jn.define('communication/events/base', (require, exports, module) => {
 	}
 
 	module.exports = { BaseEvent };
-
 });

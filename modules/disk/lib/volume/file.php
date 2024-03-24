@@ -35,30 +35,35 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		$storageId = $this->getFilterValue('STORAGE_ID', '=@');
 		if (!empty($storageId))
 		{
-			$this->addSelect('STORAGE_ID', "'$storageId'");
+			$this->addSelect('STORAGE_ID', $storageId);
 		}
 
 		$moduleId = $this->getFilterValue('MODULE_ID', '=@');
 		if (!empty($moduleId))
 		{
-			$this->addSelect('MODULE_ID', "'$moduleId'");
+			$this->addSelect('MODULE_ID', $moduleId);
 		}
 
 		$folderId = $this->getFilterValue('FOLDER_ID', '=@');
 		if (!empty($folderId))
 		{
-			$this->addSelect('FOLDER_ID', "'$folderId'");
+			$this->addSelect('FOLDER_ID', $folderId);
 		}
 
 		$parentFolderId = $this->getFilterValue('PARENT_ID', '=@!');
 		if (!empty($parentFolderId))
 		{
 			$this
-				->addSelect('PARENT_ID', "'$parentFolderId'")
+				->addSelect('PARENT_ID', $parentFolderId)
 				->unsetFilter('PARENT_ID')
 				->addFilter('@PARENT_ID', Volume\QueryHelper::prepareFolderTreeQuery($parentFolderId));
 		}
 
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
+		{
+			$prefSql = 'ORDER BY NULL';
+		}
 
 		/**
 		 * @param string $selectSql
@@ -101,7 +106,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			$fromSql .= "
 				(
 					SELECT
-						SUM(IFNULL(ver.SIZE, files.SIZE)) AS FILE_SIZE,
+						COALESCE(SUM(COALESCE(ver.SIZE, files.SIZE)), 0) AS FILE_SIZE,
 						COUNT(DISTINCT files.ID) AS FILE_COUNT,
 						COUNT(DISTINCT ver.ID) AS VERSION_COUNT
 						{$subSelectSql}
@@ -142,7 +147,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				/* preview */
 				, (
 					SELECT
-						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
+						SUM(COALESCE(preview_file.FILE_SIZE, 0)) + SUM(COALESCE(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT
 					FROM
 						b_disk_object files
@@ -169,7 +174,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		$buildAttachedSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
 		{
 			$selectSql .= "
-				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
+				, COALESCE(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
 			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
@@ -204,7 +209,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		$buildExternalSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
 		{
 			$selectSql .= "
-				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
+				, COALESCE(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
 			$columns = array_merge($columns, [
 				'LINK_COUNT',
@@ -240,7 +245,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		$buildSharingSql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
 		{
 			$selectSql .= "
-				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
+				, COALESCE(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
 			$columns = array_merge($columns, [
 				'SHARING_COUNT',
@@ -273,11 +278,11 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		 * @param string $subWhereSql
 		 * @return void
 		 */
-		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '')
+		$buildUnnecessarySql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '') use ($prefSql)
 		{
 			$selectSql .= "
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
-				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
+				, COALESCE(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
 			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
@@ -307,7 +312,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version
 								GROUP BY object_id
-								ORDER BY NULL
+								{$prefSql}
 							) head ON head.OBJECT_ID = files.ID
 
 							LEFT JOIN b_disk_attached_object  attached
@@ -319,7 +324,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND COALESCE(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -330,7 +335,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 						GROUP BY
 							files.ID
-						ORDER BY NULL
+						{$prefSql}
 					) src
 				) CNT_FREE
 			";
@@ -403,7 +408,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			SELECT
 				'{$indicatorType}' AS INDICATOR_TYPE,
 				{$ownerId} as OWNER_ID,
-				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME
+				". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME
 				{$selectSql}
 			FROM
 				{$fromSql}
@@ -411,8 +416,8 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 		VolumeTable::createTemporally();
 		VolumeTable::clearTemporally();
-		$tableName = VolumeTable::getTableName();
-		$temporallyTableName = VolumeTable::getTemporallyName();
+		$tableName = $sqlHelper->quote(VolumeTable::getTableName());
+		$temporallyTableName = $sqlHelper->quote(VolumeTable::getTemporallyName());
 
 		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
 		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
@@ -423,13 +428,12 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		{
 			$filterId = $this->getFilterId();
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$querySql = "
-				UPDATE
-					{$tableName} destinationTbl,
-					({$temporallyDataSource}) sourceQuery
-				SET {$columnList}
-				WHERE destinationTbl.ID = {$filterId}
-			";
+			$querySql = $sqlHelper->prepareCorrelatedUpdate(
+				$tableName, 'destinationTbl',
+				$columnList,
+				"({$temporallyDataSource}) sourceQuery",
+				"destinationTbl.ID = {$filterId}"
+			);
 		}
 		else
 		{
@@ -458,6 +462,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	public function getMeasurementResult(array $collectedData = [self::DISK_FILE, self::ATTACHED_OBJECT, self::EXTERNAL_LINK, self::UNNECESSARY_VERSION, self::CRM_OBJECT]): DB\Result
 	{
 		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
 
 		$parentFolderId = $this->getFilterValue('PARENT_ID', '=@!');
 		if (!empty($parentFolderId))
@@ -509,25 +514,27 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 
 		$sqlHint = '';
-		if($connection instanceof DB\MysqlCommonConnection)
+		$prefSql = '';
+		if ($connection instanceof DB\MysqlCommonConnection)
 		{
 			$sqlHint = 'SQL_CALC_FOUND_ROWS';
+			$prefSql = 'ORDER BY NULL';
 		}
 
-		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
+		$indicatorType = $sqlHelper->forSql(static::className());
 
 		/**
 		 * @param string $whereSql
 		 * @return string
 		 */
-		$buildQueryFiles = function($whereSql = '')
+		$buildQueryFiles = function($whereSql = '') use ($prefSql)
 		{
 			// language=SQL
 			$querySql = "
 				/* files */
 				(
 					SELECT
-						SUM(IFNULL(ver.SIZE, 0)) AS VERSION_SIZE,
+						SUM(COALESCE(ver.SIZE, 0)) AS VERSION_SIZE,
 						COUNT(distinct ver.ID) AS VERSION_COUNT,
 						files.NAME as TITLE,
 						files.SIZE as SIZE_FILE,
@@ -554,7 +561,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						files.NAME,
 						files.SIZE,
 						files.UPDATE_TIME
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FILES
 			";
 			return $querySql;
@@ -564,7 +571,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		 * @param string $whereSql
 		 * @return string
 		 */
-		$buildPreviewSql = function($whereSql = '')
+		$buildPreviewSql = function($whereSql = '') use ($prefSql)
 		{
 			// language=SQL
 			$querySql = "
@@ -572,7 +579,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				LEFT JOIN
 				(
 					SELECT
-						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
+						SUM(COALESCE(preview_file.FILE_SIZE, 0)) + SUM(COALESCE(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
 						files.ID AS FID
 					FROM
@@ -588,7 +595,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						files.STORAGE_ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_PREVIEW
 					ON CNT_PREVIEW.FID = CNT_FILES.FID
 			";
@@ -599,7 +606,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		 * @param string $whereSql
 		 * @return string
 		 */
-		$buildQueryAttached = function($whereSql = '')
+		$buildQueryAttached = function($whereSql = '') use ($prefSql)
 		{
 			// language=SQL
 			$querySql = "
@@ -619,7 +626,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY
 						files.ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_ATTACH
 					ON CNT_ATTACH.FID = CNT_FILES.FID
 			";
@@ -630,7 +637,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		 * @param string $whereSql
 		 * @return string
 		 */
-		$buildQueryExternal = function($whereSql = '')
+		$buildQueryExternal = function($whereSql = '') use ($prefSql)
 		{
 			// language=SQL
 			$querySql = "
@@ -651,7 +658,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY
 						files.ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_LINK
 					ON CNT_LINK.FID = CNT_FILES.FID
 			";
@@ -662,7 +669,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		 * @param string $whereSql
 		 * @return string
 		 */
-		$buildQuerySharing = function($whereSql = '')
+		$buildQuerySharing = function($whereSql = '') use ($prefSql)
 		{
 			// language=SQL
 			$querySql = "
@@ -683,7 +690,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY
 						files.ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_SHARING
 					ON CNT_FILES.FID = CNT_SHARING.FID
 			";
@@ -694,7 +701,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		 * @param string $whereSql
 		 * @return string
 		 */
-		$buildQueryCrm = function($whereSql = '')
+		$buildQueryCrm = function($whereSql = '') use ($prefSql)
 		{
 			// language=SQL
 			$querySql = "
@@ -715,7 +722,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY
 						files.ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_CRM
 					ON CNT_FILES.FID = CNT_CRM.FID
 			";
@@ -726,7 +733,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		 * @param string $whereSql
 		 * @return string
 		 */
-		$buildQueryUnnecessary = function($whereSql = '')
+		$buildQueryUnnecessary = function($whereSql = '') use ($prefSql)
 		{
 			// language=SQL
 			$querySql = "
@@ -748,7 +755,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 							SELECT  object_id, max(id) as id
 							FROM b_disk_version
 							GROUP BY object_id
-							ORDER BY NULL
+							{$prefSql}
 						) head ON head.OBJECT_ID = files.ID
 
 						LEFT JOIN b_disk_attached_object  attached
@@ -760,7 +767,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 							ON link.OBJECT_ID  = ver.OBJECT_ID
 							AND link.VERSION_ID = ver.ID
 							AND link.VERSION_ID != head.ID
-							AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+							AND COALESCE(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 					WHERE
 						files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -771,7 +778,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 					GROUP BY
 						files.ID
-					ORDER BY NULL
+					{$prefSql}
 				) CNT_FREE
 					ON CNT_FREE.FID = CNT_FILES.FID
 			";
@@ -830,36 +837,36 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			if (in_array(self::PREVIEW_FILE, $collectedData))
 			{
 				$selectSql .=
-					', IFNULL(CNT_PREVIEW.PREVIEW_SIZE, 0) as PREVIEW_SIZE '.
-					', IFNULL(CNT_PREVIEW.PREVIEW_COUNT, 0) as PREVIEW_COUNT';
+					', COALESCE(CNT_PREVIEW.PREVIEW_SIZE, 0) as PREVIEW_SIZE '.
+					', COALESCE(CNT_PREVIEW.PREVIEW_COUNT, 0) as PREVIEW_COUNT';
 				$fromSql .= $buildPreviewSql($whereSql);
 			}
 
 			if (in_array(self::ATTACHED_OBJECT, $collectedData))
 			{
-				$selectSql .= ', IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) as ATTACHED_COUNT';
-				$usingSql .= '+ IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0)';
+				$selectSql .= ', COALESCE(CNT_ATTACH.ATTACHED_COUNT, 0) as ATTACHED_COUNT';
+				$usingSql .= '+ COALESCE(CNT_ATTACH.ATTACHED_COUNT, 0)';
 				$fromSql .= $buildQueryAttached($whereSql);
 			}
 
 			if (in_array(self::EXTERNAL_LINK, $collectedData))
 			{
-				$selectSql .= ', IFNULL(CNT_LINK.LINK_COUNT, 0) as LINK_COUNT';
-				$usingSql .= '+ IFNULL(CNT_LINK.LINK_COUNT, 0)';
+				$selectSql .= ', COALESCE(CNT_LINK.LINK_COUNT, 0) as LINK_COUNT';
+				$usingSql .= '+ COALESCE(CNT_LINK.LINK_COUNT, 0)';
 				$fromSql .= $buildQueryExternal($whereSql);
 			}
 
 			if (in_array(self::SHARING_OBJECT, $collectedData))
 			{
-				$selectSql .= ', IFNULL(CNT_SHARING.SHARING_COUNT, 0) as SHARING_COUNT';
+				$selectSql .= ', COALESCE(CNT_SHARING.SHARING_COUNT, 0) as SHARING_COUNT';
 				$fromSql .= $buildQuerySharing($whereSql);
 			}
 
 			if (in_array(self::UNNECESSARY_VERSION, $collectedData))
 			{
 				$selectSql .=
-					', IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) as UNNECESSARY_VERSION_SIZE '.
-					', IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) as UNNECESSARY_VERSION_COUNT';
+					', COALESCE(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) as UNNECESSARY_VERSION_SIZE '.
+					', COALESCE(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) as UNNECESSARY_VERSION_COUNT';
 
 				$fromSql .= $buildQueryUnnecessary($whereSql);
 			}
@@ -869,8 +876,8 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				$crmIndicator = new Volume\Module\Crm();
 				if ($crmIndicator->isMeasureAvailable())
 				{
-					$selectSql .= ', IFNULL(CNT_CRM.ACT_COUNT, 0) as ACT_COUNT';
-					$usingSql .= '+ IFNULL(CNT_CRM.ACT_COUNT, 0)';
+					$selectSql .= ', COALESCE(CNT_CRM.ACT_COUNT, 0) as ACT_COUNT';
+					$usingSql .= '+ COALESCE(CNT_CRM.ACT_COUNT, 0)';
 					$fromSql .= $buildQueryCrm($whereSql);
 				}
 			}

@@ -92,7 +92,7 @@ class CustomSection
 	 *
 	 * @return string|null
 	 */
-	public function getModuleId(): string
+	public function getModuleId(): ?string
 	{
 		return $this->moduleId;
 	}

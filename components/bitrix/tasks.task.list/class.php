@@ -20,12 +20,12 @@ use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Helper\Grid;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
@@ -708,7 +708,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult['USER_ID'] = $this->userId;
 		$this->arResult['OWNER_ID'] = $this->arParams['USER_ID'];
 
-		$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::DEFAULT;
+		$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::getDefault();
 
 		$this->arParams['DEFAULT_ROLEID'] = $this->filter->getDefaultRoleId();
 

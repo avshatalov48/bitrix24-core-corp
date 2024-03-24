@@ -48,16 +48,16 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-						'crmmobile.Terminal.Entity.createPayment',
-						{
-							json: {
-								entityId: props.entityId,
-								entityTypeId: props.entityTypeId,
-								responsibleId: props.responsibleId,
-								products: props.products,
-							},
+					'crmmobile.Terminal.Entity.createPayment',
+					{
+						json: {
+							entityId: props.entityId,
+							entityTypeId: props.entityTypeId,
+							responsibleId: props.responsibleId,
+							products: props.products,
 						},
-					)
+					},
+				)
 					.then((response) => {
 						if (response.data.payment)
 						{

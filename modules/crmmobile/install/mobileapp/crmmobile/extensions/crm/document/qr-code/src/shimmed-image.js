@@ -3,6 +3,7 @@
  */
 jn.define('crm/document/qr-code/shimmed-image', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+
 	class ShimmedImage extends LayoutComponent
 	{
 		constructor(props)
@@ -127,4 +128,3 @@ jn.define('crm/document/qr-code/shimmed-image', (require, exports, module) => {
 
 	module.exports = { ShimmedImage };
 });
-

@@ -2,6 +2,8 @@
 namespace Bitrix\Tasks\Grid\Task\Row;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Helper\Analytics;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\User;
 use CComponentEngine;
 use CExtranet;
@@ -34,9 +36,22 @@ class Action
 		$groupId = (int)$this->parameters['GROUP_ID'];
 		$actions = $this->rowData['ACTION'];
 
-		$urlPath = ($groupId > 0 ? $this->parameters['PATH_TO_GROUP_TASKS_TASK'] : $this->parameters['PATH_TO_USER_TASKS_TASK']);
 		$pinAction = (($this->rowData['IS_PINNED'] ?? '') === 'Y' ? 'UNPIN' : 'PIN');
 		$muteAction = (($this->rowData['IS_MUTED'] ?? '') === 'Y' ? 'UNMUTE' : 'MUTE');
+
+		$taskViewPath = new Main\Web\Uri(
+			TaskPathMaker::getPath([
+				'user_id' => $userId,
+				'task_id' => $taskId,
+				'group_id' => $groupId,
+				'action' => 'view',
+			])
+		);
+		$taskViewPath->addParams([
+			'ta_sec' => Analytics::SECTION['tasks'],
+			'ta_sub' => Analytics::SUB_SECTION['list'],
+			'ta_el' => Analytics::ELEMENT['context_menu'],
+		]);
 
 		$taskRowActions = [
 			[
@@ -49,12 +64,7 @@ class Action
 			],
 			[
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_VIEW'),
-				'href' => CComponentEngine::MakePathFromTemplate($urlPath, [
-					'user_id' => $userId,
-					'task_id' => $taskId,
-					'group_id' => $groupId,
-					'action' => 'view',
-				]),
+				'href' => $taskViewPath->getUri(),
 			],
 		];
 		if ($this->parameters['CAN_USE_PIN'])
@@ -68,7 +78,7 @@ class Action
 		{
 			$taskRowActions[] = [
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_EDIT'),
-				'href' => CComponentEngine::MakePathFromTemplate($urlPath, [
+				'href' => TaskPathMaker::getPath([
 					'user_id' => $userId,
 					'task_id' => $taskId,
 					'group_id' => $groupId,
@@ -76,15 +86,27 @@ class Action
 				]),
 			];
 		}
+
+		$subTaskPath = new Main\Web\Uri(
+			TaskPathMaker::getPath([
+				'user_id' => $userId,
+				'task_id' => 0,
+				'group_id' => $groupId,
+				'action' => 'edit',
+			])
+		);
+		$subTaskPath->addParams([
+			'PARENT_ID' => $taskId,
+			'viewType' => 'VIEW_MODE_LIST',
+			'ta_sec' => Analytics::SECTION['tasks'],
+			'ta_sub' => Analytics::SUB_SECTION['list'],
+			'ta_el' => Analytics::ELEMENT['context_menu'],
+		]);
 		$taskRowActions[] = [
 			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ADD_SUB_TASK'),
-			'href' => CComponentEngine::MakePathFromTemplate($urlPath, [
-					'user_id' => $userId,
-					'task_id' => 0,
-					'group_id' => $groupId,
-					'action' => 'edit',
-				]).'?PARENT_ID='.$taskId.'&viewType=VIEW_MODE_LIST',
+			'href' => $subTaskPath->getUri(),
 		];
+
 		if ($actions['ADD_FAVORITE'])
 		{
 			$taskRowActions[] = [
@@ -141,24 +163,33 @@ class Action
 				'onclick' => 'BX.Tasks.GridActions.action("defer", '.$taskId.');',
 			];
 		}
+
+		$copyTaskPath = new Main\Web\Uri(
+			TaskPathMaker::getPath([
+				'user_id' => $userId,
+				'task_id' => 0,
+				'action' => 'edit',
+				'group_id' => $groupId,
+			])
+		);
+		$copyTaskPath->addParams([
+			'COPY' => $taskId,
+			'viewType' => 'VIEW_MODE_LIST',
+			'ta_sec' => Analytics::SECTION['tasks'],
+			'ta_sub' => Analytics::SUB_SECTION['list'],
+			'ta_el' => Analytics::ELEMENT['context_menu'],
+		]);
 		$taskRowActions[] = [
 			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY'),
-			'href' => CComponentEngine::MakePathFromTemplate($urlPath, [
-					'user_id' => $userId,
-					'task_id' => 0,
-					'action' => 'edit',
-					'group_id' => $groupId,
-				]).'?COPY='.$taskId.'&viewType=VIEW_MODE_LIST',
+			'href' => $copyTaskPath->getUri(),
 		];
-		$copyLink = tasksServerName() . CComponentEngine::MakePathFromTemplate(
-			$urlPath,
-			[
-				'user_id' => $userId,
-				'task_id' => $taskId,
-				'action' => 'view',
-				'group_id' => $groupId,
-			]
-		);
+
+		$copyLink = tasksServerName() . TaskPathMaker::getPath([
+			'user_id' => $userId,
+			'task_id' => $taskId,
+			'action' => 'view',
+			'group_id' => $groupId,
+		]);
 		$taskRowActions[] = [
 			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY_LINK'),
 			'onclick' => 'BX.Tasks.GridActions.action("copyLink", '.$taskId.', {copyLink: "'.$copyLink.'"});',

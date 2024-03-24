@@ -16,7 +16,8 @@ $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 	"ui.buttons.icons",
 	"popup",
 	"ui.fonts.opensans",
-	"ui.dialogs.checkbox-list"
+	"ui.dialogs.checkbox-list",
+	'ui.tour',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -49,14 +50,14 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 <? endif ?>
 
 <?php
-if ($arParams['MENU_GROUP_ID'] == 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] != 'N')
+if ((int)$arParams['MENU_GROUP_ID'] === 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] !== 'N')
 {
 	include(__DIR__ . '/create_button.php');
 }
 
 include(__DIR__.'/filter.php');
 
-if ($arParams['USE_GROUP_SELECTOR'] == 'Y' && $arParams['PROJECT_VIEW'] !== 'Y')
+if ($arParams['USE_GROUP_SELECTOR'] === 'Y' && $arParams['PROJECT_VIEW'] !== 'Y')
 {
 	include(__DIR__.'/group_selector.php');
 }
@@ -70,16 +71,16 @@ if ($arResult['SPRINT'])
 <div class="pagetitle-container pagetitle-align-right-container">
 
 	<?php
-	if ($arParams['SHOW_USER_SORT'] == 'Y' ||
-			  $arParams['USE_GROUP_BY_SUBTASKS'] == 'Y' ||
-			  $arParams['USE_GROUP_BY_GROUPS'] == 'Y' ||
+	if ($arParams['SHOW_USER_SORT'] === 'Y' ||
+			  $arParams['USE_GROUP_BY_SUBTASKS'] === 'Y' ||
+			  $arParams['USE_GROUP_BY_GROUPS'] === 'Y' ||
 			  $arParams['USE_EXPORT'] == 'Y' ||
 			  !empty($arParams['POPUP_MENU_ITEMS'])
 	)
 	{
 		include(__DIR__.'/popup_menu.php');
 	}
-	if ($arParams["SHOW_QUICK_FORM_BUTTON"] != "N")
+	if ($arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
 	{
 		include(__DIR__.'/quick_form.php');
 	}
@@ -99,7 +100,7 @@ if ($isBitrix24Template)
 ?>
 
 <?php CJSCore::Init("spotlight");
-if (!$arResult['isPresetAhaMomentViewed'] && Preset::isRolePresetsEnabled())
+if ($arResult['showPresetTourGuide'])
 {
 ?>
 <script>

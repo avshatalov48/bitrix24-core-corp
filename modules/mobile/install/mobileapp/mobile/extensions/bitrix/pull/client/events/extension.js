@@ -53,7 +53,10 @@
 			this.context = 'client';
 
 			this._internalRpcResponseAwaiters = {};
+			this.userStatusCallbacks = {}; // [userId] => array of callbacks
+
 			BX.addCustomEvent("Pull::internalRpcResponse", this.onInternalRpcResponse.bind(this));
+			BX.addCustomEvent("onPullOnlineEvent", (command, params, extra) => this.emitUserStatusChange(params.user_id, params.online))
 		}
 
 		/**
@@ -310,6 +313,46 @@
 		getUsersLastSeen(userList)
 		{
 			return this.executeInternalRpc("getUsersLastSeen", {userList});
+		}
+
+		subscribeUserStatusChange(userId, callback)
+		{
+			return new Promise((resolve, reject) => {
+				this.executeInternalRpc('subscribeUserStatus', {userId}).then(() => {
+					if (!this.userStatusCallbacks[userId])
+					{
+						this.userStatusCallbacks[userId] = [];
+					}
+					if (typeof(callback) === 'function')
+					{
+						this.userStatusCallbacks[userId].push(callback);
+					}
+
+					return resolve()
+				}).catch(err => reject(err))
+			})
+		}
+
+		unsubscribeUserStatusChange(userId, callback)
+		{
+			if (this.userStatusCallbacks[userId])
+			{
+				this.userStatusCallbacks[userId] = this.userStatusCallbacks[userId].filter(cb => cb !== callback)
+				if (this.userStatusCallbacks[userId].length === 0)
+				{
+					return this.executeInternalRpc('unsubscribeUserStatus', {userId});
+				}
+			}
+
+			return Promise.resolve();
+		}
+
+		emitUserStatusChange(userId, isOnline)
+		{
+			if (this.userStatusCallbacks[userId])
+			{
+				this.userStatusCallbacks[userId].forEach(cb => cb({userId, isOnline}));
+			}
 		}
 
 		sendMessage(users, moduleId, command, params, expiry)

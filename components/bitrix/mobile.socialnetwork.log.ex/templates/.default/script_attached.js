@@ -98,32 +98,17 @@ function __MSLOnFeedInit(params)
 						icon: 'checkbox',
 						arrowFlag: true,
 						action: function() {
-
-							if (Application.getApiVersion() >= 31)
-							{
-								BXMobileApp.Events.postToComponent(
-									'taskbackground::taskList::open',
-									[{
-										groupId: groupID,
-										groupName: BX.message('MSLLogTitle'),
-										groupImageUrl: groupImage,
-										ownerId: BX.message('USER_ID')
-									}],
-									'background'
-								);
-							}
-							else
-							{
-								var path = BX.message('MSLPathToTasksRouter');
-								path = path
-									.replace('__ROUTE_PAGE__', 'list')
-									.replace('#USER_ID#', BX.message('USER_ID'));
-								window.BXMobileApp.PageManager.loadPageUnique({
-									url: path,
-									bx24ModernStyle: true
-								});
-							}
-						}
+							BXMobileApp.Events.postToComponent(
+								'taskbackground::taskList::open',
+								[{
+									groupId: groupID,
+									groupName: BX.message('MSLLogTitle'),
+									groupImageUrl: groupImage,
+									ownerId: BX.message('USER_ID'),
+								}],
+								'background',
+							);
+						},
 					});
 
 					BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
@@ -2165,16 +2150,13 @@ BitrixMSL.prototype.InitDetail = function(params)
 		type: 'detail',
 	});
 
-	if (Application.getApiVersion() >= 34)
-	{
-		setTimeout(function() {
-			var postInstance = BX.MobileLivefeed.Instance.getPostFromLogId(BX.MobileLivefeed.Instance.getLogId());
-			if (postInstance)
-			{
-				postInstance.initDetailPin();
-			}
-		}.bind(this), 0);
-	}
+	setTimeout(function() {
+		var postInstance = BX.MobileLivefeed.Instance.getPostFromLogId(BX.MobileLivefeed.Instance.getLogId());
+		if (postInstance)
+		{
+			postInstance.initDetailPin();
+		}
+	}.bind(this), 0);
 };
 
 BitrixMSL.prototype.setExpertMode = function(params)

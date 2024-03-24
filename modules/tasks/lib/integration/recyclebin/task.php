@@ -40,8 +40,8 @@ use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Kanban\TaskStageTable;
-use Bitrix\Tasks\Replicator\Template\Regularity\Time\Service\RegularityService;
-use Bitrix\Tasks\Replicator\Template\Repository\TaskRepository;
+use Bitrix\Tasks\Replication\Task\Regularity\Time\Service\RegularityService;
+use Bitrix\Tasks\Replication\Repository\TaskRepository;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -613,14 +613,6 @@ class Task implements Recyclebinable
 		return $result;
 	}
 
-	/**
-	 * @throws NotImplementedException
-	 */
-	public static function previewFromRecyclebin(Entity $entity): void
-	{
-		throw new NotImplementedException("Coming soon...");
-	}
-
 	public static function getNotifyMessages(): array
 	{
 		return [
@@ -644,7 +636,8 @@ class Task implements Recyclebinable
 		return [
 			'LIMIT_DATA' => [
 				'RESTORE' => [
-					'DISABLE' => TaskLimit::isLimitExceeded() || !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASKS_RECYCLEBIN),
+					'DISABLE' => TaskLimit::isLimitExceeded()
+						|| !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASKS_RECYCLEBIN),
 					'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
 				],
 			],
@@ -688,5 +681,14 @@ class Task implements Recyclebinable
 		return Loc::getMessage('TASKS_RECYCLEBIN_TASK_MOVED_TO_RECYCLEBIN', [
 			'#RECYCLEBIN_URL#' => str_replace('#user_id#', $userId, RouteDictionary::PATH_TO_RECYCLEBIN),
 		]);
+	}
+
+	/**
+	 * @deprecated and will be removed since recyclebin 23.0.0
+	 * @throws NotImplementedException
+	 */
+	public static function previewFromRecyclebin(Entity $entity): void
+	{
+		throw new NotImplementedException("Coming soon...");
 	}
 }

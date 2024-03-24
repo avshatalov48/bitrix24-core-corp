@@ -7,6 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Service\Container;
 
+/** @global CMain $APPLICATION */
+/** @var array $arResult */
+
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/activity.js');
 
 \Bitrix\Main\UI\Extension::load([
@@ -15,7 +18,7 @@ CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/activity.js');
 
 $activityEditorParams = [
 	'CONTAINER_ID' => '',
-	'EDITOR_ID' => $arResult['activityEditorId'],
+	'EDITOR_ID' => $arResult['activityEditorId'] ?? null,
 	'PREFIX' => '',
 	'ENABLE_UI' => false,
 	'ENABLE_EMAIL_ADD' => true,
@@ -31,7 +34,7 @@ $APPLICATION->IncludeComponent(
 	'',
 	$activityEditorParams,
 	$this->getComponent(),
-	array('HIDE_ICONS' => 'Y')
+	['HIDE_ICONS' => 'Y']
 );
 
 if (\Bitrix\Crm\Integration\Bitrix24\Product::isRegionRussian(true))
@@ -52,7 +55,9 @@ else
 		'instagram',
 	];
 }
+
 $arResult['contactCenterUrl'] = Container::getInstance()->getRouter()->getContactCenterUrl();
+
 ?>
 	<div id="channel-selector-container"></div>
 

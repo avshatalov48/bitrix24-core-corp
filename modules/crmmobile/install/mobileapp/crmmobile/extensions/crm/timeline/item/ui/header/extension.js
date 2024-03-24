@@ -240,17 +240,17 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				return null;
 			}
 
-			const { type, action } = this.props.changeStreamButton;
+			const { type, action, disableIfReadonly } = this.props.changeStreamButton;
 
 			const props = {
 				onClick: () => {
 					Haptics.impactMedium();
 					this.onAction(action);
 				},
+				isReadonly: this.props.isReadonly && disableIfReadonly,
 			};
 
 			const cancelButton = makeCancelButton(
-
 				() => this.changeStreamButtonRef.uncheck(),
 
 				this.props.confirmationTexts.cancelButton,
@@ -268,17 +268,17 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			const onCompleteButtonClick = () => {
 				Haptics.impactMedium();
 
-				if (this.sharedStorage.get(`${this.props.activityType}_showConfirm`) !== 'N')
+				if (this.sharedStorage.get(`${this.props.activityType}_showConfirm`) === 'N')
+				{
+					this.onAction(action);
+				}
+				else
 				{
 					Alert.confirm(
 						this.props.confirmationTexts.title,
 						this.props.confirmationTexts.description,
 						[confirmButton, cancelButton],
 					);
-				}
-				else
-				{
-					this.onAction(action);
 				}
 			};
 
@@ -290,6 +290,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 							ref: (ref) => this.changeStreamButtonRef = ref,
 							onClick: onCompleteButtonClick,
 							testId: 'TimelineItemChangeStreamComplete',
+							isReadonly: this.props.isReadonly && disableIfReadonly,
 						});
 
 					case ChangeStreamButtonTypes.PIN:
@@ -331,4 +332,3 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 
 	module.exports = { TimelineItemHeader };
 });
-

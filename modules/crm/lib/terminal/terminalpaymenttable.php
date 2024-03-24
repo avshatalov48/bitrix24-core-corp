@@ -14,6 +14,19 @@ use Bitrix\Main\ORM\Fields\IntegerField;
  * </ul>
  *
  * @package Bitrix\Crm\Terminal
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TerminalPayment_Query query()
+ * @method static EO_TerminalPayment_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_TerminalPayment_Result getById($id)
+ * @method static EO_TerminalPayment_Result getList(array $parameters = [])
+ * @method static EO_TerminalPayment_Entity getEntity()
+ * @method static \Bitrix\Crm\Terminal\EO_TerminalPayment createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection createCollection()
+ * @method static \Bitrix\Crm\Terminal\EO_TerminalPayment wakeUpObject($row)
+ * @method static \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection wakeUpCollection($rows)
  */
 class TerminalPaymentTable extends DataManager
 {

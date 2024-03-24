@@ -39,5 +39,7 @@ $MESS["TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS"] = "Tracking task progress has 
 Counters for new comments and overdue tasks will help you focus on areas requiring most attention.<br><br>
 The tasks in any view (List, Planner, Deadline or Kanban) are sorted according to their active state. The task moves up in the list if it receives a new comment or changes deadline.<br>";
 $MESS["TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_BUTTON"] = "Details";
+$MESS["TASKS_TEMPLATE_SPOTLIGHT_SIMPLE_COUNTERS_MSGVER_1"] = "Counters for new comments and overdue tasks will help you focus on areas requiring most attention.<br><br>
+The tasks in any view (List, Planner, Deadline or Kanban) are sorted by their respective last active date. The task moves up in the list if it receives a new comment or changes deadline.<br>";
 $MESS["TASKS_TEMPLATE_SPOTLIGHT_TIMELINE"] = "Use the new view to plan your tasks and watch deadlines.";
 $MESS["TASKS_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT"] = "Edit automation rules and triggers here";

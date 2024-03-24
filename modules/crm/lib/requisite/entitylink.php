@@ -7,6 +7,7 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service;
 use Bitrix\Main;
+use Bitrix\Main\Data\Cache;
 
 /**
  * Class EntityLink
@@ -40,8 +41,23 @@ class EntityLink
 	const ENTITY_OPERATION_UPDATE = 2;
 	const ENTITY_OPERATION_LAST = 2;
 
+	protected const CACHE_PATH_MY_COMPNAY = '/crm/requisite/entitylink/mycompany/';
+	protected const CACHE_TTL_MY_COMPANY = 86400;
+	protected const CACHE_ID_MY_COMPANY_BY_ID = 'myCompanyById';
+	protected const CACHE_ID_MY_COMPANY_FIRST = 'myCompanyFirst';
+
 	private static $FIELD_INFOS = null;
 	private static $parentEntityFieldMap = null;
+
+	protected static ?Crm\Cache\RatedCache $byEntityCache = null;
+
+	protected static function clearByEntityCache()
+	{
+		if (static::$byEntityCache)
+		{
+			static::$byEntityCache->clear();
+		}
+	}
 
 	/**
 	 * @param $entityTypeId
@@ -52,6 +68,26 @@ class EntityLink
 	 */
 	public static function getByEntity($entityTypeId, $entityId)
 	{
+		$entityTypeId = (int)$entityTypeId;
+		$entityId = (int)$entityId;
+
+		if (!\CCrmOwnerType::IsDefined($entityTypeId) || $entityId <= 0)
+		{
+			return null;
+		}
+
+		if (static::$byEntityCache === null)
+		{
+			static::$byEntityCache = new Crm\Cache\RatedCache();
+		}
+
+		$cacheKey = $entityTypeId . '_' . $entityId;
+		$result = static::$byEntityCache->get($cacheKey);
+		if ($result !== null)
+		{
+			return $result;
+		}
+
 		$dbResult = LinkTable::getList(
 			array(
 				'filter' => array('=ENTITY_TYPE_ID' => $entityTypeId, '=ENTITY_ID' => $entityId),
@@ -60,7 +96,11 @@ class EntityLink
 			)
 		);
 		$fields = $dbResult->fetch();
-		return is_array($fields) ? $fields : null;
+
+		$fields = is_array($fields) ? $fields : [];
+		static::$byEntityCache->set($cacheKey, $fields);
+
+		return !empty($fields) ? $fields : null;
 	}
 
 	/**
@@ -194,7 +234,7 @@ class EntityLink
 					|| $entityTypeId != \CCrmOwnerType::SmartInvoice
 				)
 				{
-					list($result, $entityNotFound) = self::clientSellerInfoByOrm(
+					[$result, $entityNotFound] = self::clientSellerInfoByOrm(
 						$factory,
 						$entityId,
 						$result,
@@ -205,7 +245,7 @@ class EntityLink
 				}
 				else
 				{
-					list($result, $entityNotFound) = self::clientSellerInfoByFactory(
+					[$result, $entityNotFound] = self::clientSellerInfoByFactory(
 						$factory,
 						$entityId,
 						$result,
@@ -539,6 +579,8 @@ class EntityLink
 				'MC_BANK_DETAIL_ID' => $mcBankDetailId
 			)
 		);
+
+		static::clearByEntityCache();
 	}
 
 	/**
@@ -565,6 +607,8 @@ class EntityLink
 				'ENTITY_ID' => $entityId
 			)
 		);
+
+		static::clearByEntityCache();
 	}
 
 	/**
@@ -599,6 +643,8 @@ class EntityLink
 			"SET MC_REQUISITE_ID = 0, MC_BANK_DETAIL_ID = 0 ".
 			"WHERE MC_REQUISITE_ID = {$requisiteId} AND REQUISITE_ID > 0"
 		);
+
+		static::clearByEntityCache();
 	}
 
 	public static function getSelectedRequisiteLink($entityTypeId, $entityId): array
@@ -1640,43 +1686,94 @@ class EntityLink
 		return $resultLink;
 	}
 
+	public static function clearMyCompanyCache(): void
+	{
+		Cache::clearCache(true, static::CACHE_PATH_MY_COMPNAY);
+	}
+
 	/**
 	 * @return int ID of default seller company.
 	 */
 	public static function getDefaultMyCompanyId()
 	{
-		$myCompanyId = (int)Main\Config\Option::get('crm', 'def_mycompany_id', 0);
+		$optionValue = Main\Config\Option::get('crm', 'def_mycompany_id', null);
+		$isOptionSet = ($optionValue !== null);
+		$myCompanyId = $isOptionSet ? (int)$optionValue : 0;
 
 		if ($myCompanyId > 0)
 		{
-			$res = \CCrmCompany::GetListEx(
-				array(),
-				array('ID' => $myCompanyId, 'IS_MY_COMPANY' => 'Y', 'CHECK_PERMISSIONS' => 'N'),
-				false,
-				array('nTopCount' => 1),
-				array('ID')
-			);
-			if (!is_object($res) || !($row = $res->Fetch()) || !is_array($row))
+			$cache = Cache::createInstance();
+			if (
+				$cache->initCache(
+					static::CACHE_TTL_MY_COMPANY,
+					static::CACHE_ID_MY_COMPANY_BY_ID,
+					static::CACHE_PATH_MY_COMPNAY
+				)
+			)
+			{
+				$cacheVars = $cache->getVars();
+			}
+			elseif ($cache->startDataCache())
+			{
+				$res = \CCrmCompany::GetListEx(
+					array(),
+					array('ID' => $myCompanyId, 'IS_MY_COMPANY' => 'Y', 'CHECK_PERMISSIONS' => 'N'),
+					false,
+					array('nTopCount' => 1),
+					array('ID')
+				);
+				$cacheVars = (is_object($res) && ($row = $res->Fetch()) && is_array($row)) ? [$myCompanyId => 'Y'] : [];
+				$cache->endDataCache($cacheVars);
+			}
+
+			if (!isset($cacheVars[$myCompanyId]))
+			{
 				$myCompanyId = 0;
+			}
 		}
 
 		if ($myCompanyId <= 0)
 		{
 			$myCompanyId = 0;
 
-			$res = \CCrmCompany::GetListEx(
-				array('ID' => 'ASC'),
-				array('IS_MY_COMPANY' => 'Y', 'CHECK_PERMISSIONS' => 'N'),
-				false,
-				array('nTopCount' => 1),
-				array('ID')
-			);
-			if (($row = $res->Fetch()) && is_array($row) && isset($row['ID']))
+			$cache = Cache::createInstance();
+			if (
+				$cache->initCache(
+					static::CACHE_TTL_MY_COMPANY,
+					static::CACHE_ID_MY_COMPANY_FIRST,
+					static::CACHE_PATH_MY_COMPNAY
+				)
+			)
 			{
-				$myCompanyId = (int)$row['ID'];
+				$cacheVars = $cache->getVars();
+			}
+			elseif ($cache->startDataCache())
+			{
+				$res = \CCrmCompany::GetListEx(
+					array('ID' => 'ASC'),
+					array('IS_MY_COMPANY' => 'Y', 'CHECK_PERMISSIONS' => 'N'),
+					false,
+					array('nTopCount' => 1),
+					array('ID')
+				);
+				$cacheVars = [
+					'myCompanyId' =>
+						(($row = $res->Fetch()) && is_array($row) && isset($row['ID']))
+							? (int)$row['ID']
+							: 0
+				];
+				$cache->endDataCache($cacheVars);
 			}
 
-			self::setDefaultMyCompanyId($myCompanyId);
+			if (isset($cacheVars['myCompanyId']))
+			{
+				$myCompanyId = $cacheVars['myCompanyId'];
+			}
+
+			if (!$isOptionSet || $myCompanyId > 0)
+			{
+				self::setDefaultMyCompanyId($myCompanyId);
+			}
 		}
 
 		return $myCompanyId;
@@ -1787,6 +1884,8 @@ class EntityLink
 				array('MC_REQUISITE_ID' => $seedRequisiteId)
 			);
 		}
+
+		static::clearByEntityCache();
 
 		$event = new Main\Event(
 			'crm',

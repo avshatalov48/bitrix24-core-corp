@@ -19,20 +19,32 @@ class ActivityCounter extends EntityCounter
 	 * @param int $userID User ID.
 	 * @param array|null $extras Additional Parameters.
 	 * @throws Main\NotSupportedException
-	 * @throws Main\ArgumentOutOfRangeException
 	 */
 	public function __construct($typeID, $userID = 0, array $extras = null)
 	{
-		if($typeID !== EntityCounterType::PENDING
-			&& $typeID !== EntityCounterType::OVERDUE
-			&& $typeID !== EntityCounterType::CURRENT)
+		// @todo check this types
+		$supportedCounterTypes = [
+			EntityCounterType::PENDING,
+			EntityCounterType::OVERDUE,
+			EntityCounterType::CURRENT,
+			EntityCounterType::INCOMING_CHANNEL,
+			EntityCounterType::IDLE,
+			EntityCounterType::PENDING|EntityCounterType::INCOMING_CHANNEL,
+			EntityCounterType::READY_TODO,
+			EntityCounterType::ALL,
+		];
+
+		if (in_array($typeID, $supportedCounterTypes, true))
 		{
-			$typeName = EntityCounterType::resolveName($typeID);
-			throw new Main\NotSupportedException("The '{$typeName}' is not supported in current context");
+			parent::__construct(\CCrmOwnerType::Activity, $typeID, $userID, $extras);
+
+			return;
 		}
 
-		parent::__construct(\CCrmOwnerType::Activity, $typeID, $userID, $extras);
+		$typeName = EntityCounterType::resolveName($typeID);
+		throw new Main\NotSupportedException("The '{$typeName}' is not supported in current context");
 	}
+
 	/**
 	 * Prepare entity query
 	 * @param int $entityTypeID Entity Type ID
@@ -146,43 +158,29 @@ class ActivityCounter extends EntityCounter
 		return $join;
 	}
 
-	/**
-	 * Evaluate counter value
-	 * @return int
-	 */
-	public function calculateValue(): int
+	public function prepareEntityListFilter(array $params = null): array
 	{
-		if (
-			!\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled()
-			|| !\Bitrix\Crm\Settings\CounterSettings::getInstance()->canBeCounted()
-		)
+		if ($params === null)
 		{
-			return 0; // counters feature is completely disabled
+			$params = [];
 		}
 
-		$queries = array(
-			$this->prepareEntityQuery(\CCrmOwnerType::Contact)->getQuery(),
-			$this->prepareEntityQuery(\CCrmOwnerType::Company)->getQuery(),
-			$this->prepareEntityQuery(\CCrmOwnerType::Lead)->getQuery(),
-			$this->prepareEntityQuery(\CCrmOwnerType::Deal)->getQuery(),
-			$this->prepareEntityQuery(\CCrmOwnerType::Order)->getQuery()
-		);
+		$sql = $this->getEntityListSqlExpression($params);
+		if (empty($sql))
+		{
+			return [];
+		}
 
-		$dbResult = Main\Application::getConnection()->query(
-			/** @lang MySQL */
-			'SELECT COUNT(DISTINCT t.ACTIVITY_ID) QTY FROM ('.implode(' UNION ALL ', $queries).') t'
-		);
-		$fields = $dbResult->fetch();
-		return is_array($fields) ? (int)$fields['QTY'] : 0;
-	}
-	/**
-	 * @param array|null $params List Params (MASTER_ALIAS, MASTER_IDENTITY and etc).
-	 * @throws Main\NotSupportedException
-	 * @return void
-	 */
-	public function prepareEntityListFilter(array $params = null)
-	{
-		throw new Main\NotSupportedException("This method is not supported in current context");
+		$masterAlias = $params['MASTER_ALIAS'] ?? 'L';
+		$masterIdentity = $params['MASTER_IDENTITY'] ?? 'ID';
+
+		return [
+			'__CONDITIONS' => [
+				[
+					'SQL' => "{$masterAlias}.{$masterIdentity} IN ({$sql})",
+				],
+			],
+		];
 	}
 
 	private function convertToUserTime(DateTime $date)

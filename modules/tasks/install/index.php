@@ -464,12 +464,16 @@ Class tasks extends CModule
 				'interval' => 300,
 			],
 			[
+				'name' => '\Bitrix\Tasks\Util\AgentManager::createOverdueChats();',
+				'interval' => 900,
+			],
+			[
 				'name' => '\Bitrix\Tasks\Internals\Effective::agent();',
 				'nextExec' => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime('23:50:00')),
 				'disableTimeZone' => true,
 			],
 			[
-				'name' => '(new \Bitrix\Tasks\Integration\Recyclebin\AutoRemoveTaskAgent(new \Bitrix\Tasks\Integration\Recyclebin\RecycleBinOrmRepository()))->execute();',
+				'name' => '\Bitrix\Tasks\Integration\Recyclebin\AutoRemoveTaskAgent::execute();',
 				'nextExec' => \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+600, "FULL"),
 			],
 		];

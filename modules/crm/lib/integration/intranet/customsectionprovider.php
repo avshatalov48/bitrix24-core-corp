@@ -3,10 +3,12 @@
 namespace Bitrix\Crm\Integration\Intranet;
 
 use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Integration\Intranet\SystemPageProvider\ActivityPage;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Service\Router;
+use Bitrix\Intranet\CustomSection\DataStructures\CustomSection;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable;
 use Bitrix\Intranet\CustomSection\Manager;
 use Bitrix\Intranet\CustomSection\Provider;
@@ -17,6 +19,15 @@ class CustomSectionProvider extends Provider
 {
 	public const COUNTER_PREFIX = 'crm_custom_page_';
 
+	public static function getSystemPageProviders(): array
+	{
+		$router = Container::getInstance()->getRouter();
+
+		return [
+			$router->getSystemPageCode(\CCrmOwnerType::Activity) => ActivityPage::class,
+		];
+	}
+
 	public static function getEntityTypeByPageSetting(string $pageSetting): ?int
 	{
 		return IntranetManager::getEntityTypeIdByPageSettings($pageSetting);
@@ -24,7 +35,7 @@ class CustomSectionProvider extends Provider
 
 	public static function getEntityTypeIdByCounterId(string $code): ?int
 	{
-		return IntranetManager::getEntityTypeIdByPageSettings(CustomSectionProvider::getPageSettingsByCounterId($code));
+		return IntranetManager::getEntityTypeIdByPageSettings(self::getPageSettingsByCounterId($code));
 	}
 
 	/**
@@ -32,13 +43,23 @@ class CustomSectionProvider extends Provider
 	 */
 	public function isAvailable(string $pageSettings, int $userId): bool
 	{
+		if (self::isSystemPage($pageSettings))
+		{
+			return self::checkIfsystemPageIsAvailable($pageSettings);
+		}
+
 		$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($pageSettings);
 		if (!\CCrmOwnerType::IsDefined($entityTypeId))
 		{
 			return false;
 		}
 
-		return Container::getInstance()->getUserPermissions($userId)->checkReadPermissions($entityTypeId);
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+
+		return
+			$userPermissions->checkReadPermissions($entityTypeId)
+			|| $userPermissions->canUpdateType($entityTypeId)
+		;
 	}
 
 	/**
@@ -46,6 +67,20 @@ class CustomSectionProvider extends Provider
 	 */
 	public function resolveComponent(string $pageSettings, Uri $url): ?Component
 	{
+		if (self::isSystemPage($pageSettings))
+		{
+			$systemPageCode = explode(self::PAGE_SETTINGS_SEPARATOR, $pageSettings)[0];
+			$pageProviders = static::getSystemPageProviders();
+			$dataClass = $pageProviders[$systemPageCode] ?? null;
+
+			if (is_subclass_of($dataClass, SystemPageProvider::class))
+			{
+				return $dataClass::getComponent($pageSettings, $url);
+			}
+
+			return null;
+		}
+
 		$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($pageSettings);
 		if (is_null($entityTypeId) || !\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 		{
@@ -64,12 +99,17 @@ class CustomSectionProvider extends Provider
 		{
 			foreach ($section->getPages() as $page)
 			{
+				if ($page->getSettings() !== $pageSettings)
+				{
+					continue;
+				}
+
 				$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($page->getSettings());
-				if (($entityTypeId > 0) && ($page->getSettings() === $pageSettings))
+				if ($entityTypeId > 0)
 				{
 					$url = IntranetManager::getUrlForCustomSectionPage($section->getCode(), $page->getCode());
 					$componentParameters = [
-						'root' => ($url ? $url->getPath() : null),
+						'root' => $url?->getPath(),
 					];
 
 					$listView = $router->getCurrentListView($entityTypeId);
@@ -98,7 +138,7 @@ class CustomSectionProvider extends Provider
 
 	public function getCounterValue(string $pageSettings): ?int
 	{
-		return EntityCounterFactory::createNamed($this->getCounterId($pageSettings))->getValue();
+		return EntityCounterFactory::createNamed($this->getCounterId($pageSettings))?->getValue();
 	}
 
 	public static function getPageSettingsByCounterId(string $counterId): string
@@ -174,9 +214,104 @@ class CustomSectionProvider extends Provider
 		{
 			return Manager::buildCustomSectionCounterId('crm', $customSectionId);
 		}
-		else
+
+		return 'crm_custom_section_' . $customSectionId;
+	}
+
+	/**
+	 * Returns true if page is a system (added by the developer)
+	 *
+	 * @param string $pageSettings
+	 * @return bool
+	 */
+	public static function isSystemPage(string $pageSettings): bool
+	{
+		$pageProviders = static::getSystemPageProviders();
+		foreach ($pageProviders as $systemPageCode => $systemPageProvider)
 		{
-			return 'crm_custom_section_' . $customSectionId;
+			if (str_starts_with($pageSettings, $systemPageCode))
+			{
+				return true;
+			}
 		}
+
+		return false;
+	}
+
+	public static function isSystemPageCounter(string $code): bool
+	{
+		$pageProviders = static::getSystemPageProviders();
+		foreach ($pageProviders as $systemPageCode => $systemPageProvider)
+		{
+			if (str_starts_with($code, self::COUNTER_PREFIX . $systemPageCode))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public function getSystemPages(CustomSection $section, bool $ignorePageAvailability = false): array
+	{
+		$systemPages = [];
+
+		$pageProviders = static::getSystemPageProviders();
+		foreach ($pageProviders as $systemPageProvider)
+		{
+			/** @var SystemPageProvider $systemPageProvider */
+			if (!$ignorePageAvailability && !$systemPageProvider::isPageAvailable($section))
+			{
+				continue;
+			}
+
+			$systemPage = $systemPageProvider::getPageInstance($section);
+			if (!is_null($systemPage))
+			{
+				$systemPages[] = $systemPage;
+			}
+		}
+
+		return $systemPages;
+	}
+
+	private static function checkIfSystemPageIsAvailable(string $pageSettings): bool
+	{
+		if (!defined('\Bitrix\Intranet\CustomSection\Provider::PAGE_SETTINGS_SEPARATOR'))
+		{
+			return false;
+		}
+		$separator = \Bitrix\Intranet\CustomSection\Provider::PAGE_SETTINGS_SEPARATOR;
+		[$pageCode, $sectionCode, $foo] = explode($separator, $pageSettings);
+		$pageProviders = static::getSystemPageProviders();
+		if (!isset($pageProviders[$pageCode]))
+		{
+			return false;
+		}
+		$customSections = IntranetManager::getCustomSections();
+		$currentUser = Container::getInstance()->getContext()->getUserId();
+		$provider = new self();
+		foreach ($customSections as $customSection)
+		{
+			if ($customSection->getCode() === $sectionCode)
+			{
+				$pages = $customSection->getPages();
+				// system pages are available only if any entity pages are available:
+				foreach ($pages as $page)
+				{
+					if (
+						!self::isSystemPage($page->getSettings())
+						&& $provider->isAvailable($page->getSettings(), $currentUser)
+					)
+					{
+						return true;
+					}
+				}
+
+				break;
+			}
+		}
+
+		return false;
 	}
 }

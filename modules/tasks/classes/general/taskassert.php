@@ -57,7 +57,8 @@ class CTaskAssert
 
 	public static function logError($logMessage)
 	{
-		trigger_error('CTaskAssert::ELL_ERROR (data loss or corruption expected): ' . $logMessage, E_USER_WARNING);
+
+-		trigger_error('CTaskAssert::ELL_ERROR (data loss or corruption expected): ' . $logMessage, E_USER_WARNING);
 		self::log($logMessage, self::ELL_ERROR);
 		return (false);
 	}

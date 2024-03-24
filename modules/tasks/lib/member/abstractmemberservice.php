@@ -3,26 +3,36 @@
 namespace Bitrix\Tasks\Member;
 
 use Bitrix\Main\Error;
-use Bitrix\Main\Result;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Member\Config\ConfigInterface;
 use Bitrix\Tasks\Member\Exception\MemberException;
 use Bitrix\Tasks\Member\Exception\MemberTypeException;
+use Bitrix\Tasks\Member\Result\MemberResult;
 use Bitrix\Tasks\Member\Role\Accomplices;
 use Bitrix\Tasks\Member\Role\Auditors;
 use Bitrix\Tasks\Member\Role\Responsibles;
 use Bitrix\Tasks\Member\Role\Directors;
 use Bitrix\Tasks\Member\Type\Member;
+use Bitrix\Tasks\Member\Type\MemberCollection;
 
 abstract class AbstractMemberService
 {
-	/** @var Member[] $members */
-	private array $members = [];
+	protected int $entityId;
+	private array $roles = [];
+	private ConfigInterface $config;
+	private MemberCollection $members;
 	private RepositoryInterface $repository;
+	private MemberResult $result;
 
-	public function __construct(protected int $entityId)
+	public static function invalidate(): void
 	{
-		$this->repository = $this->getRepository();
+		AbstractMemberManager::invalidate();
+	}
+
+	public function __construct(int $entityId)
+	{
+		$this->entityId = $entityId;
+		$this->init();
 	}
 
 	abstract public function getRepository(): RepositoryInterface;
@@ -30,36 +40,36 @@ abstract class AbstractMemberService
 	/**
 	 * @see RoleDictionary
 	 */
-	public function get(array $roles, ConfigInterface $config): Result
+	public function get(array $roles, ConfigInterface $config): MemberResult
 	{
-		$result = new Result();
+		$this->roles = $roles;
+		$this->config = $config;
+		$this->result = new MemberResult();
+		$this->members->clear();
+
 		if (is_null($this->repository->getEntity()))
 		{
-			$result->addError(new Error('Task or template not found'));
-			return $result;
+			$this->addError("{$this->repository->getType()}: entity {$this->entityId} not found.");
+			return $this->result;
 		}
 
-		if (!$this->isRolesValid($roles))
+		if (!$this->isRolesValid())
 		{
-			$result->addError(new Error('Invalid $roles data: ' . implode(', ', $roles)));
-			return $result;
+			$this->addError('Invalid $roles data: ' . implode(', ', $this->roles));
+			return $this->result;
 		}
+
 		try
 		{
-			foreach ($roles as $role)
-			{
-				$this->members[$role] = $this->getHandler($role, $config)->get();
-			}
+			$this->setMembers();
 		}
 		catch (MemberException $exception)
 		{
-			$result->addError(new Error($exception->getMessage()));
-			return $result;
+			$this->addError($exception->getMessage());
+			return $this->result;
 		}
 
-		$result->setData($this->members);
-
-		return $result;
+		return $this->result;
 	}
 
 	/**
@@ -73,13 +83,13 @@ abstract class AbstractMemberService
 			RoleDictionary::ROLE_RESPONSIBLE => new Responsibles($this->repository, $config),
 			RoleDictionary::ROLE_DIRECTOR => new Directors($this->repository, $config),
 			RoleDictionary::ROLE_AUDITOR => new Auditors($this->repository, $config),
-			default => throw new MemberTypeException("Unknown member type {$role}"),
+			default => throw new MemberTypeException("Unknown member type {$role} for entity {$this->repository->getEntity()->getId()}"),
 		};
 	}
 
-	private function isRolesValid(array $roles): bool
+	private function isRolesValid(): bool
 	{
-		foreach ($roles as $role)
+		foreach ($this->roles as $role)
 		{
 			if (!in_array($role, RoleDictionary::getAvailableRoles(), true))
 			{
@@ -90,8 +100,38 @@ abstract class AbstractMemberService
 		return true;
 	}
 
-	public static function invalidate(): void
+	/**
+	 * @throws MemberException
+	 */
+	private function setMembers(): void
 	{
-		AbstractMemberManager::invalidate();
+		foreach ($this->roles as $role)
+		{
+			$this->setMembersByRole($role);
+		}
+
+		$this->result->setMembers($this->members);
+	}
+
+	/**
+	 * @throws MemberException
+	 */
+	private function setMembersByRole(string $role): void
+	{
+		$members = $this->getHandler($role, $this->config)->get();
+		array_map(function (Member $member) use ($role): void {
+			$this->members->set($role, $member);
+		}, $members);
+	}
+
+	private function addError(string $message): void
+	{
+		$this->result->addError(new Error($message));
+	}
+
+	private function init(): void
+	{
+		$this->repository = $this->getRepository();
+		$this->members = new MemberCollection();
 	}
 }

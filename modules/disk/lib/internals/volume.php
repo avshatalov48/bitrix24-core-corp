@@ -75,7 +75,7 @@ final class VolumeTable extends DataManager
 	 * Returns DB table name for entity
 	 * @return string
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_disk_volume';
 	}
@@ -84,7 +84,7 @@ final class VolumeTable extends DataManager
 	 * Returns entity map definition.
 	 * @return array
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return array(
 			'ID' => array(
@@ -304,7 +304,7 @@ final class VolumeTable extends DataManager
 	 * @internal
 	 * @return void
 	 */
-	public static function onStorageDelete($storageId, $deletedBy = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID)
+	public static function onStorageDelete($storageId, $deletedBy = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID): void
 	{
 		try
 		{
@@ -314,7 +314,7 @@ final class VolumeTable extends DataManager
 				static::deleteBatch(array('STORAGE_ID' => $storageId));
 			}
 		}
-		catch(\Exception $e)
+		catch(Main\SystemException $e)
 		{
 		}
 	}
@@ -325,7 +325,7 @@ final class VolumeTable extends DataManager
 	 * @internal
 	 * @return void
 	 */
-	public static function onUserDelete($userId)
+	public static function onUserDelete($userId): void
 	{
 		try
 		{
@@ -335,7 +335,7 @@ final class VolumeTable extends DataManager
 				static::deleteBatch(array('OWNER_ID' => $userId));
 			}
 		}
-		catch(\Exception $e)
+		catch(Main\SystemException $e)
 		{
 		}
 	}
@@ -346,7 +346,7 @@ final class VolumeTable extends DataManager
 	 * @internal
 	 * @return void
 	 */
-	public static function deleteBatch(array $filter)
+	public static function deleteBatch(array $filter): void
 	{
 		$connection = Main\Application::getConnection();
 		$tableName = static::getTableName();
@@ -383,7 +383,7 @@ final class VolumeTable extends DataManager
 	 * Removes all data
 	 * @return void
 	 */
-	public static function purify()
+	public static function purify(): void
 	{
 		Main\Application::getConnection()->truncateTable(static::getTableName());
 	}
@@ -392,7 +392,7 @@ final class VolumeTable extends DataManager
 	 * Returns temporally table name.
 	 * @return string
 	 */
-	public static function getTemporallyName()
+	public static function getTemporallyName(): string
 	{
 		return 'b_disk_volume_tmp';
 	}
@@ -401,28 +401,44 @@ final class VolumeTable extends DataManager
 	 * Drops Temporally table
 	 * @return void
 	 */
-	public static function dropTemporally()
+	public static function dropTemporally(): void
 	{
-		$tableName = static::getTemporallyName();
-		Main\Application::getConnection()->query("DROP TEMPORARY TABLE IF EXISTS {$tableName}");
+		$connection = Main\Application::getConnection();
+		$tableName = $connection->getSqlHelper()->quote(static::getTemporallyName());
+		if ($connection instanceof \Bitrix\Main\DB\PgsqlConnection)
+		{
+			$connection->queryExecute("DROP TABLE IF EXISTS {$tableName}");
+		}
+		else
+		{
+			$connection->queryExecute("DROP TEMPORARY TABLE IF EXISTS {$tableName}");
+		}
 	}
 
 	/**
 	 * Creates database structure
 	 * @return void
 	 */
-	public static function createTemporally()
+	public static function createTemporally(): void
 	{
-		$tableName = static::getTemporallyName();
-		$sourceTableName = static::getTableName();
-		Main\Application::getConnection()->query("CREATE TEMPORARY TABLE IF NOT EXISTS {$tableName} SELECT * FROM {$sourceTableName} LIMIT 0");
+		$connection = Main\Application::getConnection();
+		$tableName = $connection->getSqlHelper()->quote(static::getTemporallyName());
+		$sourceTableName = $connection->getSqlHelper()->quote(static::getTableName());
+		if ($connection instanceof \Bitrix\Main\DB\PgsqlConnection)
+		{
+			$connection->queryExecute("CREATE TEMPORARY TABLE IF NOT EXISTS {$tableName} (LIKE {$sourceTableName} INCLUDING DEFAULTS INCLUDING IDENTITY)");
+		}
+		else
+		{
+			$connection->queryExecute("CREATE TEMPORARY TABLE IF NOT EXISTS {$tableName} SELECT * FROM {$sourceTableName} LIMIT 0");
+		}
 	}
 
 	/**
 	 * Checks data base structure
 	 * @return bool
 	 */
-	public static function checkTemporally()
+	public static function checkTemporally(): bool
 	{
 		return Main\Application::getConnection()->isTableExists(static::getTemporallyName());
 	}
@@ -431,7 +447,7 @@ final class VolumeTable extends DataManager
 	 * Removes all data
 	 * @return void
 	 */
-	public static function clearTemporally()
+	public static function clearTemporally(): void
 	{
 		Main\Application::getConnection()->truncateTable(static::getTemporallyName());
 	}

@@ -31,13 +31,16 @@ if($lAdmin->EditAction())
 				$lAdmin->AddGroupError(GetMessage("LFP_SCHEME_LIST_SAVE_ERROR")." ".$cData->LAST_ERROR, $ID);
 				$DB->Rollback();
 			}
+			else
+			{
+				$DB->Commit();
+			}
 		}
 		else
 		{
 			$lAdmin->AddGroupError(GetMessage("LFP_SCHEME_LIST_SAVE_ERROR")." ".GetMessage("LFP_SCHEME_LIST_NO_RECORD"), $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
 	}
 }
 
