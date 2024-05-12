@@ -478,7 +478,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 			):
 		?>
 			<tr>
-				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_search_network"><?= GetMessage('CONFIG_ALLOW_SEARCH_NETWORK') ?></label></td>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_search_network"><?= GetMessage('CONFIG_ALLOW_SEARCH_NETWORK_MSGVER_1') ?></label></td>
 				<td class="content-edit-form-field-input">
 					<input type="checkbox" id="allow_search_network" name="allow_search_network" <?php if (\Bitrix\ImConnector\Connectors\Network::isSearchEnabled()): ?>checked<?php endif; ?> class="content-edit-form-field-input-selector"/>
 				</td>

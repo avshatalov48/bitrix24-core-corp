@@ -34,10 +34,6 @@ class CIntranetSearchComponent extends CBitrixComponent
 			"/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#":
 			$arParams["PATH_TO_CONPANY_DEPARTMENT"];
 
-		$arParams["PATH_TO_VIDEO_CALL"] = IsModuleInstalled("video") && empty($arParams["PATH_TO_VIDEO_CALL"])?
-			"/company/personal/video/#USER_ID#/":
-			$arParams["PATH_TO_VIDEO_CALL"];
-
 		TrimArr($arParams['ALPHABET_LANG']);
 		$arParams['ALPHABET_LANG'] = empty($arParams['ALPHABET_LANG']) ? array(LANGUAGE_ID) : $arParams['ALPHABET_LANG'];
 		$arParams['CURRENT_VIEW']  = $this->getCurrentView($arParams);

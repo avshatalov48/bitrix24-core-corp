@@ -7,7 +7,10 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { throttle } = require('utils/function');
 	const { utils } = require('native/im');
+	const { DateHelper } = require('im/messenger/lib/helper');
 	const { FeatureFlag } = require('im/messenger/const/feature-flag');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { ComponentCode } = require('im/messenger/const');
 
 	class ShareDialogCache
 	{
@@ -28,11 +31,19 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 					return;
 				}
 
+				const componentCode = MessengerParams.get('COMPONENT_CODE');
+				if (componentCode === ComponentCode.imCopilotMessenger)
+				{
+					reject(new Error('Copilot recent cache not available for current app version'));
+
+					return;
+				}
+
 				recentItemList = recentItemList.map((item) => {
 					let lastMessageTimestamp = 0;
 					if (item.message && item.message.id !== 0 && item.message.date)
 					{
-						lastMessageTimestamp = +item.message.date;
+						lastMessageTimestamp = +DateHelper.cast(item.message.date);
 					}
 
 					return {

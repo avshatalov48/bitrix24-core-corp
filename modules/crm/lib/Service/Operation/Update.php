@@ -252,12 +252,11 @@ class Update extends Operation
 		}
 
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
-
-		if ($factory->isStagesEnabled() && $this->wasItemMovedToFinalStage())
+		if ($factory?->isStagesEnabled() && $this->wasItemMovedToFinalStage())
 		{
 			MarkController::getInstance()->onItemMoveToFinalStage(
 				$this->getItemIdentifier(),
-				$factory->getStageSemantics((string)$this->item->getStageId()),
+				(string)$this->item->getStageId(),
 				$this->getContext()->getUserId(),
 			);
 		}

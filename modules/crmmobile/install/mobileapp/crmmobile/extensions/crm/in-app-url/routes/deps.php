@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'require-lazy',
 		'in-app-url',
 		'crm:type',

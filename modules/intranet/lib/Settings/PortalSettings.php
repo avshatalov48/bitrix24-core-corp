@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\Settings;
 
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main;
@@ -292,6 +293,19 @@ class PortalSettings extends AbstractSettings
 	{
 		$data = [];
 
+		$data['sectionCompanyTitle'] = new Intranet\Settings\Controls\Section(
+			'settings-portal-section-company_title',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE'),
+			'ui-icon-set --pencil-draw',
+		);
+
+		$data['sectionSiteTheme'] = new Intranet\Settings\Controls\Section(
+			'settings-portal-section-theme',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_PORTAL_THEME'),
+			'ui-icon-set --picture',
+			false,
+		);
+
 		$data['portalSettings'] = [
 			'name' => $this->portalSettings->getName(),
 			'canUserEditName' => $this->portalSettings->canCurrentUserEditName(),
@@ -303,10 +317,33 @@ class PortalSettings extends AbstractSettings
 			'canUserEditLogo' => $this->portalSettings->canCurrentUserEditLogo(),
 		];
 
+		$data['portalSettingsLabels'] = [
+			'title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE_INPUT_LABEL'),
+			'logo24' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_LOGO24'),
+			'name' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_NAME'),
+			'logo' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE1'),
+		];
+
+		$data['tabCompanyTitle'] = new Intranet\Settings\Controls\Tab(
+			'settings-portal-tab-company_title',
+			[
+				'title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE')
+			]
+		);
+		$data['tabCompanyLogo'] = new Intranet\Settings\Controls\Tab(
+			'settings-portal-tab-company_logo',
+			[
+				'title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO')
+			],
+			restricted: ($this->portalSettings->canCurrentUserEditLogo24() === false),
+			bannerCode: 'limit_admin_logo',
+		);
+
 		if ($this->isBitrix24)
 		{
 			$domain = Bitrix24\Domain::getCurrent();
 			$data['portalDomainSettings'] = [
+				'label' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_DOMAIN'),
 				'hostname' => $domain->getValue(),
 				'subDomainName' => $domain->getSubDomain(),
 				'mainDomainName' => $domain->getBitrixDomainName(),
@@ -315,12 +352,36 @@ class PortalSettings extends AbstractSettings
 				'canUserEdit' => $domain->canCurrentUserEdit(),
 				'occupiedDomains' => $domain::RESERVED_SUBDOMAIN_NAME,
 			];
+
+			$data['sectionSiteDomain'] = new Intranet\Settings\Controls\Section(
+				'settings-portal-section-domain',
+				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_DOMAIN'),
+				'ui-icon-set --globe',
+				false,
+			);
+
+			$data['tabDomainPrefix'] = new Intranet\Settings\Controls\Tab(
+				'settings-portal-tab-domain_prefix',
+				[
+					'title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME1')
+				]
+			);
+
+			$data['tabDomain'] = new Intranet\Settings\Controls\Tab(
+				'settings-portal-tab-domain',
+				[
+					'title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME2')
+				],
+				restricted: $domain->isCustomizable() === false,
+				bannerCode: 'limit_office_own_domain',
+			);
 		}
 
 		$themePicker = $this->getThemePicker();
 		$theme = $themePicker->getDefaultTheme();
 		$theme = $theme ?: [];
 		$data['portalThemeSettings'] = array(
+			'label' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_PORTAL_THEME'),
 			"templateId" => $themePicker->getTemplateId(),
 			"siteId" => $themePicker->getSiteId(),
 
@@ -343,5 +404,33 @@ class PortalSettings extends AbstractSettings
 		);
 
 		return new static($data);
+	}
+
+	public function find(string $query): array
+	{
+		$index = [];
+		if ($this->isBitrix24)
+		{
+			$index['settings-portal-section-domain'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_DOMAIN');
+			$index['settings-portal-tab-domain_prefix'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME1');
+			$index['settings-portal-tab-domain'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME2');
+			$index['subDomainName'] = Loc::getMessage('SETTINGS_RENAMING_IS_NO_LONGER_ALLOWED');
+		}
+
+		$searchEngine = SearchEngine::initWithDefaultFormatter($index + [
+			//sections
+			'settings-portal-section-company_title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE'),
+			'settings-portal-section-theme' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_PORTAL_THEME'),
+			//tabs
+			'settings-portal-tab-company_title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE'),
+			'settings-portal-tab-company_logo' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO'),
+			//fields
+			'title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE_INPUT_LABEL'),
+			'logo24' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_LOGO24'),
+			'name' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_NAME'),
+			'logo' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE1'),
+		]);
+
+		return $searchEngine->find($query);
 	}
 }

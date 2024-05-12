@@ -21,6 +21,27 @@ trait EditorConfig
 		$componentNameWithoutBitrixPrefix = mb_substr($this->getDetailComponentName(), 7);
 		$sessionId = bitrix_sessid_get();
 
+		/** @var \Bitrix\Crm\Integration\Analytics\Builder\BuilderContract $analyticsBuilder */
+		if ($this->isCopyMode)
+		{
+			$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyEvent::createDefault($this->factory->getEntityTypeId());
+		}
+		elseif ($this->isEditMode)
+		{
+			$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\UpdateEvent::createDefault($this->factory->getEntityTypeId());
+		}
+		elseif (isset($this->conversionWizard))
+		{
+			$analyticsBuilder =
+				\Bitrix\Crm\Integration\Analytics\Builder\Entity\ConvertEvent::createDefault($this->factory->getEntityTypeId())
+					->setSrcEntityTypeId($this->conversionWizard->getEntityTypeID())
+			;
+		}
+		else
+		{
+			$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddEvent::createDefault($this->factory->getEntityTypeId());
+		}
+
 		return [
 			'ENTITY_TYPE_ID' => $entityTypeId,
 			'ENTITY_ID' => $this->isCopyMode ? 0 :$this->getEntityId(),
@@ -61,6 +82,11 @@ trait EditorConfig
 			],
 			'SHOW_EMPTY_FIELDS' => !empty($this->arParams['SHOW_EMPTY_FIELDS']),
 			'ENABLE_PAGE_TITLE_CONTROLS' => $this->arResult['IS_EDIT_MODE'],
+			// this data is used to send analytics when user clicks 'save' button
+			'ANALYTICS_CONFIG' => [
+				'data' => $analyticsBuilder->buildData(),
+				'appendParamsFromCurrentUrl' => true,
+			],
 		];
 	}
 

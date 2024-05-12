@@ -26,6 +26,7 @@ class Invite extends Main\Engine\Controller
 	public function registerAction(array $fields)
 	{
 		$errorList = [];
+		$convertedPhoneNumbers = [];
 		$userIdList = \CIntranetInviteDialog::registerNewUser(\CSite::getDefSite(), $fields, $errorList);
 
 		if (!empty($errorList))
@@ -44,6 +45,21 @@ class Invite extends Main\Engine\Controller
 		}
 		else
 		{
+			$phoneNumbers = $fields['PHONE'];
+			$phoneCountries = $fields['PHONE_COUNTRY'];
+			$hasPhoneNumbers = !empty($phoneNumbers) && is_array($phoneNumbers);
+			if ($hasPhoneNumbers)
+			{
+				foreach ($phoneNumbers as $index => $phoneNumber)
+				{
+					$phoneCountry = $phoneCountries[$index] ?? '';
+					$parsedPhoneNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($phoneNumber, $phoneCountry);
+					if($parsedPhoneNumber->isValid())
+					{
+						$convertedPhoneNumbers[] = $parsedPhoneNumber->format(\Bitrix\Main\PhoneNumber\Format::E164);
+					}
+				}
+			}
 			\CIntranetInviteDialog::logAction(
 				$userIdList,
 				(
@@ -69,6 +85,7 @@ class Invite extends Main\Engine\Controller
 
 		return [
 			'userIdList' => $userIdList,
+			'convertedPhoneNumbers' => $convertedPhoneNumbers,
 			'errors' => []
 		];
 	}
@@ -176,13 +193,24 @@ class Invite extends Main\Engine\Controller
 
 	public function getDataAction()
 	{
-		return [
+		$data = [
 			'registerUrl' => Invitation::getRegisterUrl(),
 			'adminConfirm' => Invitation::getRegisterAdminConfirm(),
 			'disableAdminConfirm' => !Invitation::canListDelete(),
 			'sharingMessage' => Invitation::getRegisterSharingMessage(),
 			'rootStructureSectionId' => Invitation::getRootStructureSectionId(),
 		];
+
+		if (Loader::includeModule('bitrix24'))
+		{
+			$data['creatorEmailConfirmed'] = \CBitrix24::isEmailConfirmed();
+		}
+		else
+		{
+			$data['creatorEmailConfirmed'] = true;
+		}
+
+		return $data;
 	}
 
 	public function getRegisterUrlAction(array $params = [])

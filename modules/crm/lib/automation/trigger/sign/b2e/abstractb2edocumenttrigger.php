@@ -46,11 +46,11 @@ class AbstractB2eDocumentTrigger extends Automation\Trigger\BaseTrigger
 		if (
 			static::isEnabled()
 			&& Loader::includeModule('bitrix24')
-			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('sign_automation')
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('sign_b2e_automation')
 		)
 		{
 			$result['LOCKED'] = [
-				'INFO_CODE' => 'limit_crm_sign_automation',
+				'INFO_CODE' => 'limit_office_e_signature',
 			];
 		}
 

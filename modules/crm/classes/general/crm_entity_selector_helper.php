@@ -1,10 +1,13 @@
 <?php
 
+use Bitrix\Crm\EntityPreset;
+use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Location\Entity\Address;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Item\Company;
@@ -14,6 +17,10 @@ IncludeModuleLangFile(__FILE__);
 
 class CCrmEntitySelectorHelper
 {
+	protected const CACHE_PATH_PREFIX = '/crm/entityselectorhelper/';
+	protected const CACHE_TTL = 86400;
+	protected const CACHE_PREFIX_PREPARE_REQUISITE_DATA = 'prepareRequisiteData';
+
 	public static function getIdWithEntityPrefix($id, string $entityName): string
 	{
 		return \CCrmOwnerTypeAbbr::ResolveByTypeName($entityName) . '_' . $id;
@@ -1110,8 +1117,34 @@ class CCrmEntitySelectorHelper
 		);
 	}
 
+	protected static function getPrepareRequisiteDataCachePathPrefix()
+	{
+		return static::CACHE_PATH_PREFIX . static::CACHE_PREFIX_PREPARE_REQUISITE_DATA;
+	}
+
+	public static function clearPrepareRequisiteDataCache(): void
+	{
+		Application::getInstance()->getCache()->cleanDir(static::getPrepareRequisiteDataCachePathPrefix());
+	}
+
+	public static function clearPrepareRequisiteDataCacheByEntity(int $entityTypeId, int $entityId): void
+	{
+		$entityCacheTag = static::getPrepareRequisiteDataCachePathPrefix() . "/entity_{$entityTypeId}_$entityId";
+
+		Application::getInstance()->getTaggedCache()->clearByTag($entityCacheTag);
+	}
+
+	public static function clearPrepareRequisiteDataCacheByPreset(int $presetId): void
+	{
+		$entityCacheTag = static::getPrepareRequisiteDataCachePathPrefix() . "/preset_$presetId";
+
+		Application::getInstance()->getTaggedCache()->clearByTag($entityCacheTag);
+	}
+
 	public static function PrepareRequisiteData($entityTypeId, $entityId, $options = array())
 	{
+		$result = [];
+
 		$entityTypeId = (int)$entityTypeId;
 		$entityId = (int)$entityId;
 
@@ -1136,11 +1169,7 @@ class CCrmEntitySelectorHelper
 			&& $options['SKIP_CHECK_MY_COMPANY_PERMISSION'] === true
 		);
 
-		$result = array();
-
-		$requisite = new \Bitrix\Crm\EntityRequisite();
-		$preset = new \Bitrix\Crm\EntityPreset();
-		$fieldsInfo = $requisite->getFormFieldsInfo();
+		$requisite = new EntityRequisite();
 
 		if (
 			(
@@ -1151,352 +1180,420 @@ class CCrmEntitySelectorHelper
 			|| $requisite->validateEntityReadPermission($entityTypeId, $entityId)
 		)
 		{
-			// selected
-			$requisiteIdSelected = 0;
-			$bankDetailIdSelected = 0;
-			$settings = $requisite->loadSettings($entityTypeId, $entityId);
-			if (is_array($settings))
+			/*
+			   WARNING!
+			   It is necessary to change the formation of the hash
+			   if the contents of the array with options have changed.
+			*/
+			$optionsHash = md5(
+				json_encode(
+					[
+						$copyMode,
+						$viewDataOnly,
+						$viewFormatted,
+						$addressAsJson,
+						$skipCheckMyCompanyPermission,
+					]
+				)
+			);
+			$cachePathPrefix = static::getPrepareRequisiteDataCachePathPrefix();
+			$cachePath = $cachePathPrefix . "/{$entityTypeId}_$entityId";
+			$cacheId = $cachePath . "/$optionsHash";
+			$cache = Application::getInstance()->getCache();
+			if (
+				$cache->initCache(
+					static::CACHE_TTL,
+					$cacheId,
+					$cachePath
+				)
+			)
 			{
-				if (isset($settings['REQUISITE_ID_SELECTED']))
-				{
-					$requisiteIdSelected = (int)$settings['REQUISITE_ID_SELECTED'];
-					if ($requisiteIdSelected < 0)
-						$requisiteIdSelected = 0;
-				}
-				if (isset($settings['BANK_DETAIL_ID_SELECTED']))
-				{
-					$bankDetailIdSelected = (int)$settings['BANK_DETAIL_ID_SELECTED'];
-					if ($bankDetailIdSelected < 0)
-						$bankDetailIdSelected = 0;
-				}
+				$result = $cache->getVars();
 			}
-			$bSelected = false;
-
-			$fieldsAllowedMap = array();
-			foreach ($fieldsInfo as $fieldName => $fieldInfo)
+			elseif ($cache->startDataCache())
 			{
-				if ($fieldInfo['isRQ'])
+				$taggedCache = Application::getInstance()->getTaggedCache();
+				$taggedCache->startTagCache($cachePath);
+				$taggedCache->registerTag($cachePathPrefix . "/entity_{$entityTypeId}_$entityId");
+
+				$preset = new EntityPreset();
+				$fieldsInfo = $requisite->getFormFieldsInfo();
+
+				// selected
+				$requisiteIdSelected = 0;
+				$bankDetailIdSelected = 0;
+				$settings = $requisite->loadSettings($entityTypeId, $entityId);
+				if (is_array($settings))
 				{
-					$fieldsAllowedMap[$fieldName] = true;
-				}
-			}
-			unset($fieldName, $fieldInfo);
-			$select = array_keys($fieldsInfo);
-
-			// address field
-			$needLoadAddresses = false;
-			if (array_search(Bitrix\Crm\EntityRequisite::ADDRESS, $select, true))
-			{
-				$needLoadAddresses = true;
-				unset($select[Bitrix\Crm\EntityRequisite::ADDRESS]);
-			}
-
-			$requisiteList = array();
-			$presetList = array();
-			$presetIds = array();
-			$requisiteAddresses = array();
-			if (is_array($select) && !empty($select))
-			{
-				$res = $requisite->getList(
-					array(
-						'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
-						'filter' => array(
-							'=ENTITY_TYPE_ID' => $entityTypeId,
-							'=ENTITY_ID' => $entityId
-						),
-						'select' => $select
-					)
-				);
-				while ($row = $res->fetch())
-				{
-					if ($needLoadAddresses)
+					if (isset($settings['REQUISITE_ID_SELECTED']))
 					{
-						$row[Bitrix\Crm\EntityRequisite::ADDRESS] = [];
+						$requisiteIdSelected = (int)$settings['REQUISITE_ID_SELECTED'];
+						if ($requisiteIdSelected < 0)
+							$requisiteIdSelected = 0;
 					}
-					$presetIds[] = (int)$row['PRESET_ID'];
-					$requisiteList[$row['ID']] = $row;
-					if (!$bSelected && $requisiteIdSelected === intval($row['ID']))
-						$bSelected = true;
-				}
-				if (!empty($requisiteList))
-				{
-					if (!empty($presetIds))
+					if (isset($settings['BANK_DETAIL_ID_SELECTED']))
 					{
-						$presetIds = array_unique($presetIds);
-						$res = $preset->getList(
-							array(
-								'filter' => array(
-									'=ID' => $presetIds,
-									'=ENTITY_TYPE_ID' => \Bitrix\Crm\EntityPreset::Requisite/*,
-									'=ACTIVE' => 'Y'*/
-								),
-								'select' => array('ID', 'NAME', 'COUNTRY_ID', 'SETTINGS')
-							)
-						);
-						while ($row = $res->Fetch())
+						$bankDetailIdSelected = (int)$settings['BANK_DETAIL_ID_SELECTED'];
+						if ($bankDetailIdSelected < 0)
+							$bankDetailIdSelected = 0;
+					}
+				}
+				$bSelected = false;
+
+				$fieldsAllowedMap = array();
+				foreach ($fieldsInfo as $fieldName => $fieldInfo)
+				{
+					if ($fieldInfo['isRQ'])
+					{
+						$fieldsAllowedMap[$fieldName] = true;
+					}
+				}
+				unset($fieldName, $fieldInfo);
+				$select = array_keys($fieldsInfo);
+
+				// address field
+				$needLoadAddresses = false;
+				if (array_search(EntityRequisite::ADDRESS, $select, true))
+				{
+					$needLoadAddresses = true;
+					unset($select[EntityRequisite::ADDRESS]);
+				}
+
+				$requisiteList = array();
+				$presetList = array();
+				$presetIds = array();
+				$requisiteAddresses = array();
+				if (is_array($select) && !empty($select))
+				{
+					$res = $requisite->getList(
+						array(
+							'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
+							'filter' => array(
+								'=ENTITY_TYPE_ID' => $entityTypeId,
+								'=ENTITY_ID' => $entityId
+							),
+							'select' => $select
+						)
+					);
+					while ($row = $res->fetch())
+					{
+						if ($needLoadAddresses)
 						{
-							$presetList[$row['ID']] = $row;
+							$row[EntityRequisite::ADDRESS] = [];
+						}
+						$requisiteId = (int)$row['ID'];
+						$presetIds[] = (int)$row['PRESET_ID'];
+						$requisiteList[$requisiteId] = $row;
+
+						$taggedCache->registerTag(
+							$cachePathPrefix . "/entity_" . CCrmOwnerType::Requisite . "_$requisiteId"
+						);
+
+						if (!$bSelected && $requisiteIdSelected === intval($row['ID']))
+						{
+							$bSelected = true;
 						}
 					}
-
-					// load addresses
-					if ($needLoadAddresses)
+					if (!empty($requisiteList))
 					{
-						$rqAddr = new Bitrix\Crm\RequisiteAddress();
-						$res = $rqAddr->getList(
-							array(
-								'filter' => array(
-									'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
-									'ENTITY_ID' => array_keys($requisiteList)
-								),
-								'select' => array(
-									'ENTITY_ID',
-									'TYPE_ID',
-									'ADDRESS_1',
-									'ADDRESS_2',
-									'CITY',
-									'POSTAL_CODE',
-									'REGION',
-									'PROVINCE',
-									'COUNTRY',
-									'COUNTRY_CODE',
-									'LOC_ADDR_ID'
+						if (!empty($presetIds))
+						{
+							$presetIds = array_unique($presetIds);
+							$res = $preset->getList(
+								array(
+									'filter' => array(
+										'=ID' => $presetIds,
+										'=ENTITY_TYPE_ID' => EntityPreset::Requisite/*,
+										'=ACTIVE' => 'Y'*/
+									),
+									'select' => array('ID', 'NAME', 'COUNTRY_ID', 'SETTINGS')
 								)
-							)
-						);
-						while ($row = $res->fetch())
-						{
-							$requisiteId = (int)$row['ENTITY_ID'];
-							$typeId = (int)$row['TYPE_ID'];
-							unset($row['ENTITY_ID'], $row['TYPE_ID']);
-							$requisiteAddresses[$typeId] = \Bitrix\Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma($row);
-
-							if ($addressAsJson)
+							);
+							while ($row = $res->Fetch())
 							{
-								if (RequisiteAddress::isLocationModuleIncluded())
+								$presetId = (int)$row['ID'];
+								$presetList[$row['ID']] = $row;
+
+								$taggedCache->registerTag($cachePathPrefix . "/preset_$presetId");
+							}
+						}
+
+						// load addresses
+						if ($needLoadAddresses)
+						{
+							$rqAddr = new Bitrix\Crm\RequisiteAddress();
+							$res = $rqAddr->getList(
+								array(
+									'filter' => array(
+										'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+										'ENTITY_ID' => array_keys($requisiteList)
+									),
+									'select' => array(
+										'ENTITY_ID',
+										'TYPE_ID',
+										'ADDRESS_1',
+										'ADDRESS_2',
+										'CITY',
+										'POSTAL_CODE',
+										'REGION',
+										'PROVINCE',
+										'COUNTRY',
+										'COUNTRY_CODE',
+										'LOC_ADDR_ID'
+									)
+								)
+							);
+							while ($row = $res->fetch())
+							{
+								$requisiteId = (int)$row['ENTITY_ID'];
+								$typeId = (int)$row['TYPE_ID'];
+								unset($row['ENTITY_ID'], $row['TYPE_ID']);
+								$requisiteAddresses[$typeId] =
+									\Bitrix\Crm\Format\AddressFormatter::getSingleInstance()
+										->formatTextComma($row)
+								;
+
+								if ($addressAsJson)
 								{
-									/** @var $locationAddress Address */
-									$locationAddress = RequisiteAddress::makeLocationAddressByFields($row);
-									if ($locationAddress)
+									if (RequisiteAddress::isLocationModuleIncluded())
 									{
-										$requisiteList[$requisiteId][Bitrix\Crm\EntityRequisite::ADDRESS][$typeId] =
-											$locationAddress->toJson();
+										/** @var $locationAddress Address */
+										$locationAddress = RequisiteAddress::makeLocationAddressByFields($row);
+										if ($locationAddress)
+										{
+											$requisiteList[$requisiteId][EntityRequisite::ADDRESS][$typeId] =
+												$locationAddress->toJson()
+											;
+										}
+										unset($locationAddress);
 									}
-									unset($locationAddress);
-								}
-							}
-							else
-							{
-								$requisiteList[$requisiteId][Bitrix\Crm\EntityRequisite::ADDRESS][$typeId] = $row;
-							}
-						}
-					}
-
-					$index = 0;
-					foreach ($requisiteList as $requisiteId => $fields)
-					{
-						$presetID = isset($fields['PRESET_ID']) ? (int)$fields['PRESET_ID'] : 0;
-						$bankDetailCountryId = 0;
-						$dataFields = array();
-						foreach ($fields as $fName => $fValue)
-						{
-							if ($copyMode && ($fName === 'ID' || $fName === 'ENTITY_ID'))
-								$fValue = 0;
-
-							if ($fValue instanceof \Bitrix\Main\Type\DateTime)
-								$dataFields[$fName] = $fValue->toString();
-							else
-								$dataFields[$fName] = $fValue;
-						}
-						unset($fName, $fValue);
-
-						$presetFieldsMap = [];
-						$presetFieldsIndex = [];
-						$presetFieldsSort = [
-							'ID' => [],
-							'SORT' => [],
-							'FIELD_NAME' => []
-						];
-						if (is_array($presetList[$fields['PRESET_ID']]))
-						{
-							if (is_array($presetList[$fields['PRESET_ID']]['SETTINGS']))
-							{
-								$presetFieldsInfo = $preset->settingsGetFields($presetList[$fields['PRESET_ID']]['SETTINGS']);
-								foreach ($presetFieldsInfo as $fieldInfo)
-								{
-									if (isset($fieldInfo['FIELD_NAME']))
-									{
-										$presetFieldsSort['ID'][] = isset($fieldInfo['ID']) ? (int)$fieldInfo['ID'] : 0;
-										$presetFieldsSort['SORT'][] = isset($fieldInfo['SORT']) ? (int)$fieldInfo['SORT'] : 0;
-										$presetFieldsSort['FIELD_NAME'][] = $fieldInfo['FIELD_NAME'];
-									}
-								}
-								unset($presetFieldsInfo, $fieldInfo);
-							}
-							if (is_array($presetList[$fields['PRESET_ID']]['COUNTRY_ID']))
-							{
-								$bankDetailCountryId = (int)$presetList[$fields['PRESET_ID']]['COUNTRY_ID'];
-							}
-						}
-						if (!empty($presetFieldsSort['FIELD_NAME']))
-						{
-							if(array_multisort(
-								$presetFieldsSort['SORT'], SORT_ASC, SORT_NUMERIC,
-								$presetFieldsSort['ID'], SORT_ASC, SORT_NUMERIC,
-								$presetFieldsSort['FIELD_NAME']))
-							{
-								$presetFieldsMap = array_fill_keys($presetFieldsSort['FIELD_NAME'], true);
-								$presetFieldsIndex = array_flip($presetFieldsSort['FIELD_NAME']);
-							}
-						}
-						unset($presetFieldsSort);
-
-						// sort fields by preset
-						$viewDataFields = array();
-						if (!empty($presetFieldsIndex))
-						{
-							$dataFieldsSortedIndex = array();
-							$dataFieldsUnsortedIndex = array();
-							foreach ($dataFields as $dataFieldName => &$dataField)
-							{
-								if (isset($presetFieldsIndex[$dataFieldName]))
-									$dataFieldsSortedIndex[$presetFieldsIndex[$dataFieldName]] = $dataFieldName;
-								else
-									$dataFieldsUnsortedIndex[] = $dataFieldName;
-							}
-							unset($dataFieldName, $dataField);
-							if (!empty($dataFieldsSortedIndex))
-							{
-								ksort($dataFieldsSortedIndex, SORT_NUMERIC);
-								foreach ($dataFieldsSortedIndex as $dataFieldName)
-									$viewDataFields[$dataFieldName] = &$dataFields[$dataFieldName];
-								unset($dataFieldName);
-							}
-							unset($dataFieldsSortedIndex);
-							if (!empty($dataFieldsUnsortedIndex))
-							{
-								foreach ($dataFieldsUnsortedIndex as $dataFieldName)
-									$viewDataFields[$dataFieldName] = &$dataFields[$dataFieldName];
-								unset($dataFieldName);
-							}
-							unset($dataFieldsUnsortedIndex);
-						}
-						else
-						{
-							$viewDataFields = &$dataFields;
-						}
-
-						$requisiteData = array();
-						if (!$viewDataOnly)
-						{
-							$requisiteData['fields'] = $dataFields;
-						}
-						$fieldsInView = array_intersect_assoc($presetFieldsMap, $fieldsAllowedMap);
-
-						if ($viewFormatted)
-						{
-							$requisiteData['viewData'] = $requisite->prepareViewDataFormatted($viewDataFields, $fieldsInView);
-						}
-						else
-						{
-							$requisiteData['viewData'] = $requisite->prepareViewData($viewDataFields, $fieldsInView);
-						}
-
-						unset($presetFields, $fieldsInView);
-						if ($bankDetailCountryId <= 0)
-							$bankDetailCountryId = \Bitrix\Crm\EntityPreset::getCurrentCountryId();
-						$bankDetailsData = self::PrepareBankDetailsData(
-							\CCrmOwnerType::Requisite,
-							$requisiteId,
-							array(
-								'VIEW_DATA_ONLY' => $viewDataOnly,
-								'SKIP_CHECK_PERMISSION' => true,
-								'COUNTRY_ID' => $bankDetailCountryId,
-								'BANK_DETAIL_ID_SELECTED' => $bankDetailIdSelected
-							)
-						);
-						if (!$viewDataOnly)
-						{
-							$requisiteData['bankDetailFieldsList'] = &$bankDetailsData['bankDetailFieldsList'];
-						}
-						$requisiteData['bankDetailViewDataList'] = &$bankDetailsData['bankDetailViewDataList'];
-						$requisiteData['bankDetailIdSelected'] = &$bankDetailsData['bankDetailIdSelected'];
-						$requisiteData['formattedAddresses'] = $requisiteAddresses;
-
-						unset($viewDataFields, $bankDetailsData, $requisiteAddress);
-						$requisiteDataJson = '';
-						$requisiteDataSign = '';
-						if (is_array($requisiteData))
-						{
-							$jsonData = null;
-							try
-							{
-								$jsonData = \Bitrix\Main\Web\Json::encode($requisiteData);
-							}
-							catch (\Bitrix\Main\SystemException $e)
-							{}
-							if ($jsonData)
-							{
-								if ($viewDataOnly)
-								{
-									$requisiteDataJson = $jsonData;
 								}
 								else
 								{
-									$signer = new \Bitrix\Main\Security\Sign\Signer();
-									$requisiteDataSign = '';
-									try
-									{
-										$requisiteDataSign = $signer->getSignature(
-											$jsonData,
-											'crm.requisite.edit-'.$entityTypeId
-										);
-									}
-									catch (\Bitrix\Main\SystemException $e)
-									{}
+									$requisiteList[$requisiteId][EntityRequisite::ADDRESS][$typeId] = $row;
+								}
+							}
+						}
 
-									if (!empty($requisiteDataSign))
+						$index = 0;
+						foreach ($requisiteList as $requisiteId => $fields)
+						{
+							$presetID = isset($fields['PRESET_ID']) ? (int)$fields['PRESET_ID'] : 0;
+							$bankDetailCountryId = 0;
+							$dataFields = array();
+							foreach ($fields as $fName => $fValue)
+							{
+								if ($copyMode && ($fName === 'ID' || $fName === 'ENTITY_ID'))
+									$fValue = 0;
+
+								if ($fValue instanceof \Bitrix\Main\Type\DateTime)
+									$dataFields[$fName] = $fValue->toString();
+								else
+									$dataFields[$fName] = $fValue;
+							}
+							unset($fName, $fValue);
+
+							$presetFieldsMap = [];
+							$presetFieldsIndex = [];
+							$presetFieldsSort = [
+								'ID' => [],
+								'SORT' => [],
+								'FIELD_NAME' => []
+							];
+							if (is_array($presetList[$fields['PRESET_ID']]))
+							{
+								if (is_array($presetList[$fields['PRESET_ID']]['SETTINGS']))
+								{
+									$presetFieldsInfo =
+										$preset->settingsGetFields($presetList[$fields['PRESET_ID']]['SETTINGS'])
+									;
+									foreach ($presetFieldsInfo as $fieldInfo)
+									{
+										if (isset($fieldInfo['FIELD_NAME']))
+										{
+											$presetFieldsSort['ID'][] = (int)($fieldInfo['ID'] ?? 0);
+											$presetFieldsSort['SORT'][] = (int)($fieldInfo['SORT'] ?? 0);
+											$presetFieldsSort['FIELD_NAME'][] = $fieldInfo['FIELD_NAME'];
+										}
+									}
+									unset($presetFieldsInfo, $fieldInfo);
+								}
+								if (is_array($presetList[$fields['PRESET_ID']]['COUNTRY_ID']))
+								{
+									$bankDetailCountryId = (int)$presetList[$fields['PRESET_ID']]['COUNTRY_ID'];
+								}
+							}
+							if (!empty($presetFieldsSort['FIELD_NAME']))
+							{
+								if(array_multisort(
+									$presetFieldsSort['SORT'], SORT_ASC, SORT_NUMERIC,
+									$presetFieldsSort['ID'], SORT_ASC, SORT_NUMERIC,
+									$presetFieldsSort['FIELD_NAME']))
+								{
+									$presetFieldsMap = array_fill_keys($presetFieldsSort['FIELD_NAME'], true);
+									$presetFieldsIndex = array_flip($presetFieldsSort['FIELD_NAME']);
+								}
+							}
+							unset($presetFieldsSort);
+
+							// sort fields by preset
+							$viewDataFields = array();
+							if (!empty($presetFieldsIndex))
+							{
+								$dataFieldsSortedIndex = array();
+								$dataFieldsUnsortedIndex = array();
+								foreach ($dataFields as $dataFieldName => &$dataField)
+								{
+									if (isset($presetFieldsIndex[$dataFieldName]))
+										$dataFieldsSortedIndex[$presetFieldsIndex[$dataFieldName]] = $dataFieldName;
+									else
+										$dataFieldsUnsortedIndex[] = $dataFieldName;
+								}
+								unset($dataFieldName, $dataField);
+								if (!empty($dataFieldsSortedIndex))
+								{
+									ksort($dataFieldsSortedIndex, SORT_NUMERIC);
+									foreach ($dataFieldsSortedIndex as $dataFieldName)
+									{
+										$viewDataFields[$dataFieldName] = &$dataFields[$dataFieldName];
+									}
+									unset($dataFieldName);
+								}
+								unset($dataFieldsSortedIndex);
+								if (!empty($dataFieldsUnsortedIndex))
+								{
+									foreach ($dataFieldsUnsortedIndex as $dataFieldName)
+									{
+										$viewDataFields[$dataFieldName] = &$dataFields[$dataFieldName];
+									}
+									unset($dataFieldName);
+								}
+								unset($dataFieldsUnsortedIndex);
+							}
+							else
+							{
+								$viewDataFields = &$dataFields;
+							}
+
+							$requisiteData = array();
+							if (!$viewDataOnly)
+							{
+								$requisiteData['fields'] = $dataFields;
+							}
+							$fieldsInView = array_intersect_assoc($presetFieldsMap, $fieldsAllowedMap);
+
+							if ($viewFormatted)
+							{
+								$requisiteData['viewData'] =
+									$requisite->prepareViewDataFormatted($viewDataFields, $fieldsInView)
+								;
+							}
+							else
+							{
+								$requisiteData['viewData'] =
+									$requisite->prepareViewData($viewDataFields, $fieldsInView)
+								;
+							}
+
+							unset($presetFields, $fieldsInView);
+							if ($bankDetailCountryId <= 0)
+								$bankDetailCountryId = EntityPreset::getCurrentCountryId();
+							$bankDetailsData = self::PrepareBankDetailsData(
+								\CCrmOwnerType::Requisite,
+								$requisiteId,
+								array(
+									'VIEW_DATA_ONLY' => $viewDataOnly,
+									'SKIP_CHECK_PERMISSION' => true,
+									'COUNTRY_ID' => $bankDetailCountryId,
+									'BANK_DETAIL_ID_SELECTED' => $bankDetailIdSelected
+								)
+							);
+							if (!$viewDataOnly)
+							{
+								$requisiteData['bankDetailFieldsList'] = &$bankDetailsData['bankDetailFieldsList'];
+							}
+							$requisiteData['bankDetailViewDataList'] = &$bankDetailsData['bankDetailViewDataList'];
+							$requisiteData['bankDetailIdSelected'] = &$bankDetailsData['bankDetailIdSelected'];
+							$requisiteData['formattedAddresses'] = $requisiteAddresses;
+
+							unset($viewDataFields, $bankDetailsData, $requisiteAddress);
+							$requisiteDataJson = '';
+							$requisiteDataSign = '';
+							if (is_array($requisiteData))
+							{
+								$jsonData = null;
+								try
+								{
+									$jsonData = \Bitrix\Main\Web\Json::encode($requisiteData);
+								}
+								catch (\Bitrix\Main\SystemException $e)
+								{}
+								if ($jsonData)
+								{
+									if ($viewDataOnly)
 									{
 										$requisiteDataJson = $jsonData;
 									}
+									else
+									{
+										$signer = new \Bitrix\Main\Security\Sign\Signer();
+										$requisiteDataSign = '';
+										try
+										{
+											$requisiteDataSign = $signer->getSignature(
+												$jsonData,
+												'crm.requisite.edit-'.$entityTypeId
+											);
+										}
+										catch (\Bitrix\Main\SystemException $e)
+										{}
+
+										if (!empty($requisiteDataSign))
+										{
+											$requisiteDataJson = $jsonData;
+										}
+									}
 								}
+								unset($jsonData);
 							}
-							unset($jsonData);
-						}
 
-						if (!empty($requisiteDataJson) && ($viewDataOnly || !empty($requisiteDataSign)))
-						{
-							if (is_array($presetList[$presetID])
-								&& isset($presetList[$presetID]['COUNTRY_ID']))
+							if (!empty($requisiteDataJson) && ($viewDataOnly || !empty($requisiteDataSign)))
 							{
-								$presetCountryId = (int)$presetList[$presetID]['COUNTRY_ID'];
-							}
-							else
-							{
-								$presetCountryId = 0;
-							}
-							$resultItem = array(
-								'presetId' => $presetID,
-								'presetCountryId' => $presetCountryId,
-								'requisiteId' => $copyMode ? 0 : $requisiteId,
-								'entityTypeId' => $entityTypeId,
-								'entityId' => $copyMode ? 0 : $entityId,
-								'requisiteData' => $requisiteDataJson
-							);
+								if (is_array($presetList[$presetID])
+									&& isset($presetList[$presetID]['COUNTRY_ID']))
+								{
+									$presetCountryId = (int)$presetList[$presetID]['COUNTRY_ID'];
+								}
+								else
+								{
+									$presetCountryId = 0;
+								}
+								$resultItem = array(
+									'presetId' => $presetID,
+									'presetCountryId' => $presetCountryId,
+									'requisiteId' => $copyMode ? 0 : $requisiteId,
+									'entityTypeId' => $entityTypeId,
+									'entityId' => $copyMode ? 0 : $entityId,
+									'requisiteData' => $requisiteDataJson
+								);
 
-							if (!$viewDataOnly)
-							{
-								$resultItem['requisiteDataSign'] = $requisiteDataSign;
+								if (!$viewDataOnly)
+								{
+									$resultItem['requisiteDataSign'] = $requisiteDataSign;
+								}
+								$resultItem['selected'] = (!$bSelected && $index === 0
+									|| $requisiteIdSelected === intval($requisiteId));
+								$result[$index++] = $resultItem;
+								unset($resultItem);
 							}
-							$resultItem['selected'] = (!$bSelected && $index === 0
-								|| $requisiteIdSelected === intval($requisiteId));
-							$result[$index++] = $resultItem;
-							unset($resultItem);
+							unset($dataFields);
 						}
-						unset($dataFields);
+						unset($requisiteId, $fields);
 					}
-					unset($requisiteId, $fields);
 				}
+
+				$taggedCache->endTagCache();
+				$cache->endDataCache($result);
 			}
 		}
 
@@ -1515,7 +1612,7 @@ class CCrmEntitySelectorHelper
 			&& ($options['SKIP_CHECK_PERMISSION'] === true || $options['SKIP_CHECK_PERMISSION'] === 'Y'));
 
 		$countryId = isset($options['COUNTRY_ID']) ? (int)$options['COUNTRY_ID'] : 0;
-		$currentCountryId = \Bitrix\Crm\EntityPreset::getCurrentCountryId();
+		$currentCountryId = EntityPreset::getCurrentCountryId();
 
 		$bankDetailIdSelected = 0;
 		if (isset($options['BANK_DETAIL_ID_SELECTED']))

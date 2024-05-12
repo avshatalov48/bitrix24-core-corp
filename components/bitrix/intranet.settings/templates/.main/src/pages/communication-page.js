@@ -3,7 +3,7 @@ import {Loc, Event, Tag, Type} from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
-import { Section, Row } from 'ui.section';
+import {Section, Row, SeparatorRow} from 'ui.section';
 import 'ui.forms';
 import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage } from 'ui.form-elements.field';
 import { AnalyticSettingsEvent } from '../analytic';
@@ -36,10 +36,11 @@ export class CommunicationPage extends BaseSettingsPage
 
 	#buildNewsFeedSection(): SettingsSection
 	{
-		let newsFeedSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_NEWS_FEED'),
-			titleIconClasses: 'ui-icon-set --feed-bold',
-		});
+		if (!this.hasValue('sectionFeed'))
+		{
+			return ;
+		}
+		let newsFeedSection = new Section(this.getValue('sectionFeed'));
 
 		let settingsSection = new SettingsSection({
 			section: newsFeedSection,
@@ -48,15 +49,16 @@ export class CommunicationPage extends BaseSettingsPage
 
 		if (this.hasValue('allow_livefeed_toall'))
 		{
-			let allowPostFeedField = new Checker({
-				inputName: 'allow_livefeed_toall',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_POST_FEED_ON'),
-				checked: this.getValue('allow_livefeed_toall') === 'Y',
-				hideSeparator: true,
-			});
+			let allowPostFeedField = new Checker(this.getValue('allow_livefeed_toall'));
+			allowPostFeedField.hideSeparator = true;
 
-			CommunicationPage.addToSectionHelper(allowPostFeedField, settingsSection);
+			let settingsField = new SettingsField({
+				fieldView: allowPostFeedField,
+			});
+			const settingsRow = new SettingsRow({
+				parent: settingsSection,
+				child: settingsField,
+			});
 
 			let userSelectorField = new UserSelector({
 				inputName: 'livefeed_toall_rights[]',
@@ -96,13 +98,20 @@ export class CommunicationPage extends BaseSettingsPage
 					}
 				},
 			});
-			let userSelectorRow = new Row({
-				content: userSelectorField.render(),
+			settingsField = new SettingsField({
+				fieldView: userSelectorField,
+			});
+
+			const userSelectorRow = new Row({
 				isHidden: !allowPostFeedField.isChecked(),
 				className: 'ui-section__subrow',
-				separator: 'bottom',
 			});
-			CommunicationPage.addToSectionHelper(userSelectorField, settingsSection, userSelectorRow);
+
+			new SettingsRow({
+				row: userSelectorRow,
+				parent: settingsRow,
+				child: settingsField,
+			});
 
 			EventEmitter.subscribe(
 				allowPostFeedField.switcher,
@@ -122,13 +131,7 @@ export class CommunicationPage extends BaseSettingsPage
 
 		if (this.hasValue('default_livefeed_toall'))
 		{
-			let allowPostToAllField = new Checker({
-				inputName: 'default_livefeed_toall',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_PUBLISH_TO_ALL_DEFAULT_ON'),
-				checked: this.getValue('default_livefeed_toall') === 'Y',
-				// helpDesk: '1',
-			});
+			let allowPostToAllField = new Checker(this.getValue('default_livefeed_toall'));
 
 			CommunicationPage.addToSectionHelper(allowPostToAllField, settingsSection);
 		}
@@ -137,9 +140,9 @@ export class CommunicationPage extends BaseSettingsPage
 		{
 			const likeBtnNameField = new TextInputInline({
 				inputName: this.getValue('ratingTextLikeY')?.name,
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
+				label: this.getValue('ratingTextLikeY').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
 				hintTitle: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_LIKE'),
-				value: this.getValue('ratingTextLikeY')?.value,
+				value: this.getValue('ratingTextLikeY')?.current,
 				valueColor: this.hasValue('ratingTextLikeY'),
 				hintDesc: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_DESC_LIKE'),
 			});
@@ -151,11 +154,12 @@ export class CommunicationPage extends BaseSettingsPage
 
 	#buildChatSection(): Section
 	{
-		let chatSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHATS'),
-			titleIconClasses: 'ui-icon-set --chats-1',
-			isOpen: false
-		});
+		if (!this.hasValue('sectionChats'))
+		{
+			return ;
+		}
+
+		let chatSection = new Section(this.getValue('sectionChats'));
 
 		let settingsSection = new SettingsSection({
 			section: chatSection,
@@ -164,13 +168,7 @@ export class CommunicationPage extends BaseSettingsPage
 
 		if (this.hasValue('general_chat_can_post'))
 		{
-			let canPostGeneralChatField = new Checker({
-				inputName: 'allow_post_general_chat',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_POST_GEN_CHAT_ON'),
-				checked: this.getValue('allow_post_general_chat') === 'Y',
-				helpDesk: 'redirect=detail&code=18213254',
-			});
+			let canPostGeneralChatField = new Checker(this.getValue('allow_post_general_chat'));
 
 			let settingsField = new SettingsField({
 				fieldView: canPostGeneralChatField,
@@ -180,34 +178,17 @@ export class CommunicationPage extends BaseSettingsPage
 				child: settingsField,
 			});
 
-			let canPostGeneralChatListField = new Selector({
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT_LIST'),
-				name: this.getValue('general_chat_can_post').name,
-				items: this.getValue('general_chat_can_post').values,
-				current: this.getValue('general_chat_can_post').current,
-			});
+			let canPostGeneralChatListField = new Selector(this.getValue('general_chat_can_post'));
 			settingsField = new SettingsField({
 				fieldView: canPostGeneralChatListField,
 			});
 
 			let canPostGeneralChatListRow = new Row({
 				isHidden: !canPostGeneralChatField.isChecked(),
-				className: 'ui-section__subrow',
-			});
-			let canPostGeneralChatListSettingsRow = new SettingsRow({
-				row: canPostGeneralChatListRow,
-				parent: settingsRow,
-				child: settingsField,
+				className: 'ui-section__subrow --no-border',
 			});
 
-			let subRowForGeneralChatList = new Row({
-				content: canPostGeneralChatListField.render(),
-			});
-			new SettingsRow({
-				row: subRowForGeneralChatList,
-				parent: canPostGeneralChatListSettingsRow,
-				child: settingsField,
-			});
+			CommunicationPage.addToSectionHelper(canPostGeneralChatListField, settingsRow, canPostGeneralChatListRow);
 
 			let managerSelectorField = new UserSelector({
 				inputName: 'imchat_toall_rights[]',
@@ -247,17 +228,21 @@ export class CommunicationPage extends BaseSettingsPage
 					}
 				},
 			});
-			settingsField = new SettingsField({
-				fieldView: managerSelectorField,
-			});
+
 			let managerSelectorRow = new Row({
 				content: managerSelectorField.render(),
 				isHidden: this.getValue('general_chat_can_post').current !== 'MANAGER',
+				className: 'ui-section__subrow --no-border',
+			});
+
+			CommunicationPage.addToSectionHelper(managerSelectorField, settingsRow, managerSelectorRow);
+
+			const separatorRow = new SeparatorRow({
+				isHidden: this.getValue('general_chat_can_post').current !== 'MANAGER',
 			});
 			new SettingsRow({
-				row: managerSelectorRow,
-				parent: canPostGeneralChatListSettingsRow,
-				child: settingsField,
+				row: separatorRow,
+				parent: settingsRow,
 			});
 
 			EventEmitter.subscribe(
@@ -267,10 +252,17 @@ export class CommunicationPage extends BaseSettingsPage
 					if (canPostGeneralChatField.isChecked())
 					{
 						canPostGeneralChatListRow.show();
+						if (canPostGeneralChatListField.getInputNode().value === 'MANAGER')
+						{
+							managerSelectorRow.show();
+						}
+						separatorRow.show();
 					}
 					else
 					{
 						canPostGeneralChatListRow.hide();
+						managerSelectorRow.hide();
+						separatorRow.hide();
 					}
 				},
 			);
@@ -290,44 +282,25 @@ export class CommunicationPage extends BaseSettingsPage
 
 		if (this.hasValue('general_chat_message_leave'))
 		{
-			let leaveMessageField = new Checker({
-				inputName: 'general_chat_message_leave',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE'),
-				checked: this.getValue('general_chat_message_leave') === 'Y',
-			});
+			let leaveMessageField = new Checker(this.getValue('general_chat_message_leave'));
 			CommunicationPage.addToSectionHelper(leaveMessageField, settingsSection);
 		}
 
 		if (this.hasValue('general_chat_message_admin_rights'))
 		{
-			let adminMessageField = new Checker({
-				inputName: 'general_chat_message_admin_rights',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE'),
-				checked: this.getValue('general_chat_message_admin_rights') === 'Y',
-			});
+			let adminMessageField = new Checker(this.getValue('general_chat_message_admin_rights'));
 			CommunicationPage.addToSectionHelper(adminMessageField, settingsSection);
 		}
 
 		if (this.hasValue('url_preview_enable'))
 		{
-			let allowUrlPreviewField = new Checker({
-				inputName: 'url_preview_enable',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_URL_PREVIEW'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_URL_PREVIEW_ON'),
-				checked: this.getValue('url_preview_enable') === 'Y',
-			});
+			let allowUrlPreviewField = new Checker(this.getValue('url_preview_enable'));
 			CommunicationPage.addToSectionHelper(allowUrlPreviewField, settingsSection);
 		}
 
 		if (this.hasValue('create_overdue_chats'))
 		{
-			let overdueChatsField = new Checker({
-				inputName: 'create_overdue_chats',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_OVERDUE_CHATS_ON'),
-				checked: this.getValue('create_overdue_chats') === 'Y',
-				helpDesk: 'redirect=detail&code=18213270',
-			});
+			let overdueChatsField = new Checker(this.getValue('create_overdue_chats'));
 			CommunicationPage.addToSectionHelper(overdueChatsField, settingsSection);
 		}
 
@@ -336,11 +309,12 @@ export class CommunicationPage extends BaseSettingsPage
 
 	#buildDiskSection(): SettingsSection
 	{
-		let diskSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_DISK'),
-			titleIconClasses: 'ui-icon-set --disk',
-			isOpen: false,
-		});
+		if (!this.hasValue('sectionDisk'))
+		{
+			return ;
+		}
+
+		let diskSection = new Section(this.getValue('sectionDisk'));
 
 		let settingsSection = new SettingsSection({
 			section: diskSection,
@@ -349,12 +323,7 @@ export class CommunicationPage extends BaseSettingsPage
 
 		if (this.hasValue('DISK_VIEWER_SERVICE'))
 		{
-			let fileViewerField = new Selector({
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER'),
-				name: this.getValue('DISK_VIEWER_SERVICE').name,
-				items: this.getValue('DISK_VIEWER_SERVICE').values,
-				current: this.getValue('DISK_VIEWER_SERVICE').current,
-			});
+			let fileViewerField = new Selector(this.getValue('DISK_VIEWER_SERVICE'));
 			CommunicationPage.addToSectionHelper(fileViewerField, settingsSection);
 		}
 
@@ -364,22 +333,23 @@ export class CommunicationPage extends BaseSettingsPage
 				'INTRANET_SETTINGS_FIELD_HELP_MESSAGE'
 			)}</span>`;
 			let fileLimitField = new Selector({
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT'),
+				label: this.getValue('DISK_LIMIT_PER_FILE').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT'),
 				hintTitle: this.getValue('DISK_LIMIT_PER_FILE').hintTitle,
 				name: this.getValue('DISK_LIMIT_PER_FILE').name,
 				items: this.getValue('DISK_LIMIT_PER_FILE').values,
 				hints: this.getValue('DISK_LIMIT_PER_FILE').hints,
 				current: this.getValue('DISK_LIMIT_PER_FILE').current,
-				isEnable: this.getValue('DISK_LIMIT_PER_FILE').is_enable,
+				isEnable: this.getValue('DISK_LIMIT_PER_FILE').isEnable,
 				bannerCode: 'limit_max_entries_in_document_history',
 				helpDesk: 'redirect=detail&code=18869612',
 				helpMessageProvider: this.helpMessageProviderFactory(messageNode),
 			});
+
 			let fileLimitRow = new Row({
 				separator: 'bottom',
 				className: '--block',
 			});
-			if (!this.getValue('DISK_LIMIT_PER_FILE').is_enable)
+			if (!this.getValue('DISK_LIMIT_PER_FILE').isEnable)
 			{
 				Event.bind(
 					fileLimitField.getInputNode(),
@@ -399,26 +369,24 @@ export class CommunicationPage extends BaseSettingsPage
 			CommunicationPage.addToSectionHelper(fileLimitField, settingsSection, fileLimitRow);
 		}
 
+		new SettingsRow({
+			row: new SeparatorRow(),
+			parent: settingsSection,
+		});
+
 		if (this.hasValue('disk_allow_edit_object_in_uf'))
 		{
-			let allowEditDocField = new Checker({
-				inputName: 'disk_allow_edit_object_in_uf',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_EDIT_DOC_ON'),
-				checked: this.getValue('disk_allow_edit_object_in_uf') === 'Y',
+			let allowEditDocField = new Checker(this.getValue('disk_allow_edit_object_in_uf'));
+			let allowEditDocRow = new Row({
+				separator: 'top',
+				className: '--block',
 			});
-			CommunicationPage.addToSectionHelper(allowEditDocField, settingsSection);
+			CommunicationPage.addToSectionHelper(allowEditDocField, settingsSection, allowEditDocRow);
 		}
 
 		if (this.hasValue('disk_allow_autoconnect_shared_objects'))
 		{
-			let connectDiskField = new Checker({
-				inputName: 'disk_allow_autoconnect_shared_objects',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_CONNECT_DISK_ON'),
-				checked: this.getValue('disk_allow_autoconnect_shared_objects') === 'Y',
-				helpDesk: 'redirect=detail&code=18213280',
-			});
+			let connectDiskField = new Checker(this.getValue('disk_allow_autoconnect_shared_objects'));
 			CommunicationPage.addToSectionHelper(connectDiskField, settingsSection);
 		}
 
@@ -428,16 +396,16 @@ export class CommunicationPage extends BaseSettingsPage
 				'INTRANET_SETTINGS_FIELD_HELP_MESSAGE'
 			)}</span>`;
 			let publicLinkField = new Checker({
-				inputName: 'disk_allow_use_external_link',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_PUBLIC_LINK_ON'),
-				checked: this.getValue('disk_allow_use_external_link').value === 'Y',
-				isEnable: this.getValue('disk_allow_use_external_link').is_enable,
+				inputName: this.getValue('disk_allow_use_external_link').inputName,
+				title: this.getValue('disk_allow_use_external_link').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK'),
+				hintOn: this.getValue('disk_allow_use_external_link').hintOn,
+				checked: this.getValue('disk_allow_use_external_link').checked,
+				isEnable: this.getValue('disk_allow_use_external_link').isEnable,
 				bannerCode: 'limit_admin_share_link',
-				helpDesk: 'redirect=detail&code=5390599',
+				helpDesk: this.getValue('disk_allow_use_external_link').helpDesk,
 				helpMessageProvider: this.helpMessageProviderFactory(messageNode),
 			});
-			if (!this.getValue('disk_allow_use_external_link').is_enable)
+			if (!this.getValue('disk_allow_use_external_link').isEnable)
 			{
 				EventEmitter.subscribe(
 					publicLinkField.switcher,
@@ -463,16 +431,16 @@ export class CommunicationPage extends BaseSettingsPage
 				'INTRANET_SETTINGS_FIELD_HELP_MESSAGE'
 			)}</span>`;
 			let enableBlockDocField = new Checker({
-				inputName: 'disk_object_lock_enabled',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_BLOCK_DOC_ON'),
-				checked: this.getValue('disk_object_lock_enabled').value === 'Y',
-				isEnable: this.getValue('disk_object_lock_enabled').is_enable,
+				inputName: this.getValue('disk_object_lock_enabled').inputName,
+				title: this.getValue('disk_object_lock_enabled').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC'),
+				hintOn: this.getValue('disk_object_lock_enabled').hintOn,
+				checked: this.getValue('disk_object_lock_enabled').checked,
+				isEnable: this.getValue('disk_object_lock_enabled').isEnable,
 				bannerCode: 'limit_document_lock',
 				helpMessageProvider: this.helpMessageProviderFactory(messageNode),
-				helpDesk: 'redirect=detail&code=2301293',
+				helpDesk: this.getValue('disk_object_lock_enabled').helpDesk,
 			});
-			if (!this.getValue('disk_object_lock_enabled').is_enable)
+			if (!this.getValue('disk_object_lock_enabled').isEnable)
 			{
 				EventEmitter.subscribe(
 					enableBlockDocField.switcher,
@@ -499,16 +467,16 @@ export class CommunicationPage extends BaseSettingsPage
 				{ '#TARIFF#': 'ent250'},
 			)}</span>`;
 			let enableFindField = new Checker({
-				inputName: 'disk_allow_use_extended_fulltext',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_SEARCH_DOC_ON'),
-				checked: this.getValue('disk_allow_use_extended_fulltext').value === 'Y',
-				isEnable: this.getValue('disk_allow_use_extended_fulltext').is_enable,
+				inputName: this.getValue('disk_allow_use_extended_fulltext').inputName,
+				title: this.getValue('disk_allow_use_extended_fulltext').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC'),
+				hintOn: this.getValue('disk_allow_use_extended_fulltext').hintOn,
+				checked: this.getValue('disk_allow_use_extended_fulltext').checked,
+				isEnable: this.getValue('disk_allow_use_extended_fulltext').isEnable,
 				bannerCode: 'limit_in_text_search',
-				helpDesk: 'redirect=detail&code=18213348',
+				helpDesk: this.getValue('disk_allow_use_extended_fulltext').helpDesk,
 				helpMessageProvider: this.helpMessageProviderFactory(messageNode),
 			});
-			if (!this.getValue('disk_allow_use_extended_fulltext').is_enable)
+			if (!this.getValue('disk_allow_use_extended_fulltext').isEnable)
 			{
 				EventEmitter.subscribe(
 					enableFindField.switcher,

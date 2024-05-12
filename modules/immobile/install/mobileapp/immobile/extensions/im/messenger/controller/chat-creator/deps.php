@@ -5,7 +5,7 @@ return [
 		'type',
 		'loc',
 		'utils/object',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/params',
 		'im:chat/dataconverter',
 		'im:chat/searchscopes',

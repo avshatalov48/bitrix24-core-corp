@@ -8,6 +8,8 @@ return [
 		'layout/ui/menu',
 		'loc',
 		'tasks:filter/task',
+		'tasks:statemanager/redux/slices/tasks/field-change-registry',
+		'tasks:statemanager/redux/types',
 		'type',
 		'utils/object',
 	],

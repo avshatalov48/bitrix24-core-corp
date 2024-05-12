@@ -220,11 +220,10 @@ abstract class Kanban
 		return $GLOBALS['USER']->canDoOperation('edit_other_settings');
 	}
 
-	/**
-	 * @return array
-	 */
 	public function getComponentParams(): array
 	{
+		$isOnlyItems = $this->isOnlyItems();
+
 		$params = [
 			'ENTITY_TYPE_CHR' => $this->entity->getTypeName(),
 			'ENTITY_TYPE_INT' => $this->entity->getTypeId(),
@@ -238,9 +237,8 @@ abstract class Kanban
 
 			'ITEMS' => [],
 			'ADMINS' => $this->getAdmins(),
-			'MORE_FIELDS' => (!$this->isOnlyItems() ? $this->getAdditionalFields() : []),
-			'MORE_EDIT_FIELDS' => ($this->isOnlyItems() ? [] : $this->getAdditionalEditFields()),
-			'FIELDS_DISABLED' => $this->disableMoreFields,
+			'MORE_FIELDS' => ($isOnlyItems ? [] : $this->getAdditionalFields()),
+			'MORE_EDIT_FIELDS' => ($isOnlyItems ? [] : $this->getAdditionalEditFields()),
 			'CATEGORIES' => [],
 
 			'CURRENT_USER_ID' => $this->currentUserId,
@@ -268,7 +266,6 @@ abstract class Kanban
 		if (!$this->isOnlyItems())
 		{
 			$inlineEditorParameters = $this->entity->getInlineEditorParameters();
-			$params['FIELDS_SECTIONS'] = $inlineEditorParameters['fieldsSections'];
 
 			if ($this->entity->isInlineEditorSupported())
 			{
@@ -295,17 +292,11 @@ abstract class Kanban
 		return $params;
 	}
 
-	/**
-	 * @return bool
-	 */
 	protected function isOnlyItems(): bool
 	{
 		return (isset($this->params['ONLY_ITEMS']) && $this->params['ONLY_ITEMS'] === 'Y');
 	}
 
-	/**
-	 * @param array $params
-	 */
 	protected function prepareComponentParams(array &$params): void
 	{
 
@@ -714,6 +705,7 @@ abstract class Kanban
 			'ADDRESS_COUNTRY', 'ADDRESS_POSTAL_CODE'
 		];
 		$filterHistory = ['STAGE_ID_FROM_HISTORY', 'STAGE_ID_FROM_SUPPOSED_HISTORY', 'STAGE_SEMANTIC_ID_FROM_HISTORY'];
+		$filterUtm = ['UTM_SOURCE', 'UTM_MEDIUM', 'UTM_CAMPAIGN', 'UTM_CONTENT', 'UTM_TERM'];
 		//from main.filter
 		$grid = $entity->getFilterOptions();
 
@@ -833,7 +825,7 @@ abstract class Kanban
 					{
 						$filter['=%' . $key] = $search[$key] . '%';
 					}
-					elseif(in_array($key, $filterHistory, true))
+					elseif(in_array($key, array_merge($filterHistory, $filterUtm), true))
 					{
 						$filter['%' . $key] = $search[$key];
 					}
@@ -2023,4 +2015,10 @@ abstract class Kanban
 
 		return htmlspecialcharsbx($string);
 	}
+
+	public function getDisabledMoreFields(): array
+	{
+		return $this->disableMoreFields;
+	}
+
 }

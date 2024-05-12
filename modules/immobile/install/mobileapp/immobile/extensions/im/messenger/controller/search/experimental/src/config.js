@@ -22,6 +22,16 @@ jn.define('im/messenger/controller/search/experimental/config', (require, export
 			];
 		}
 
+		/**
+		* @param {object} options
+		* @param {Array<string>} [options.includeOnly] - ['users', 'chats', 'bots'] — find only this entity's
+		* @param {Array<string>} [options.exclude] - ['users', 'chats', 'bots'] — kick from search this entity's
+		*/
+		setOption(options = {})
+		{
+			this.entities[0].options = options;
+		}
+
 		getConfig()
 		{
 			/** @type {ajaxConfig} */

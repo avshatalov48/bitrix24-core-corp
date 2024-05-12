@@ -14,6 +14,5 @@ $MESS['CATEGORY_DETAIL_DELETE2'] = 'Удалить воронку';
 
 $MESS['CATEGORY_DETAIL_IS_DEFAULT_TEXT'] = 'Её можно редактировать, но нельзя удалить';
 $MESS['CATEGORY_DETAIL_DELETE_CATEGORY2'] = 'Удалить воронку?';
-$MESS['CATEGORY_DETAIL_DELETE_CATEGORY_OK'] = 'Удалить';
 
 $MESS['CATEGORY_DETAIL_IS_DEFAULT_TITLE2_MSGVER_1'] = 'Это воронка по умолчанию';

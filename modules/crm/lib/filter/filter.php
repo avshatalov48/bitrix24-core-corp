@@ -139,4 +139,40 @@ class Filter extends \Bitrix\Main\Filter\Filter
 			], $semanticFilter);
 		}
 	}
+
+	/**
+	 * Extract semantic values from filter after `applyStageSemanticFilter` transform
+	 * @param array $filter
+	 * @return array|null
+	 */
+	public static function extractStageSemanticFilter(array $filter): ?array
+	{
+		$stageSemanticFound = [];
+
+		foreach ($filter as $key => $val)
+		{
+			if (
+				is_numeric($key)
+				&& is_array($val)
+				&& ($val['LOGIC'] ?? null) === 'OR'
+			)
+			{
+				foreach ($val as $subKey => $field)
+				{
+					if (
+						is_numeric($subKey)
+						&& is_array($field)
+						&& count($field) === 1
+						&& isset($field['=STAGE.SEMANTICS'])
+					)
+					{
+						$stageSemanticFound[] = $field['=STAGE.SEMANTICS'];
+					}
+				}
+			}
+		}
+
+		return empty($stageSemanticFound) ? null : $stageSemanticFound;
+	}
+
 }

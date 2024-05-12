@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/const/rest',
 		'im:messenger/lib/element',
 		'im:messenger/lib/helper/dialog',

@@ -23,7 +23,7 @@ if (!$arParams['TOOL_AVAILABLE'])
 {
 	$APPLICATION->IncludeComponent('bitrix:intranet.settings.tool.stub', '.default',
 		[
-			'LIMIT_CODE' => 'limit_office_absence_off',
+			'LIMIT_CODE' => 'limit_office_login_history_off',
 			'MODULE' => 'intranet',
 			'SOURCE' => 'login-history'
 		]

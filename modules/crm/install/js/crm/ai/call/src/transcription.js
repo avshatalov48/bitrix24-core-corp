@@ -1,6 +1,9 @@
 import { Loc } from 'main.core';
 import { Base } from './base.js';
 
+/**
+ * @memberOf BX.Crm.AI.Call
+ */
 export class Transcription extends Base
 {
 	initDefaultOptions(): void

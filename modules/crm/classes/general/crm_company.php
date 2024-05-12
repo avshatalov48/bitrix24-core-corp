@@ -18,6 +18,7 @@ use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UtmTable;
@@ -1114,13 +1115,13 @@ class CAllCrmCompany
 			/** @var \CCrmPerms $arOptions['PERMS'] */
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			Crm\Security\QueryBuilder\Options::createFromArray($arOptions)
-				->setOperations((array)$mPermType)
-				->setAliasPrefix((string)$sAliasPrefix)
-				->setReadAllAllowed(true)
-				->setSkipCheckOtherEntityTypes($permissionTypeHelper->getAllowSkipOtherEntityTypesFromOptions($arOptions))
-		;
+
+		$builderOptions = OptionsBuilder::makeFromArray($arOptions)
+			->setOperations((array)$mPermType)
+			->setAliasPrefix((string)$sAliasPrefix)
+			->setReadAllAllowed(true)
+			->setSkipCheckOtherEntityTypes($permissionTypeHelper->getAllowSkipOtherEntityTypesFromOptions($arOptions))
+			->build();
 
 		$queryBuilder = Container::getInstance()
 			->getUserPermissions($userId)
@@ -2773,6 +2774,8 @@ class CAllCrmCompany
 			{
 				$GLOBALS["CACHE_MANAGER"]->ClearByTag("crm_entity_name_".CCrmOwnerType::Company."_".$ID);
 			}
+
+			CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(CCrmOwnerType::Company, $ID);
 
 			$afterEvents = GetModuleEvents('crm', 'OnAfterCrmCompanyDelete');
 			while ($arEvent = $afterEvents->Fetch())

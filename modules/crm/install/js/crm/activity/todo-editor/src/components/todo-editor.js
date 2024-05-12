@@ -1,7 +1,8 @@
+import { CopilotTextarea, Events as CopilotTextareaEvents } from 'crm.ai.copilot-textarea';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { Browser, Dom } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { Browser, Dom, Loc, Text, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { TodoEditorActionBtn } from './todo-editor-action-btn';
 import { TodoEditorActionDelimiter } from './todo-editor-action-delimiter';
 import { TodoEditorPingSelector } from './todo-editor-ping-selector';
@@ -35,10 +36,13 @@ export const TodoEditor = {
 		popupMode: Boolean,
 		currentUser: Object,
 		pingSettings: Object,
+		copilotSettings: Object,
 	},
 
 	data(): Object
 	{
+		const isCopilotEnabled = Type.isPlainObject(this.copilotSettings);
+
 		return {
 			description: this.defaultDescription,
 			currentDeadline: this.deadline ?? new Date(),
@@ -47,6 +51,12 @@ export const TodoEditor = {
 			showFileUploader: false,
 			isTextareaToLong: false,
 			wasUsed: false,
+			isCopilotEnabled: isCopilotEnabled,
+			placeholderText: Loc.getMessage(
+				isCopilotEnabled
+					? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT'
+					: 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER',
+			),
 		};
 	},
 
@@ -55,8 +65,8 @@ export const TodoEditor = {
 		{
 			const converter = new DatetimeConverter(this.currentDeadline);
 
-			return converter.toDatetimeString({ withDayOfWeek: true, delimiter:', ' });
-		}
+			return converter.toDatetimeString({ withDayOfWeek: true, delimiter: ', ' });
+		},
 	},
 
 	watch: {
@@ -115,6 +125,7 @@ export const TodoEditor = {
 
 		onDeadlineClick(): void
 		{
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 			BX.calendar({
 				node: this.$refs.deadline,
 				bTime: true,
@@ -152,7 +163,7 @@ export const TodoEditor = {
 		resetPingOffsetsToDefault(): void
 		{
 			this.setPingOffsets(this.pingSettings.selectedValues);
-			this.$refs.pingSelector?.setValue(this.pingSettings.selectedValues);;
+			this.$refs.pingSelector?.setValue(this.pingSettings.selectedValues);
 		},
 
 		resetResponsibleUserToDefault(): void
@@ -178,30 +189,62 @@ export const TodoEditor = {
 
 		onTextareaInput(event)
 		{
-			this.setDescription(event.target.value);
-			this.onChangeDescription(event.target.value);
+			const value = event.target.value;
+
+			this.setDescription(value);
+			this.onChangeDescription(value);
+		},
+
+		onCopilotTextareaValueChange(event: BaseEvent): void
+		{
+			const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
+			const id = event.getData().id;
+
+			if (this.wasUsed && copilotId === id)
+			{
+				const value = event.getData().value;
+
+				this.setDescription(value);
+				this.onChangeDescription(value);
+			}
 		},
 	},
 
 	mounted()
 	{
 		this.$Bitrix.eventEmitter.subscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
+
+		if (this.isCopilotEnabled)
+		{
+			this.copilotTextarea = new CopilotTextarea({
+				id: Text.getRandom(),
+				target: this.$refs.textarea,
+				copilotParams: this.copilotSettings,
+			});
+
+			EventEmitter.subscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+		}
 	},
 
 	beforeUnmount()
 	{
 		this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
+
+		if (this.isCopilotEnabled)
+		{
+			EventEmitter.unsubscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+		}
 	},
 
 	template: `
 		<label class="crm-activity__todo-editor_body">
 			<textarea
-				rows="1"
+				rows="2"
 				ref="textarea"
 				@focus="onTextareaFocus"
 				@keydown="onTextareaKeydown"
 				class="crm-activity__todo-editor_textarea"
-				:placeholder="$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER')"
+				:placeholder="placeholderText"
 				@input="onTextareaInput"
 				:value="description"
 				:class="{ '--has-scroll': isTextareaToLong }"
@@ -250,5 +293,5 @@ export const TodoEditor = {
 				</div>
 			</div>
 		</label>
-	`
+	`,
 };

@@ -15,7 +15,7 @@ final class Binder
 				TaskRequestFilter::class,
 				'searchParams',
 				static function ($className, array $searchParams = []) {
-					return new TaskRequestFilter($searchParams);
+					return TaskRequestFilter::make($searchParams);
 				}
 			)
 		);

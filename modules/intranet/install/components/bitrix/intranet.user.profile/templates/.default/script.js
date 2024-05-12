@@ -233,9 +233,9 @@
 						}
 						else
 						{
-							this.setAdminRights();
+							this.getAdminConfirmPopup().show();
 						}
-					}, this)
+					}, this),
 				});
 			}
 
@@ -388,6 +388,53 @@
 					}
 				}
 			}).show();
+		},
+
+		getAdminConfirmPopup: function()
+		{
+			const popup = BX.PopupWindowManager.create({
+				id: "intranet-user-profile-admin-confirm-popup",
+				content:
+					BX.create("div", {
+						props : {
+							style : "max-width: 450px"
+						},
+						html: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION'),
+					}),
+				closeIcon : false,
+				lightShadow : true,
+				offsetLeft : 100,
+				overlay : true,
+				titleBar: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE'),
+				contentPadding: 10,
+				buttons: [
+					new BX.UI.CreateButton({
+						text: BX.message("INTRANET_USER_PROFILE_CONFIRM_YES"),
+						events: {
+							click: (button, event) => {
+								this.setAdminRights()
+								event.stopPropagation();
+								popup.close();
+							}
+						}
+					}),
+					new BX.UI.CancelButton({
+						text : BX.message("INTRANET_USER_PROFILE_CONFIRM_NO"),
+						events : {
+							click: () => {
+								popup.close();
+							},
+						},
+					}),
+				],
+				events : {
+					onPopupClose: () => {
+						popup.destroy();
+					},
+				},
+			});
+
+			return popup;
 		},
 
 		showFireInvitedUserPopup: function(callback)

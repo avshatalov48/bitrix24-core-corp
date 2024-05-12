@@ -73,6 +73,7 @@ jn.define('crm/required-fields', (require, exports, module) => {
 				backdrop: {
 					swipeAllowed: false,
 					horizontalSwipeAllowed: false,
+					onlyMediumPosition: true,
 					shouldResizeContent: true,
 					swipeContentAllowed: false,
 					navigationBarColor: AppTheme.colors.bgSecondary,

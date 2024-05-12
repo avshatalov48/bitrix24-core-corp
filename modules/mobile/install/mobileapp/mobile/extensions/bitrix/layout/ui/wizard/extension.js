@@ -257,7 +257,10 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 						wizard: this,
 						showNextStepButtonAtBottom: this.showNextStepButtonAtBottom,
 						ref: (ref) => {
-							this.stepLayoutRef = ref;
+							if (ref)
+							{
+								this.stepLayoutRef = ref;
+							}
 						},
 					}));
 				}).catch(console.error);
@@ -373,6 +376,7 @@ jn.define('layout/ui/wizard', (require, exports, module) => {
 				this.currentLayout.setRightButtons([
 					{
 						name: nextStepButtonText,
+						testId: 'wizardMoveToNextStepButton',
 						type: 'text',
 						color: isEnabled ? BUTTON_COLORS.ENABLED : BUTTON_COLORS.DISABLED,
 						callback: () => {

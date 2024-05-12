@@ -4,7 +4,7 @@
 jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { Settings } = require('im/messenger/lib/settings');
+	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		DialogTable,
 	} = require('im/messenger/db/table');
@@ -35,7 +35,7 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 
 		async getByDialogId(dialogId)
 		{
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
 				return null;
 			}
@@ -241,6 +241,16 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			if (Type.isNumber(dialog.disk_folder_id))
 			{
 				result.diskFolderId = dialog.disk_folder_id;
+			}
+
+			if (Type.isStringFilled(dialog.aiProvider))
+			{
+				result.aiProvider = dialog.aiProvider;
+			}
+
+			if (Type.isStringFilled(dialog.ai_provider))
+			{
+				result.aiProvider = dialog.ai_provider;
 			}
 
 			return result;

@@ -1,6 +1,7 @@
 .crm-timeline__card-status {
 	margin-right: 6px;
 	margin-bottom: 8px;
+	max-width: 350px;
 }
 
 .crm-timeline__card-status .ui-label {

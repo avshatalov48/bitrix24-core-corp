@@ -61,14 +61,14 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 		 */
 		getMenuActions()
 		{
-			const { checklists, sourceCheckListId } = this.props;
+			const { checklists, sourceChecklistId } = this.props;
 			const actions = [];
 
 			checklists.forEach((checkList) => {
 				const rootItem = checkList.getRootItem();
 				const checkListId = rootItem.getId();
 
-				if (sourceCheckListId !== checkListId)
+				if (sourceChecklistId !== checkListId)
 				{
 					actions.push({
 						id: checkListId,
@@ -129,7 +129,7 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 		parentWidget: PropTypes.object,
 		moveItemToChecklist: PropTypes.func,
 		checklists: PropTypes.array,
-		sourceCheckListId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+		sourceChecklistId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 	};
 
 	module.exports = { ChecklistsMenu };

@@ -28,6 +28,7 @@ export class SettingsWidget extends EventEmitter
 	#isAdmin:? boolean;
 	#requisite:? Object;
 	#settingsUrl: string;
+	#isRenameable:? boolean;
 
 	constructor(options: SettingsWidgetOptions)
 	{
@@ -39,6 +40,7 @@ export class SettingsWidget extends EventEmitter
 		this.#isAdmin = options.isAdmin;
 		this.#requisite = options.requisite;
 		this.#settingsUrl = options.settingsPath;
+		this.#isRenameable = options.isRenameable;
 
 		this.#setOptions(options);
 
@@ -211,9 +213,9 @@ export class SettingsWidget extends EventEmitter
 		Dom.append(this.#getHeader(), container);
 
 		const content = [
-			this.#isBitrix24 ? this.#getHoldingsElement() : null,
 			this.#requisite && this.#isAdmin ? this.#getRequisitesElement() : null,
 			this.#isAdmin ? this.#getSecurityAndSettingsElement() : null,
+			this.#isBitrix24 ? this.#getHoldingsElement() : null,
 			this.#getMigrateElement(),
 		];
 
@@ -224,9 +226,9 @@ export class SettingsWidget extends EventEmitter
 		Dom.append(this.#getFooter(), container);
 	}
 
-	#getHeader(): HTMLElement
+	#getLinkHeaderIcon(): HTMLElement
 	{
-		const onclickCopyLink = (event) => {
+		const onclickCopyLink = () => {
 			if (BX.clipboard.copy(window.location.origin))
 			{
 				BX.UI.Notification.Center.notify({
@@ -237,11 +239,26 @@ export class SettingsWidget extends EventEmitter
 			}
 		};
 
+		return Tag.render`<span class='ui-icon-set --link-3 intranet-settings-widget__header-btn' onclick="${onclickCopyLink}"></span>`;
+	}
+
+	#getEditHeaderIcon(): HTMLElement
+	{
+		const onclickEditLink = () => {
+			this.#getWidget().close();
+			BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings&page=portal&option=subDomainName');
+		};
+
+		return Tag.render`<span class='ui-icon-set --pencil-40 intranet-settings-widget__header-btn' onclick="${onclickEditLink}"></span>`;
+	}
+
+	#getHeader(): HTMLElement
+	{
 		const header = Tag.render`
 				<div class="intranet-settings-widget__header">
 					<div class="intranet-settings-widget__header_inner">
 						<span class="intranet-settings-widget__header-name">${window.location.host}</span>
-						<span class='ui-icon-set --link-3 intranet-settings-widget__header-btn' onclick="${onclickCopyLink}"></span>
+						${this.#isRenameable ? this.#getEditHeaderIcon() : this.#getLinkHeaderIcon()}
 					</div>
 				</div>
 			`;
@@ -336,7 +353,6 @@ export class SettingsWidget extends EventEmitter
 	{
 		const onclickOpenRequisite = (event) => {
 			window.open(this.#requisite.publicUrl, '_blank');
-			this.#requisitesPopup.close();
 			this.#getWidget().close();
 		}
 
@@ -451,7 +467,7 @@ export class SettingsWidget extends EventEmitter
 					}
 
 					this.#getWidget().close();
-					BX.SidePanel.Instance.open(this.#settingsUrl + '?page=requisite&analyticContext=widget_settings_settings', { width: 1034 });
+					BX.SidePanel.Instance.open(this.#settingsUrl + '?page=requisite&analyticContext=widget_settings_settings');
 				};
 
 				const configureRequisiteButton = {
@@ -561,16 +577,10 @@ export class SettingsWidget extends EventEmitter
 			this.#getHoldingWidget().show(this.#target);
 		};
 
-		const profilePhotoStyle = affiliate.profilePhoto
-			? `background: url('${encodeURI(Text.encode(affiliate.profilePhoto))}') no-repeat center; background-size: cover;`
-			: '';
-
 		const element = Tag.render`
 		<div class="intranet-settings-widget__branch" onclick="${onclickOpen}">
 			<div class="intranet-settings-widget__branch-icon_box">
-				<div class="ui-icon ui-icon-common-user intranet-settings-widget__branch-icon">
-					<i style="${profilePhotoStyle}"></i>
-				</div>
+				<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
 			</div>
 			<div class="intranet-settings-widget__branch_content">
 				<div class="intranet-settings-widget__branch-title">
@@ -686,7 +696,7 @@ export class SettingsWidget extends EventEmitter
 	{
 		const onclick = (event) => {
 			this.#getWidget().close();
-			BX.SidePanel.Instance.open(this.#settingsUrl + '?page=security&analyticContext=widget_settings_settings', { width: 1034 });
+			BX.SidePanel.Instance.open(this.#settingsUrl + '?page=security&analyticContext=widget_settings_settings');
 		};
 
 		const element = Tag.render`
@@ -710,7 +720,7 @@ export class SettingsWidget extends EventEmitter
 	{
 		const onclick = (event) => {
 			this.#getWidget().close();
-			BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings', { width: 1034 });
+			BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings');
 		};
 
 		const element = Tag.render`

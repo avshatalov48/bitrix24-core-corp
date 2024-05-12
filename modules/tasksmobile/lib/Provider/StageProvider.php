@@ -53,7 +53,7 @@ final class StageProvider
 	)
 	{
 		$this->userId = $userId;
-		$this->searchParams = ($searchParams ?? new TaskRequestFilter(['ownerId' => $this->userId]));
+		$this->searchParams = ($searchParams ?? TaskRequestFilter::make(['ownerId' => $this->userId]));
 		$this->extra = $extra;
 	}
 
@@ -503,12 +503,26 @@ final class StageProvider
 			}
 
 			$deadline = null;
-			if ($timeLineMode && !empty($stage['TO_UPDATE']['DEADLINE']))
+			$leftBorder = null;
+			$rightBorder = null;
+
+			if ($timeLineMode)
 			{
-				$deadline = (new DateTime($stage['TO_UPDATE']['DEADLINE']))->getTimestamp();
+				if (!empty($stage['TO_UPDATE']['DEADLINE']))
+				{
+					$deadline = (new DateTime($stage['TO_UPDATE']['DEADLINE']))->getTimestamp();
+				}
+				if (!empty($stage['ADDITIONAL_FILTER']['>DEADLINE']))
+				{
+					$leftBorder = (new DateTime($stage['ADDITIONAL_FILTER']['>DEADLINE']))->getTimestamp();
+				}
+				if (!empty($stage['ADDITIONAL_FILTER']['<=DEADLINE']))
+				{
+					$rightBorder = (new DateTime($stage['ADDITIONAL_FILTER']['<=DEADLINE']))->getTimestamp();
+				}
 			}
 
-			$stagesWithCounters[] = new Stage([
+			$stagesWithCounters[] = Stage::make([
 				'id' => $stage['ID'],
 				'name' => $stage['TITLE'],
 				'color' => '#' . $stage['COLOR'],
@@ -519,6 +533,8 @@ final class StageProvider
 				],
 				'entityType' => $stage['ENTITY_TYPE'],
 				'deadline' => $deadline,
+				'leftBorder' => $leftBorder,
+				'rightBorder' => $rightBorder,
 			]);
 		}
 

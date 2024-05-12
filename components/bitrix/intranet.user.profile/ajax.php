@@ -353,22 +353,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 	public function sendSmsForAppAction($phone = "")
 	{
-		if (!$this->canEditProfile())
-		{
-			return false;
-		}
-
-		if (empty($phone))
-		{
-			return false;
-		}
-
-		if (Loader::includeModule('socialservices'))
-		{
-			\Bitrix\Socialservices\Network::sendMobileApplicationLink($phone, LANGUAGE_ID);
-		}
-
-		return true;
+		return false;
 	}
 
 	public function setIntegratorRightsAction()

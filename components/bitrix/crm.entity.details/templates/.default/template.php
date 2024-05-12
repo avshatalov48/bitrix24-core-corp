@@ -64,6 +64,7 @@ $tabContainerId = "{$guid}_tabs";
 					'CAN_CONVERT' => $arResult['CAN_CONVERT'],
 					'CONVERSION_TYPE_ID' => $arResult['CONVERSION_TYPE_ID'],
 					'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'],
+					'CONVERTER_ID' => $arResult['CONVERTER_ID'],
 					'READ_ONLY' => !$arResult['ENABLE_PROGRESS_CHANGE']
 				)
 			),

@@ -8,15 +8,11 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	const { withPressed } = require('utils/color');
 	const { ChatTitle } = require('im/messenger/lib/element');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { clone } = require('utils/object');
 
 	/**
-	 * @typedef {Object} ItemData
-	 * @property {string | number} id
-	 * @property {string} title
-	 * @property {string} subTitle
-	 * @property {string} avatarUri
-	 * @property {string} avatarColor
-	 * @property {string} size
+	 * @class Item
+	 * @typedef {LayoutComponent<MessengerItemProps, {}>} Item
 	 */
 	class Item extends LayoutComponent
 	{
@@ -39,11 +35,11 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 			const size = this.props.size === 'L' ? 'L' : 'M';
 			if (size === 'L')
 			{
-				style = itemStyles.large;
+				style = clone(itemStyles.large);
 			}
 			else
 			{
-				style = itemStyles.medium;
+				style = clone(itemStyles.medium);
 			}
 
 			style.itemInfo.title.color = ChatTitle.createFromDialogId(this.props.data.id).getTitleColor();
@@ -122,7 +118,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 								title: this.props.data.title,
 								isYouTitle: this.props.data.isYouTitle,
 								subtitle: this.props.data.subtitle,
-								size: this.props.data.size,
+								size: this.props.size,
 								style: style.itemInfo,
 								status: this.props.data.status,
 								iconSubtitle: this.props.data.iconSubtitle,

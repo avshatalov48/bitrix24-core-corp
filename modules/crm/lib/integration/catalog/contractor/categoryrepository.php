@@ -7,7 +7,6 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UtmTable;
-use Bitrix\Main\Application;
 use Bitrix\Main\Web\Json;
 
 /**

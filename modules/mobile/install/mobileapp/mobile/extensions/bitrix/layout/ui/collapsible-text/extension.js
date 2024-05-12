@@ -3,10 +3,11 @@
  */
 jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { Loc } = require('loc');
 	const { BBCodeParser } = require('bbcode/parser');
 	const { Type } = require('type');
+	const { stringify } = require('utils/string');
 
 	/**
 	 * @class CollapsibleText
@@ -23,6 +24,7 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 		 * @param {Object} props.containerStyle
 		 * @param {Function} props.onLongClick
 		 * @param {Function} props.onLinkClick
+		 * @param {onClick} props.onClick
 		 * @param {string} props.testId
 		*/
 		constructor(props)
@@ -36,7 +38,7 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 
 		get value()
 		{
-			return this.props.value.trim();
+			return stringify(this.props.value).trim();
 		}
 
 		get maxLettersCount()
@@ -61,16 +63,25 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 
 		render()
 		{
-			const { style, onLinkClick, testId, containerStyle } = this.props;
+			const { style, onLinkClick, testId, containerStyle, onClick } = this.props;
 
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
-						flexGrow: 2,
+						flexGrow: 1,
 						...containerStyle,
 					},
-					onClick: () => this.toggleExpand(),
+					onClick: () => {
+						if (onClick && !this.isExpandable())
+						{
+							onClick();
+						}
+						else
+						{
+							this.toggleExpand();
+						}
+					},
 					onLongClick: () => this.handleContentLongClick(),
 				},
 				BBCodeText(
@@ -108,7 +119,7 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 				? ` ${Loc.getMessage('COLLAPSIBLE_STRING_VIEW_LESS')}`
 				: ` ${Loc.getMessage('COLLAPSIBLE_STRING_VIEW_MORE')}`;
 
-			const button = `[color=${AppTheme.colors.base3}]${buttonText}[/color]`;
+			const button = `[color=${Color.base3}]${buttonText}[/color]`;
 
 			if (this.state.expanded)
 			{
@@ -205,8 +216,10 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 		bbCodeMode: PropTypes.bool,
 		maxLettersCount: PropTypes.number,
 		maxNewLineCount: PropTypes.number,
+		containerStyle: PropTypes.object,
 		onLongClick: PropTypes.func,
 		onLinkClick: PropTypes.func,
+		onClick: PropTypes.func,
 		testId: PropTypes.string,
 
 	};

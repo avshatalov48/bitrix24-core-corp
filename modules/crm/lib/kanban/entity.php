@@ -19,6 +19,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Security\QueryBuilder\Result\JoinWithUnionSpecification;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
@@ -26,6 +27,7 @@ use Bitrix\Crm\Statistics\StatisticEntryManager;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -47,8 +49,8 @@ abstract class Entity
 	protected const OPTION_NAME_VIEW_FIELDS_PREFIX = 'kanban_select_more_v4_';
 	protected const OPTION_NAME_EDIT_FIELDS_PREFIX = 'kanban_edit_more_v4_';
 	protected const OPTION_NAME_CURRENT_SORT_PREFIX = 'kanban_current_sort_';
-	protected const VIEW_TYPE_VIEW = 'view';
-	protected const VIEW_TYPE_EDIT = 'edit';
+	public const VIEW_TYPE_VIEW = 'view';
+	public const VIEW_TYPE_EDIT = 'edit';
 
 	protected $canEditCommonSettings = false;
 	protected $filter;
@@ -645,6 +647,21 @@ abstract class Entity
 		];
 	}
 
+	public function getDefaultAdditionalFields(string $viewType): array
+	{
+		if ($viewType === self::VIEW_TYPE_VIEW)
+		{
+			return $this->getDefaultAdditionalSelectFields();
+		}
+
+		if ($viewType === self::VIEW_TYPE_EDIT)
+		{
+			return $this->getDefaultAdditionalEditFields();
+		}
+
+		throw new ArgumentException("Must be 'view' or 'edit'", 'viewType');
+	}
+
 	/**
 	 * Returns fields for edit in quick form.
 	 *
@@ -772,7 +789,10 @@ abstract class Entity
 		return $component->prepareConfiguration();
 	}
 
-	protected function prepareFieldsSections(array $configuration): array
+	/**
+	 * @internal
+	 */
+	public function prepareFieldsSections(array $configuration): array
 	{
 		$sections = [];
 		foreach ($configuration as $configurationSection)
@@ -813,6 +833,19 @@ abstract class Entity
 		return $sections;
 	}
 
+	public function getPreparedCustomFieldsConfig(string $viewType, array $selectedFields = []): array
+	{
+		$component = $this->getDetailComponent();
+		if (!$component)
+		{
+			return [];
+		}
+
+		$popupFieldsPreparer = new PopupFieldsPreparer($this, $component, $viewType);
+
+		return $popupFieldsPreparer->setSelectedFields($selectedFields)->getData();
+	}
+
 	/**
 	 * Returns parameters for inline editor in quick form.
 	 *
@@ -832,6 +865,7 @@ abstract class Entity
 		}
 		$result['userFields'] = $this->getUserFields();
 		$fieldInfos = $component->prepareFieldInfos();
+
 		$configuration = $this->getInlineEditorConfiguration($component);
 		$result['fieldsSections'] = $this->prepareFieldsSections($configuration);
 
@@ -1024,6 +1058,13 @@ abstract class Entity
 			if (method_exists($provider, 'getListEx'))
 			{
 				$options = [];
+
+				if (JoinWithUnionSpecification::getInstance()->isSatisfiedBy($filter))
+				{
+					// When forming a request for restricting rights, the optimization mode with the use of union was used.
+					$options['PERMISSION_BUILDER_OPTION_OBSERVER_JOIN_AS_UNION'] = true;
+				}
+
 				$select = [$stageFieldName];
 				if (mb_strpos($fieldSum, 'UF_') === 0)
 				{
@@ -1669,6 +1710,7 @@ abstract class Entity
 		return [
 			'GET_LIST' => $path . '&action=list',
 			'GET_FIELD' => $path . '&action=field',
+			'GET_FIELDS' => $path . '&action=fields',
 		];
 	}
 
@@ -2251,6 +2293,15 @@ abstract class Entity
 	public function getFieldsRestrictionsEngine(): string
 	{
 		return $this->fieldRestrictionManager->fetchRestrictedFieldsEngine(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
+	}
+
+	public function getFieldsRestrictions(): array
+	{
+		return $this->fieldRestrictionManager->getFilterFields(
 			$this->getGridId(),
 			[],
 			$this->getFilter()

@@ -11,7 +11,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 <div class="intranet-promo-block">
 	<div class="intranet-promo-block-title"><?=Loc::getMessage("INTRANET_DISK_PROMO_HEADER")?></div>
-	<div class="intranet-promo-block-description"><?=Loc::getMessage("INTRANET_DISK_PROMO_DESC")?></div>
+	<div class="intranet-promo-block-description"><?=Loc::getMessage("INTRANET_DISK_PROMO_DESC_MSGVER_1")?></div>
 	<div class="intranet-promo-block-description"><?=Loc::getMessage("INTRANET_DISK_PROMO_DESC_SUB")?></div>
 	<div class="intranet-promo-section intranet-promo-step-1">
 		<div class="intranet-promo-step-num">1</div>
@@ -27,7 +27,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	</div>
 	<div class="intranet-promo-section intranet-promo-step-2">
 		<div class="intranet-promo-step-num">2</div>
-		<div class="intranet-promo-section-title"><?=Loc::getMessage("INTRANET_DISK_PROMO_STEP2_TITLE")?></div>
+		<div class="intranet-promo-section-title"><?=Loc::getMessage("INTRANET_DISK_PROMO_STEP2_TITLE_MSGVER_1")?></div>
 		<div class="intranet-promo-section-desc"><?=Loc::getMessage("INTRANET_DISK_PROMO_STEP2_DESC")?></div>
 		<div class="intranet-promo-screenshot">
 			<img class="intranet-promo-section-img" src="<?=$arResult["IMAGE_PATH"]?>">

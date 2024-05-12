@@ -8,19 +8,14 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 	const { List } = require('im/messenger/lib/ui/base/list');
 	const AppTheme = require('apptheme');
 
+	/**
+	 * @class SingleSelector
+	 * @typedef {LayoutComponent<SingleSelectorProps, SingleSelectorState>} SingleSelector
+	 */
 	class SingleSelector extends LayoutComponent
 	{
 		/**
-		 *
-		 * @param {Object} props
-		 * @param {Array} props.itemList
-		 * @param {Function} props.onItemSelected
-		 * @param {string} props.searchMode 'inline' or 'overlay'
-		 * @param {Function} [props.onSearchItemSelected] with props.searchMode === 'overlay'
-		 * @param {Function} [props.onChangeText] with props.searchMode === 'inline'
-		 * @param {Function} [props.onSearchShow] with props.searchMode === 'inline'
-		 * @param {Array} [props.buttons]
-		 * @param {Function} [props.ref]
+		 * @param {SingleSelectorProps} props
 		 */
 		constructor(props)
 		{
@@ -78,6 +73,8 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			return new List({
 				recentText: this.props.recentText,
 				itemList: this.props.itemList,
+				openWithLoader: this.props.openWithLoader ?? false,
+				openingLoaderTitle: this.props.openingLoaderTitle,
 				onItemSelected: (itemData) => this.props.onItemSelected(itemData),
 				ref: (ref) => {
 					this.listRef = ref;

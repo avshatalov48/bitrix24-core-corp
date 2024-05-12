@@ -2,6 +2,10 @@
 
 namespace Bitrix\ListsMobile\EntityEditor;
 
+use Bitrix\Lists\Api\Service\AccessService;
+use Bitrix\Lists\Security\ElementRight;
+use Bitrix\Lists\Service\Param;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -16,6 +20,8 @@ class Provider extends \Bitrix\UI\EntityEditor\BaseProvider
 	private array $wfValues = [];
 	private array $wfFields = [];
 
+	private bool $useSectionBorder = false;
+
 	public function __construct(array $element, array $fields, array $wfStates)
 	{
 		$this->entity = $element;
@@ -24,6 +30,11 @@ class Provider extends \Bitrix\UI\EntityEditor\BaseProvider
 		$this->entityFields = [];
 		$this->prepareEntityFields($fields);
 		$this->prepareWfStates($wfStates);
+	}
+
+	public function useSectionBorder(bool $flag = true): void
+	{
+		$this->useSectionBorder = $flag;
 	}
 
 	public static function getBaseFieldsMap(): array
@@ -111,6 +122,11 @@ class Provider extends \Bitrix\UI\EntityEditor\BaseProvider
 
 		foreach ($states as $state)
 		{
+			if ($state['ID'] !== '')
+			{
+				continue;
+			}
+
 			$parameters = $state['TEMPLATE_PARAMETERS'] ?? [];
 
 			if (!empty($parameters) && is_array($parameters) && !empty($state['TEMPLATE_NAME']))
@@ -205,6 +221,17 @@ class Provider extends \Bitrix\UI\EntityEditor\BaseProvider
 		{
 			foreach ($this->wfSections as $section)
 			{
+				if (isset($section['data']))
+				{
+					$section['data'] = array_merge($section['data'], [
+						'showBorder' => $this->useSectionBorder,
+					]);
+				}
+				else
+				{
+					$section['data'] = ['showBorder' => $this->useSectionBorder];
+				}
+
 				$columnElements[] = $section;
 			}
 		}
@@ -226,9 +253,12 @@ class Provider extends \Bitrix\UI\EntityEditor\BaseProvider
 
 		return [
 			'name' => 'main',
-			'title' => Loc::getMessage('LISTSMOBILE_LIB_ENTITY_EDITOR_PROVIDER_MAIN_SECTION_TITLE'),
+			'title' => Loc::getMessage('LISTSMOBILE_LIB_ENTITY_EDITOR_PROVIDER_MAIN_SECTION_TITLE_1'),
 			'type' => 'section',
 			'elements' => $elements,
+			'data' => [
+				'showBorder' => $this->useSectionBorder,
+			],
 		];
 	}
 
@@ -239,6 +269,9 @@ class Provider extends \Bitrix\UI\EntityEditor\BaseProvider
 			'title' => Loc::getMessage('LISTSMOBILE_LIB_ENTITY_EDITOR_PROVIDER_SECTION_SECTION_TITLE'),
 			'type' => 'section',
 			'elements' => [['name' => 'IBLOCK_SECTION_ID']],
+			'data' => [
+				'showBorder' => $this->useSectionBorder,
+			],
 		];
 	}
 
@@ -265,5 +298,33 @@ class Provider extends \Bitrix\UI\EntityEditor\BaseProvider
 		}
 
 		return $data;
+	}
+
+	public function isReadOnly(): bool
+	{
+		$entityId = $this->getEntityId();
+		if ($entityId === null || $entityId === 0)
+		{
+			return false; // create
+		}
+
+		$currentUserId = (int)(CurrentUser::get()->getId());
+		$iBlockId = $this->entity['IBLOCK_ID'] ?? 0;
+
+		$accessService = new AccessService(
+			$currentUserId,
+			new Param([
+				'IBLOCK_TYPE_ID' => $this->entity['IBLOCK_TYPE_ID'] ?? '',
+				'IBLOCK_ID' => $iBlockId,
+				'SOCNET_GROUP_ID' => $this->entity['SOCNET_GROUP_ID'] ?? 0,
+			])
+		);
+
+		$sectionId = $this->entity['IBLOCK_SECTION_ID'] ?? 0;
+		$response = $accessService->checkElementPermission($entityId, $sectionId, ElementRight::EDIT, $iBlockId);
+
+		$canEdit = $response->isSuccess();
+
+		return !$canEdit;
 	}
 }

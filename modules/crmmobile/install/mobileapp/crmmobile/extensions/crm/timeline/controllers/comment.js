@@ -5,8 +5,7 @@ jn.define('crm/timeline/controllers/comment', (require, exports, module) => {
 	const { TimelineBaseController } = require('crm/controllers/base');
 	const { CommentConfig } = require('crm/timeline/services/file-selector-configs');
 	const { FileSelector } = require('layout/ui/file/selector');
-	const { Loc } = require('loc');
-	const { Alert, ButtonType } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 
 	const SupportedActions = {
 		ADD_FILE: 'Comment:AddFile',
@@ -76,20 +75,11 @@ jn.define('crm/timeline/controllers/comment', (require, exports, module) => {
 
 			const data = { id: commentId, ownerTypeId, ownerId };
 
-			Alert.confirm(
-				'',
-				confirmationText,
-				[
-					{
-						text: Loc.getMessage('CRM_TIMELINE_CONFIRM_REMOVE'),
-						type: ButtonType.DESTRUCTIVE,
-						onPress: () => this.executeDeleteAction(data),
-					},
-					{
-						type: ButtonType.CANCEL,
-					},
-				],
-			);
+			confirmDestructiveAction({
+				title: '',
+				description: confirmationText,
+				onDestruct: () => this.executeDeleteAction(data),
+			});
 		}
 
 		/**

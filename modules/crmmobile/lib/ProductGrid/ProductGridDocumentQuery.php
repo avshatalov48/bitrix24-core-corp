@@ -77,7 +77,7 @@ final class ProductGridDocumentQuery
 	private function fetchVatRates(): array
 	{
 		$vatRates = \CCrmTax::GetVatRateInfos();
-		return array_map(static fn ($fields) => new VatRate($fields), $vatRates);
+		return array_map(static fn($fields) => VatRate::make($fields), $vatRates);
 	}
 
 	private function isProductRowTaxUniform(): bool
@@ -107,7 +107,7 @@ final class ProductGridDocumentQuery
 	private function completeGallery(array $model): array
 	{
 		$model['GALLERY'] = [];
-		$productInfo = $this->productsInfo[$model['PRODUCT_ID']];
+		$productInfo = $this->productsInfo[$model['PRODUCT_ID']] ?? [];
 		foreach ($productInfo['GALLERY'] ?? [] as $file)
 		{
 			$model['GALLERY'][] = File::loadWithPreview($file['ID']);
@@ -118,8 +118,8 @@ final class ProductGridDocumentQuery
 
 	private function completeSkuTree(array $model): array
 	{
-		$productInfo = $this->productsInfo[$model['PRODUCT_ID']];
-		$model['SKU_TREE'] = $productInfo['SKU_TREE'];
+		$productInfo = $this->productsInfo[$model['PRODUCT_ID']] ?? [];
+		$model['SKU_TREE'] = $productInfo['SKU_TREE'] ?? [];
 
 		return $model;
 	}

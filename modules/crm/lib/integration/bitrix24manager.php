@@ -274,24 +274,15 @@ class Bitrix24Manager
 	 * @return string
 	 * @throws Main\LoaderException
 	 */
-	public static function prepareLicenseInfoHelperScript(array $params)
+	public static function prepareLicenseInfoHelperScript(array $params): string
 	{
 		$script = '';
 
-		if(ModuleManager::isModuleInstalled('bitrix24')
-			&& Loader::includeModule('bitrix24')
-			&& ModuleManager::isModuleInstalled('ui')
-			&& Loader::includeModule('ui')
-		)
+		if (Loader::includeModule('bitrix24') && Loader::includeModule('ui'))
 		{
 			if ((is_string($params['ID']) && $params['ID'] !== ''))
 			{
-				$script = 'if (top.hasOwnProperty("BX") && top.BX !== null && typeof(top.BX) === "function"'.
-					' && top.BX.hasOwnProperty("UI") && top.BX.UI !== null && typeof(top.BX.UI) === "object"'.
-					' && top.BX.UI.hasOwnProperty("InfoHelper") && top.BX.UI.InfoHelper !== null'.
-					' && typeof(top.BX.UI.InfoHelper) === "object" && top.BX.UI.InfoHelper.hasOwnProperty("show")'.
-					' && typeof(top.BX.UI.InfoHelper.show) === "function"){top.BX.UI.InfoHelper.show("'.
-					\CUtil::JSEscape($params['ID']).'");}';
+				$script = 'if (top.BX && top.BX.UI && top.BX.UI.InfoHelper && top.BX.UI.InfoHelper.show){top.BX.UI.InfoHelper.show("'.\CUtil::JSEscape($params['ID']).'");}';
 			}
 		}
 

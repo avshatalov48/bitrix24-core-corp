@@ -86,10 +86,32 @@ jn.define('layout/ui/fields/tag', (require, exports, module) => {
 				},
 			};
 		}
+
+		getLeftIcon()
+		{
+			return {
+				icon: 'tag',
+			};
+		}
+
+		getAddButtonText()
+		{
+			return BX.message('FIELDS_TAG_ADD_BUTTON_TEXT');
+		}
 	}
+
+	TagField.propTypes = {
+		...EntitySelectorFieldClass.propTypes,
+	};
+
+	TagField.defaultProps = {
+		...EntitySelectorFieldClass.defaultProps,
+		showEditIcon: false,
+	};
 
 	module.exports = {
 		TagType: 'tag',
+		TagFieldClass: TagField,
 		TagField: (props) => new TagField(props),
 	};
 });

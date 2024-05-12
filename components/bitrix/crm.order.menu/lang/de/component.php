@@ -1,0 +1,22 @@
+<?php
+$MESS["DEAL_ORDER_SCENARIO"] = "Modus der Bestellverarbeitung";
+$MESS["ORDER_ADD"] = "Neue Bestellung";
+$MESS["ORDER_ADD_TITLE"] = "Neue Bestellung";
+$MESS["ORDER_CANCEL"] = "Bestellung stornieren";
+$MESS["ORDER_CANCEL_TITLE"] = "Bestellung stornieren";
+$MESS["ORDER_COPY"] = "Kopieren";
+$MESS["ORDER_COPY_TITLE"] = "Bestellung kopieren";
+$MESS["ORDER_DELETE"] = "Bestellung löschen";
+$MESS["ORDER_DELETE_TITLE"] = "Bestellung löschen";
+$MESS["ORDER_DOCUMENT_BUTTON_TEXT"] = "Dokument";
+$MESS["ORDER_DOCUMENT_BUTTON_TITLE"] = "Aus der Bestellung ein Dokument erstellen";
+$MESS["ORDER_EDIT_ORDER_FORM"] = "Checkout-Formular konfigurieren";
+$MESS["ORDER_EDIT_ORDER_FORM_TITLE"] = "Checkout-Formular konfigurieren";
+$MESS["ORDER_EXPORT_CSV"] = "Bestellungen nach CSV exportieren";
+$MESS["ORDER_EXPORT_CSV_TITLE"] = "Bestellungen nach CSV exportieren";
+$MESS["ORDER_EXPORT_EXCEL"] = "Bestellungen nach Microsoft Excel exportieren";
+$MESS["ORDER_EXPORT_EXCEL_TITLE"] = "Bestellungen nach Microsoft Excel exportieren";
+$MESS["ORDER_RESTORE"] = "Bestellung wiederherstellen";
+$MESS["ORDER_RESTORE_TITLE"] = "Bestellung wiederherstellen";
+$MESS["ORDER_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Alle Bestellfelder exportieren";
+$MESS["ORDER_STEXPORT_SUMMARY"] = "Es wird eine Exportdatei für die Bestellung erstellt. Sollen umfangreiche Dateien exportiert werden, kann es einige Zeit in Anspruch nehmen.";

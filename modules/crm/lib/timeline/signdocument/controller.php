@@ -418,7 +418,7 @@ final class Controller extends Timeline\Controller
 				TimelineEntry\Facade::SIGN_DOCUMENT,
 			],
 			Entry::TYPE_CATEGORY_SIGN_COMPLETED => [
-				TimelineEntry\Facade::SIGN_DOCUMENT_LOG,
+//				TimelineEntry\Facade::SIGN_DOCUMENT_LOG,
 				TimelineEntry\Facade::SIGN_DOCUMENT,
 			],
 			Entry::TYPE_CATEGORY_SENT_FINAL => [TimelineEntry\Facade::SIGN_DOCUMENT,],

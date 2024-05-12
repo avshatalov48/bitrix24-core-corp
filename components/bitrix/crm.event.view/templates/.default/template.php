@@ -155,7 +155,7 @@ $prefix = $arResult['GRID_ID'];
 		if(isset($arResult['ENTITY_TYPE']) && $arResult['ENTITY_TYPE'] !== ''
 			&& isset($arResult['ENTITY_ID']) && is_int($arResult['ENTITY_ID']) && $arResult['ENTITY_ID'] > 0)
 		{
-			$showAddEventButton = true;
+			$showAddEventButton = in_array($arResult['ENTITY_TYPE'], [CCrmOwnerType::LeadName, CCrmOwnerType::DealName, CCrmOwnerType::ContactName, CCrmOwnerType::CompanyName, CCrmOwnerType::QuoteName, CCrmOwnerType::InvoiceName]);
 			if (in_array($arResult['ENTITY_TYPE'], [CCrmOwnerType::ContactName, CCrmOwnerType::CompanyName]))
 			{
 				$showAddEventButton = !\Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::ResolveID($arResult['ENTITY_TYPE']))

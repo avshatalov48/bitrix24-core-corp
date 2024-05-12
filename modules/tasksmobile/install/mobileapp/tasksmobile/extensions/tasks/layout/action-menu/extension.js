@@ -2,7 +2,7 @@
  * @module tasks/layout/action-menu
  */
 jn.define('tasks/layout/action-menu', (require, exports, module) => {
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const { downloadImages } = require('asset-manager');
 	const { Feature } = require('feature');
 	const { Loc } = require('loc');
@@ -497,22 +497,15 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 				}
 			};
 
-			Alert.confirm(
-				'',
-				Loc.getMessage('TASKSMOBILE_LAYOUT_ACTION_MENU_REMOVE_CONFIRM'),
-				[
-					{ type: 'cancel' },
-					{
-						type: 'destructive',
-						text: Loc.getMessage('TASKSMOBILE_LAYOUT_ACTION_MENU_REMOVE_CONFIRM_YES'),
-						onPress: () => {
-							closePromise()
-								.then(() => showToastNotification())
-								.catch(console.error);
-						},
-					},
-				],
-			);
+			confirmDestructiveAction({
+				title: '',
+				description: Loc.getMessage('TASKSMOBILE_LAYOUT_ACTION_MENU_REMOVE_CONFIRM'),
+				onDestruct: () => {
+					closePromise()
+						.then(() => showToastNotification())
+						.catch(console.error);
+				},
+			});
 		}
 	}
 

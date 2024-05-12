@@ -12,7 +12,6 @@ if($siteID !== '')
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
 use Bitrix\Main;
-use Bitrix\Crm;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -38,30 +37,62 @@ else
 		)
 	);
 
-	if($action === 'field')
+	/**
+	 * @deprecated since crm 24.0.0. See action === 'fields'
+	 */
+	if ($action === 'field')
 	{
-		$fieldID = isset($_REQUEST['id']) ? $_REQUEST['id'] : '';
+		$fieldID = $_REQUEST['id'] ?? '';
 		$field = $filter->getField($fieldID);
-		if($field)
+		if ($field)
 		{
 			$result = Main\UI\Filter\FieldAdapter::adapt($field->toArray());
 		}
 		else
 		{
-			$result = array('ERROR' => Main\Localization\Loc::getMessage('CRM_FILTER_FIELD_NOT_FOUND'));
+			$result = ['ERROR' => Main\Localization\Loc::getMessage('CRM_FILTER_FIELD_NOT_FOUND')];
 		}
 	}
-	elseif($action === 'list')
+	elseif ($action === 'fields')
 	{
-		$result = array();
-		foreach($filter->getFields() as $field)
+		$ids = $_REQUEST['ids'] ?? '';
+		$fieldIds = is_array($ids) ? $ids : [$ids];
+
+		$fields = [];
+		foreach ($fieldIds as $fieldId)
 		{
-			$result[] = Main\UI\Filter\FieldAdapter::adapt($field->toArray(array('lightweight' => true)));
+			$field = $filter->getField($fieldId);
+			if ($field)
+			{
+				$fields[] = $field;
+			}
+			else
+			{
+				$result = [
+					'ERROR' => Main\Localization\Loc::getMessage('CRM_FILTER_FIELD_NOT_FOUND') . ': ' . $fieldId,
+				];
+			}
+		}
+
+		if (empty($result))
+		{
+			foreach ($fields as $field)
+			{
+				$result[] = Main\UI\Filter\FieldAdapter::adapt($field->toArray());
+			}
+		}
+	}
+	elseif ($action === 'list')
+	{
+		$result = [];
+		foreach ($filter->getFields() as $field)
+		{
+			$result[] = Main\UI\Filter\FieldAdapter::adapt($field->toArray(['lightweight' => true]));
 		}
 	}
 	else
 	{
-		$result = array('ERROR' => Main\Localization\Loc::getMessage('CRM_FILTER_ACTION_NOT_SUPPORTED'));
+		$result = ['ERROR' => Main\Localization\Loc::getMessage('CRM_FILTER_ACTION_NOT_SUPPORTED')];
 	}
 }
 

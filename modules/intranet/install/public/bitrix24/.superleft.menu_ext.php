@@ -41,8 +41,7 @@ if (defined("BX_COMP_MANAGED_CACHE"))
 
 $isNewLiveFeedCounterAvailable = (
 	Loader::includeModule('socialnetwork')
-	&& \Bitrix\Socialnetwork\Space\Service::isAvailable()
-	&& \Bitrix\Socialnetwork\Internals\LiveFeed\Counter\CounterController::isEnabled((int)$userId)
+	&& \Bitrix\Socialnetwork\Space\Service::isAvailable(true)
 );
 
 $arMenu = [
@@ -122,7 +121,7 @@ $diskPath =
 ;
 
 $arMenu[] = array(
-	GetMessage("MENU_DISK_SECTION"),
+	GetMessage("MENU_DISK_SECTION_MSGVER_1"),
 	"/docs/",
 	array(
 		$diskPath,
@@ -260,6 +259,25 @@ $arMenu[] = [
 	''
 ];
 
+if (
+	Loader::includeModule('sign')
+	&& method_exists(\Bitrix\Sign\Config\Storage::class, 'isB2eAvailable')
+	&& \Bitrix\Sign\Config\Storage::instance()->isB2eAvailable()
+)
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_SIGN_B2E'),
+		'/sign/b2e/',
+		[],
+		[
+			'menu_item_id' => 'menu_sign_b2e',
+			'my_tools_section' => true,
+			'can_be_first_item' => true,
+		],
+		''
+	];
+}
+
 if (Loader::includeModule('sign') && \Bitrix\Sign\Config\Storage::instance()->isAvailable())
 {
 	$arMenu[] = [
@@ -393,7 +411,7 @@ $arMenu[] = [
 	'',
 ];
 
-if (IsModuleInstalled("bitrix24"))
+if (Loader::includeModule("bitrix24"))
 {
 	$arMenu[] = array(
 		GetMessage("MENU_TARIFF"),
@@ -402,7 +420,7 @@ if (IsModuleInstalled("bitrix24"))
 		array(
 			"real_link" => getLeftMenuItemLink(
 				"top_menu_id_settings",
-				$GLOBALS['USER']->CanDoOperation('bitrix24_config') ? "/settings/license.php" : "/settings/license_all.php"
+				($GLOBALS['USER']->CanDoOperation('bitrix24_config') || \CBitrix24::canAllBuyLicense()) ? '/settings/license.php' : '/settings/license_all.php',
 			),
 			"class" => "menu-tariff",
 			"menu_item_id" => "menu_tariff",

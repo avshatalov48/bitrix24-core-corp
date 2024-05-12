@@ -200,7 +200,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				},
 				new CollapsibleText({
 					value: this.getValue(),
-					style: this.getStyles(),
+					style: this.getStyles().value,
 					bbCodeMode: this.getConfig().readOnlyElementType === ReadOnlyElementType.BB_CODE_TEXT,
 					onLinkClick: this.getOnLinkClick(),
 					onLongClick: this.getContentLongClickHandler(),

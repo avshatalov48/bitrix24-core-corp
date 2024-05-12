@@ -315,6 +315,8 @@ class CompanyController extends BaseController
 		}
 		CompanyRelationManager::getInstance()->registerRecycleBin($recyclingEntityID, $entityID, $slots);
 		//endregion
+
+		\CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(\CCrmOwnerType::Company, $entityID);
 	}
 
 	/**

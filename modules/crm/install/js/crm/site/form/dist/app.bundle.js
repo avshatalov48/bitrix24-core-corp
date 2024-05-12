@@ -6394,7 +6394,7 @@ var Vue = exports.Vue;
     }();
 
     /*! 
-     * portal-vue © Thorsten Lünborg, 2019 
+     * portal-vue В© Thorsten LГјnborg, 2019 
      * 
      * Version: 2.1.7
      * 

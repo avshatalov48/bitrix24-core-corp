@@ -9,4 +9,7 @@ return [
 	'crm:error',
 	'feature',
 	'crm:terminal/entity/payment-pay-opener',
+	'notify',
+	'crm:multi-field-drawer',
+	'crm:type',
 ];

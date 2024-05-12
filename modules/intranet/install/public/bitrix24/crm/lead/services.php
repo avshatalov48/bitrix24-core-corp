@@ -1,7 +1,7 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/crm/lead/services.php");
-$APPLICATION->SetTitle(GetMessage("TITLE")/*"Âåá ñåðâèñ"*/);
+$APPLICATION->SetTitle(GetMessage("TITLE")/*"Ð’ÐµÐ± ÑÐµÑ€Ð²Ð¸Ñ"*/);
 ?><?$APPLICATION->IncludeComponent(
 	"bitrix:crm.lead.webservice",
 	"",

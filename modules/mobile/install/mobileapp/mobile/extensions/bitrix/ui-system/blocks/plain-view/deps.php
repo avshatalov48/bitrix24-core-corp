@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-		'ui-system/blocks/icon',
+		'tokens',
+		'utils/object',
 	],
 ];

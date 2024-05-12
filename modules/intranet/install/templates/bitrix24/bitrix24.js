@@ -1267,7 +1267,7 @@ B24.upgradeButtonRedirect = function(params)
 			host: host
 		},
 		BX.proxy(function(){
-			document.location.href = licensePath;
+			BX.SidePanel.Instance.open(licensePath);
 		}, this)
 	);
 }

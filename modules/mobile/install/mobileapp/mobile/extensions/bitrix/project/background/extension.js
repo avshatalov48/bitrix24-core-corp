@@ -22,10 +22,10 @@
 		static executeAction(data)
 		{
 			const projectId = data.projectId ? parseInt(data.projectId, 10) : 0;
-			const action = data.action ? data.action : null;
-			const siteId = data.siteId ? data.siteId : null;
-			const siteDir = data.siteDir ? data.siteDir : null;
-			const item = data.item ? data.item : null;
+			const action = data.action || null;
+			const siteId = data.siteId || null;
+			const siteDir = data.siteDir || null;
+			const item = data.item || null;
 			const newsPathTemplate = data.newsPathTemplate || '';
 			const calendarWebPathTemplate = data.calendarWebPathTemplate || '';
 			const currentUserId = data.currentUserId || env.userId;
@@ -97,80 +97,54 @@
 			const {
 				siteId,
 				siteDir,
+				newsPathTemplate,
+				calendarWebPathTemplate,
+				currentUserId,
 			} = params;
 
 			const subtitle = WorkgroupUtil.getSubtitle(item.params.membersCount);
 			const guid = WorkgroupUtil.createGuid();
+			const tabs = WorkgroupUtil.getTabsItems(
+				{
+					siteId,
+					siteDir,
+					guid,
+					availableFeatures: item.params.features,
+					projectNewsPathTemplate: (newsPathTemplate || ''),
+				},
+				item,
+			);
 
-			return ProjectBackgroundAction.getIsNewDashboardActive().then((isNewDashboardActive) => {
-				const tabs = WorkgroupUtil.getTabsItems(
-					{
-						siteId,
-						siteDir,
-						guid,
-						isNewDashboardActive,
-						availableFeatures: item.params.features,
-						projectNewsPathTemplate: (params.newsPathTemplate || ''),
-					},
+			PageManager.openComponent('JSStackComponent', {
+				scriptPath: availableComponents['project.tabs'].publicUrl,
+				componentCode: 'project.tabs',
+				canOpenInDefault: true,
+				params: {
+					id: item.id,
+					subtitle,
 					item,
-				);
-
-				PageManager.openComponent('JSStackComponent', {
-					scriptPath: availableComponents['project.tabs'].publicUrl,
-					componentCode: 'project.tabs',
-					canOpenInDefault: true,
-					params: {
-						id: item.id,
-						subtitle,
-						item,
-						calendarWebPathTemplate: (params.calendarWebPathTemplate || ''),
-						currentUserId: (params.currentUserId || env.userId),
-						siteId,
-						guid,
-					},
-					title: item.title,
-					rootWidget: {
-						name: 'tabs',
-						settings: {
-							objectName: 'tabs',
-							titleParams: {
-								text: item.title,
-								detailText: subtitle,
-								imageUrl: item.params.avatar,
-								userLargeTitleMode: true,
-							},
-							grabTitle: false,
-							tabs: {
-								items: tabs,
-							},
+					calendarWebPathTemplate: (calendarWebPathTemplate || ''),
+					currentUserId: (currentUserId || env.userId),
+					siteId,
+					guid,
+				},
+				title: item.title,
+				rootWidget: {
+					name: 'tabs',
+					settings: {
+						objectName: 'tabs',
+						titleParams: {
+							text: item.title,
+							detailText: subtitle,
+							imageUrl: item.params.avatar,
+							userLargeTitleMode: true,
+						},
+						grabTitle: false,
+						tabs: {
+							items: tabs,
 						},
 					},
-				});
-			});
-		}
-
-		static getIsNewDashboardActive()
-		{
-			return new Promise((resolve) => {
-				const has = Object.prototype.hasOwnProperty;
-				const storage = Application.storageById('tasksmobile');
-				const cacheSettings = storage.getObject('settings');
-
-				if (has.call(cacheSettings, 'isNewDashboardActive'))
-				{
-					resolve(cacheSettings.isNewDashboardActive);
-				}
-				else
-				{
-					BX.ajax.runAction('tasksmobile.Settings.isNewDashboardActive')
-						.then((result) => {
-							cacheSettings.isNewDashboardActive = result.data;
-							storage.setObject('settings', cacheSettings);
-							resolve(result.data);
-						})
-						.catch(() => resolve(false))
-					;
-				}
+				},
 			});
 		}
 

@@ -1,9 +1,13 @@
 <?
 return [
 	'extensions' => [
+		'analytics',
+		'alert',
 		'utils',
 		'rest',
 		'notify',
 	],
-	'components' => ['intranet.invite'],
+	'bundle' => [
+		'./src/analytics',
+	]
 ];

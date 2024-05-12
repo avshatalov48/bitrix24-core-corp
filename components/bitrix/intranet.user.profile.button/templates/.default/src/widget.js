@@ -6,7 +6,6 @@ import ThemePicker from './theme-picker';
 import {Menu} from 'main.popup';
 import 'main.qrcode';
 import Options from "./options";
-import MaskEditor from "./mask-editor";
 import Ustat from "./ustat";
 import UserLoginHistory from './user-login-history';
 import {QrAuthorization} from "ui.qrauthorization";
@@ -110,7 +109,8 @@ export default class Widget extends EventEmitter
 			[
 				{
 					flex: 0.5,
-					html: this.#getQrContainer(0.7)
+					html: this.#getQrContainer(0.7),
+					minHeight: '190px',
 				},
 				[
 					{
@@ -226,7 +226,7 @@ export default class Widget extends EventEmitter
 				</span>
 				`;
 			const nameNode = Tag.render`
-				<div class="system-auth-form__profile-name">${Text.encode(this.#profile.FULL_NAME)}</div>
+				<div class="system-auth-form__profile-name">${this.#profile.FULL_NAME}</div>
 			`;
 			EventEmitter.subscribe(
 				EventEmitter.GLOBAL_TARGET,
@@ -322,7 +322,7 @@ export default class Widget extends EventEmitter
 						<div class="system-auth-form__item-logo--image --network"></div>
 					</div>
 					<div class="system-auth-form__item-container --center">
-						<div class="system-auth-form__item-title --light">${Loc.getMessage('AUTH_PROFILE_B24NET')}</div>
+						<div class="system-auth-form__item-title --light">${Loc.getMessage('AUTH_PROFILE_B24NET_MSGVER_1')}</div>
 					</div>
 					<div class="system-auth-form__item-container --block">
 						<div class="ui-qr-popupcomponentmaker__btn">${Loc.getMessage('INTRANET_USER_PROFILE_GOTO')}</div>
@@ -366,13 +366,25 @@ export default class Widget extends EventEmitter
 	#getMaskContainer(): Element
 	{
 		return this.#cache.remember('Mask', () => {
-			const maskEditor = new MaskEditor(this.#profile.MASK);
-			maskEditor.subscribe('onOpen', this.hide);
-			maskEditor.subscribe('onChangePhoto', ({data}) => {
-				this.#savePhoto(data)
-			});
-			this.emit('onChangePhoto')
-			return maskEditor.getPromise();
+			return Tag.render`
+				<div class="system-auth-form__item system-auth-form__scope --padding-sm">
+					<div class="system-auth-form__item-logo">
+						<div class="system-auth-form__item-logo--image --mask"></div>
+					</div>
+					<div class="system-auth-form__item-container">
+						<div class="system-auth-form__item-title">
+							<span>${Loc.getMessage('INTRANET_USER_PROFILE_MASKS')}</span>
+							<span style="cursor: default" class="system-auth-form__icon-help"></span>
+						</div>
+						<div class="system-auth-form__item-content --center --center-force">
+							<div class="ui-qr-popupcomponentmaker__btn --disabled">${Loc.getMessage('INTRANET_USER_PROFILE_INSTALL')}</div>
+						</div>
+					</div>
+					<div class="system-auth-form__item-new --soon">
+						<div class="system-auth-form__item-new--title">${Loc.getMessage('INTRANET_USER_PROFILE_SOON')}</div>
+					</div>
+				</div>
+			`;
 		});
 	}
 
@@ -444,28 +456,30 @@ export default class Widget extends EventEmitter
 	#getQrContainer(flex): Element
 	{
 		return this.#cache.remember('getQrContainer', () => {
-			const isInstalled = this.#features['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y'
-				|| this.#features['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
-			const onclick = () => {
-				this.hide();
-				(new QrAuthorization({
-					title: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
-					content: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
-					helpLink: ''
-				})).show();
-			}
-			const onclickHelp = (event: MouseEvent) => {
-				top.BX.Helper.show('redirect=detail&code=14999860');
-				this.hide();
-				event.preventDefault();
-				event.stopPropagation();
-				return false;
-			};
-			let node;
-			if (flex !== 2 && flex !== 0)
-			{
-				// for a small size
-				node = Tag.render`
+			return new Promise((resolve, reject) => {
+				BX.loadExt(['ui.qrauthorization', 'qrcode']).then(() => {
+					const isInstalled = this.#features['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y'
+						|| this.#features['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
+					const onclick = () => {
+						this.hide();
+						(new QrAuthorization({
+							title: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
+							content: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
+							helpLink: '',
+						})).show();
+					}
+					const onclickHelp = (event: MouseEvent) => {
+						top.BX.Helper.show('redirect=detail&code=14999860');
+						this.hide();
+						event.preventDefault();
+						event.stopPropagation();
+						return false;
+					};
+					let node;
+					if (flex !== 2 && flex !== 0)
+					{
+						// for a small size
+						node = Tag.render`
 					<div class="system-auth-form__item system-auth-form__scope ${isInstalled ? '--active' : ''}  --clickable" onclick="${onclick}" style="padding: 10px 14px">
 						<div class="system-auth-form__item-container --center --column --center">
 							<div class="system-auth-form__item-title --center --margin-xl">${Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL')}</div>
@@ -476,11 +490,11 @@ export default class Widget extends EventEmitter
 						<div class="system-auth-form__icon-help --absolute" onclick="${onclickHelp}" title="${Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK')}"></div>
 					</div>
 				`;
-			}
-			else if (flex === 0)
-			{
-				//full size
-				node = Tag.render`
+					}
+					else if (flex === 0)
+					{
+						//full size
+						node = Tag.render`
 					<div class="system-auth-form__item system-auth-form__scope ${isInstalled ? '--active' : ''} --padding-qr-xl">
 						<div class="system-auth-form__item-container --column --flex --flex-start">
 							<div class="system-auth-form__item-title --l">${Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2')}</div>
@@ -496,11 +510,11 @@ export default class Widget extends EventEmitter
 						</div>
 					</div>
 				`;
-			}
-			else
-			{
-				// for flex 2. It is kind of middle
-				node = Tag.render`
+					}
+					else
+					{
+						// for flex 2. It is kind of middle
+						node = Tag.render`
 					<div class="system-auth-form__item system-auth-form__scope ${isInstalled ? '--active' : ''} --padding-mid-qr  --clickable" onclick="${onclick}">
 						<div class="system-auth-form__item-container --column --flex --flex-start">
 							<div class="system-auth-form__item-title --block">
@@ -514,8 +528,11 @@ export default class Widget extends EventEmitter
 						</div>
 					</div>
 				`;
-			}
-			return node;
+					}
+
+					return resolve(node);
+				}).catch(reject);
+			});
 		});
 	}
 

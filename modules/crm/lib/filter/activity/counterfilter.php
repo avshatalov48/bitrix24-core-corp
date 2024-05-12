@@ -8,6 +8,7 @@ use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Entity\EntityBase;
 use Bitrix\Crm\Entity\EntityManager;
 use Bitrix\Crm\Filter\EntityDataProvider;
+use Bitrix\Crm\Filter\Filter;
 use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
@@ -92,17 +93,28 @@ final class CounterFilter
 		int $entityTypeId
 	): void
 	{
-		$stageField = $this->getStageField($entityTypeId);
 		$activitySubQuery = $counter->getEntityListSqlExpression(
 			[
 				'MASTER_ALIAS' => null,
 				'MASTER_IDENTITY' => null,
 				'USER_IDS' => $counterUserIds,
 				'EXCLUDE_USERS' => $isExcludeUsers,
-				'STAGE_SEMANTIC_ID' => $filterFields[$stageField] ?? null,
+				'STAGE_SEMANTIC_ID' => $this->extractStageSemanticFromFilter($filterFields, $entityTypeId),
 			]
 		);
 		$filterFields[] = ['@ID' => new SqlExpression($activitySubQuery)];
+	}
+
+	private function extractStageSemanticFromFilter(array $filter, int $entityTypeId): array|string|null
+	{
+		$stageField = $this->getStageField($entityTypeId);
+		if (array_key_exists($stageField, $filter))
+		{
+			return $filter[$stageField];
+		}
+
+		// try to search stage semantic filter after conversion by Bitrix\Crm\Filter\Filter::applyStageSemanticFilter
+		return Filter::extractStageSemanticFilter($filter);
 	}
 
 	private function prepareFilterFieldsWithoutFactory(

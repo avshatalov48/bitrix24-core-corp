@@ -294,9 +294,10 @@ class Order extends Entity
 		$shipmentRaw = Shipment::getList([
 			'filter' => [
 				'=ORDER_ID' => $ids,
-				'SYSTEM' => 'N'
-			]
+				'=SYSTEM' => 'N',
+			],
 		]);
+
 		while ($shipment = $shipmentRaw->fetch())
 		{
 			$orderId = $shipment['ORDER_ID'];

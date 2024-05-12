@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'im:messenger/lib/helper',
-		'im:messenger/lib/settings',
+		'im:messenger/lib/feature',
 	],
 	'bundle' => [
 		'./src/table',
@@ -18,5 +18,7 @@ return [
 		'./src/reaction',
 		'./src/queue',
 		'./src/smile',
+		'./src/link-pin',
+		'./src/link-pin-message',
 	],
 ];

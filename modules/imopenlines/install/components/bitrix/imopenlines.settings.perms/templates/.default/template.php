@@ -23,7 +23,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 
 ?>
 
-<script type="text/javascript">
+<script>
 	function openTrialInfoHelper(dialogId)
 	{
 		BX.UI.InfoHelper.show(dialogId);

@@ -1,11 +1,11 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_entitySelector,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,main_loader,ui_buttons,ui_vue3,main_popup,ui_tour,crm_tourManager,calendar_sharing_interface,crm_messagesender,main_core_events,crm_activity_todoEditor,crm_zoom,main_core) {
+(function (exports,ui_entitySelector,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,main_loader,ui_buttons,ui_vue3,main_popup,ui_tour,crm_tourManager,calendar_sharing_interface,crm_messagesender,crm_template_editor,main_core_events,crm_activity_todoEditor,main_core,crm_zoom) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _entityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _entityCategoryId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCategoryId");
 	var _isReadonly = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReadonly");
 	var _menuBarContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuBarContainer");
 	class Context {
@@ -15,6 +15,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    Object.defineProperty(this, _entityId, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _entityCategoryId, {
 	      writable: true,
 	      value: null
 	    });
@@ -28,6 +32,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = params.entityTypeId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = params.entityId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCategoryId)[_entityCategoryId] = main_core.Type.isNumber(params.entityCategoryId) ? params.entityCategoryId : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isReadonly)[_isReadonly] = params.isReadonly;
 	    babelHelpers.classPrivateFieldLooseBase(this, _menuBarContainer)[_menuBarContainer] = params.menuBarContainer;
 	  }
@@ -36,6 +41,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  getEntityId() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId];
+	  }
+	  getEntityCategoryId() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _entityCategoryId)[_entityCategoryId];
 	  }
 	  isReadonly() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _isReadonly)[_isReadonly];
@@ -211,6 +219,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  initializeLayout() {
 	    this._ownerTypeId = this.getEntityTypeId();
 	    this._ownerId = this.getEntityId();
+	    this._ownerCategoryId = this.getEntityCategoryId();
 	    this._ghostInput = null;
 	    this._saveButtonHandler = BX.delegate(this.onSaveButtonClick, this);
 	    this._cancelButtonHandler = BX.delegate(this.onCancelButtonClick, this);
@@ -1435,7 +1444,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  const phone = this.getCurrentPhone();
 	  if (!phone) {
 	    /*
-	    now the situation of the absence of the client�s phone
+	    now the situation of the absence of the clientвЂ™s phone
 	    has not been worked out by the product manager in any way
 	    	@todo need handle this situation
 	     */
@@ -4224,6 +4233,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._shipmentId = null;
 	    this._compilationProductIds = [];
 	    this._templateId = null;
+	    this.templateOriginalId = null;
 	    this._templateFieldHintNode = null;
 	    this._templateSelectorNode = null;
 	    this._templateTemplateTitleNode = null;
@@ -4403,6 +4413,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._fromList = sender.fromList;
 	    this._senderSelectorNode.textContent = sender.shortName ? sender.shortName : sender.name;
 	    this._templateId = null;
+	    this.templateOriginalId = null;
 	    if (sender.isTemplatesBased) {
 	      this.showNode(this._templatesContainer);
 	      this.hideNode(this._messageLengthCounterWrapperNode);
@@ -4426,16 +4437,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    BX[visualFn](this._fromContainerNode);
 	    if (setAsDefault) {
 	      BX.userOptions.save("crm", "sms_manager_editor", "senderId", this._senderId);
-	    }
-	  }
-	  showNode(node) {
-	    if (node) {
-	      node.style.display = "";
-	    }
-	  }
-	  hideNode(node) {
-	    if (node) {
-	      node.style.display = "none";
 	    }
 	  }
 	  initFromSelector() {
@@ -4614,20 +4615,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  save() {
 	    const sender = this.getSelectedSender();
-	    let text = '';
-	    let templateId = '';
-	    if (!sender || !sender.isTemplatesBased) {
-	      text = this._input.value;
-	      if (text === '') {
-	        return;
-	      }
-	    } else {
-	      const template = this.getSelectedTemplate();
-	      if (!template) {
-	        return;
-	      }
-	      text = template.PREVIEW;
-	      templateId = template.ID;
+	    const {
+	      text,
+	      templateId
+	    } = this.getSendData();
+	    if (text === '') {
+	      return;
 	    }
 	    if (!this._communications.length) {
 	      alert(BX.message('CRM_TIMELINE_SMS_ERROR_NO_COMMUNICATIONS'));
@@ -4636,32 +4629,31 @@ this.BX.Crm = this.BX.Crm || {};
 	    if (this._isRequestRunning || this._isLocked) {
 	      return;
 	    }
-	    this._isRequestRunning = this._isLocked = true;
+	    this._isRequestRunning = true;
+	    this._isLocked = true;
 	    return new Promise((resolve, reject) => {
 	      BX.ajax({
-	        url: BX.util.add_url_param(this._serviceUrl, {
-	          "action": "save_sms_message",
-	          "sender": this._senderId
-	        }),
-	        method: "POST",
-	        dataType: "json",
+	        url: this.getSendUrl(),
+	        method: 'POST',
+	        dataType: 'json',
 	        data: {
-	          'site': BX.message('SITE_ID'),
-	          'sessid': BX.bitrix_sessid(),
-	          'source': this._source,
-	          "ACTION": "SAVE_SMS_MESSAGE",
-	          "SENDER_ID": this._senderId,
-	          "MESSAGE_FROM": this._from,
-	          "MESSAGE_TO": this._to,
-	          "MESSAGE_BODY": text,
-	          "MESSAGE_TEMPLATE": templateId,
-	          "OWNER_TYPE_ID": this._ownerTypeId,
-	          "OWNER_ID": this._ownerId,
-	          "TO_ENTITY_TYPE_ID": this._commEntityTypeId,
-	          "TO_ENTITY_ID": this._commEntityId,
-	          "PAYMENT_ID": this._paymentId,
-	          "SHIPMENT_ID": this._shipmentId,
-	          "COMPILATION_PRODUCT_IDS": this._compilationProductIds
+	          site: BX.message('SITE_ID'),
+	          sessid: BX.bitrix_sessid(),
+	          source: this._source,
+	          ACTION: 'SAVE_SMS_MESSAGE',
+	          SENDER_ID: this._senderId,
+	          MESSAGE_FROM: this._from,
+	          MESSAGE_TO: this._to,
+	          MESSAGE_BODY: text,
+	          MESSAGE_TEMPLATE: templateId,
+	          MESSAGE_TEMPLATE_WITH_PLACEHOLDER: this.isCurrentSenderTemplateHasPlaceholders(),
+	          OWNER_TYPE_ID: this._ownerTypeId,
+	          OWNER_ID: this._ownerId,
+	          TO_ENTITY_TYPE_ID: this._commEntityTypeId,
+	          TO_ENTITY_ID: this._commEntityId,
+	          PAYMENT_ID: this._paymentId,
+	          SHIPMENT_ID: this._shipmentId,
+	          COMPILATION_PRODUCT_IDS: this._compilationProductIds
 	        },
 	        onsuccess: () => {
 	          this.onSaveSuccess();
@@ -4673,6 +4665,42 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	    });
+	  }
+	  getSendData() {
+	    let text = '';
+	    let templateId = null;
+	    if (this.isCurrentSenderIsTemplatesBased()) {
+	      const template = this.getSelectedTemplate();
+	      if (!template) {
+	        return null;
+	      }
+	      if (this.tplEditor) {
+	        const tplEditorData = this.tplEditor.getData();
+	        if (main_core.Type.isPlainObject(tplEditorData)) {
+	          text = tplEditorData.body; // @todo check position: body or preview
+	        }
+	      }
+
+	      if (text === '') {
+	        text = template.PREVIEW;
+	      }
+	      templateId = template.ID;
+	    } else {
+	      text = this._input.value;
+	    }
+	    return {
+	      text,
+	      templateId
+	    };
+	  }
+	  getSendUrl() {
+	    return BX.util.add_url_param(this._serviceUrl, {
+	      'action': 'save_sms_message',
+	      'sender': this._senderId
+	    });
+	  }
+	  getSelectedSender() {
+	    return this._senders.find(sender => sender.id === this._senderId);
 	  }
 	  cancel() {
 	    this._input.value = "";
@@ -4918,15 +4946,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  showTemplateSelectDropdown(items) {
 	    const menuItems = [];
-	    if (BX.Type.isArray(items)) {
+	    if (main_core.Type.isArray(items)) {
 	      if (items.length) {
-	        items.forEach(function (item) {
+	        items.forEach(item => {
 	          menuItems.push({
+	            templateId: item.ORIGINAL_ID,
 	            value: item.ID,
 	            text: item.TITLE,
 	            onclick: this._selectTemplateHandler
 	          });
-	        }.bind(this));
+	        });
 	        BX.PopupMenu.show({
 	          id: this._templateSelectorMenuId,
 	          bindElement: this._templateSelectorNode,
@@ -4957,12 +4986,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._isRequestRunning) {
 	        this._isRequestRunning = true;
 	        const senderId = this._senderId;
-	        BX.ajax.runAction('messageservice.Sender.getTemplates', {
+	        BX.ajax.runAction('crm.activity.sms.getTemplates', {
 	          data: {
-	            id: senderId,
+	            senderId,
 	            context: {
 	              module: 'crm',
 	              entityTypeId: this.getEntityTypeId(),
+	              entityCategoryId: this.getEntityCategoryId(),
 	              entityId: this.getEntityId()
 	            }
 	          }
@@ -4976,7 +5006,9 @@ this.BX.Crm = this.BX.Crm || {};
 	            this.toggleTemplateSelectAvailability();
 	            if (BX.PopupMenu.getMenuById(loaderMenuId)) {
 	              BX.PopupMenu.getMenuById(loaderMenuId).close();
-	              this.showTemplateSelectDropdown(sender.templates);
+	              if (this.isVisible()) {
+	                this.showTemplateSelectDropdown(sender.templates);
+	              }
 	            }
 	          }
 	        }.bind(this)).catch(function (response) {
@@ -4991,20 +5023,27 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  }
-	  getSelectedSender() {
-	    return this._senders.find(function (sender) {
-	      return sender.id === this._senderId;
-	    }.bind(this));
-	  }
 	  getSelectedTemplate() {
 	    const sender = this.getSelectedSender();
 	    if (!this._templateId || !sender || !sender.templates) {
 	      return null;
 	    }
-	    const template = sender.templates.find(function (template) {
-	      return template.ID == this._templateId;
-	    }.bind(this));
-	    return template ? template : null;
+	    const template = sender.templates.find(template => template.ID === this._templateId);
+	    return template != null ? template : null;
+	  }
+	  preparePlaceholdersFromTemplate(template) {
+	    var _template$PLACEHOLDER;
+	    const templatePlaceholders = (_template$PLACEHOLDER = template.PLACEHOLDERS) != null ? _template$PLACEHOLDER : null;
+	    if (!main_core.Type.isPlainObject(templatePlaceholders)) {
+	      this.placeholders = null;
+	      this.filledPlaceholders = null;
+	      return;
+	    }
+	    this.placeholders = templatePlaceholders;
+	    if (!main_core.Type.isArray(template.FILLED_PLACEHOLDERS)) {
+	      template.FILLED_PLACEHOLDERS = [];
+	    }
+	    this.filledPlaceholders = template.FILLED_PLACEHOLDERS;
 	  }
 	  onTemplateSelectClick() {
 	    const sender = this.getSelectedSender();
@@ -5014,6 +5053,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  onSelectTemplate(e, item) {
 	    this._templateId = item.value;
+	    this.templateOriginalId = item.templateId;
 	    this.applySelectedTemplate();
 	    this.toggleSaveButton();
 	    const menu = BX.PopupMenu.getMenuById(this._templateSelectorMenuId);
@@ -5023,7 +5063,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  toggleTemplateSelectAvailability() {
 	    const sender = this.getSelectedSender();
-	    if (sender && BX.Type.isArray(sender.templates) && !sender.templates.length) {
+	    if (sender && main_core.Type.isArray(sender.templates) && !sender.templates.length) {
 	      BX.addClass(this._templateSelectorNode, 'ui-ctl-disabled');
 	      this._templateTemplateTitleNode.textContent = BX.message('CRM_TIMELINE_SMS_TEMPLATES_NOT_FOUND');
 	    } else {
@@ -5032,21 +5072,107 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }
 	  applySelectedTemplate() {
+	    if (!this.isCurrentSenderHasTemplates()) {
+	      this.hideTemplatePreviewNodeAndClearTitle();
+	      return;
+	    }
+	    const template = this.getSelectedTemplate();
+	    if (!main_core.Type.isPlainObject(template)) {
+	      this.hideTemplatePreviewNodeAndClearTitle();
+	      return;
+	    }
+	    this.preparePlaceholdersFromTemplate(template);
+	    this.setTemplateNodeTitle(template.TITLE);
+	    this.initTemplateEditor(template);
+	    this.showNode(this._templatePreviewNode);
+	  }
+	  showNode(node) {
+	    main_core.Dom.style(node, {
+	      display: ''
+	    });
+	  }
+	  isCurrentSenderTemplateHasPlaceholders() {
+	    return this.isCurrentSenderIsTemplatesBased() && main_core.Type.isPlainObject(this.placeholders);
+	  }
+	  isCurrentSenderIsTemplatesBased() {
 	    const sender = this.getSelectedSender();
-	    if (!this._templateId || !sender || !sender.templates) {
-	      this.hideNode(this._templatePreviewNode);
-	      this._templateTemplateTitleNode.textContent = '';
-	    } else {
-	      const template = this.getSelectedTemplate();
-	      if (template) {
-	        const preview = BX.Text.encode(template.PREVIEW).replace(/\n/g, '<br>');
-	        this.showNode(this._templatePreviewNode);
-	        this._templatePreviewNode.innerHTML = preview;
-	        this._templateTemplateTitleNode.textContent = template.TITLE;
-	      } else {
-	        this.hideNode(this._templatePreviewNode);
-	        this._templateTemplateTitleNode.textContent = '';
+	    return sender && sender.isTemplatesBased;
+	  }
+	  isCurrentSenderHasTemplates() {
+	    const sender = this.getSelectedSender();
+	    return sender && sender.templates;
+	  }
+	  hideTemplatePreviewNodeAndClearTitle() {
+	    this.hideNode(this._templatePreviewNode);
+	    this.setTemplateNodeTitle();
+	  }
+	  hideNode(node) {
+	    main_core.Dom.style(node, {
+	      display: 'none'
+	    });
+	  }
+	  setTemplateNodeTitle(title = '') {
+	    this._templateTemplateTitleNode.textContent = title;
+	  }
+	  initTemplateEditor(template) {
+	    // @todo will support other positions too, not only Preview
+	    const preview = main_core.Text.encode(template.PREVIEW).replaceAll('\n', '<br>');
+	    const params = {
+	      target: this._templatePreviewNode,
+	      entityId: this._ownerId,
+	      entityTypeId: this._ownerTypeId,
+	      categoryId: this._ownerCategoryId,
+	      onSelect: params => this.createOrUpdatePlaceholder(params)
+	      //onDeselect: (params) => this.deletePlaceholder(params),
+	    };
+
+	    this.tplEditor = new BX.Crm.Template.Editor(params).setPlaceholders(this.placeholders).setFilledPlaceholders(this.filledPlaceholders);
+
+	    // @todo will support other positions too, not only Preview
+	    this.tplEditor.setBody(preview);
+	  }
+	  createOrUpdatePlaceholder(params) {
+	    const {
+	      id,
+	      value,
+	      entityType,
+	      text
+	    } = params;
+	    BX.ajax.runAction('crm.activity.smsplaceholder.createOrUpdatePlaceholder', {
+	      data: {
+	        placeholderId: id,
+	        fieldName: main_core.Type.isStringFilled(value) ? value : null,
+	        entityType: main_core.Type.isStringFilled(value) ? entityType : null,
+	        fieldValue: main_core.Type.isStringFilled(text) ? text : null,
+	        ...this.getCommonPlaceholderData()
 	      }
+	    });
+	  }
+
+	  /* deletePlaceholder({ placeholderId }): void
+	  {
+	  	BX.ajax.runAction(
+	  		'crm.activity.smsplaceholder.deletePlaceholder',
+	  		{
+	  			data: {
+	  				placeholderId,
+	  				...this.getCommonPlaceholderData(),
+	  			},
+	  		},
+	  	);
+	  } */
+
+	  getCommonPlaceholderData() {
+	    return {
+	      templateId: this.templateOriginalId,
+	      entityTypeId: this._ownerTypeId,
+	      entityCategoryId: this._ownerCategoryId
+	    };
+	  }
+	  activate() {
+	    super.activate();
+	    if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates) {
+	      this.onTemplateSelectClick();
 	    }
 	  }
 	  static create(id, settings) {
@@ -5347,6 +5473,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    ownerId: this.getEntityId(),
 	    currentUser: this.getSetting('currentUser'),
 	    pingSettings: this.getSetting('pingSettings'),
+	    copilotSettings: this.getSetting('copilotSettings'),
 	    events: {
 	      onFocus: this.setFocused.bind(this, true),
 	      onChangeDescription: babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this)
@@ -6136,6 +6263,7 @@ this.BX.Crm = this.BX.Crm || {};
 	/** @memberof BX.Crm.Timeline.MenuBar */
 	var _entityTypeId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _entityId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _entityCategoryId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCategoryId");
 	var _isReadonly$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReadonly");
 	var _container$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
@@ -6165,6 +6293,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _entityCategoryId$1, {
+	      writable: true,
+	      value: null
+	    });
 	    Object.defineProperty(this, _isReadonly$1, {
 	      writable: true,
 	      value: false
@@ -6187,6 +6319,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = params.entityTypeId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1] = params.entityId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityCategoryId$1)[_entityCategoryId$1] = params.entityCategoryId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isReadonly$1)[_isReadonly$1] = params.isReadonly;
 	    babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1] = document.getElementById(params.containerId);
 	    const menuId = (_params$menuId = params.menuId) != null ? _params$menuId : (BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]) + '_menu').toLowerCase();
@@ -6194,6 +6327,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    const context = new Context({
 	      entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1],
 	      entityId: babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1],
+	      entityCategoryId: babelHelpers.classPrivateFieldLooseBase(this, _entityCategoryId$1)[_entityCategoryId$1],
 	      isReadonly: babelHelpers.classPrivateFieldLooseBase(this, _isReadonly$1)[_isReadonly$1],
 	      menuBarContainer: babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1]
 	    });
@@ -6320,5 +6454,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI.EntitySelector,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX,BX.UI,BX.Vue3,BX.Main,BX.UI.Tour,BX.Crm,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.Event,BX.Crm.Activity,BX.Crm,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI.EntitySelector,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX,BX.UI,BX.Vue3,BX.Main,BX.UI.Tour,BX.Crm,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.Crm.Template,BX.Event,BX.Crm.Activity,BX,BX.Crm));
 //# sourceMappingURL=toolbar.bundle.js.map

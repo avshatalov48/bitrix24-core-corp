@@ -22,7 +22,7 @@ final class Wizard
 		$currency = $product->documentCurrency ?? $document->currency;
 		$sku = self::loadProduct((int)$product->id);
 
-		$record = new DocumentProductRecord([
+		$record = DocumentProductRecord::make([
 			'id' => 'unsaved_' . $product->wizardUniqid,
 			'type' => $sku ? $sku->getType() : ProductTable::TYPE_PRODUCT,
 			'documentId' => $documentId,

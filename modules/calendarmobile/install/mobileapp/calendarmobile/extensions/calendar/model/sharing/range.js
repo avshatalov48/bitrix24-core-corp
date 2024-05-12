@@ -15,15 +15,13 @@ jn.define('calendar/model/sharing/range', (require, exports, module) => {
 	{
 		constructor(range)
 		{
-			const { id, from, to, weekDays, weekStart, slotSize, isNew } = range;
-
-			this.id = id;
-			this.from = from;
-			this.to = to;
-			this.weekDays = weekDays;
-			this.weekStart = weekStart;
-			this.slotSize = slotSize;
-			this.isNew = isNew;
+			this.id = BX.prop.getNumber(range, 'id', 0);
+			this.from = BX.prop.getNumber(range, 'from', 0);
+			this.to = BX.prop.getNumber(range, 'to', 0);
+			this.weekdays = BX.prop.getArray(range, 'weekdays', [1, 2, 3, 4, 5]);
+			this.weekStart = BX.prop.getNumber(range, 'weekStart', 1);
+			this.slotSize = BX.prop.getNumber(range, 'slotSize', 30);
+			this.isNew = BX.prop.getBoolean(range, 'isNew', false);
 		}
 
 		/**
@@ -96,7 +94,7 @@ jn.define('calendar/model/sharing/range', (require, exports, module) => {
 		 */
 		getWeekDays()
 		{
-			return this.weekDays;
+			return this.weekdays;
 		}
 
 		/**
@@ -104,7 +102,7 @@ jn.define('calendar/model/sharing/range', (require, exports, module) => {
 		 */
 		setWeekDays(days)
 		{
-			this.weekDays = days;
+			this.weekdays = days;
 		}
 
 		/**
@@ -128,14 +126,14 @@ jn.define('calendar/model/sharing/range', (require, exports, module) => {
 		 */
 		getWeekdaysFormatted()
 		{
-			if (this.weekDays.sort().join(',') === [1, 2, 3, 4, 5].sort().join(','))
+			if (this.weekdays.sort().join(',') === [1, 2, 3, 4, 5].sort().join(','))
 			{
 				return Loc.getMessage('M_CALENDAR_SETTINGS_WORKDAYS');
 			}
 
-			const weekdaysLoc = this.getWeekdaysLoc(this.weekDays.length === 1);
+			const weekdaysLoc = this.getWeekdaysLoc(this.weekdays.length === 1);
 
-			return this.sortWeekdays(this.weekDays).map((weekday) => weekdaysLoc[weekday]).join(', ');
+			return this.sortWeekdays(this.weekdays).map((weekday) => weekdaysLoc[weekday]).join(', ');
 		}
 
 		sortWeekdays(weekdays)

@@ -62,7 +62,7 @@ final class DashboardRepository
 		return $dashboards;
 	}
 
-	public function getById(int $dashboardId): ?Dashboard
+	public function getById(int $dashboardId, bool $loadCredentials = true): ?Dashboard
 	{
 		$params = [
 			'filter' => [
@@ -76,16 +76,16 @@ final class DashboardRepository
 		{
 			return null;
 		}
-		$credentialsResponse =
-			$dashboard->getExternalId()
-				? $this->integrator->getDashboardEmbeddedCredentials($dashboard->getExternalId())
-				: null
-		;
 
-		$credentials = $credentialsResponse?->getData();
-		if ($credentials !== null)
+		if ($loadCredentials && $dashboard->getExternalId())
 		{
-			$dashboard->setDashboardCredentials($credentials);
+			$credentialsResponse = $this->integrator->getDashboardEmbeddedCredentials($dashboard->getExternalId());
+
+			$credentials = $credentialsResponse->getData();
+			if (!empty($credentials))
+			{
+				$dashboard->setDashboardCredentials($credentials);
+			}
 		}
 
 		return $dashboard;
@@ -153,10 +153,31 @@ final class DashboardRepository
 
 	private function synchronizeDashboard(EO_SupersetDashboard $dashboard, Dto\Dashboard $proxyData): void
 	{
-		$title = $proxyData->title;
-		if ($dashboard->getTitle() !== $title)
+		if ($dashboard->getTitle() !== $proxyData->title)
 		{
-			$dashboard->setTitle($title);
+			$dashboard->setTitle($proxyData->title);
+		}
+
+		if (
+			$proxyData->dateModify
+			&& $dashboard->getDateModify()?->getTimestamp() !== $proxyData->dateModify->getTimestamp()
+		)
+		{
+			$dashboard->setDateModify($proxyData->dateModify);
+		}
+		elseif (
+			$proxyData->dateModify === null
+			&& !$dashboard->isDateModifyFilled()
+		)
+		{
+			$dashboard->setDateModify($dashboard->getDateCreate());
+		}
+
+		if (
+			$dashboard->isTitleChanged()
+			|| $dashboard->isDateModifyChanged()
+		)
+		{
 			$dashboard->save();
 		}
 	}

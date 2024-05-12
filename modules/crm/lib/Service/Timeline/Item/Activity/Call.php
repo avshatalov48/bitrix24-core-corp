@@ -8,7 +8,6 @@ use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Timeline\Config;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Item\Payload;
 use Bitrix\Crm\Service\Timeline\Layout;
@@ -489,6 +488,24 @@ class Call extends Activity
 		};
 	}
 
+	protected function fetchAudioRecordList(): array
+	{
+		$originId = $this->fetchOriginId();
+		if (!$this->isVoxImplant($originId))
+		{
+			return [];
+		}
+
+		if (!empty($this->getAssociatedEntityModel()?->get('MEDIA_FILE_INFO')['URL']))
+		{
+			return [[
+				'VIEW_URL' => (string)$this->getAssociatedEntityModel()?->get('MEDIA_FILE_INFO')['URL']
+			]];
+		}
+
+		return parent::fetchAudioRecordList();
+	}
+
 	private function buildResponsibleUserBlock(): ?ContentBlock
 	{
 		$data = $this->getUserData($this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'));
@@ -705,9 +722,7 @@ class Call extends Activity
 					->addActionParamInt('activityId', $activityId)
 					->addActionParamInt('ownerTypeId', $ownerTypeId)
 					->addActionParamInt('ownerId', $ownerId)
-					// analytic metrics
-					->addActionParamString('callId', $this->fetchInfo()['CALL_ID'])
-					->addActionParamString('crmMode', $this->getContext()->getCurrentCrmMode())
+					->addActionParamBoolean('isCopilotBannerNeedShow', $this->isCopilotBannerNeedShow())
 			)
 			->setScopeWeb()
 		;
@@ -783,35 +798,6 @@ class Call extends Activity
 		return $this->isVoxImplant($originId)
 			? VoxImplantManager::getCallInfo(mb_substr($originId, 3)) ?? []
 			: [];
-	}
-
-	private function fetchAudioRecordList(): array
-	{
-		$originId = $this->fetchOriginId();
-		if (!$this->isVoxImplant($originId))
-		{
-			return [];
-		}
-
-		if (!empty($this->getAssociatedEntityModel()?->get('MEDIA_FILE_INFO')['URL']))
-		{
-			return [[
-				'VIEW_URL' => (string)$this->getAssociatedEntityModel()?->get('MEDIA_FILE_INFO')['URL']
-			]];
-		}
-
-		$files = $this->fetchStorageFiles();
-		if (empty($files))
-		{
-			return [];
-		}
-
-		return array_values(
-			array_filter(
-				$files,
-				fn($row) => in_array(GetFileExtension(mb_strtolower($row['NAME'])), Config::ALLOWED_AUDIO_EXTENSIONS)
-			)
-		);
 	}
 
 	private function fetchPhoneList(int $entityTypeId, int $entityId): array
@@ -896,5 +882,10 @@ class Call extends Activity
 	private function isTranscribed(array $input): bool
 	{
 		return isset($input['HAS_TRANSCRIPT']) && $input['HAS_TRANSCRIPT'];
+	}
+
+	private function isCopilotBannerNeedShow(): bool
+	{
+		return \Bitrix\AI\Config::getPersonalValue('first_launch') !== 'N';
 	}
 }

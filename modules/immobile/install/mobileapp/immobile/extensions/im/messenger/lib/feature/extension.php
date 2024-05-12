@@ -11,5 +11,5 @@ if (!\Bitrix\Main\Loader::includeModule('im'))
 }
 
 return [
-	'isBitrixCallEnabled' => \Bitrix\Im\Call\Call::isBitrixCallServerEnabled(),
+	'isBitrixCallEnabled' => \Bitrix\Im\Call\Call::isBitrixCallEnabled(),
 ];

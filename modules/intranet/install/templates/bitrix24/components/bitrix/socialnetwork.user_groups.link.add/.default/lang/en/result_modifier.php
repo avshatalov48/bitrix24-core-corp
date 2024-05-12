@@ -1,9 +1,9 @@
-<?
+<?php
 $MESS["SONET_C36_FILTER_LIST_YES"] = "Yes";
 $MESS["SONET_C36_T_FILTER_CLOSED"] = "Archive";
 $MESS["SONET_C36_T_FILTER_EXTRANET"] = "Extranet";
 $MESS["SONET_C36_T_FILTER_FAVORITES"] = "Favorites";
-$MESS["SONET_C36_T_FILTER_LANDING"] = "For posting at Bitrix24.Sites";
+$MESS["SONET_C36_T_FILTER_LANDING_MSGVER_1"] = "For posting on Bitrix24 Sites";
 $MESS["SONET_C36_T_FILTER_MEMBER"] = "Member";
 $MESS["SONET_C36_T_FILTER_NAME"] = "Name";
 $MESS["SONET_C36_T_FILTER_OWNER"] = "Owner";
@@ -12,4 +12,3 @@ $MESS["SONET_C36_T_FILTER_PROJECT"] = "Project";
 $MESS["SONET_C36_T_FILTER_PROJECT_DATE_FINISH"] = "Project end date";
 $MESS["SONET_C36_T_FILTER_PROJECT_DATE_START"] = "Project start date";
 $MESS["SONET_C36_T_FILTER_TAG"] = "Tag";
-?>

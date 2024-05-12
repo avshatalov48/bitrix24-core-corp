@@ -378,10 +378,9 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['ADMINS'] = $this->componentParams['ADMINS'];
 		$this->arResult['MORE_FIELDS'] = $this->componentParams['MORE_FIELDS'];
 		$this->arResult['MORE_EDIT_FIELDS'] = $this->componentParams['MORE_EDIT_FIELDS'];
-		$this->arResult['FIELDS_DISABLED'] = $this->componentParams['FIELDS_DISABLED'];
 		$this->arResult['CATEGORIES'] = $this->componentParams['CATEGORIES'];
 		$this->arResult['FIELDS_SECTIONS'] = $this->componentParams['FIELDS_SECTIONS'] ?? null;
-		//$this->arResult['STUB'] = $this->getStub(); TODO: исправить, когда появятся актуальные тексты
+		//$this->arResult['STUB'] = $this->getStub(); TODO: РёСЃРїСЂР°РІРёС‚СЊ, РєРѕРіРґР° РїРѕСЏРІСЏС‚СЃСЏ Р°РєС‚СѓР°Р»СЊРЅС‹Рµ С‚РµРєСЃС‚С‹
 		$this->arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] = $this->showErrorCounterByActivityResponsible();
 		$this->arResult['SKIP_COLUMN_COUNT_CHECK'] = $this->isSkipColumnCountCheck();
 		$this->arResult['USE_ITEM_PLANNER'] = ($this->arParams['USE_ITEM_PLANNER'] ?? 'N') === 'Y';
@@ -550,10 +549,13 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return $this->arResult;
 		}
 
-		$this->arResult['RESTRICTED_FIELDS_ENGINE'] = $this->getEntity()->getFieldsRestrictionsEngine();
-		$this->arResult['SORT_SETTINGS'] = $this->getEntity()->getSortSettings();
-		$this->arResult['IS_LAST_ACTIVITY_ENABLED'] = $this->getEntity()->isLastActivityEnabled();
-		$GLOBALS['APPLICATION']->setTitle($this->getEntity()->getTitle());
+		$entity = $this->getEntity();
+		$this->arResult['RESTRICTED_FIELDS_ENGINE'] = $entity->getFieldsRestrictionsEngine();
+		$this->arResult['RESTRICTED_FIELDS'] = $entity->getFieldsRestrictions();
+		$this->arResult['SORT_SETTINGS'] = $entity->getSortSettings();
+		$this->arResult['IS_LAST_ACTIVITY_ENABLED'] = $entity->isLastActivityEnabled();
+
+		$GLOBALS['APPLICATION']->setTitle($entity->getTitle());
 		$this->IncludeComponentTemplate();
 	}
 
@@ -1448,7 +1450,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		$type = $this->getEntity()->getTypeName();
 
-		// TODO: исправить, когда появятся актуальные тексты
+		// TODO: РёСЃРїСЂР°РІРёС‚СЊ, РєРѕРіРґР° РїРѕСЏРІСЏС‚СЃСЏ Р°РєС‚СѓР°Р»СЊРЅС‹Рµ С‚РµРєСЃС‚С‹
 		if ($type === CCrmOwnerType::LeadName)
 		{
 			return [

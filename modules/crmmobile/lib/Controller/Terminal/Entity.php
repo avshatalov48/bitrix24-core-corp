@@ -9,7 +9,7 @@ use Bitrix\CrmMobile\Controller\Terminal\Actions\Entity\InitializeAction;
 use Bitrix\CrmMobile\Controller\Terminal\Actions\Entity\CreatePaymentAction;
 use Bitrix\CrmMobile\Controller\Terminal\Actions\Entity\OpenPaymentPayAction;
 use Bitrix\Main\Engine\ActionFilter;
-use Bitrix\Main\Engine\Controller;
+use Bitrix\CrmMobile\Controller\BaseJson;
 use Bitrix\Main\Loader;
 
 Loader::requireModule('crm');
@@ -21,7 +21,7 @@ Loader::requireModule('mobile');
 Loader::requireModule('currency');
 Loader::requireModule('seo');
 
-class Entity extends Controller
+class Entity extends BaseJson
 {
 	use PrimaryAutoWiredEntity;
 	
@@ -46,10 +46,7 @@ class Entity extends Controller
 	protected function getDefaultPreFilters(): array
 	{
 		return [
-			new ActionFilter\Authentication(),
-			new ActionFilter\Csrf(),
-			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-			new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+			...parent::getDefaultPreFilters(),
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 		];
 	}

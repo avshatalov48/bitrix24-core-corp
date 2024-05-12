@@ -8,8 +8,8 @@ $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote.list/templates/.default/template.php');
@@ -32,6 +32,11 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 				$APPLICATION->getCurPageParam()
 			), true);
 }
+
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN,
+];
 
 // main menu
 $APPLICATION->IncludeComponent(
@@ -56,7 +61,8 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_REPORT_LIST' => isset($arResult['PATH_TO_REPORT_LIST']) ? $arResult['PATH_TO_REPORT_LIST'] : '',
 		'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 		'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
-		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
+		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : '',
+		'ANALYTICS' => $analytics,
 	],
 	$component
 );
@@ -108,7 +114,8 @@ else
 			'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'],
 			'ELEMENT_ID' => 0,
 			'TYPE' => 'list',
-			'DISABLE_EXPORT' => 'Y'
+			'DISABLE_EXPORT' => 'Y',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);

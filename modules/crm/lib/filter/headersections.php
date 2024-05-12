@@ -55,7 +55,7 @@ final class HeaderSections
 			$additionalProviders = array_merge($additionalProviders, $filterFactory->getClientDataProviders($settings));
 		}
 
-		if ($this->isActivitySearchSupported($settings->getEntityTypeID()))
+		if ($this->isFastSearchCanBeUsed($settings))
 		{
 			$additionalProviders[] = new ActivityFastSearchDataProvider(
 				new ActivityFastSearchSettings(['ID' => $settings->getID()])
@@ -121,6 +121,17 @@ final class HeaderSections
 			'selected' => true,
 			'grid' => false
 		];
+	}
+
+	private function isFastSearchCanBeUsed(EntitySettings $settings): bool
+	{
+		$myCompanyMode = $settings instanceof CompanySettings && $settings->isMyCompanyMode();
+		if ($myCompanyMode)
+		{
+			return false;
+		}
+
+		return $this->isActivitySearchSupported($settings->getEntityTypeID());
 	}
 
 	private function isActivitySearchSupported(int $entityTypeId): bool

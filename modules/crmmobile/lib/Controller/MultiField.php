@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\CrmMobile\Controller\BaseJson;
 use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 use Bitrix\Crm\Engine\ActionFilter\CheckWritePermission;
@@ -12,7 +13,6 @@ use Bitrix\Crm\Multifield\Type;
 use Bitrix\Crm\Multifield\Value;
 use Bitrix\Crm\Multifield\ValueExtra;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Engine\JsonController;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -20,7 +20,7 @@ use Bitrix\Main\Engine\ActionFilter;
 
 Loader::requireModule('crm');
 
-class MultiField extends JsonController
+class MultiField extends BaseJson
 {
 	use PrimaryAutoWiredEntity;
 	use PublicErrorsTrait;
@@ -28,10 +28,7 @@ class MultiField extends JsonController
 	protected function getDefaultPreFilters(): array
 	{
 		return [
-			new ActionFilter\Authentication(),
-			new ActionFilter\Csrf(),
-			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-			new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+			...parent::getDefaultPreFilters(),
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 			new CheckWritePermission(),
 		];

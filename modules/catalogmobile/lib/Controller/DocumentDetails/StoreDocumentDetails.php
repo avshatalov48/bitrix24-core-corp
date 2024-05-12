@@ -394,7 +394,7 @@ class StoreDocumentDetails extends BaseDocumentDetails
 		 */
 		foreach ($products as $productElement)
 		{
-			$productDto = new DocumentProductRecord($productElement);
+			$productDto = DocumentProductRecord::make($productElement);
 
 			$price = $productDto->price ?? [];
 			$pricePurchase = $price['purchase'] ?? [];

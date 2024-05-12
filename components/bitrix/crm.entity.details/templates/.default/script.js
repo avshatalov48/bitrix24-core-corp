@@ -207,16 +207,9 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 				throw "Crm.EntityDetailManager: The 'serviceUrl' parameter is not defined or empty.";
 			}
 
-			var url = this._serviceUrl;
-			var params = this.prepareAnalyticParams("delete", {});
-			if(params)
-			{
-				url = BX.util.add_url_param(url, params);
-			}
-
 			BX.ajax(
 				{
-					url: url,
+					url: this._serviceUrl,
 					method: "POST",
 					dataType: "json",
 					data:
@@ -485,24 +478,12 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 		{
 			return false;
 		},
+		/**
+		 * @deprecated
+		 */
 		prepareAnalyticParams: function(action, contextParams)
 		{
-			var tracker = typeof(window.top.BX.Crm) !== "undefined"
-				&& typeof(window.top.BX.Crm.AnalyticTracker) !== "undefined"
-				? window.top.BX.Crm.AnalyticTracker.getCurrent() : null;
-
-			if(!tracker)
-			{
-				return null;
-			}
-
-			var params = BX.prop.getObject(this._settings, "analyticParams", {});
-			if(BX.type.isPlainObject(contextParams))
-			{
-				params = BX.mergeEx(params, contextParams);
-			}
-
-			return tracker.prepareEntityActionParams(action, this._entityTypeId, params);
+			return null;
 		},
 		onFailedValidation: function(sender, eventArgs)
 		{

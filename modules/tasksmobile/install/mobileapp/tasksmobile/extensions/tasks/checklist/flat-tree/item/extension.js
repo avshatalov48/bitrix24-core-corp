@@ -18,9 +18,9 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		constructor(props)
 		{
 			this.emitter = new JNEventEmitter();
-			const { checkList, item } = props;
+			const { checklist, item } = props;
 			/** @type {CheckListFlatTree} */
-			this.checkList = checkList;
+			this.checklist = checklist;
 			this.item = item;
 
 			this.updateListViewType();
@@ -47,6 +47,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 				fields: {
 					id: nodeId,
 					title: '',
+					prevTitle: '',
 					parentId: 0,
 					sortIndex: 0,
 					displaySortIndex: '',
@@ -83,12 +84,12 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		getCheckList()
 		{
-			return this.checkList;
+			return this.checklist;
 		}
 
 		setCheckList(checkList)
 		{
-			this.checkList = checkList;
+			this.checklist = checkList;
 		}
 
 		getType()
@@ -104,6 +105,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		createHashType()
 		{
 			const params = {
+				isRoot: this.isRoot(),
 				focused: this.isFocused(),
 				attachments: this.getAttachments(),
 				members: this.getMembers(),
@@ -143,7 +145,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		getParent()
 		{
-			return this.checkList.getItemById(this.getParentId());
+			return this.checklist.getItemById(this.getParentId());
 		}
 
 		getParentId()
@@ -159,6 +161,14 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		setTitle(title = '')
 		{
 			this.fields.title = title;
+		}
+
+		/**
+		 * @return {string}
+		 */
+		getPrevTitle()
+		{
+			return this.fields.prevTitle;
 		}
 
 		setParentId(id)
@@ -252,7 +262,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		getTaskId()
 		{
-			return this.checkList.getTaskId();
+			return this.checklist.getTaskId();
 		}
 
 		isRoot()
@@ -263,6 +273,16 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		isFocused()
 		{
 			return this.item.focused;
+		}
+
+		isAlwaysShow()
+		{
+			return this.item.alwaysShow;
+		}
+
+		setAlwaysShow(value)
+		{
+			this.item.alwaysShow = value;
 		}
 
 		isNew()
@@ -305,9 +325,9 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			return this.action.modify;
 		}
 
-		checkCanRemove()
+		shouldRemove()
 		{
-			return this.action.remove;
+			return !this.hasAttachments() && !this.hasDescendants() && !this.hasMembers();
 		}
 
 		checkCanToggle()
@@ -317,12 +337,15 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		checkCanTabIn()
 		{
-			return true;
+			const sortIndex = this.getSortIndex();
+			const depth = this.getDepth();
+
+			return depth <= 5 && sortIndex > 0;
 		}
 
 		checkCanTabOut()
 		{
-			return true;
+			return Boolean(this.getDepth());
 		}
 
 		/**
@@ -351,6 +374,11 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			this.item.focused = true;
 		}
 
+		hasMembers()
+		{
+			return this.getMembersCount() > 0;
+		}
+
 		getMembersCount()
 		{
 			return Object.keys(this.getMembers()).length;
@@ -364,6 +392,16 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		setMembers(members)
 		{
 			this.fields.members = members;
+		}
+
+		/**
+		 * @param {Array<Object>} members
+		 */
+		addMembers(members)
+		{
+			members.forEach((member) => {
+				this.addMember(member);
+			});
 		}
 
 		getMember(id)
@@ -381,14 +419,56 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			members[member.id] = member;
 		}
 
+		clearMemberByType(memberType)
+		{
+			const members = {};
+			Object.values(this.getMembers()).forEach((member) => {
+				if (memberType !== member.type)
+				{
+					members[member.id] = member;
+				}
+			});
+
+			this.fields.members = members;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		hasAuditor()
+		{
+			return this.hasMemberType(memberTypes.auditor);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		hasAccomplice()
+		{
+			return this.hasMemberType(memberTypes.accomplice);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		hasMemberType(memberType)
+		{
+			return Object.values(this.getMembers()).some(({ type }) => memberType === type);
+		}
+
 		getMemberType(type)
 		{
 			return memberTypes[type];
 		}
 
+		getUserId()
+		{
+			return this.checklist.getUserId();
+		}
+
 		getMoveIds()
 		{
-			const moveIds = [this.getId()];
+			const moveIds = [];
 			this.getDescendants(true).forEach((descendant) => {
 				moveIds.push(descendant.getId());
 			});
@@ -398,17 +478,22 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		getDescendants(deep = false)
 		{
-			return this.checkList.getDescendants(this.getId(), deep);
+			return this.checklist.getDescendants(this.getId(), deep);
 		}
 
-		getDescendantsCount()
+		hasDescendants()
 		{
-			return this.checkList.getDescendantsCount(this.getId());
+			return this.getDescendantsCount() > 0;
+		}
+
+		getDescendantsCount(deep = false)
+		{
+			return this.checklist.getDescendantsCount(this.getId(), deep);
 		}
 
 		getCompleteCount()
 		{
-			return this.checkList.getCompleteCount(this.getId());
+			return this.checklist.getCompleteCount(this.getId());
 		}
 
 		toggleComplete()
@@ -422,7 +507,8 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 			this.setIsComplete(isComplete);
 			this.updateComplete(isComplete);
-			this.updateCounter();
+			this.updateCounter(this.getParent());
+			this.updateListViewType();
 		}
 
 		setIsComplete(isComplete)
@@ -442,55 +528,44 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		tabOut()
 		{
-			const parent = this.getParent();
-			const parentId = parent ? parent.getParentId() : null;
+			const oldParent = this.getParent();
+			const newParent = this.getParent().getParent();
 
-			if (!parentId)
-			{
-				return false;
-			}
-
-			this.setParentId(parentId);
-			this.checkList.updateIndexes(parentId);
+			this.setParentId(newParent.getId());
+			this.tabMoveUpdateCounter([oldParent, newParent]);
 
 			return true;
 		}
 
 		tabIn()
 		{
-			const prevItem = this.checkList.getPrevSiblingById(this.getId());
-			if (!prevItem)
-			{
-				return false;
-			}
+			const oldParent = this.getParent();
+			const newParent = this.checklist.getPrevSiblingById(this.getId());
 
-			const parentId = prevItem.getId();
-			this.setParentId(parentId);
-			this.checkList.updateIndexes(parentId);
+			this.setParentId(newParent.getId());
+			this.tabMoveUpdateCounter([oldParent, newParent]);
+			this.updateListViewType();
 
 			return true;
+		}
+
+		tabMoveUpdateCounter(items)
+		{
+			items.forEach((item) => {
+				this.checklist.updateIndexes(item.getId());
+				this.updateCounter(item);
+			});
+		}
+
+		updateCounter(item)
+		{
+			item.updateCompletedCount();
 		}
 
 		updateCompletedCount()
 		{
 			const completedCount = this.countCompletedCount();
 			this.setCompletedCount(completedCount);
-		}
-
-		updateCounter()
-		{
-			const parent = this.getParent();
-			if (!parent)
-			{
-				return;
-			}
-
-			this.getParent().updateCounts();
-		}
-
-		updateCounts()
-		{
-			this.updateCompletedCount();
 		}
 
 		countCompletedCount(recursively = false)

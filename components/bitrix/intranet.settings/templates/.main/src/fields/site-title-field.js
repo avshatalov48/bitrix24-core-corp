@@ -3,10 +3,12 @@ import { BaseSettingsElement } from "ui.form-elements.field";
 import { HelpMessage } from 'ui.section';
 import { Checker, TextInput } from 'ui.form-elements.view';
 import { EventEmitter, BaseEvent } from "main.core.events";
+import { SiteTitle24Field } from './site-title-24-field';
 
 export type SiteTitleFieldType = {
 	parent: BaseSettingsElement,
 	siteTitleOptions: SiteTitleInputType,
+	siteTitleLabels: SiteTitleLabelType,
 };
 export type SiteTitleInputType = {
 	name: string,
@@ -17,14 +19,20 @@ export type SiteTitleInputType = {
 	canUserEditLogo24: boolean,
 	logo: ?Array
 };
+export type SiteTitleLabelType = {
+	title: ?string,
+	logo24: ?string,
+}
 
 export class SiteTitleField extends BaseSettingsElement
 {
 	options: SiteTitleInputType;
+	labels: SiteTitleLabelType;
 
 	#content: HTMLElement;
+	#contentLogo24: HTMLElement;
 	#title: TextInput;
-	#logo24: Checker;
+	#logo24: SiteTitle24Field;
 
 	#inputMonitoringIntervalId: ?number;
 	#inputMonitoringCountdown: number = 10;
@@ -43,17 +51,22 @@ export class SiteTitleField extends BaseSettingsElement
 			logo24: options.logo24,
 			canUserEditLogo24: options.canUserEditLogo24,
 		};
+		const labels = params.siteTitleLabels;
+		this.labels = {
+			title: labels.title,
+			logo24: labels.logo24,
+		}
 
-		this.#initTitle(options);
-		this.#initLogo24(options);
+		this.#initTitle(options, labels);
+		this.#initLogo24(options, labels);
 	}
 
-	#initTitle(options: SiteTitleInputType)
+	#initTitle(options: SiteTitleInputType, labels: SiteTitleLabelType)
 	{
 		this.#title = new TextInput({
 			value: options.title,
 			placeholder: options.title,
-			label: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE_INPUT_LABEL'),
+			label: labels.title ?? Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE_INPUT_LABEL'),
 			id: 'siteTitle',
 			inputName: 'title',
 			isEnable: true,
@@ -67,24 +80,13 @@ export class SiteTitleField extends BaseSettingsElement
 		);
 	}
 
-	#initLogo24(options)
+	#initLogo24(options: SiteTitleInputType, labels: SiteTitleLabelType)
 	{
-		this.#logo24 = new Checker({
-			id: 'siteLogo24',
-			inputName: 'logo24',
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_LOGO24'),
-			size: 'extra-small',
-			// hintOn: '',
-			// hintOff: '',
+		this.#logo24 = new SiteTitle24Field({
+			title: labels.logo24,
 			isEnable: options.canUserEditLogo24,
-			checked: options.logo24 !== '',
-			value: 'Y',
-			bannerCode: 'limit_admin_logo24',
+			checked: options.logo24,
 		});
-
-		this.#logo24.setEventNamespace(
-			this.getEventNamespace()
-		);
 	}
 
 	getFieldView()
@@ -146,7 +148,7 @@ export class SiteTitleField extends BaseSettingsElement
 		Event.bind(this.#title.getInputNode(), 'blur', this.stopInputMonitoring.bind(this));
 		Event.bind(this.#title.getInputNode(), 'blur', this.stopInputMonitoring.bind(this));
 
-		this.#logo24.subscribe('change', (event: BaseEvent) => {
+		this.#logo24.getFieldView().subscribe('change', (event: BaseEvent) => {
 			EventEmitter.emit(
 				EventEmitter.GLOBAL_TARGET,
 				this.getEventNamespace() + ':Portal:Change',
@@ -154,7 +156,7 @@ export class SiteTitleField extends BaseSettingsElement
 			);
 		});
 
-		return Tag.render`
+		this.#content = Tag.render`
 		<div id="${this.#title.getId()}" class="ui-section__field-selector --no-border --no-margin --align-center">
 			<div class="ui-section__field-container">
 				<div class="ui-section__field-label_box">
@@ -168,10 +170,14 @@ export class SiteTitleField extends BaseSettingsElement
 					</div>
 				</div>
 			</div>
-			<div class="ui-section__hint">
-				${this.#logo24.render()}
-			</div>
 		</div>
 		`;
+
+		return this.#content;
+	}
+
+	getLogo24Field()
+	{
+		return this.#logo24;
 	}
 }

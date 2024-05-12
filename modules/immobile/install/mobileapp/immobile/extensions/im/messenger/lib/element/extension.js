@@ -8,6 +8,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
+	const { CopilotItem } = require('im/messenger/lib/element/recent/item/copilot');
 	const { CallItem } = require('im/messenger/lib/element/recent/item/call');
 	const { AnnouncementItem } = require('im/messenger/lib/element/recent/item/chat/announcement');
 	const { ExtranetItem } = require('im/messenger/lib/element/recent/item/chat/extranet');
@@ -39,31 +40,9 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { UnsupportedMessage } = require('im/messenger/lib/element/dialog/message/unsupported');
 	const { DateSeparatorMessage } = require('im/messenger/lib/element/dialog/message/date-separator');
 	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog/message/unread-separator');
-
-	const {
-		LikeReaction,
-		KissReaction,
-		LaughReaction,
-		WonderReaction,
-		CryReaction,
-		AngryReaction,
-		FacepalmReaction,
-	} = require('im/messenger/lib/element/dialog/message-menu/reaction');
-	const {
-		ActionType,
-		ReplyAction,
-		CopyAction,
-		PinAction,
-		ForwardAction,
-		DownloadToDeviceAction,
-		DownloadToDiskAction,
-		QuoteAction,
-		ProfileAction,
-		EditAction,
-		DeleteAction,
-		SeparatorAction,
-	} = require('im/messenger/lib/element/dialog/message-menu/action');
-	const { MessageMenu } = require('im/messenger/lib/element/dialog/message-menu/menu');
+	const { CopilotMessage } = require('im/messenger/lib/element/dialog/message/copilot');
+	const { CopilotPromtMessage } = require('im/messenger/lib/element/dialog/message/copilot-promt');
+	const { CopilotErrorMessage } = require('im/messenger/lib/element/dialog/message/copilot-error');
 
 	module.exports = {
 		ChatAvatar,
@@ -73,6 +52,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		RecentItem,
 		CallItem,
 		ChatItem,
+		CopilotItem,
 		UserItem,
 		CurrentUserItem,
 		AnnouncementItem,
@@ -99,28 +79,10 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		UnsupportedMessage,
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,
+		CopilotMessage,
+		CopilotPromtMessage,
+		CopilotErrorMessage,
 		MessageAlign,
 		MessageTextAlign,
-
-		ActionType,
-		MessageMenu,
-		ReplyAction,
-		CopyAction,
-		PinAction,
-		ForwardAction,
-		DownloadToDeviceAction,
-		DownloadToDiskAction,
-		QuoteAction,
-		ProfileAction,
-		EditAction,
-		DeleteAction,
-		SeparatorAction,
-		LikeReaction,
-		KissReaction,
-		LaughReaction,
-		WonderReaction,
-		CryReaction,
-		AngryReaction,
-		FacepalmReaction,
 	};
 });

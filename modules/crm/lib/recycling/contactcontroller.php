@@ -316,6 +316,8 @@ class ContactController extends BaseController
 		}
 		ContactRelationManager::getInstance()->registerRecycleBin($recyclingEntityID, $entityID, $slots);
 		//endregion
+
+		\CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(\CCrmOwnerType::Contact, $entityID);
 	}
 
 	/**

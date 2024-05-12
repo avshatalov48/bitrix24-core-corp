@@ -5,6 +5,7 @@ return [
 		'apptheme',
 		'loc',
 		'utils/color',
+		'utils/object',
 		'im:messenger/lib/ui/base/avatar',
 		'im:messenger/assets/common',
 	],

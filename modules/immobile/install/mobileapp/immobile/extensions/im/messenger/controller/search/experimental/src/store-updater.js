@@ -2,7 +2,7 @@
  * @module im/messenger/controller/search/experimental/store-updater
  */
 jn.define('im/messenger/controller/search/experimental/store-updater', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogType } = require('im/messenger/const');
 	class StoreUpdater
 	{
@@ -12,7 +12,7 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 			 * @private
 			 * @type {MessengerCoreStore}
 			 */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		/**
@@ -109,7 +109,6 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 		}
 
 		/**
-		 * @private
 		 * @param {Array<object>} users
 		 */
 		async setUsersToModel(users)
@@ -123,7 +122,6 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 		 */
 		async setRecentItemsToModel(recentItems)
 		{
-			console.log('setRecentItemsToModel' , recentItems);
 			return this.store.dispatch('recentModel/update', recentItems);
 		}
 

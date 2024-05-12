@@ -65,18 +65,18 @@ class OrderContactCompany extends \Bitrix\Sale\Controller\Controller
 		{
 			foreach ($fields['CLIENTS'] as $client)
 			{
-				//TODO: необходимо вынести в проверку полей. ѕол€ в rest описаны как об€зательные
+				//TODO: must be included in the field check. Fields in rest are described as required
 				if(intval($client['ENTITY_TYPE_ID'])<=0 || intval($client['ENTITY_ID'])<=0)
 					continue;
 
 				$client['IS_PRIMARY'] = (isset($client['IS_PRIMARY']) && $client['IS_PRIMARY'] == 'Y') ? 'Y':'N';
 
-				// компани€ может быть только одна
+				// there can only be one company
 				if(count($data[\CCrmOwnerType::Company])==0)
 				{
 					if($client['ENTITY_TYPE_ID'] == \CCrmOwnerType::Company)
 					{
-						// компани€ должна быть isPrinary т.к. в этого требует матчер
+						// the company must be isPrimary because the matcher requires this
 						$client['IS_PRIMARY'] = 'Y';
 						$data[\CCrmOwnerType::Company][] = $client;
 					}
@@ -93,7 +93,7 @@ class OrderContactCompany extends \Bitrix\Sale\Controller\Controller
 
 			if(count($data[\CCrmOwnerType::Contact])>0 && !$contactIsPrinary)
 			{
-				//если ни один из переданных контактов не €вл€етс€ isPrinary, проставл€ем признак дл€ первого
+				// if none of the transferred contacts is isPrimary, set the flag for the first
 				$data[\CCrmOwnerType::Contact][0]['IS_PRIMARY'] = 'Y';
 			}
 			return ['CLIENTS'=>array_merge($data[\CCrmOwnerType::Company], $data[\CCrmOwnerType::Contact])];

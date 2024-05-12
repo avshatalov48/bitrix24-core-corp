@@ -51,7 +51,7 @@ class DocumentCreateTrigger extends BaseTrigger
 
 		if (static::isEnabled())
 		{
-			$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap()[$entityTypeId];
+			$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($entityTypeId);
 			if ($provider)
 			{
 				$result['SETTINGS']['Properties'] = [

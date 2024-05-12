@@ -70,7 +70,7 @@ class Spreadsheet extends DataProvider //implements Nameable
 
 	public static function getLangName()
 	{
-		return 'Настраиваемая таблица';
+		return 'РќР°СЃС‚СЂР°РёРІР°РµРјР°СЏ С‚Р°Р±Р»РёС†Р°';
 	}
 
 	protected function getFieldId()

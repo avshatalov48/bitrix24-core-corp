@@ -4,6 +4,7 @@
 jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 	const { Type } = require('type');
 	const { RestMethod } = require('im/messenger/const');
+	const { runAction } = require('im/messenger/lib/rest');
 
 	/**
 	 * @class MessageRest
@@ -13,26 +14,33 @@ jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 		send(options = {})
 		{
 			const messageAddParams = {
-				DIALOG_ID: options.dialogId,
-				MESSAGE: options.text,
+				dialogId: options.dialogId,
+				fields: {},
 			};
+
+			if (Type.isStringFilled(options.text))
+			{
+				messageAddParams.fields.message = options.text;
+			}
 
 			if (options.replyId && Type.isNumber(options.replyId))
 			{
-				messageAddParams.REPLY_ID = options.replyId;
-			}
-
-			if (Type.isString(options.messageType))
-			{
-				messageAddParams.MESSAGE_TYPE = options.messageType;
+				messageAddParams.fields.replyId = options.replyId;
 			}
 
 			if (Type.isString(options.templateId))
 			{
-				messageAddParams.TEMPLATE_ID = options.templateId;
+				messageAddParams.fields.templateId = options.templateId;
 			}
 
-			return BX.rest.callMethod(RestMethod.imMessageAdd, messageAddParams);
+			if (Type.isObject(options.forwardIds))
+			{
+				messageAddParams.fields.forwardIds = options.forwardIds;
+			}
+
+			return runAction(RestMethod.imV2ChatMessageSend, {
+				data: messageAddParams,
+			});
 		}
 
 		like(options = {})

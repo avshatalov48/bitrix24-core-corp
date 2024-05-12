@@ -4,7 +4,7 @@
 jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { Settings } = require('im/messenger/lib/settings');
+	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		Table,
 		FieldType,
@@ -23,7 +23,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 		{
 			return [
 				{ name: 'dialogId', type: FieldType.text, unique: true, index: true },
-				{ name: 'chatId', type: FieldType.integer, unique: true, index: true },
+				{ name: 'chatId', type: FieldType.integer },
 				{ name: 'type', type: FieldType.text },
 				{ name: 'name', type: FieldType.text },
 				{ name: 'description', type: FieldType.text },
@@ -47,12 +47,59 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'public', type: FieldType.json },
 				{ name: 'code', type: FieldType.text },
 				{ name: 'diskFolderId', type: FieldType.integer },
+				{ name: 'aiProvider', type: FieldType.text },
 			];
+		}
+
+		async getListByDialogIds(dialogIdList, shouldRestoreRows = true)
+		{
+			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isArrayFilled(dialogIdList))
+			{
+				return {
+					items: [],
+				};
+			}
+			const idsFormatted = Type.isNumber(dialogIdList[0]) ? dialogIdList.toString() : dialogIdList.map((id) => `"${id}"`);
+			const result = await this.executeSql({
+				query: `
+					SELECT * 
+					FROM ${this.getName()} 
+					WHERE dialogId IN (${idsFormatted})
+				`,
+			});
+
+			const {
+				columns,
+				rows,
+			} = result;
+
+			const list = {
+				items: [],
+			};
+
+			rows.forEach((row) => {
+				const listRow = {};
+				row.forEach((value, index) => {
+					const key = columns[index];
+					listRow[key] = value;
+				});
+
+				if (shouldRestoreRows === true)
+				{
+					list.items.push(this.restoreDatabaseRow(listRow));
+				}
+				else
+				{
+					list.items.push(listRow);
+				}
+			});
+
+			return list;
 		}
 
 		async deleteByIdList(idList)
 		{
-			if (!Settings.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
 			{
 				return Promise.resolve({});
 			}
@@ -73,7 +120,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 
 		async deleteByChatIdList(idList)
 		{
-			if (!Settings.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
 			{
 				return Promise.resolve({});
 			}

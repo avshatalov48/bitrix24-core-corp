@@ -2,9 +2,10 @@
  * @module crm/tunnel-list/item
  */
 jn.define('crm/tunnel-list/item', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const { CategorySelectActions } = require('crm/category-list/actions');
 	const { Robot } = require('crm/tunnel-list/item/robot');
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const { trim } = require('utils/string');
 	const AppTheme = require('apptheme');
 
@@ -621,21 +622,12 @@ jn.define('crm/tunnel-list/item', (require, exports, module) => {
 			return new Promise((resolve, reject) => {
 				const { tunnel } = this.props;
 
-				Alert.confirm(
-					'',
-					BX.message('TUNNEL_MENU_DELETE_CONFIRM'),
-					[
-						{
-							type: 'cancel',
-							onPress: reject,
-						},
-						{
-							text: BX.message('TUNNEL_MENU_DELETE_CONFIRM_OK'),
-							type: 'destructive',
-							onPress: () => this.onDeleteTunnel(tunnel).then(resolve),
-						},
-					],
-				);
+				confirmDestructiveAction({
+					title: '',
+					description: Loc.getMessage('TUNNEL_MENU_DELETE_CONFIRM'),
+					onDestruct: () => this.onDeleteTunnel(tunnel).then(resolve),
+					onCancel: reject,
+				});
 			});
 		}
 

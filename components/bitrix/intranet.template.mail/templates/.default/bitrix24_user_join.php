@@ -99,7 +99,7 @@ if (
 											):?>
 											<tr>
 												<td align="center" style="text-align: center; padding: 30px 0 5px;">
-													<a href="<?= Analytics\Event::addAnalyticLabelToUrl(new Uri(BX24_HOST_NAME), Analytics\Event::LINK_INVITE_ADMIN_AGREE)->getUri() ?>" target="_blank" style="display: inline-block; border-radius: 23px; padding: 0 30px; vertical-align: middle; text-decoration: none; height: 47px; background-color: #9dcf00;">
+													<a href="<?= Analytics\Event::addAnalyticLabelToUrl(new Uri($httpPrefix . '://' . BX24_HOST_NAME), Analytics\Event::LINK_INVITE_ADMIN_AGREE)->getUri() ?>" target="_blank" style="display: inline-block; border-radius: 23px; padding: 0 30px; vertical-align: middle; text-decoration: none; height: 47px; background-color: #9dcf00;">
 														<b style="line-height: 47px;font-size: 18px;font-family: Helvetica Neue, Helvetica, Arial, sans-serif;color: #fff;"><?=Loc::getMessage("INTRANET_USER_JOIN_ACCEPT")?></b>
 													</a>
 												</td>

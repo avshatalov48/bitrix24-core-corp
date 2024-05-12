@@ -114,6 +114,7 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 		setPreviewImage(value)
 		{
 			this.previewImage = value;
+			this.video.previewImage = value;
 		}
 
 		/**

@@ -12,6 +12,21 @@ use Bitrix\Main\ModuleManager;
 
 class Company extends Tool
 {
+	private function getSubgroupsAvailability($subgroupId): bool
+	{
+		return match ($subgroupId) {
+			'knowledge_base' => ModuleManager::isModuleInstalled('landing'),
+			'video_conference' => ModuleManager::isModuleInstalled('im'),
+			'worktime', 'work_report', 'schedules' =>
+				ModuleManager::isModuleInstalled('timeman')
+				|| (Loader::includeModule('bitrix24') && Feature::isFeatureEnabled('timeman')),
+			'meetings' =>
+				ModuleManager::isModuleInstalled('meeting')
+				|| (Loader::includeModule('bitrix24') && Feature::isFeatureEnabled('meeting')),
+			default => true,
+		};
+	}
+
 	protected const COMPANY_SUBGROUPS_ID = [
 		'structure' => '',
 		'employees' => '',
@@ -57,12 +72,12 @@ class Company extends Tool
 
 	public function isEnabledSubgroupById(string $id): bool
 	{
-		if ('worktime' === $id && !ModuleManager::isModuleInstalled('timeman'))
+		if ('worktime' === $id && !ModuleManager::isModuleInstalled('timeman') && !ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			return false;
 		}
 
-		if ('meetings' === $id && !ModuleManager::isModuleInstalled('meeting'))
+		if ('meetings' === $id && !ModuleManager::isModuleInstalled('meeting') && !ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			return false;
 		}
@@ -91,7 +106,7 @@ class Company extends Tool
 					'modulesList' => ['meeting' => 'Y'],
 				]);
 				$event->send();
-				Option::set('bitrix24', 'feature_meetings', 'Y');
+				Option::set('bitrix24', 'feature_meeting', 'Y');
 			}
 		}
 
@@ -119,7 +134,7 @@ class Company extends Tool
 					'modulesList' => ['meeting' => 'N'],
 				]);
 				$event->send();
-				Option::set('bitrix24', 'feature_meetings', 'N');
+				Option::set('bitrix24', 'feature_meeting', 'N');
 			}
 		}
 
@@ -161,6 +176,11 @@ class Company extends Tool
 
 		foreach (self::COMPANY_SUBGROUPS_ID as $id => $menuId)
 		{
+			if (!$this->getSubgroupsAvailability($id))
+			{
+				continue;
+			}
+
 			$result[$id] = [
 				'name' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_COMPANY_SUBGROUP_' . strtoupper($id)),
 				'id' => $id,
@@ -182,6 +202,7 @@ class Company extends Tool
 			if (
 				isset($item['id'], $item['available'], $item['menuData']['menu_item_id'], $item['title'])
 				&& $item['available']
+				// && $this->getSubgroupsAvailability($item['id'])
 			)
 			{
 				if (in_array($item['id'], array_keys(self::TIMEMAN_SUBGROUPS_ID)))
@@ -210,24 +231,9 @@ class Company extends Tool
 		}
 
 		$result = array_replace(array_flip(self::SUBGROUPS_ORDER_ARRAY), $result);
-
-		if (
-			!ModuleManager::isModuleInstalled('timeman')
-			&& !(Loader::includeModule('bitrix24') && Feature::isFeatureEnabled('timeman'))
-		)
-		{
-			unset($result['worktime']);
-			unset($result['work_report']);
-			unset($result['schedules']);
-		}
-
-		if (
-			!ModuleManager::isModuleInstalled('meeting')
-			&& !(Loader::includeModule('bitrix24') && Feature::isFeatureEnabled('meeting'))
-		)
-		{
-			unset($result['meetings']);
-		}
+		$result = array_filter($result, function ($value) {
+			return is_array($value);
+		});
 
 		return $result;
 	}

@@ -4,6 +4,9 @@
 jn.define('im/messenger/lib/page-navigation', (require, exports, module) => {
 	const { Type } = require('type');
 
+	/**
+	 * @class PageNavigation
+	 */
 	class PageNavigation
 	{
 		constructor(options = {})
@@ -24,7 +27,7 @@ jn.define('im/messenger/lib/page-navigation', (require, exports, module) => {
 		{
 			if (!Type.isNumber(pageNumber))
 			{
-				throw new Error('PageNavigation: pageNumber is not a number');
+				throw new TypeError('PageNavigation: pageNumber is not a number');
 			}
 
 			this._currentPage = pageNumber;
@@ -44,7 +47,7 @@ jn.define('im/messenger/lib/page-navigation', (require, exports, module) => {
 		{
 			if (!Type.isBoolean(hasPage))
 			{
-				throw new Error('PageNavigation: hasPage is not a boolean value');
+				throw new TypeError('PageNavigation: hasPage is not a boolean value');
 			}
 
 			this._hasNextPage = hasPage;
@@ -59,7 +62,7 @@ jn.define('im/messenger/lib/page-navigation', (require, exports, module) => {
 		{
 			if (!Type.isBoolean(isLoading))
 			{
-				throw new Error('PageNavigation: isLoading is not a boolean value');
+				throw new TypeError('PageNavigation: isLoading is not a boolean value');
 			}
 
 			this._isPageLoading = isLoading;
@@ -69,7 +72,7 @@ jn.define('im/messenger/lib/page-navigation', (require, exports, module) => {
 		{
 			if (!Type.isNumber(count))
 			{
-				throw new Error('PageNavigation: count is not a number');
+				throw new TypeError('PageNavigation: count is not a number');
 			}
 
 			this._currentPage += count;

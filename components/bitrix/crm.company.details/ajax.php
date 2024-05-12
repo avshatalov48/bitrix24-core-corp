@@ -908,7 +908,8 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'INITIAL_MODE' => $initialMode !== '' ? $initialMode : 'edit',
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
-			'CONTEXT' => $context
+			'CONTEXT' => $context,
+			'ANALYTICS_CONFIG' => isset($_POST['ANALYTICS_CONFIG']) && is_array($_POST['ANALYTICS_CONFIG']) ? $_POST['ANALYTICS_CONFIG'] : null,
 		)
 	);
 

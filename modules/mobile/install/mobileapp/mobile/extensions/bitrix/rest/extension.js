@@ -1,6 +1,7 @@
 (() => {
 	const require = jn.require;
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { isValidAnalyticsData } = require('analytics/validator');
 
 	/**
 	 * @class RequestExecutor
@@ -422,13 +423,30 @@
 	const prepareAjaxGetParameters = function(config) {
 		const getParameters = config.getParameters || {};
 
-		if (typeof config.analyticsLabel === 'string')
+		if (typeof config.analyticsLabel === 'string' || typeof config.analyticsLabel === 'object')
 		{
 			getParameters.analyticsLabel = config.analyticsLabel;
 		}
-		else if (typeof config.analyticsLabel === 'object')
+
+		if (typeof config.analytics === 'object')
 		{
-			getParameters.analyticsLabel = config.analyticsLabel;
+			if (config.analyticsLabel)
+			{
+				delete getParameters.analyticsLabel;
+
+				console.error(
+					'BX.ajax: Only {analytics} or {analyticsLabel} should be used. If both are present, {analyticsLabel} will be ignored.',
+				);
+			}
+
+			if (isValidAnalyticsData(config.analytics))
+			{
+				getParameters.st = config.analytics;
+			}
+			else
+			{
+				console.error('BX.ajax: {analytics} is invalid and will be ignored.');
+			}
 		}
 
 		if (typeof config.mode !== 'undefined')

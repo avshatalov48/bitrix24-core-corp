@@ -201,4 +201,36 @@ class LeadConversionConfig extends EntityConversionConfig
 
 		return static::getOptionName(static::getEntityTypeId());
 	}
+
+	public function getScheme(): Scheme
+	{
+		$scheme = parent::getScheme();
+		if ($this->typeID === LeadConversionType::RETURNING_CUSTOMER || $this->typeID === LeadConversionType::SUPPLEMENT)
+		{
+			$excludedTypes = [
+				\CCrmOwnerType::Contact,
+				\CCrmOwnerType::Company,
+			];
+
+			$newSchemeItems = [];
+			foreach ($scheme->getItems() as $item)
+			{
+				if (empty(array_intersect($excludedTypes, $item->getEntityTypeIds())))
+				{
+					$newSchemeItems[] = $item;
+				}
+			}
+
+			$newScheme = new Scheme($newSchemeItems);
+			$currentItem = $scheme->getCurrentItem();
+			if ($currentItem)
+			{
+				$newScheme->setCurrentItemId($currentItem->getId());
+			}
+
+			$scheme = $newScheme;
+		}
+
+		return $scheme;
+	}
 }

@@ -1,6 +1,6 @@
 <?
 $MESS["NTR_MAIL_PAGE_TITLE"] = "Подключение почтового ящика";
-$MESS["INTR_MAIL_B24_PAGE_TITLE"] = "Битрикс24.Почта";
+$MESS["INTR_MAIL_B24_PAGE_TITLE_MSGVER_1"] = "Битрикс24 Почта";
 $MESS["INTR_MAIL_DOMAIN_PAGE_TITLE"] = "Подключение почтового домена";
 $MESS["INTR_MAIL_MANAGE_PAGE_TITLE"] = "Управление почтой";
 $MESS["MAIL_MODULE_NOT_INSTALLED"] = "Модуль mail не установлен.";

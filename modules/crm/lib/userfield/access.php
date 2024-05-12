@@ -90,6 +90,7 @@ class Access extends UserFieldAccess
 			'string_formatted',
 			'disk_file',
 			'disk_version',
+			'snils',
 		]);
 	}
 }

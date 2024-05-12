@@ -3,12 +3,14 @@
  */
 jn.define('ui-system/form/checkbox', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Corner } = require('tokens');
+	const { Corner, Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { OutlineIconTypes } = require('assets/icons/types');
 
-	const DEFAULT_COLOR = AppTheme.colors.accentMainPrimary;
+	const DEFAULT_COLOR = Color.accentMainPrimary;
+	const DISABLED_COLOR = Color.base7;
+	const DEFAULT_SIZE = 20;
 
 	class Checkbox extends LayoutComponent
 	{
@@ -16,16 +18,16 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 		{
 			super(props);
 
-			this.initialState(props);
+			this.initializeState(props);
 			this.handleOnClick = this.handleOnClick.bind(this);
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.initialState(props);
+			this.initializeState(props);
 		}
 
-		initialState(props)
+		initializeState(props = {})
 		{
 			const { checked } = props;
 
@@ -34,39 +36,47 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 
 		render()
 		{
-			const { disabled, useState } = this.props;
+			const { checked } = this.state;
+			const { testId, disabled, useState = true } = this.props;
 
 			return View(
 				{
+					testId,
 					clickable: !disabled && useState,
 					style: this.getStyle(),
 					onClick: this.handleOnClick,
 				},
-				this.renderIcon(),
+				checked && this.renderIcon(),
 			);
 		}
 
 		renderIcon()
 		{
-			const { checked } = this.state;
-			const { indeterminate, size } = this.props;
+			const { indeterminate, size = DEFAULT_SIZE } = this.props;
 
 			const iconProps = {
 				iconSize: size - 2,
-				icon: indeterminate ? OutlineIconTypes.minus : OutlineIconTypes.check,
+				icon: OutlineIconTypes.check,
+				iconColor: Color.baseWhiteFixed,
 			};
 
 			if (indeterminate)
 			{
-				iconProps.iconColor = indeterminate ? this.getBaseColor() : AppTheme.colors.baseWhiteFixed;
+				iconProps.icon = OutlineIconTypes.minus;
+				iconProps.iconColor = this.getBaseColor();
 			}
 
-			return checked && IconView(iconProps);
+			return IconView(iconProps);
 		}
 
 		async handleOnClick()
 		{
-			const { onClick, useState } = this.props;
+			const { onClick, useState = true, disabled } = this.props;
+
+			if (disabled)
+			{
+				return;
+			}
 
 			if (useState)
 			{
@@ -94,7 +104,7 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 
 			if (disabled)
 			{
-				return AppTheme.colors.base5;
+				return DISABLED_COLOR;
 			}
 
 			return background || DEFAULT_COLOR;
@@ -102,7 +112,7 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 
 		getStyle()
 		{
-			const { indeterminate, size } = this.props;
+			const { indeterminate, size = DEFAULT_SIZE } = this.props;
 			const { checked } = this.state;
 
 			const style = {
@@ -128,12 +138,17 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			else
 			{
 				style.borderWidth = 1;
-				style.borderColor = AppTheme.colors.base6;
+				style.borderColor = Color.base6;
 			}
 
 			return style;
 		}
 	}
+
+	Checkbox.defaultProps = {
+		size: DEFAULT_SIZE,
+		useState: true,
+	};
 
 	Checkbox.propTypes = {
 		size: PropTypes.number,
@@ -142,6 +157,15 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 		background: PropTypes.string,
 		useState: PropTypes.bool,
 		indeterminate: PropTypes.bool,
+	};
+
+	Checkbox.defaultProps = {
+		size: 24,
+		checked: true,
+		disabled: false,
+		background: AppTheme.colors.accentMainPrimary,
+		useState: true,
+		indeterminate: false,
 	};
 
 	module.exports = { Checkbox };

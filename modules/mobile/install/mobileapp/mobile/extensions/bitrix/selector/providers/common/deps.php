@@ -2,15 +2,16 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'layout/ui/user/empty-avatar',
+		'loc',
 		'selector/providers/base',
 		'selector/utils/picker-cache',
 		'user/utils',
 		'utils',
-		'utils/url',
 		'utils/array',
-		'utils/object',
 		'utils/function',
-		'loc',
+		'utils/object',
+		'utils/url',
 	],
 	'bundle' => [
 		'./src/entity-color',

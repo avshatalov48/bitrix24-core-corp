@@ -18,6 +18,7 @@ return [
 		'layout/ui/info-helper',
 		'crm:terminal/services/field-manager',
 		'crm:terminal/entity/payment-pay-opener',
+		'crm:multi-field-drawer',
 	],
 	'bundle' => [
 		'./payment-document',

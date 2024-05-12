@@ -18,29 +18,44 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 /* endregion Clearing session variables after script reload */
 
 (async () => {
+	/* global dialogList, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { get, isEqual } = require('utils/object');
-	const { Feature } = require('feature');
+	const { Feature: MobileFeature } = require('feature');
 
-	const { core } = require('im/messenger/core');
-	await core.ready();
+	const { Logger } = require('im/messenger/lib/logger');
+	const { ChatApplication } = require('im/messenger/core/chat');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
-	const { restManager, RestManager } = require('im/messenger/lib/rest-manager');
-	const { Settings } = require('im/messenger/lib/settings');
+	const core = new ChatApplication({
+		localStorageEnable: true,
+	});
+	try
+	{
+		await core.init();
+	}
+	catch (error)
+	{
+		Logger.error('ChatApplication init error: ', error);
+	}
+	serviceLocator.add('core', core);
+
+	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
-		MessagePullHandler,
-		FilePullHandler,
-		DialogPullHandler,
-		UserPullHandler,
+		ChatMessagePullHandler,
+		ChatFilePullHandler,
+		ChatDialogPullHandler,
+		ChatUserPullHandler,
 		DesktopPullHandler,
 		NotificationPullHandler,
 		OnlinePullHandler,
-	} = require('im/messenger/provider/pull');
+	} = require('im/messenger/provider/pull/chat');
 
 	const {
 		AppStatus,
@@ -48,20 +63,16 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		RestMethod,
 		FeatureFlag,
 		UserRole,
+		ComponentCode,
 	} = require('im/messenger/const');
-	const {
-		ConnectionService,
-		SyncService,
-		SendingService,
-		QueueService,
-	} = require('im/messenger/provider/service');
+
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Logger } = require('im/messenger/lib/logger');
 
-	const { Recent } = require('im/messenger/controller/recent');
+	const { ChatRecent } = require('im/messenger/controller/recent/chat');
 	const { RecentView } = require('im/messenger/view/recent');
-	const { Dialog } = require('im/messenger/controller/dialog');
+	const { Dialog } = require('im/messenger/controller/dialog/chat');
+	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { EntityReady } = require('entity-ready');
@@ -70,12 +81,13 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { PushHandler } = require('im/messenger/provider/push');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
-	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
+	const { MessengerBase } = require('im/messenger/component/messenger-base');
+	const { SyncFillerChat } = require('im/messenger/provider/service');
 	/* endregion import */
 
-	class Messenger
+	class Messenger extends MessengerBase
 	{
 		/* region initiation */
 
@@ -96,16 +108,21 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		constructor()
 		{
-			this.isReady = false;
-			this.isFirstLoad = true;
-			this.refreshTimeout = null;
+			super();
 			this.refreshAfterErrorInterval = 10000;
-			this.refreshErrorNoticeFlag = false;
+
+			this.communication = new Communication();
+			EntityReady.addCondition('chat', () => this.isReady);
+		}
+
+		initCore()
+		{
+			this.serviceLocator = serviceLocator;
 
 			/**
 			 * @type {CoreApplication}
 			 */
-			this.core = core;
+			this.core = this.serviceLocator.get('core');
 			this.repository = this.core.getRepository();
 
 			/**
@@ -117,75 +134,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			 * @type {MessengerCoreStoreManager}
 			 */
 			this.storeManager = this.core.getStoreManager();
-
-			/**
-			 * @type {RestManager}
-			 */
-			this.queueRestManager = new RestManager();
-
-			/**
-			 * @type {SyncService}
-			 */
-			this.syncService = null;
-
-			/**
-			 * @type {SendingService}
-			 */
-			this.sendingService = null;
-			/**
-			 * @type {QueueService}
-			 */
-			this.queueService = null;
-
-			this.titleParams = {};
-			this.appStatus = '';
-
-			this.recent = null;
-			this.dialog = null;
-			/** @type {RecentSelector || DialogSelector} */
-			this.searchSelector = null;
-			this.chatCreator = null;
-			this.dialogCreator = null;
-			this.sidebar = null;
-			this.communication = new Communication();
-			this.visibilityManager = VisibilityManager.getInstance();
-
-			this.onApplicationSetStatus = this.applicationSetStatusHandler.bind(this);
-			this.chestnoPererisuemShapku = false;
-
-			EntityReady.addCondition('chat', () => this.isReady);
-
-			this.init();
 		}
 
-		init()
-		{
-			this.preloadAssets();
-			this.initRequests();
-
-			BX.onViewLoaded(async () => {
-				this.initComponents();
-				this.subscribeEvents();
-				this.initPullHandlers();
-				this.initServices();
-				await this.initCurrentUser();
-				await this.initQueueRequests();
-
-				this.connectionService.updateStatus();
-
-				EntityReady.wait('im.navigation')
-					.then(() => this.executeStoredPullEvents())
-					.catch((error) => Logger.error(error))
-				;
-
-				this.checkChatV2Support();
-				this.refresh(false);
-			});
-		}
-
+		/**
+		 * @override
+		 */
 		checkChatV2Support()
 		{
-			if (Settings.isChatV2Supported === true)
+			if (Feature.isChatV2Supported === true)
 			{
 				return true;
 			}
@@ -203,7 +159,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		showUnsupportedWidget(props = {}, parentWidget = PageManager)
 		{
-			Feature.showDefaultUnsupportedWidget(props, parentWidget);
+			MobileFeature.showDefaultUnsupportedWidget(props, parentWidget);
 		}
 
 		initRequests()
@@ -211,13 +167,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			restManager.on(RestMethod.imRevisionGet, {}, this.checkRevision.bind(this));
 		}
 
-		initComponents()
+		/**
+		 * @override
+		 */
+		async initComponents()
 		{
-			this.recent = new Recent({
+			this.recent = new ChatRecent({
 				view: new RecentView({
 					ui: dialogList,
 				}),
 			});
+			await this.recent.init();
 
 			this.searchSelector = new RecentSelector(dialogList);
 
@@ -229,118 +189,144 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 		}
 
+		/**
+		 * @override
+		 */
+		bindMethods()
+		{
+			this.onApplicationSetStatus = this.applicationSetStatusHandler.bind(this);
+			this.openDialog = this.openDialog.bind(this);
+			this.openSidebar = this.openSidebar.bind(this);
+			this.openLine = this.openLine.bind(this);
+			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
+			this.getOpenLineParams = this.getOpenLineParams.bind(this);
+			this.openChatSearch = this.openChatSearch.bind(this);
+			this.closeChatSearch = this.closeChatSearch.bind(this);
+			this.openChatCreate = this.openChatCreate.bind(this);
+			this.openNotifications = this.openNotifications.bind(this);
+			this.refresh = this.refresh.bind(this);
+			this.destroyDialog = this.destroyDialog.bind(this);
+			this.uploadFiles = this.uploadFiles.bind(this);
+			this.cancelFileUpload = this.cancelFileUpload.bind(this);
+			this.onDialogAccessError = this.onDialogAccessError.bind(this);
+
+			this.onChatDialogInitComplete = this.onChatDialogInitComplete.bind(this);
+			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
+			this.onChatDialogAccessError = this.onChatDialogAccessError.bind(this);
+			this.onTaskStatusSuccess = this.onTaskStatusSuccess.bind(this);
+			this.onCallActive = this.onCallActive.bind(this);
+			this.onCallInactive = this.onCallInactive.bind(this);
+			this.onNotificationOpen = this.onNotificationOpen.bind(this);
+			this.onNotificationReload = this.onNotificationReload.bind(this);
+			this.onAppActiveBefore = this.onAppActiveBefore.bind(this);
+			this.onAppPaused = this.onAppPaused.bind(this);
+			this.onAppActive = this.onAppActive.bind(this);
+			this.onChatSettingChange = this.onChatSettingChange.bind(this);
+		}
+
+		/**
+		 * desc preload assets by support feature flag
+		 * @override
+		 */
 		preloadAssets()
 		{
 			if (FeatureFlag.dialog.nativeSupported)
 			{
 				// TODO: generalize the approach to background caching
-				Dialog.preloadAssets();
+				(new ChatAssets()).preloadAssets();
 			}
 		}
 
-		subscribeEvents()
-		{
-			this.subscribeMessengerEvents();
-			this.subscribeExternalEvents();
-			this.subscribeStoreEvents();
-		}
-
+		/**
+		 * @override
+		 */
 		subscribeMessengerEvents()
 		{
-			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog.bind(this));
-			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar.bind(this));
-			BX.addCustomEvent(EventType.messenger.openLine, this.openLine.bind(this));
-			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams.bind(this));
-			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams.bind(this));
-			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch.bind(this));
-			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch.bind(this));
-			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate.bind(this));
-			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications.bind(this));
-			BX.addCustomEvent(EventType.messenger.refresh, this.refresh.bind(this));
-			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog.bind(this));
-			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles.bind(this));
-			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload.bind(this));
-			BX.addCustomEvent(EventType.messenger.dialogAccessError, this.onDialogAccessError.bind(this));
+			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
+			BX.addCustomEvent(EventType.messenger.openLine, this.openLine);
+			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
+			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams);
+			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
+			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
+			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
+			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
+			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
+			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
+			BX.addCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
+			BX.addCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
+			BX.addCustomEvent(EventType.messenger.dialogAccessError, this.onDialogAccessError);
 		}
 
+		unsubscribeMessengerEvents()
+		{
+			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			BX.removeCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
+			BX.removeCustomEvent(EventType.messenger.openLine, this.openLine);
+			BX.removeCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
+			BX.removeCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams);
+			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
+			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
+			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
+			BX.removeCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
+			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
+			BX.removeCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
+			BX.removeCustomEvent(EventType.messenger.uploadFiles, this.uploadFiles);
+			BX.removeCustomEvent(EventType.messenger.cancelFileUpload, this.cancelFileUpload);
+			BX.removeCustomEvent(EventType.messenger.dialogAccessError, this.onDialogAccessError);
+		}
+
+		/**
+		 * @override
+		 */
 		subscribeExternalEvents()
 		{
-			BX.addCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete.bind(this));
-			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange.bind(this));
-			BX.addCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError.bind(this));
-			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess.bind(this));
-
-			BX.addCustomEvent(EventType.call.active, this.onCallActive.bind(this));
-			BX.addCustomEvent(EventType.call.inactive, this.onCallInactive.bind(this));
-
-			BX.addCustomEvent(EventType.notification.open, this.onNotificationOpen.bind(this));
-			BX.addCustomEvent(EventType.notification.reload, this.onNotificationReload.bind(this));
-
-			BX.addCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore.bind(this));
-			BX.addCustomEvent(EventType.app.paused, this.onAppPaused.bind(this));
-			BX.addCustomEvent(EventType.app.active, this.onAppActive.bind(this));
-			BX.addCustomEvent(EventType.app.failRestoreConnection, this.refresh.bind(this));
-
-			BX.addCustomEvent(EventType.setting.chat.change, this.onChatSettingChange.bind(this));
+			BX.addCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
+			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
+			BX.addCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
+			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
+			BX.addCustomEvent(EventType.call.active, this.onCallActive);
+			BX.addCustomEvent(EventType.call.inactive, this.onCallInactive);
+			BX.addCustomEvent(EventType.notification.open, this.onNotificationOpen);
+			BX.addCustomEvent(EventType.notification.reload, this.onNotificationReload);
+			BX.addCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
+			BX.addCustomEvent(EventType.app.paused, this.onAppPaused);
+			BX.addCustomEvent(EventType.app.active, this.onAppActive);
+			BX.addCustomEvent(EventType.app.failRestoreConnection, this.refresh);
+			BX.addCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
 		}
 
-		subscribeStoreEvents()
+		/**
+		 * @override
+		 */
+		unsubscribeExternalEvents()
 		{
-			this.storeManager.on('applicationModel/setStatus', this.onApplicationSetStatus);
+			BX.removeCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
+			BX.removeCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
+			BX.removeCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
+			BX.removeCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
+			BX.removeCustomEvent(EventType.call.active, this.onCallActive);
+			BX.removeCustomEvent(EventType.call.inactive, this.onCallInactive);
+			BX.removeCustomEvent(EventType.notification.open, this.onNotificationOpen);
+			BX.removeCustomEvent(EventType.notification.reload, this.onNotificationReload);
+			BX.removeCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
+			BX.removeCustomEvent(EventType.app.paused, this.onAppPaused);
+			BX.removeCustomEvent(EventType.app.active, this.onAppActive);
+			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.refresh);
+			BX.removeCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
 		}
 
-		unsubscribeStoreEvents()
+		/**
+		 * @override
+		 */
+		initCustomServices()
 		{
-			this.storeManager.off('applicationModel/setStatus', this.onApplicationSetStatus);
+			this.syncFillerService = new SyncFillerChat();
 		}
 
-		applicationSetStatusHandler(mutation)
-		{
-			const statusKey = mutation.payload.data.status.name;
-			const statusValue = mutation.payload.data.status.value;
-			const wasAppOffline = this.appStatus === AppStatus.networkWaiting;
-			const isAppOnline = (statusKey === AppStatus.networkWaiting && statusValue === false);
-			this.buildQueueRequests();
-
-			if (wasAppOffline && isAppOnline)
-			{
-				Logger.info('Messenger: The device went online from offline.');
-
-				this.refresh();
-			}
-
-			// this.redrawHeader();
-			// TODO delete please me start
-			if (this.chestnoPererisuemShapku)
-			{
-				this.redrawHeader();
-				this.appStatus = this.core.getAppStatus();
-
-				return;
-			}
-
-			if (this.core.getAppStatus() === AppStatus.running)
-			{
-				this.redrawHeader();
-				this.appStatus = this.core.getAppStatus();
-
-				return;
-			}
-
-			if (!this.redrawTimeout)
-			{
-				this.redrawTimeout = setTimeout(() => {
-					this.redrawHeader();
-
-					this.redrawTimeout = null;
-				}, 3000);
-
-			}
-			// TODO delete please me end
-
-			this.appStatus = this.core.getAppStatus();
-		}
-
+		/**
+		 * @override
+		 */
 		redrawHeader()
 		{
 			let headerTitle;
@@ -350,22 +336,22 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			switch (appStatus)
 			{
 				case AppStatus.networkWaiting:
-					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_HEADER_NETWORK_WAITING');
+					headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER_NETWORK_WAITING');
 					useProgress = true;
 					break;
 
 				case AppStatus.connection:
-					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_HEADER_CONNECTION');
+					headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER_CONNECTION');
 					useProgress = true;
 					break;
 
 				case AppStatus.sync:
-					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_HEADER_SYNC');
+					headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER_SYNC');
 					useProgress = true;
 					break;
 
 				default:
-					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_HEADER');
+					headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
 					useProgress = false;
 					break;
 			}
@@ -385,25 +371,23 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			dialogList.setTitle(this.titleParams);
 		}
 
+		/**
+		 * @override
+		 */
 		initPullHandlers()
 		{
-			BX.PULL.subscribe(new MessagePullHandler());
-			BX.PULL.subscribe(new FilePullHandler());
-			BX.PULL.subscribe(new DialogPullHandler());
-			BX.PULL.subscribe(new UserPullHandler());
+			BX.PULL.subscribe(new ChatMessagePullHandler());
+			BX.PULL.subscribe(new ChatFilePullHandler());
+			BX.PULL.subscribe(new ChatDialogPullHandler());
+			BX.PULL.subscribe(new ChatUserPullHandler());
 			BX.PULL.subscribe(new DesktopPullHandler());
 			BX.PULL.subscribe(new NotificationPullHandler());
 			BX.PULL.subscribe(new OnlinePullHandler());
 		}
 
-		initServices()
-		{
-			this.connectionService = ConnectionService.getInstance();
-			this.syncService = SyncService.getInstance();
-			this.sendingService = SendingService.getInstance();
-			this.queueService = QueueService.getInstance();
-		}
-
+		/**
+		 * @override
+		 */
 		async initCurrentUser()
 		{
 			const currentUser = await this.core.getRepository().user.userTable.getById(this.core.getUserId());
@@ -413,6 +397,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 		}
 
+		/**
+		 * @override
+		 */
 		async initQueueRequests()
 		{
 			const queueRequests = await this.core.getRepository().queue.getList();
@@ -422,9 +409,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 		}
 
+		/**
+		 * @override
+		 */
 		executeStoredPullEvents()
 		{
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
 				PushHandler.updateList();
 			}
@@ -435,19 +425,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		onAppActiveBefore()
 		{
 			BX.onViewLoaded(() => {
-
-				if (!Settings.isLocalStorageEnabled)
+				if (!Feature.isLocalStorageEnabled)
 				{
 					MessengerEmitter.emit(EventType.dialog.external.disableScrollToBottom);
 
 					PushHandler.updateList();
 				}
 
-				this.refresh()
-					.finally(() => {
-						MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
-					})
-				;
+				this.refresh();
 			});
 		}
 
@@ -463,10 +448,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			PushHandler.clearHistory();
 		}
 
-		async refresh(chestnoPererisuemShapku)
+		/**
+		 * @override
+		 */
+		async refresh(redrawHeaderTruly)
 		{
-			this.chestnoPererisuemShapku = chestnoPererisuemShapku ?? false;
-
+			this.redrawHeaderTruly = redrawHeaderTruly ?? false;
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			SmileManager.init();
@@ -476,20 +463,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			return restManager.callBatch()
 				.then(() => this.afterRefresh())
 				.catch((response) => this.afterRefreshError(response))
+				.finally(() => {
+					MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
+
+					Logger.warn('Messenger.refresh complete');
+				})
 			;
-		}
-
-		buildQueueRequests()
-		{
-			const requests = this.store.getters['queueModel/getQueue'];
-			if (requests && requests.length > 0)
-			{
-				const sortedRequests = requests.sort((a, b) => a.priority - b.priority);
-
-				sortedRequests.forEach((req) => {
-					this.queueRestManager.once(req.requestName, req.requestData);
-				});
-			}
 		}
 
 		queueCallBatch()
@@ -506,7 +485,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		async afterRefresh()
 		{
-			if (Settings.isLocalStorageEnabled)
+			if (Feature.isLocalStorageEnabled)
 			{
 				await this.core.setAppStatus(AppStatus.sync, true);
 			}
@@ -517,7 +496,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			Counters.update();
 
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
 				return this.ready();
 			}
@@ -556,7 +535,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 						this.refreshErrorNoticeFlag = true;
 
 						InAppNotifier.showNotification({
-							message: Loc.getMessage('IMMOBILE_MESSENGER_REFRESH_ERROR'),
+							message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_REFRESH_ERROR'),
 							backgroundColor: '#E6000000',
 							time: this.refreshAfterErrorInterval / 1000 - 2,
 						});
@@ -643,6 +622,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * desc Handler call open sidebar event
 		 * @param {{dialogId: string|number}} params
+		 * @override
 		 */
 		openSidebar(params)
 		{
@@ -680,7 +660,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				PageManager.getNavigator().makeTabActive();
 			}
 
-			BX.postComponentEvent('onTabChange', ['notifications'], 'im.navigation');
+			BX.postComponentEvent('onTabChange', ['notifications'], ComponentCode.imNavigation);
 		}
 
 		openChatSearch()
@@ -750,7 +730,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			const openDialogParamsResponseEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
 
 			const params = Dialog.getOpenDialogParams(options);
-			BX.postComponentEvent(openDialogParamsResponseEvent, [params]);
+			BX.postComponentEvent(openDialogParamsResponseEvent, [params], ComponentCode.imMessenger);
 		}
 
 		getOpenLineParams(options = {})
@@ -855,8 +835,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			Logger.warn('EventType.chatDialog.accessError');
 
 			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
-				message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
+				title: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
+				message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
 				backgroundColor: '#E6000000',
 				time: 3,
 			});
@@ -867,8 +847,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		onDialogAccessError()
 		{
 			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
-				message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
+				title: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
+				message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
 				backgroundColor: '#E6000000',
 				time: 3,
 			});
@@ -911,6 +891,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		destructor()
 		{
 			this.unsubscribeStoreEvents();
+			this.unsubscribeMessengerEvents();
+			this.unsubscribeExternalEvents();
 
 			if (this.connectionService)
 			{
@@ -919,8 +901,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			BX.listeners = {};
 
-			// eslint-disable-next-line no-console
-			console.warn('Messenger: Garbage collection after refresh complete');
+			Logger.warn('Messenger: Garbage collection after refresh complete');
 		}
 	}
 

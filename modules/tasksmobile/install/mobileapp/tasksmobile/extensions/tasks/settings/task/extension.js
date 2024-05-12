@@ -21,6 +21,21 @@
 			);
 		}
 
+		async initOptions()
+		{
+			// Add your options in this array
+			/**
+			 * @private
+			 * @type {FormSection[]}
+			 */
+			this.options = [];
+		}
+
+		hasOptions()
+		{
+			return this.options.length > 0;
+		}
+
 		getProviderId()
 		{
 			return this.providerId;
@@ -45,6 +60,32 @@
 			});
 		}
 
+		async createBetaForm()
+		{
+			const isBetaAvailable = await this.isBetaAvailablePromise;
+
+			let taskBetaOption = null;
+			if (isBetaAvailable)
+			{
+				const isBetaActive = await this.isBetaActivePromise;
+
+				const taskBetaActiveSwitch = this.createSwitchItem(
+					'taskBetaActive',
+					'TASKSMOBILE_SETTINGS_TASK_BETA_ACTIVE_TITLE',
+					isBetaActive,
+					'TASK_SETTINGS_TASK_BETA_ACTIVE',
+				);
+
+				taskBetaOption = this.createSection(
+					'taskBeta',
+					[taskBetaActiveSwitch],
+					'TASKSMOBILE_SETTINGS_TASK_BETA_TITLE',
+				);
+			}
+
+			return taskBetaOption;
+		}
+
 		checkAjaxActive(valueName, action)
 		{
 			return new Promise((resolve) => {
@@ -67,52 +108,51 @@
 		{
 			const form = await this.getForm();
 
-			this.provider.openForm(form.compile(), form.getId());
+			if (this.provider)
+			{
+				this.provider.openForm(form.compile(), form.getId());
+			}
 		}
 
-		createSwitch(switchId, messageId, value)
+		createSwitchItem(switchId, textCode, isActive, testId)
 		{
+			// eslint-disable-next-line no-undef
 			const formSwitch = FormItem.create(
 				switchId,
+				// eslint-disable-next-line no-undef
 				FormItemType.SWITCH,
-				Loc.getMessage(messageId),
+				Loc.getMessage(textCode),
 			);
-			formSwitch.setValue(value);
+			formSwitch.setValue(isActive);
+
+			if (typeof formSwitch.setTestId === 'function')
+			{
+				formSwitch.setTestId(testId);
+			}
 
 			return formSwitch;
 		}
 
 		async getForm()
 		{
-			const isBetaAvailable = await this.isBetaAvailablePromise;
+			// eslint-disable-next-line no-undef
+			const form = Form.create(this.providerId, this.providerTitle);
 
-			let taskBetaOption = null;
-			if (isBetaAvailable)
+			if (this.hasOptions())
 			{
-				const isBetaActive = await this.isBetaActivePromise;
-
-				const taskBetaActiveSwitch = FormItem.create(
-					'taskBetaActive',
-					FormItemType.SWITCH,
-					Loc.getMessage('TASKSMOBILE_SETTINGS_TASK_BETA_ACTIVE_TITLE'),
-				);
-				taskBetaActiveSwitch.setValue(isBetaActive);
-
-				if (typeof taskBetaActiveSwitch.setTestId === 'function')
-				{
-					taskBetaActiveSwitch.setTestId('TASK_SETTINGS_TASK_BETA_ACTIVE');
-				}
-
-				taskBetaOption = FormSection.create('taskBeta', Loc.getMessage('TASKSMOBILE_SETTINGS_TASK_BETA_TITLE'));
-				taskBetaOption.addItems([
-					taskBetaActiveSwitch,
-				]);
+				form.addSections(this.options);
 			}
 
-			const form = Form.create(this.providerId, this.providerTitle);
-			form.addSections([taskBetaOption]);
-
 			return form;
+		}
+
+		createSection(formId, formItems, sectionNameCode)
+		{
+			// eslint-disable-next-line no-undef
+			const option = FormSection.create(formId, Loc.getMessage(sectionNameCode));
+			option.addItems(formItems);
+
+			return option;
 		}
 
 		setAjaxItemValue(name, params)
@@ -171,20 +211,17 @@
 	const taskSettingsManager = new TaskSettings();
 
 	BX.addCustomEvent('onRegisterProvider', async (provider) => {
+		// eslint-disable-next-line no-undef
 		class TaskSettingsProvider extends SettingsProvider
 		{
 			onButtonTap(data)
 			{
-				super.onValueChanged(data);
-
 				taskSettingsManager.setSettingsProvider(this);
 				taskSettingsManager.onSettingsProviderButtonTap(data);
 			}
 
 			onValueChanged(item)
 			{
-				super.onValueChanged(item);
-
 				taskSettingsManager.setSettingsProvider(this);
 				taskSettingsManager.onSettingsProviderValueChanged(item);
 			}
@@ -203,11 +240,11 @@
 			);
 		}
 
-		const isBetaAvailable = await taskSettingsManager.isBetaAvailablePromise;
+		await taskSettingsManager.initOptions();
+
 		checkDisabledToolById('tasks', false)
 			.then((tasksDisabled) => {
-				console.log(tasksDisabled);
-				const enableInMenu = (isBetaAvailable && !tasksDisabled);
+				const enableInMenu = !tasksDisabled && taskSettingsManager.hasOptions();
 				if (enableInMenu !== enableInMenuFromCache)
 				{
 					Application.storage.setBoolean('settings.task.enableInMenu', enableInMenu);

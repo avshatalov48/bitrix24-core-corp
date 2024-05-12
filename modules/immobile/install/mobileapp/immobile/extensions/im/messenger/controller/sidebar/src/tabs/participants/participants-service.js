@@ -2,17 +2,18 @@
  * @module im/messenger/controller/sidebar/tabs/participants/participants-service
  */
 jn.define('im/messenger/controller/sidebar/tabs/participants/participants-service', (require, exports, module) => {
+	/* global PageManager */
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { MapCache } = require('im/messenger/cache');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { SidebarUserService } = require('im/messenger/controller/sidebar/sidebar-user-service');
 	const { SidebarRestService } = require('im/messenger/controller/sidebar/sidebar-rest-service');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType, DialogType, BBCode } = require('im/messenger/const');
+	const { EventType, DialogType, BBCode, ComponentCode } = require('im/messenger/const');
 
 	/**
 	 * @class ParticipantsService
@@ -25,7 +26,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		 */
 		constructor(props)
 		{
-			this.store = core.getStore();
+			this.core = serviceLocator.get('core');
+			this.store = this.core.getStore();
 			this.dialogId = props.dialogId;
 			this.isNotes = props.isNotes;
 			this.isGroupDialog = DialogHelper.isDialogId(this.dialogId);
@@ -37,7 +39,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		}
 
 		/**
-		 * @desc Get participants from store or rest query
+		 * @desc Get participants from a store or rest query
 		 * @return {array}
 		 */
 		getParticipants()
@@ -58,7 +60,13 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		getParticipantsFromStore()
 		{
 			const dialogState = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (!dialogState)
+
+			if (!dialogState && !Type.isArray(dialogState.participants))
+			{
+				return [];
+			}
+
+			if (dialogState.participants.length !== dialogState.userCounter)
 			{
 				return [];
 			}
@@ -149,7 +157,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		 */
 		prepareUserData(user, currentUserId, ownerId)
 		{
-			const userTitle = this.sidebarUserService.getTitleDataById(user.id);
+			const isCopilot = this.sidebarUserService.isCopilotBotById(user.id);
+			const userTitle = this.sidebarUserService.getTitleDataById(user.id, isCopilot);
 			const isYou = currentUserId === user.id;
 			const isYouTitle = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_IS_YOU');
 			const userAvatar = this.sidebarUserService.getAvatarDataById(user.id);
@@ -173,6 +182,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 				crownStatus,
 				isAdmin,
 				isYou,
+				isCopilot,
 			};
 		}
 
@@ -234,7 +244,11 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		 */
 		onClickGetNotes()
 		{
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: MessengerParams.getUserId() });
+			MessengerEmitter.emit(
+				EventType.messenger.openDialog,
+				{ dialogId: MessengerParams.getUserId() },
+				ComponentCode.imMessenger,
+			);
 		}
 
 		/**
@@ -277,7 +291,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		 */
 		onClickSendMessage(userId)
 		{
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId });
+			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId }, ComponentCode.imMessenger);
 		}
 
 		/**

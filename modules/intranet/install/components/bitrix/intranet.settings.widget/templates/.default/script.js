@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_popupcomponentsmaker,main_core) {
 	'use strict';
@@ -6,8 +7,7 @@ this.BX = this.BX || {};
 	  _t,
 	  _t2,
 	  _t3,
-	  _t4,
-	  _t5;
+	  _t4;
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _isBitrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24");
@@ -57,6 +57,49 @@ this.BX = this.BX || {};
 	      }
 	    });
 	  }
+	  getHeaderSkeleton() {
+	    return main_core.Tag.render(_t || (_t = _`
+			<div class="intranet-widget-skeleton__header">
+				<div style="max-width: 95px; height: 8px;" class="intranet-widget-skeleton__line"></div>
+			</div>
+		`));
+	  }
+	  getItemSkeleton() {
+	    return main_core.Tag.render(_t2 || (_t2 = _`
+			<div class="intranet-widget-skeleton__row">
+				<div class="intranet-widget-skeleton__item">
+					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
+					<div style="max-width: 130px;" class="intranet-widget-skeleton__line"></div>
+					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
+				</div>
+			</div>
+		`));
+	  }
+	  getSplitItemSkeleton() {
+	    return main_core.Tag.render(_t3 || (_t3 = _`
+			<div class="intranet-widget-skeleton__row">
+				<div class="intranet-widget-skeleton__item">
+					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
+					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
+					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
+				</div>
+				<div class="intranet-widget-skeleton__item">
+					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
+					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
+					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
+				</div>
+			</div>
+		`));
+	  }
+	  getFooterSkeleton() {
+	    return main_core.Tag.render(_t4 || (_t4 = _`
+			<div class="intranet-widget-skeleton__footer">
+				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
+				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
+				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
+			</div>
+		`));
+	  }
 	  static init(options) {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this(options);
@@ -73,18 +116,19 @@ this.BX = this.BX || {};
 	  });
 	  const container = popup.getPopup().getPopupContainer();
 	  main_core.Dom.clean(container);
-	  main_core.Dom.addClass(container, 'intranet-settings-widget__container');
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] && !babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin]) {
-	    main_core.Dom.append(main_core.Tag.render(_t || (_t = _`<div class="intranet-settings-widget__skeleton-not-admin"></div>`)), container);
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] && babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite]) {
-	    main_core.Dom.append(main_core.Tag.render(_t2 || (_t2 = _`<div class="intranet-settings-widget__skeleton"></div>`)), container);
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] && !babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite]) {
-	    main_core.Dom.append(main_core.Tag.render(_t3 || (_t3 = _`<div class="intranet-settings-widget__skeleton-no-requisite"></div>`)), container);
-	  } else if (!babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] && babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite]) {
-	    main_core.Dom.append(main_core.Tag.render(_t4 || (_t4 = _`<div class="intranet-settings-widget__skeleton-no-holding"></div>`)), container);
-	  } else {
-	    main_core.Dom.append(main_core.Tag.render(_t5 || (_t5 = _`<div class="intranet-settings-widget__skeleton-no-requisite-holding"></div>`)), container);
+	  main_core.Dom.addClass(container, 'intranet-widget-skeleton__wrap');
+	  main_core.Dom.append(this.getHeaderSkeleton(), container);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite]) {
+	    main_core.Dom.append(this.getItemSkeleton(), container);
 	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin]) {
+	    main_core.Dom.append(this.getSplitItemSkeleton(), container);
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix]) {
+	    main_core.Dom.append(this.getItemSkeleton(), container);
+	  }
+	  main_core.Dom.append(this.getItemSkeleton(), container);
+	  main_core.Dom.append(this.getFooterSkeleton(), container);
 	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = popup;
 	  return popup;
 	}

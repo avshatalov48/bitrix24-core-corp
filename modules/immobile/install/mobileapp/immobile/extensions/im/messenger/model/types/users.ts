@@ -1,3 +1,5 @@
+import {PayloadData} from "./base";
+
 export type UsersModelState = {
 	id: number,
 	name: string,
@@ -53,3 +55,30 @@ export type UsersModelMutation =
 	| 'usersModel/setState'
 	| 'usersModel/delete'
 	| 'usersModel/merge'
+
+
+export type UsersSetStateActions = 'setState';
+export interface UsersSetStateData extends PayloadData
+{
+	collection: Record<number, UsersModelState>;
+}
+
+
+export type UsersSetActions =
+	'setFromLocalDatabase'
+	| 'set'
+	| 'addShort'
+	| 'update'
+	| 'merge'
+;
+export interface UsersSetData extends PayloadData
+{
+	userList: Array<UsersModelState>;
+}
+
+
+export type UsersDeleteActions = 'delete';
+export interface UsersDeleteData extends PayloadData
+{
+	id: number;
+}

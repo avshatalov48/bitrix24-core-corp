@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Settings;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -13,11 +13,14 @@ Main\Localization\Loc::loadMessages(__FILE__);
  */
 class Mode
 {
-	const Undefined = 0;
+	public const Undefined = 0;
 	//Leads are enabled.
-	const CLASSIC = 1;
+	public const CLASSIC = 1;
 	//Leads are disabled.
-	const SIMPLE = 2;
+	public const SIMPLE = 2;
+
+	public const CLASSIC_NAME = 'CLASSIC';
+	public const SIMPLE_NAME = 'SIMPLE';
 
 	/** @var array|null */
 	protected static $descriptions = null;
@@ -29,6 +32,14 @@ class Mode
 	public static function getCurrent()
 	{
 		return Crm\Settings\LeadSettings::isEnabled() ? self::CLASSIC : self::SIMPLE;
+	}
+
+	public static function getCurrentName(): string
+	{
+		return match (self::getCurrent()) {
+			self::CLASSIC => self::CLASSIC_NAME,
+			self::SIMPLE => self::SIMPLE_NAME,
+		};
 	}
 
 	/**

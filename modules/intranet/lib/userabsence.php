@@ -302,6 +302,7 @@ class UserAbsence
 	 */
 	public static function cleanCache()
 	{
+		\CIBlock::clearIblockTagCache(Option::get('intranet', 'iblock_absence'));
 		return Cache::createInstance()->cleanDir(UserAbsence::CACHE_PATH);
 	}
 

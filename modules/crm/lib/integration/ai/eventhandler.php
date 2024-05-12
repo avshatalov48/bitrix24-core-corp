@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm\Integration\AI;
 
+use Bitrix\AI\Context;
+use Bitrix\AI\Engine;
+use Bitrix\AI\Tuning;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
@@ -10,41 +13,58 @@ use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use CCrmOwnerType;
 
 final class EventHandler
 {
 	public const SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE = 'crm_copilot_fill_item_from_call_enabled';
+	public const SETTINGS_FILL_CRM_TEXT_ENABLED_CODE = 'crm_copilot_fill_crm_text_enabled';
+
+	public const ENGINE_CATEGORY = 'text';
 
 	private const SETTINGS_GROUP_CODE = 'crm_copilot';
 
-	public static function onTuningLoad(): \Bitrix\Main\ORM\EventResult
+	public static function onTuningLoad(): EventResult
 	{
-		$result = new \Bitrix\Main\ORM\EventResult();
+		$result = new EventResult();
 
-		if (!AIManager::isAiCallProcessingEnabled())
+		$items = [];
+		$groups = [];
+
+		if (Engine::getByCategory(self::ENGINE_CATEGORY, Context::getFake()))
 		{
-			return $result;
+			$items[self::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE] = [
+				'group' => Tuning\Defaults::GROUP_TEXT,
+				'header' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_TODO_TEXT_HEADER'),
+				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_TODO_TEXT_TITLE'),
+				'type' => Tuning\Type::BOOLEAN,
+				'default' => true,
+				'sort' => 600,
+			];
+		}
+
+		if (AIManager::isAiCallProcessingEnabled())
+		{
+			$groups[self::SETTINGS_GROUP_CODE] = [
+				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_TITLE'),
+				'description' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_DESCRIPTION'),
+				'helpdesk' => 18799442
+			];
+
+			$items[self::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE] = [
+				'group' => self::SETTINGS_GROUP_CODE,
+				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_TITLE'),
+				'header' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_ITEM_FROM_CALL_HEADER'),
+				'type' => Tuning\Type::BOOLEAN,
+				'default' => true,
+			];
 		}
 
 		$result->modifyFields([
-			'groups' => [
-				self::SETTINGS_GROUP_CODE => [
-					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_TITLE'),
-					'description' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_DESCRIPTION'),
-					'helpdesk' => 18799442
-				],
-			],
-			'items' => [
-				self::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE => [
-					'group' => self::SETTINGS_GROUP_CODE,
-					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_TITLE'),
-					'header' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_ITEM_FROM_CALL_HEADER'),
-					'type' => \Bitrix\AI\Tuning\Type::BOOLEAN,
-					'default' => true,
-				],
-			],
+			'items' => $items,
+			'groups' => $groups,
 		]);
 
 		return $result;

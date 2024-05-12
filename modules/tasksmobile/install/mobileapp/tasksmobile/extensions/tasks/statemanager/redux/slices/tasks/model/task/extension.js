@@ -3,37 +3,30 @@
  */
 jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports, module) => {
 	const { ExpirationRegistry } = require('tasks/statemanager/redux/slices/tasks/expiration-registry');
+	const { FieldChangeRegistry } = require('tasks/statemanager/redux/slices/tasks/field-change-registry');
 	const { selectIsExpired } = require('tasks/statemanager/redux/slices/tasks/selector');
 	const { Type } = require('type');
 
 	class TaskModel
 	{
-		static get status()
-		{
-			return {
-				pending: 2,
-				inProgress: 3,
-				supposedlyCompleted: 4,
-				completed: 5,
-				deferred: 6,
-			};
-		}
-
 		/**
 		 * Method maps fields from API responses of "tasksmobile" module to redux store.
 		 *
 		 * @public
-		 * @param {object} serverTask
+		 * @param {object} sourceServerTask
 		 * @param {object|null} existingReduxTask
 		 * @return {object}
 		 */
-		static prepareReduxTaskFromServerTask(serverTask, existingReduxTask = null)
+		static prepareReduxTaskFromServerTask(sourceServerTask, existingReduxTask = null)
 		{
-			const preparedTask = (existingReduxTask || TaskModel.getEmptyReduxTask());
+			const preparedTask = { ...(existingReduxTask || TaskModel.getEmptyReduxTask()) };
+			const serverTask = FieldChangeRegistry.removeChangedFields(sourceServerTask);
+			let taskId = Number(existingReduxTask?.id);
 
 			if (!Type.isUndefined(serverTask.id))
 			{
-				preparedTask.id = Number(serverTask.id);
+				taskId = Number(serverTask.id);
+				preparedTask.id = taskId;
 			}
 
 			if (!Type.isUndefined(serverTask.name))
@@ -259,6 +252,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.canUpdateDeadline = actions.changeDeadline;
 				preparedTask.canDelegate = actions.delegate;
 				preparedTask.canRemove = actions.remove;
+				preparedTask.canDefer = actions.defer;
 				preparedTask.canUseTimer = actions['dayplan.timer.toggle'];
 				preparedTask.canStart = actions.start && !actions['dayplan.timer.toggle'];
 				preparedTask.canPause = actions.pause && !actions['dayplan.timer.toggle'];
@@ -266,7 +260,6 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.canRenew = actions.renew;
 				preparedTask.canApprove = actions.approve;
 				preparedTask.canDisapprove = actions.disapprove;
-				preparedTask.canDefer = actions.defer;
 			}
 
 			preparedTask.isExpired = selectIsExpired(preparedTask);

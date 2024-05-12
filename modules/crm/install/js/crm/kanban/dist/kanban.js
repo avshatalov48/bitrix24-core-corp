@@ -1,561 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_kanban_sort,main_core_events,ui_notification,main_popup,main_core) {
+(function (exports,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core) {
 	'use strict';
-
-	var PullOperation = /*#__PURE__*/function () {
-	  babelHelpers.createClass(PullOperation, null, [{
-	    key: "createInstance",
-	    value: function createInstance(data) {
-	      var instance = new PullOperation(data.grid);
-	      instance.setItemId(data.itemId);
-	      instance.setAction(data.action);
-	      instance.setActionParams(data.actionParams);
-	      return instance;
-	    }
-	  }]);
-	  function PullOperation(grid) {
-	    babelHelpers.classCallCheck(this, PullOperation);
-	    this.grid = grid;
-	  }
-	  babelHelpers.createClass(PullOperation, [{
-	    key: "setItemId",
-	    value: function setItemId(itemId) {
-	      this.itemId = itemId;
-	      return this;
-	    }
-	  }, {
-	    key: "getItemId",
-	    value: function getItemId() {
-	      return this.itemId;
-	    }
-	  }, {
-	    key: "setAction",
-	    value: function setAction(action) {
-	      this.action = action;
-	      return this;
-	    }
-	  }, {
-	    key: "getAction",
-	    value: function getAction() {
-	      return this.action;
-	    }
-	  }, {
-	    key: "setActionParams",
-	    value: function setActionParams(actionParams) {
-	      this.actionParams = actionParams;
-	      return this;
-	    }
-	  }, {
-	    key: "getActionParams",
-	    value: function getActionParams() {
-	      return this.actionParams;
-	    }
-	  }, {
-	    key: "execute",
-	    value: function execute() {
-	      if (this.getAction() === 'updateItem') {
-	        return this.updateItem();
-	      }
-	      if (this.getAction() === 'addItem') {
-	        return this.addItem();
-	      }
-	    }
-	  }, {
-	    key: "updateItem",
-	    value: function updateItem() {
-	      var params = this.getActionParams();
-	      var item = this.grid.getItem(params.item.id);
-	      var paramsItem = params.item;
-	      if (!item) {
-	        return;
-	      }
-	      var insertItemParams = {};
-	      if (paramsItem.data.lastActivity && paramsItem.data.lastActivity.timestamp !== item.data.lastActivity.timestamp) {
-	        insertItemParams.canShowLastActivitySortTour = true;
-	      }
-	      var oldPrice = parseFloat(item.data.price);
-	      var oldColumnId = item.columnId;
-	      for (var key in paramsItem.data) {
-	        if (key in item.data) {
-	          item.data[key] = paramsItem.data[key];
-	        }
-	      }
-	      item.rawData = paramsItem.rawData;
-	      item.setActivityExistInnerHtml();
-	      item.useAnimation = true;
-	      item.setChangedInPullRequest();
-	      this.grid.resetMultiSelectMode();
-	      var newColumnId = paramsItem.data.columnId;
-	      var newColumn = this.grid.getColumn(newColumnId);
-	      var newPrice = parseFloat(paramsItem.data.price);
-	      insertItemParams.newColumnId = newColumnId;
-	      this.grid.insertItem(item, insertItemParams);
-	      item.columnId = newColumnId;
-	      if (!this.grid.getTypeInfoParam('showTotalPrice')) {
-	        return;
-	      }
-	      if (oldColumnId !== newColumnId) {
-	        var oldColumn = this.grid.getColumn(oldColumnId);
-	        oldColumn.decPrice(oldPrice);
-	        oldColumn.renderSubTitle();
-	        if (newColumn) {
-	          newColumn.incPrice(newPrice);
-	          newColumn.renderSubTitle();
-	        }
-	      } else {
-	        if (oldPrice < newPrice) {
-	          newColumn.incPrice(newPrice - oldPrice);
-	          newColumn.renderSubTitle();
-	        } else if (oldPrice > newPrice) {
-	          newColumn.decPrice(oldPrice - newPrice);
-	          newColumn.renderSubTitle();
-	        }
-	      }
-	    }
-	  }, {
-	    key: "addItem",
-	    value: function addItem() {
-	      var params = this.getActionParams();
-	      var oldItem = this.grid.getItem(params.item.id);
-	      if (oldItem) {
-	        return;
-	      }
-	      var column = this.grid.getColumn(params.item.data.columnId);
-	      if (!column) {
-	        return;
-	      }
-	      var sorter = crm_kanban_sort.Sorter.createWithCurrentSortType(column.getItems());
-	      var beforeItem = sorter.calcBeforeItemByParams(params.item.data.sort);
-	      if (beforeItem) {
-	        params.item.targetId = beforeItem.getId();
-	      }
-	      this.grid.addItem(params.item);
-	    }
-	  }]);
-	  return PullOperation;
-	}();
-
-	var ViewMode = {
-	  MODE_STAGES: 'STAGES',
-	  MODE_ACTIVITIES: 'ACTIVITIES',
-	  getDefault: function getDefault() {
-	    return this.MODE_STAGES;
-	  },
-	  getAll: function getAll() {
-	    return [this.MODE_STAGES, this.MODE_ACTIVITIES];
-	  },
-	  normalize: function normalize(mode) {
-	    return this.getAll().includes(mode) ? mode : this.getDefault();
-	  }
-	};
-	Object.freeze(ViewMode);
-
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-	/**
-	 * @class PullQueue
-	 */
-
-	var LOAD_ITEMS_DELAY = 5000;
-	var _queue = /*#__PURE__*/new WeakMap();
-	var _grid = /*#__PURE__*/new WeakMap();
-	var _viewMode = /*#__PURE__*/new WeakMap();
-	var _isProgress = /*#__PURE__*/new WeakMap();
-	var _isFreeze = /*#__PURE__*/new WeakMap();
-	var PullQueue = /*#__PURE__*/function () {
-	  function PullQueue(grid) {
-	    babelHelpers.classCallCheck(this, PullQueue);
-	    _classPrivateFieldInitSpec(this, _queue, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _grid, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _viewMode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _isProgress, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _isFreeze, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _grid, grid);
-	    babelHelpers.classPrivateFieldSet(this, _viewMode, ViewMode.normalize(babelHelpers.classPrivateFieldGet(this, _grid).getData().viewMode));
-	    babelHelpers.classPrivateFieldSet(this, _queue, new Map());
-	    babelHelpers.classPrivateFieldSet(this, _isProgress, false);
-	    babelHelpers.classPrivateFieldSet(this, _isFreeze, false);
-	    this.loadItemsTimer = null;
-	  }
-	  babelHelpers.createClass(PullQueue, [{
-	    key: "loadItem",
-	    value: function loadItem() {
-	      var _this = this;
-	      var ignoreProgressStatus = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-	      var ignoreDelay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	      if (this.loadItemsTimer && !ignoreDelay) {
-	        return;
-	      }
-	      this.loadItemsTimer = setTimeout(function () {
-	        if (babelHelpers.classPrivateFieldGet(_this, _isProgress) && !ignoreProgressStatus) {
-	          _this.loadItemsTimer = null;
-	          return;
-	        }
-	        if (document.hidden || _this.isOverflow() || _this.isFreezed()) {
-	          _this.loadItemsTimer = null;
-	          return;
-	        }
-	        var items = _this.popAllAsArray();
-	        if (items.length) {
-	          var ids = [];
-	          items.map(function (item) {
-	            ids.push(item.id);
-	            var data = item.data;
-	            var operation = PullOperation.createInstance({
-	              grid: babelHelpers.classPrivateFieldGet(_this, _grid),
-	              itemId: data.id,
-	              action: data.action,
-	              actionParams: data.actionParams
-	            });
-	            operation.execute();
-	          });
-	          var loadNextOnSuccess = function loadNextOnSuccess() {
-	            _this.loadItemsTimer = null;
-	            if (_this.peek()) {
-	              _this.loadItem(true);
-	            }
-	            babelHelpers.classPrivateFieldSet(_this, _isProgress, false);
-	          };
-	          var doNothingOnError = function doNothingOnError() {
-	            _this.loadItemsTimer = null;
-	          };
-	          babelHelpers.classPrivateFieldSet(_this, _isProgress, true);
-	          babelHelpers.classPrivateFieldGet(_this, _grid).loadNew(ids, false, true, true, true).then(loadNextOnSuccess, doNothingOnError);
-	        }
-	      }, ignoreDelay ? 0 : LOAD_ITEMS_DELAY);
-	    }
-	  }, {
-	    key: "push",
-	    value: function push(id, item) {
-	      id = parseInt(id, 10);
-	      if (this.has(id)) {
-	        this["delete"](id);
-	      }
-	      babelHelpers.classPrivateFieldGet(this, _queue).set(id, item);
-	      return this;
-	    }
-	  }, {
-	    key: "popAllAsArray",
-	    value: function popAllAsArray() {
-	      var items = Array.from(babelHelpers.classPrivateFieldGet(this, _queue), function (_ref) {
-	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	          id = _ref2[0],
-	          data = _ref2[1];
-	        return {
-	          id: id,
-	          data: data
-	        };
-	      });
-	      babelHelpers.classPrivateFieldGet(this, _queue).clear();
-	      return items;
-	    }
-	  }, {
-	    key: "popBatch",
-	    value: function popBatch(count) {
-	      if (count <= 0) {
-	        return [];
-	      }
-	      var results = [];
-	      for (var i = 0; i < count; i++) {
-	        var item = this.pop();
-	        if (!item) {
-	          break;
-	        }
-	        results.push(item);
-	      }
-	      return results;
-	    }
-	  }, {
-	    key: "pop",
-	    value: function pop() {
-	      var items = babelHelpers.classPrivateFieldGet(this, _queue).entries();
-	      var first = items.next();
-	      if (first.value) {
-	        babelHelpers.classPrivateFieldGet(this, _queue)["delete"](first.value[0]);
-	      }
-	      return first.value;
-	    }
-	  }, {
-	    key: "peek",
-	    value: function peek() {
-	      var _first$value;
-	      var items = babelHelpers.classPrivateFieldGet(this, _queue).entries();
-	      var first = items.next();
-	      return (_first$value = first.value) !== null && _first$value !== void 0 ? _first$value : null;
-	    }
-	  }, {
-	    key: "delete",
-	    value: function _delete(id) {
-	      babelHelpers.classPrivateFieldGet(this, _queue)["delete"](id);
-	    }
-	  }, {
-	    key: "has",
-	    value: function has(id) {
-	      return babelHelpers.classPrivateFieldGet(this, _queue).has(id);
-	    }
-	  }, {
-	    key: "clear",
-	    value: function clear() {
-	      babelHelpers.classPrivateFieldGet(this, _queue).clear();
-	    }
-	  }, {
-	    key: "isOverflow",
-	    value: function isOverflow() {
-	      var MAX_PENDING_ITEMS = 30;
-	      return babelHelpers.classPrivateFieldGet(this, _queue).size > MAX_PENDING_ITEMS;
-	    }
-	  }, {
-	    key: "freeze",
-	    value: function freeze() {
-	      babelHelpers.classPrivateFieldSet(this, _isFreeze, true);
-	    }
-	  }, {
-	    key: "unfreeze",
-	    value: function unfreeze() {
-	      babelHelpers.classPrivateFieldSet(this, _isFreeze, false);
-	    }
-	  }, {
-	    key: "isFreezed",
-	    value: function isFreezed() {
-	      return babelHelpers.classPrivateFieldGet(this, _isFreeze);
-	    }
-	  }]);
-	  return PullQueue;
-	}();
-
-	var PullManager = /*#__PURE__*/function () {
-	  function PullManager(grid) {
-	    babelHelpers.classCallCheck(this, PullManager);
-	    this.grid = grid;
-	    this.queue = new PullQueue(this.grid);
-	    this.openedSlidersCount = 0;
-	    if (main_core.Type.isString(grid.getData().moduleId) && grid.getData().userId > 0) {
-	      this.init();
-	    }
-	    this.bindEvents();
-	  }
-	  babelHelpers.createClass(PullManager, [{
-	    key: "init",
-	    value: function init() {
-	      var _this = this;
-	      main_core.Event.ready(function () {
-	        var Pull = BX.PULL;
-	        if (!Pull) {
-	          console.error('pull is not initialized');
-	          return;
-	        }
-	        var gridData = _this.grid.getData();
-	        var pullTag = gridData.pullTag,
-	          eventKanbanUpdatedTag = gridData.eventKanbanUpdatedTag,
-	          viewMode = gridData.viewMode;
-	        Pull.subscribe({
-	          moduleId: _this.grid.getData().moduleId,
-	          //command: this.grid.getData().pullTag,
-	          callback: function callback(data) {
-	            if (data.command !== pullTag && !(data.command.indexOf(eventKanbanUpdatedTag) === 0 && viewMode === ViewMode.MODE_ACTIVITIES)) {
-	              return;
-	            }
-	            var params = data.params;
-	            if (main_core.Type.isString(params.eventName)) {
-	              if (PullManager.eventIds.has(params.eventId)) {
-	                return;
-	              }
-	              if (_this.queue.isOverflow()) {
-	                return;
-	              }
-	              if (params.eventName === 'ITEMUPDATED') {
-	                _this.onPullItemUpdated(params);
-	              } else if (params.eventName === 'ITEMADDED') {
-	                _this.onPullItemAdded(params);
-	              } else if (params.eventName === 'ITEMDELETED') {
-	                _this.onPullItemDeleted(params);
-	              } else if (params.eventName === 'STAGEADDED') {
-	                _this.onPullStageAdded(params);
-	              } else if (params.eventName === 'STAGEDELETED') {
-	                _this.onPullStageDeleted(params);
-	              } else if (params.eventName === 'STAGEUPDATED') {
-	                _this.onPullStageUpdated(params);
-	              }
-	            }
-	          }
-	        });
-	        Pull.extendWatch(_this.grid.getData().pullTag);
-	        main_core.Event.bind(document, 'visibilitychange', function () {
-	          if (!document.hidden) {
-	            _this.onTabActivated();
-	          }
-	        });
-	      });
-	    }
-	  }, {
-	    key: "onPullItemUpdated",
-	    value: function onPullItemUpdated(params) {
-	      if (this.updateItem(params)) {
-	        this.queue.loadItem(false, params.ignoreDelay || false);
-	      }
-	    }
-	  }, {
-	    key: "updateItem",
-	    value: function updateItem(params) {
-	      var item = this.grid.getItem(params.item.id);
-	      if (item) {
-	        this.queue.push(item.id, {
-	          id: item.id,
-	          action: 'updateItem',
-	          actionParams: params
-	        });
-	        return true;
-	      }
-	      this.onPullItemAdded(params);
-	      return false;
-	    }
-	  }, {
-	    key: "onPullItemAdded",
-	    value: function onPullItemAdded(params) {
-	      if (this.addItem(params)) {
-	        this.queue.loadItem(false, params.ignoreDelay || false);
-	      }
-	    }
-	  }, {
-	    key: "addItem",
-	    value: function addItem(params) {
-	      var itemId = params.item.id;
-	      var oldItem = this.grid.getItem(itemId);
-	      if (oldItem) {
-	        return false;
-	      }
-	      this.queue.push(itemId, {
-	        id: itemId,
-	        action: 'addItem',
-	        actionParams: params
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "onPullItemDeleted",
-	    value: function onPullItemDeleted(params) {
-	      if (!main_core.Type.isPlainObject(params.item)) {
-	        return;
-	      }
-	      var _params$item = params.item,
-	        id = _params$item.id,
-	        columnId = _params$item.data.columnId;
-
-	      /**
-	       * Delay so that the element has time to be rendered before deletion,
-	       * if an event for changing the element came before. Ticket #141983
-	       */
-	      var delay = this.queue.has(id) ? 5000 : 0;
-	      setTimeout(function () {
-	        this.queue["delete"](id);
-	        var item = this.grid.getItem(id);
-	        if (!item) {
-	          return;
-	        }
-	        this.grid.removeItem(id);
-	        var column = this.grid.getColumn(columnId);
-	        column.decPrice(item.price);
-	        column.renderSubTitle();
-	      }.bind(this), delay);
-	    }
-	  }, {
-	    key: "onPullStageAdded",
-	    value: function onPullStageAdded(params) {
-	      this.grid.onApplyFilter();
-	    }
-	  }, {
-	    key: "onPullStageDeleted",
-	    value: function onPullStageDeleted(params) {
-	      this.grid.removeColumn(params.stage.id);
-	    }
-	  }, {
-	    key: "onPullStageUpdated",
-	    value: function onPullStageUpdated(params) {
-	      this.grid.onApplyFilter();
-	    }
-	  }, {
-	    key: "onTabActivated",
-	    value: function onTabActivated() {
-	      if (this.queue.isOverflow()) {
-	        this.showOutdatedDataDialog();
-	      } else if (this.queue.peek()) {
-	        this.queue.loadItem();
-	      }
-	    }
-	  }, {
-	    key: "showOutdatedDataDialog",
-	    value: function showOutdatedDataDialog() {
-	      var _this2 = this;
-	      if (!this.notifier) {
-	        this.notifier = BX.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_OUTDATED_DATA'),
-	          closeButton: false,
-	          autoHide: false,
-	          actions: [{
-	            title: main_core.Loc.getMessage('CRM_KANBAN_GRID_RELOAD'),
-	            events: {
-	              click: function click(event, balloon, action) {
-	                balloon.close();
-	                _this2.grid.reload();
-	                _this2.queue.clear();
-	              }
-	            }
-	          }]
-	        });
-	      } else {
-	        this.notifier.show();
-	      }
-	    }
-	  }, {
-	    key: "bindEvents",
-	    value: function bindEvents() {
-	      var _this3 = this;
-	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', function (event) {
-	        _this3.openedSlidersCount++;
-	        _this3.queue.freeze();
-	      });
-	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function (event) {
-	        _this3.openedSlidersCount--;
-	        if (_this3.openedSlidersCount <= 0) {
-	          _this3.openedSlidersCount = 0;
-	          _this3.queue.unfreeze();
-	          _this3.onTabActivated();
-	        }
-	      });
-	    }
-	  }], [{
-	    key: "registerRandomEventId",
-	    value: function registerRandomEventId() {
-	      var eventId = main_core.Text.getRandom(12);
-	      this.registerEventId(eventId);
-	      return eventId;
-	    }
-	  }, {
-	    key: "registerEventId",
-	    value: function registerEventId(eventId) {
-	      this.eventIds.add(eventId);
-	    }
-	  }]);
-	  return PullManager;
-	}();
-	babelHelpers.defineProperty(PullManager, "eventIds", new Set());
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var TYPE_VIEW = 'view';
@@ -915,9 +361,378 @@ this.BX.Crm = this.BX.Crm || {};
 	  return FieldsSelector;
 	}();
 
+	var PullOperation = /*#__PURE__*/function () {
+	  babelHelpers.createClass(PullOperation, null, [{
+	    key: "createInstance",
+	    value: function createInstance(data) {
+	      return new PullOperation(data.grid).setItemId(data.itemId).setAction(data.action).setActionParams(data.actionParams);
+	    }
+	  }]);
+	  function PullOperation(grid) {
+	    babelHelpers.classCallCheck(this, PullOperation);
+	    this.grid = grid;
+	  }
+	  babelHelpers.createClass(PullOperation, [{
+	    key: "setItemId",
+	    value: function setItemId(itemId) {
+	      this.itemId = itemId;
+	      return this;
+	    }
+	  }, {
+	    key: "getItemId",
+	    value: function getItemId() {
+	      return this.itemId;
+	    }
+	  }, {
+	    key: "setAction",
+	    value: function setAction(action) {
+	      this.action = action;
+	      return this;
+	    }
+	  }, {
+	    key: "getAction",
+	    value: function getAction() {
+	      return this.action;
+	    }
+	  }, {
+	    key: "setActionParams",
+	    value: function setActionParams(actionParams) {
+	      this.actionParams = actionParams;
+	      return this;
+	    }
+	  }, {
+	    key: "getActionParams",
+	    value: function getActionParams() {
+	      return this.actionParams;
+	    }
+	  }, {
+	    key: "execute",
+	    value: function execute() {
+	      var action = this.getAction();
+	      if (action === 'updateItem') {
+	        this.updateItem();
+	        return;
+	      }
+	      if (action === 'addItem') {
+	        this.addItem();
+	      }
+	    }
+	  }, {
+	    key: "updateItem",
+	    value: function updateItem() {
+	      var params = this.getActionParams();
+	      var item = this.grid.getItem(params.item.id);
+	      var paramsItem = params.item;
+	      if (!item) {
+	        return;
+	      }
+	      var insertItemParams = {};
+	      var _paramsItem$data = paramsItem.data,
+	        lastActivity = _paramsItem$data.lastActivity,
+	        newColumnId = _paramsItem$data.columnId,
+	        price = _paramsItem$data.price;
+	      if (main_core.Type.isObjectLike(lastActivity) && lastActivity.timestamp !== item.data.lastActivity.timestamp) {
+	        insertItemParams.canShowLastActivitySortTour = true;
+	      }
+	      var oldPrice = parseFloat(item.data.price);
+	      var oldColumnId = item.columnId;
+	      for (var key in paramsItem.data) {
+	        if (key in item.data) {
+	          item.data[key] = paramsItem.data[key];
+	        }
+	      }
+	      item.rawData = paramsItem.rawData;
+	      item.setActivityExistInnerHtml();
+	      item.useAnimation = true;
+	      item.setChangedInPullRequest();
+	      this.grid.resetMultiSelectMode();
+	      var newColumn = this.grid.getColumn(newColumnId);
+	      var newPrice = parseFloat(price);
+	      insertItemParams.newColumnId = newColumnId;
+	      this.grid.insertItem(item, insertItemParams);
+	      item.columnId = newColumnId;
+	      if (!this.grid.getTypeInfoParam('showTotalPrice')) {
+	        return;
+	      }
+	      if (oldColumnId === newColumnId) {
+	        if (oldPrice < newPrice) {
+	          newColumn.incPrice(newPrice - oldPrice);
+	          newColumn.renderSubTitle();
+	        } else if (oldPrice > newPrice) {
+	          newColumn.decPrice(oldPrice - newPrice);
+	          newColumn.renderSubTitle();
+	        }
+	        return;
+	      }
+	      var oldColumn = this.grid.getColumn(oldColumnId);
+	      oldColumn.decPrice(oldPrice);
+	      oldColumn.renderSubTitle();
+	      if (newColumn) {
+	        newColumn.incPrice(newPrice);
+	        newColumn.renderSubTitle();
+	      }
+	    }
+	  }, {
+	    key: "addItem",
+	    value: function addItem() {
+	      var params = this.getActionParams();
+	      var oldItem = this.grid.getItem(params.item.id);
+	      if (oldItem) {
+	        return;
+	      }
+	      var column = this.grid.getColumn(params.item.data.columnId);
+	      if (!column) {
+	        return;
+	      }
+	      var sorter = crm_kanban_sort.Sorter.createWithCurrentSortType(column.getItems());
+	      var beforeItem = sorter.calcBeforeItemByParams(params.item.data.sort);
+	      if (beforeItem) {
+	        params.item.targetId = beforeItem.getId();
+	      }
+	      this.grid.addItem(params.item);
+	    }
+	  }]);
+	  return PullOperation;
+	}();
+
+	var ViewMode = {
+	  MODE_STAGES: 'STAGES',
+	  MODE_ACTIVITIES: 'ACTIVITIES',
+	  getDefault: function getDefault() {
+	    return this.MODE_STAGES;
+	  },
+	  getAll: function getAll() {
+	    return [this.MODE_STAGES, this.MODE_ACTIVITIES];
+	  },
+	  normalize: function normalize(mode) {
+	    return this.getAll().includes(mode) ? mode : this.getDefault();
+	  }
+	};
+	Object.freeze(ViewMode);
+
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var EventName = {
+	  itemUpdated: 'ITEMUPDATED',
+	  itemAdded: 'ITEMADDED',
+	  itemDeleted: 'ITEMDELETED',
+	  stageAdded: 'STAGEADDED',
+	  stageUpdated: 'STAGEUPDATED',
+	  stageDeleted: 'STAGEDELETED'
+	};
+	var _onBeforeQueueExecute = /*#__PURE__*/new WeakSet();
+	var _onQueueExecute = /*#__PURE__*/new WeakSet();
+	var _onReload = /*#__PURE__*/new WeakSet();
+	var _onBeforePull = /*#__PURE__*/new WeakSet();
+	var _onPull = /*#__PURE__*/new WeakSet();
+	var _onPullItemUpdated = /*#__PURE__*/new WeakSet();
+	var _onPullItemAdded = /*#__PURE__*/new WeakSet();
+	var _getPullData = /*#__PURE__*/new WeakSet();
+	var _onPullItemDeleted = /*#__PURE__*/new WeakSet();
+	var _onPullStageChanged = /*#__PURE__*/new WeakSet();
+	var _onPullStageDeleted = /*#__PURE__*/new WeakSet();
+	var PullManager = function PullManager(_grid) {
+	  var _this = this;
+	  babelHelpers.classCallCheck(this, PullManager);
+	  _classPrivateMethodInitSpec(this, _onPullStageDeleted);
+	  _classPrivateMethodInitSpec(this, _onPullStageChanged);
+	  _classPrivateMethodInitSpec(this, _onPullItemDeleted);
+	  _classPrivateMethodInitSpec(this, _getPullData);
+	  _classPrivateMethodInitSpec(this, _onPullItemAdded);
+	  _classPrivateMethodInitSpec(this, _onPullItemUpdated);
+	  _classPrivateMethodInitSpec(this, _onPull);
+	  _classPrivateMethodInitSpec(this, _onBeforePull);
+	  _classPrivateMethodInitSpec(this, _onReload);
+	  _classPrivateMethodInitSpec(this, _onQueueExecute);
+	  _classPrivateMethodInitSpec(this, _onBeforeQueueExecute);
+	  if (!BX.PULL) {
+	    console.info('BX.PULL is not initialized');
+	    return;
+	  }
+	  this.grid = _grid;
+	  var _data = _grid.getData();
+	  var _options = {
+	    moduleId: _data.moduleId,
+	    pullTag: _data.pullTag,
+	    userId: _data.userId,
+	    additionalData: {
+	      viewMode: _data.viewMode
+	    },
+	    events: {
+	      onBeforePull: function onBeforePull(event) {
+	        _classPrivateMethodGet(_this, _onBeforePull, _onBeforePull2).call(_this, event);
+	      },
+	      onPull: function onPull(event) {
+	        _classPrivateMethodGet(_this, _onPull, _onPull2).call(_this, event);
+	      }
+	    },
+	    callbacks: {
+	      onBeforeQueueExecute: function onBeforeQueueExecute(items) {
+	        return _classPrivateMethodGet(_this, _onBeforeQueueExecute, _onBeforeQueueExecute2).call(_this, items);
+	      },
+	      onQueueExecute: function onQueueExecute(items) {
+	        return _classPrivateMethodGet(_this, _onQueueExecute, _onQueueExecute2).call(_this, items);
+	      },
+	      onReload: function onReload() {
+	        _classPrivateMethodGet(_this, _onReload, _onReload2).call(_this);
+	      }
+	    }
+	  };
+	  this.queueManager = new pull_queuemanager.QueueManager(_options);
+	};
+	function _onBeforeQueueExecute2(items) {
+	  var _this2 = this;
+	  items.forEach(function (item) {
+	    var data = item.data;
+	    var operation = PullOperation.createInstance({
+	      grid: _this2.grid,
+	      itemId: data.id,
+	      action: data.action,
+	      actionParams: data.actionParams
+	    });
+	    operation.execute(); // change to async and use Promise.all in return
+	  });
+
+	  return Promise.resolve();
+	}
+	function _onQueueExecute2(items) {
+	  var ids = [];
+	  items.forEach(function (_ref) {
+	    var id = _ref.id,
+	      action = _ref.data.action;
+	    if (action === 'addItem' || action === 'updateItem') {
+	      ids.push(parseInt(id, 10));
+	    }
+	  });
+	  if (ids.length === 0) {
+	    return Promise.resolve();
+	  }
+	  return this.grid.loadNew(ids, false, true, true, true);
+	}
+	function _onReload2() {
+	  this.grid.reload();
+	}
+	function _onBeforePull2(event) {
+	  var _event$data = event.data,
+	    options = _event$data.options,
+	    pullData = _event$data.pullData;
+	  if (!pullData.command.startsWith(options.pullTag) && options.additionalData.viewMode !== ViewMode.MODE_ACTIVITIES) {
+	    event.preventDefault();
+	  }
+	}
+	function _onPull2(event) {
+	  var params = event.data.pullData.params;
+	  if (params.eventName === EventName.itemUpdated) {
+	    _classPrivateMethodGet(this, _onPullItemUpdated, _onPullItemUpdated2).call(this, event);
+	    return;
+	  }
+	  if (params.eventName === EventName.itemAdded) {
+	    _classPrivateMethodGet(this, _onPullItemAdded, _onPullItemAdded2).call(this, event);
+	    return;
+	  }
+	  if (params.eventName === EventName.itemDeleted) {
+	    _classPrivateMethodGet(this, _onPullItemDeleted, _onPullItemDeleted2).call(this, event);
+	    return;
+	  }
+	  if (params.eventName === EventName.stageAdded) {
+	    _classPrivateMethodGet(this, _onPullStageChanged, _onPullStageChanged2).call(this, event);
+	    return;
+	  }
+	  if (params.eventName === EventName.stageUpdated) {
+	    _classPrivateMethodGet(this, _onPullStageChanged, _onPullStageChanged2).call(this, event);
+	    return;
+	  }
+	  if (params.eventName === EventName.stageDeleted) {
+	    _classPrivateMethodGet(this, _onPullStageDeleted, _onPullStageDeleted2).call(this, event);
+	  }
+	}
+	function _onPullItemUpdated2(event) {
+	  if (main_core.Type.isNil(event.data)) {
+	    return;
+	  }
+	  var _event$data2 = event.data,
+	    params = _event$data2.pullData.params,
+	    promises = _event$data2.promises;
+	  var item = this.grid.getItem(params.item.id);
+	  if (item) {
+	    promises.push(Promise.resolve({
+	      data: _classPrivateMethodGet(this, _getPullData, _getPullData2).call(this, 'updateItem', params)
+	    }));
+	    return;
+	  }
+	  _classPrivateMethodGet(this, _onPullItemAdded, _onPullItemAdded2).call(this, params);
+	  event.preventDefault();
+	}
+	function _onPullItemAdded2(event) {
+	  if (main_core.Type.isNil(event.data)) {
+	    return;
+	  }
+	  var _event$data3 = event.data,
+	    params = _event$data3.pullData.params,
+	    promises = _event$data3.promises;
+	  var itemId = params.item.id;
+	  var oldItem = this.grid.getItem(itemId);
+	  if (oldItem) {
+	    event.preventDefault();
+	    return;
+	  }
+	  promises.push(Promise.resolve({
+	    data: _classPrivateMethodGet(this, _getPullData, _getPullData2).call(this, 'addItem', params)
+	  }));
+	}
+	function _getPullData2(action, actionParams) {
+	  var id = actionParams.item.id;
+	  return {
+	    id: id,
+	    action: action,
+	    actionParams: actionParams
+	  };
+	}
+	function _onPullItemDeleted2(event) {
+	  var _this3 = this;
+	  var params = event.data.pullData.params;
+	  if (!main_core.Type.isPlainObject(params.item)) {
+	    return;
+	  }
+	  var _params$item = params.item,
+	    id = _params$item.id,
+	    columnId = _params$item.data.columnId;
+
+	  /**
+	   * Delay so that the element has time to be rendered before deletion,
+	   * if an event for changing the element came before. Ticket #141983
+	   */
+	  var delay = this.queueManager.hasInQueue(id) ? this.queueManager.getLoadItemsDelay() : 0;
+	  setTimeout(function () {
+	    _this3.queueManager.deleteFromQueue(id);
+	    var grid = _this3.grid;
+	    var item = grid.getItem(id);
+	    if (!item) {
+	      return;
+	    }
+	    grid.removeItem(id);
+	    if (grid.getTypeInfoParam('showTotalPrice')) {
+	      var column = grid.getColumn(columnId);
+	      column.decPrice(item.data.price);
+	      column.renderSubTitle();
+	    }
+	  }, delay);
+	  event.preventDefault();
+	}
+	function _onPullStageChanged2(event) {
+	  event.preventDefault();
+	  this.grid.onApplyFilter();
+	}
+	function _onPullStageDeleted2(event) {
+	  event.preventDefault();
+	  var params = event.data.pullData.params;
+	  this.grid.removeColumn(params.stage.id);
+	}
+
 	exports.PullManager = PullManager;
 	exports.FieldsSelector = FieldsSelector;
 	exports.ViewMode = ViewMode;
 
-}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX.CRM.Kanban,BX.Event,BX,BX.Main,BX));
+}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX,BX.Main,BX.Event,BX.Pull,BX.CRM.Kanban,BX));
 //# sourceMappingURL=kanban.js.map

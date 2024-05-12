@@ -109,7 +109,7 @@ if (
 {
 	$arResult["Filter"][] = array(
 		'id' => 'LANDING',
-		'name' => Loc::getMessage('SONET_C36_T_FILTER_LANDING'),
+		'name' => Loc::getMessage('SONET_C36_T_FILTER_LANDING_MSGVER_1'),
 		'type' => 'checkbox',
 	);
 }

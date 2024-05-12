@@ -5,5 +5,6 @@ return [
 		'apptheme',
 		'assets/common',
 		'layout/ui/fields/datetime',
+		'utils/date/formats',
 	],
 ];

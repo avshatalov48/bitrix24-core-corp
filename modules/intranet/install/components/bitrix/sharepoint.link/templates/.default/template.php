@@ -18,8 +18,8 @@ endforeach;
 if (isset($arResult['INFO'])):
 ?>
 <div class="bx-sp-info">
-	Последняя синхронизация: <?
-		echo $arResult['INFO']['SYNC_DATE'] ? $arResult['INFO']['SYNC_DATE'] : 'еще не проводилась'
+	РџРѕСЃР»РµРґРЅСЏСЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ: <?
+		echo $arResult['INFO']['SYNC_DATE'] ? $arResult['INFO']['SYNC_DATE'] : 'РµС‰Рµ РЅРµ РїСЂРѕРІРѕРґРёР»Р°СЃСЊ'
 	?>
 </div>
 <?

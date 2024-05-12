@@ -4,8 +4,8 @@
 jn.define('im/messenger/provider/service/classes/message/load', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { core } = require('im/messenger/core');
-	const { Settings } = require('im/messenger/lib/settings');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { RestMethod } = require('im/messenger/const/rest');
@@ -23,10 +23,10 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		constructor({ chatId })
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.chatId = chatId;
-			this.messageRepository = core.getRepository().message;
-			this.tempMessageRepository = core.getRepository().tempMessage;
+			this.messageRepository = serviceLocator.get('core').getRepository().message;
+			this.tempMessageRepository = serviceLocator.get('core').getRepository().tempMessage;
 
 			this.preparedHistoryMessages = [];
 			this.preparedUnreadMessages = [];
@@ -86,7 +86,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		async loadHistory()
 		{
-			if (Settings.isLocalStorageEnabled && this.isLoadingFromDb === false)
+			if (Feature.isLocalStorageEnabled && this.isLoadingFromDb === false)
 			{
 				this.isLoadingFromDb = true;
 
@@ -172,19 +172,19 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 			if (Type.isArrayFilled(result.fileList))
 			{
-				await this.store.dispatch('filesModel/set', result.fileList);
+				await this.store.dispatch('filesModel/setFromLocalDatabase', result.fileList);
 			}
 
 			if (Type.isArrayFilled(result.reactionList))
 			{
-				await this.store.dispatch('messagesModel/reactionsModel/set', {
+				await this.store.dispatch('messagesModel/reactionsModel/setFromLocalDatabase', {
 					reactions: result.reactionList,
 				});
 			}
 
 			if (Type.isArrayFilled(result.messageList))
 			{
-				await this.store.dispatch('messagesModel/setChatCollection', {
+				await this.store.dispatch('messagesModel/setFromLocalDatabase', {
 					messages: result.messageList,
 				});
 			}

@@ -21,7 +21,8 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { getAhaMoment } = require('calendar/aha-moments-manager');
 	const { magnifierWithMenuAndDot } = require('assets/common');
 	const { Type } = require('type');
-    const isAndroid = Application.getPlatform() === 'android';
+	const { CalendarGrid } = require('calendar/calendar-grid');
+	const isAndroid = Application.getPlatform() === 'android';
 
 	/**
 	 * @class CalendarEventListView
@@ -86,9 +87,11 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 				showDeclined: this.settings.showDeclined,
 				onEventLoaded: () => {
 					this.getEventsForDay();
+					this.calendarRef?.setEvents(this.eventManager.getEventsMap());
 				},
 				onRefresh: () => {
 					this.reload();
+					this.calendarRef?.setEvents(this.eventManager.getEventsMap());
 				},
 			});
 
@@ -413,7 +416,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 				// eslint-disable-next-line promise/catch-or-return
 				new BottomSheet({ component })
 					.setBackgroundColor(AppTheme.colors.bgNavigation)
-					.setMediumPositionPercent(80)
+					.setMediumPositionPercent(70)
 					.disableContentSwipe()
 					.open()
 					.then((widget) => component.setLayoutWidget(widget))
@@ -440,41 +443,25 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 
 		renderCalendarView()
 		{
-			return CalendarView(
-				{
-					style: {
-						backgroundColor: AppTheme.colors.bgNavigation,
-					},
-					textStyle: {
-						today: {
-							textColor: AppTheme.colors.accentBrandBlue,
-						},
-						todaySelected: {
-							backgroundColor: AppTheme.colors.accentBrandBlue,
-							textColor: AppTheme.colors.base8,
-						},
-						currentWeekNumber: {
-							textColor: AppTheme.colors.accentBrandBlue,
-						},
-					},
-					initialDate: this.getInitialDate(),
-					showWeekNumbers: this.settings.showWeekNumbers || false,
-					firstWeekday: this.settings.firstWeekday || 2,
-					onMonthSwitched: (timestamp) => {
-						setTimeout(() => {
-							const date = new Date(timestamp * 1000 + this.timezoneOffset);
-							this.handleMountSwitch(date);
-						}, 1);
-					},
-					onDateSelected: (timestamp) => {
+			return new CalendarGrid({
+				initialDate: this.getInitialDate(),
+				showWeekNumbers: this.settings.showWeekNumbers || false,
+				firstWeekday: this.settings.firstWeekday || 2,
+				onMonthSwitched: (timestamp) => {
+					setTimeout(() => {
 						const date = new Date(timestamp * 1000 + this.timezoneOffset);
-						this.handleDateSelected(date);
-					},
-					ref: (ref) => {
-						this.calendarRef = ref;
-					},
+						this.handleMountSwitch(date);
+					}, 1);
 				},
-			);
+				onDateSelected: (timestamp) => {
+					const date = new Date(timestamp * 1000 + this.timezoneOffset);
+					this.handleDateSelected(date);
+				},
+				ref: (ref) => {
+					this.calendarRef = ref;
+					ref?.setEvents(this.eventManager.getEventsMap());
+				},
+			});
 		}
 
 		renderSearchHeader()

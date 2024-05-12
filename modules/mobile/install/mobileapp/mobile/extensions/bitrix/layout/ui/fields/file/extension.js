@@ -147,11 +147,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				{
 					console.warn('FileField: "entityId" or "endpoint" option must be defined in controller config.');
 				}
-
-				const options = BX.prop.getObject(controller, 'options', {});
-
-				options.fieldName = this.getId();
-				controller.options = options;
 			}
 
 			return {
@@ -284,7 +279,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 								width: 14,
 								height: 15,
 							},
-							tintColor: AppTheme.colors.base3,
 							svg: {
 								content: pen(),
 							},
@@ -1131,6 +1125,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			const text = firstNonSystemError && firstNonSystemError.description || BX.message(
 				'FIELDS_FILE_UPLOAD_ALERT_DESCR',
 			);
+
 			const hash = title + text;
 
 			if (this.displayedAlertsSet.has(hash))
@@ -1162,22 +1157,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		getResizeOptions(type)
 		{
-			const mimeType = getMimeType(type);
-			const fileType = getNativeViewerMediaType(mimeType);
-			const shouldBeConverted = (
-				(fileType === NativeViewerMediaTypes.IMAGE && mimeType !== 'image/gif')
-				|| fileType === NativeViewerMediaTypes.VIDEO
-			);
-
-			if (shouldBeConverted)
-			{
-				return {
-					quality: 80,
-					width: 1920,
-					height: 1080,
-				};
-			}
-
+			// mobile: 0177829:
 			return null;
 		}
 

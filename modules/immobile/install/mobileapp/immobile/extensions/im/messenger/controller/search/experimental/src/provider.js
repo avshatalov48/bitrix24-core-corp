@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 	const { RecentConfig } = require('im/messenger/controller/search/experimental/config');
 	const { RecentLocalSearchService } = require('im/messenger/controller/search/experimental/service/local-search-service');
 	const { RecentServerSearchService } = require('im/messenger/controller/search/experimental/service/server-search-service');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper, DateHelper } = require('im/messenger/lib/helper');
 	const { DialogType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -31,7 +31,12 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 			 * @private
 			 * @type {MessengerCoreStore}
 			 */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
+			/**
+			 * @private
+			 * @type {MessengerCoreStoreManager}
+			 */
+			this.messengerStore = serviceLocator.get('core').getMessengerStore();
 			/**
 			 * @protected
 			 * @type {RecentConfig}

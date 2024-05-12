@@ -12,7 +12,6 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { get } = require('utils/object');
 	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
 	const { Kanban } = require('layout/ui/kanban');
-	const { NotifyManager } = require('notify-manager');
 
 	const store = require('statemanager/redux/store');
 	const {
@@ -70,6 +69,11 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 					this.onNotViewableHandler();
 				}
 			});
+		}
+
+		getView()
+		{
+			return 'kanban';
 		}
 
 		reload(params = {})
@@ -220,6 +224,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				onMoveItemError: this.onMoveItemError,
 				actions: this.props.actions,
 				actionParams: this.prepareActionParams(),
+				actionCallbacks: this.props.actionCallbacks,
 				filterParams: this.getFilterParams(),
 				layout: this.props.layout,
 				layoutMenuActions: this.getMenuActions(),

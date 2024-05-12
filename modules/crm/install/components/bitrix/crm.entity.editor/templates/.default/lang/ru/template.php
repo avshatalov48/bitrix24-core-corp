@@ -240,3 +240,5 @@ $MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_INVOICE"] = "Контакт доба�
 $MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_INVOICE"] = "Компания добавлена в счёт";
 $MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_COMPANY"] = "Контакт добавлен в компанию";
 $MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_CONTACT"] = "Компания добавлена в контакт";
+$MESS["CRM_ENTITY_EM_SHOW_PAYMENT_DOCUMENTS"] = "Показать блок Оплата и доставка";
+$MESS["CRM_ENTITY_EM_HIDE_PAYMENT_DOCUMENTS"] = "Скрыть блок Оплата и доставка";

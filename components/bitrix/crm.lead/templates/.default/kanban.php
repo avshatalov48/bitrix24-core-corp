@@ -51,6 +51,13 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 			), true);
 }
 
+$kanbanViewMode = $arResult['KANBAN_VIEW_MODE'] ?? null;
+
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
+	'c_sub_section' => $kanbanViewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES ? \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_ACTIVITIES : \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN,
+];
+
 // main menu
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
@@ -73,7 +80,8 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_REPORT_LIST' => $arResult['PATH_TO_REPORT_LIST'] ?? '',
 		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
 		'PATH_TO_EVENT_LIST' => $arResult['PATH_TO_EVENT_LIST'] ?? '',
-		'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? ''
+		'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
+		'ANALYTICS' => $analytics,
 	],
 	$component
 );
@@ -127,14 +135,15 @@ else
 			'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
 			'ELEMENT_ID' => 0,
 			'TYPE' => 'list',
-			'DISABLE_EXPORT' => 'Y'
+			'DISABLE_EXPORT' => 'Y',
+			'ANALYTICS' => $analytics,
 		),
 		$component
 	);
 
 	// filter
 	$activeItemId = (
-		isset($arResult['KANBAN_VIEW_MODE']) && $arResult['KANBAN_VIEW_MODE'] === ViewMode::MODE_ACTIVITIES
+		$kanbanViewMode === ViewMode::MODE_ACTIVITIES
 			? NavigationBarPanel::ID_ACTIVITY
 			: NavigationBarPanel::ID_KANBAN
 	);
@@ -163,14 +172,13 @@ else
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
-	$viewMode = ($arResult['KANBAN_VIEW_MODE'] ?? ViewMode::MODE_STAGES);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
-			'VIEW_MODE' => $viewMode,
-			'USE_ITEM_PLANNER' => ($viewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
+			'VIEW_MODE' => $kanbanViewMode ?? ViewMode::MODE_STAGES,
+			'USE_ITEM_PLANNER' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
 			'SHOW_ACTIVITY' => 'Y',
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
 			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],

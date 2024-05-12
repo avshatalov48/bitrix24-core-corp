@@ -20,6 +20,8 @@
 	const { getEntityMessage } = require('crm/loc');
 	const { SearchBar } = require('layout/ui/search-bar');
 	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
+	const { Alert } = require('alert');
+	const { Loc } = require('loc');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
@@ -92,12 +94,21 @@
 			this.bindSearchRef = this.bindSearchRef.bind(this);
 			this.onMoreButtonClick = this.onMoreButtonClick.bind(this);
 			this.onCheckRestrictions = this.onCheckRestrictions.bind(this);
+			this.onItemsLoaded = this.onItemsLoaded.bind(this);
+			this.close = this.close.bind(this);
 
 			this.scrollOnTop = throttle(this.scrollOnTop, 500, this);
 		}
 
 		componentDidMount()
 		{
+			if (env.extranet)
+			{
+				this.showAlertAndClose();
+
+				return;
+			}
+
 			this.pullUnsubscribe = BX.PULL.subscribe({
 				moduleId: 'main',
 				callback: (data) => {
@@ -109,6 +120,19 @@
 			});
 
 			this.bindEvents();
+			this.preloadCrmMode();
+		}
+
+		preloadCrmMode()
+		{
+			setTimeout(() => {
+				requireLazy('crm:crm-mode', false).then(({ CrmMode }) => {
+					void CrmMode.getCrmModeConfig();
+				})
+					.catch((error) => {
+						console.error(error);
+					});
+			}, 2000);
 		}
 
 		updateTabCounters(data)
@@ -332,6 +356,25 @@
 				}),
 				new LoadingProgressBar(),
 			);
+		}
+
+		showAlertAndClose()
+		{
+			Alert.alert(
+				Loc.getMessage('M_CRM_ENTITY_TAB_ALERT_EXTRANET_ACCESS_DENIED_TITLE'),
+				Loc.getMessage('M_CRM_ENTITY_TAB_ALERT_EXTRANET_ACCESS_DENIED_TEXT'),
+				this.close,
+				Loc.getMessage('M_CRM_ENTITY_TAB_ALERT_CONFIRM'),
+			);
+		}
+
+		close()
+		{
+			if (layout)
+			{
+				layout.back();
+				layout.close();
+			}
 		}
 
 		bindSearchRef(ref)
@@ -677,6 +720,9 @@
 						entityType: activeTabTypeName,
 					},
 				},
+				actionCallbacks: {
+					loadItems: this.onItemsLoaded,
+				},
 				permissions: this.getPermissions(),
 				restrictions: this.getRestrictions(),
 				itemParams: this.getItemParams(),
@@ -689,6 +735,14 @@
 				userInfo: this.userInfo,
 				ref,
 			};
+		}
+
+		onItemsLoaded(data)
+		{
+			if (data.event === 'refreshPresets')
+			{
+				this.searchRef?.refreshPresets();
+			}
 		}
 
 		getPermissions()

@@ -5,5 +5,6 @@ return [
 		'./call-activity',
 		'./modification',
 		'./openline-chat',
+		'./visit-activity'
 	],
 ];

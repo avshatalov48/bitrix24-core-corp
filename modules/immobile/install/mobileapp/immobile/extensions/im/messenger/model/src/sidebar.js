@@ -143,7 +143,7 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<SidebarAddData, SidebarAddActions>} payload
 			 */
 			add: (state, payload) => {
 				const {
@@ -159,7 +159,7 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<SidebarUpdateData, SidebarUpdateActions>} payload
 			 */
 			update: (state, payload) => {
 				const {
@@ -175,7 +175,7 @@ jn.define('im/messenger/model/sidebar', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<SidebarDeleteData, SidebarDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
 				const {

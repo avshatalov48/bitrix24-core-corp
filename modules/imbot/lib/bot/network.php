@@ -1130,6 +1130,8 @@ class Network extends Base implements NetworkBot
 				'SESSION_ID' => $params['SESSION_ID'],
 				'MESSAGE_ID' => $params['MESSAGE_ID'],
 				'QUOTED_MESSAGE' => $params['QUOTED_MESSAGE'],
+				'MESSAGE_TEXT' => empty($params['MESSAGE_TEXT']) ? $params['QUOTED_MESSAGE'] : $params['MESSAGE_TEXT'],
+				'MESSAGE_AUTHOR' => empty($params['MESSAGE_AUTHOR']) ? 0 : (int)$params['MESSAGE_AUTHOR'],
 				'OPERATOR_ID' => $params['OPERATOR_ID'],
 				'CHAT_ID' => $params['CHAT_ID'] ?? null,
 				'USER_ID' => $params['USER_ID'] ?? null,
@@ -4076,9 +4078,11 @@ class Network extends Base implements NetworkBot
 		\CIMMessenger::add([
 			'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
 			'DIALOG_ID' => 'chat' . $chatId,
-			'FROM_USER_ID' => $params['BOT_ID'],
-			'MESSAGE' => $params['QUOTED_MESSAGE'],
+			'FROM_USER_ID' => ((int)$params['MESSAGE_AUTHOR'] === 0) ? $params['BOT_ID'] : $userId,
+			'MESSAGE' => $params['MESSAGE_TEXT'],
 			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_CONNECTOR' => 'Y',
+			'SKIP_COMMAND' => 'Y',
 			'PUSH' => 'N',
 			'PARAMS' => $messageParams
 		]);

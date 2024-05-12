@@ -9,7 +9,7 @@ jn.define('im/messenger/lib/dev/dialog-snippets', (require, exports, module) => 
 	const AppTheme = require('apptheme');
 	const { MessageRest } = require('im/messenger/provider/rest');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { Type } = require('type');
 	const { Alert } = require('alert');
 	/**
@@ -136,7 +136,7 @@ jn.define('im/messenger/lib/dev/dialog-snippets', (require, exports, module) => 
 
 								return;
 							}
-							MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: this.state.spam.dialogId });
+							MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: this.state.spam.dialogId }, ComponentCode.imMessenger);
 						},
 					}),
 				),

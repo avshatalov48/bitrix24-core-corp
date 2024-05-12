@@ -1315,6 +1315,8 @@ class CCrmEMail
 		$res = \CMailAttachment::getList(array(), array('MESSAGE_ID' => $messageId));
 		while ($attachment = $res->fetch())
 		{
+			$attachment['FILE_NAME'] = str_replace("\0", '', $attachment['FILE_NAME']);
+
 			if (getFileExtension(mb_strtolower($attachment['FILE_NAME'])) == 'vcf' && !$denyNewContact)
 			{
 				if ($attachment['FILE_ID'])

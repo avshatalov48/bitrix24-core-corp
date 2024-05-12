@@ -23,13 +23,13 @@ use Bitrix\CrmMobile\Kanban\Entity;
 use Bitrix\CrmMobile\Kanban\GridId;
 use Bitrix\CrmMobile\Kanban\Kanban;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
-use Bitrix\Main\Engine\Controller;
+use Bitrix\CrmMobile\Controller\Base;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 
 Loader::requireModule('crm');
 
-class Category extends Controller
+class Category extends Base
 {
 	private array $usedDocumentFields = [];
 
@@ -193,7 +193,7 @@ class Category extends Controller
 		$stageColors = $this->getStageColors($stages);
 		$stagesBySemantics = $this->getStagesBySemantics($stages, [], $stageColors);
 
-		return new Dto\Category([
+		return Dto\Category::make([
 			'id' => 0,
 			'categoryId' => 0,
 			'name' => $factory->getEntityDescriptionInPlural(),
@@ -422,7 +422,7 @@ class Category extends Controller
 			$id = (int)$column['real_id'];
 			if ($id > 0)
 			{
-				$stages[] = new Dto\StageCounter([
+				$stages[] = Dto\StageCounter::make([
 					'id' => $id,
 					'total' => $column['total'],
 					'count' => $column['count'],
@@ -582,7 +582,7 @@ class Category extends Controller
 			}
 		}
 
-		return new Dto\CategoryList([
+		return Dto\CategoryList::make([
 			'categories' => $categories,
 			'restrictions' => $restrictions,
 			'canUserEditCategory' => $canUserEditCategory,
@@ -674,7 +674,7 @@ class Category extends Controller
 		$entityTypeId = $factory->getEntityTypeId();
 		$permissions = $this->getCategoryPermissions($entityTypeId, $categoryId);
 
-		return new Dto\Category([
+		return Dto\Category::make([
 			'id' => $category->getId(),
 			'categoryId' => $category->getId(),
 			'name' => $categoriesEnabled ? $category->getName() : $factory->getEntityDescriptionInPlural(),

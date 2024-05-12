@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/feedback.bundle.js',
 	namespace: 'BX.Crm.AI.Feedback',
 	browserslist: true,
-	minification: true,
 };

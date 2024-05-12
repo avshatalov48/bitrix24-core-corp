@@ -29,7 +29,7 @@ Extension::load([
 	'ui.hint',
 ]);
 ?>
-<script type="text/javascript">
+<script>
 	function openTrialInfoHelper(dialogId)
 	{
 		BX.UI.InfoHelper.show(dialogId);

@@ -66,6 +66,7 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest() && ($arParams['~HIDE_FILTER'] 
 				'LIMITS' => isset($arParams['~LIVE_SEARCH_LIMIT_INFO']) ? $arParams['~LIVE_SEARCH_LIMIT_INFO'] : null,
 				'ENABLE_LIVE_SEARCH' => isset($arParams['~ENABLE_LIVE_SEARCH']) && $arParams['~ENABLE_LIVE_SEARCH'] === true,
 				'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
+				'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => \Bitrix\Main\ModuleManager::isModuleInstalled('ui'),
 			),
 			$filterParams
 		),
@@ -168,6 +169,9 @@ $APPLICATION->IncludeComponent(
 		"TOTAL_ROWS_COUNT_HTML" => $rowCountHtml,
 		"TOTAL_ROWS_COUNT" => isset($arParams['TOTAL_ROWS_COUNT']) ? (int)$arParams['TOTAL_ROWS_COUNT'] : null,
 		"ADVANCED_EDIT_MODE" => (bool)($arParams['ADVANCED_EDIT_MODE'] ?? false),
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+			$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+		),
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')

@@ -60,15 +60,3 @@ $arComponentParameters = array(
 		'CACHE_TIME' => array('DEFAULT' => 86400*30),
 	),
 );
-
-if (IsModuleInstalled("video"))
-{
-	$arComponentParameters["PARAMETERS"]["PATH_TO_VIDEO_CALL"] = array(
-			"NAME" => GetMessage("INTR_ISV_PARAM_PATH_TO_VIDEO_CALL"),
-			"TYPE" => "STRING",
-			"DEFAULT" => "/company/personal/video/#USER_ID#/",
-			"PARENT" => "ADDITIONAL_SETTINGS",
-		);
-}
-
-?>

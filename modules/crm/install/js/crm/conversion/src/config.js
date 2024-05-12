@@ -1,8 +1,8 @@
-import type { ConfigItemData } from "./config-item";
-import { ConfigItem } from "./config-item";
-import { SchemeItem } from "./scheme-item";
-import { Scheme } from "./scheme";
-import { Type } from "main.core";
+import { Type } from 'main.core';
+import type { ConfigItemData } from './config-item';
+import { ConfigItem } from './config-item';
+import { Scheme } from './scheme';
+import { SchemeItem } from './scheme-item';
 
 /**
  * @memberOf BX.Crm.Conversion
@@ -16,7 +16,7 @@ export class Config
 	constructor(
 		entityTypeId: number,
 		items: ConfigItem[],
-		scheme: Scheme
+		scheme: Scheme,
 	)
 	{
 		this.#entityTypeId = Number(entityTypeId);
@@ -31,10 +31,11 @@ export class Config
 				else
 				{
 					console.error(
-						'ConfigItem is invalid in Config constructor. Expected instance of ConfigItem, got ' + (typeof item)
+						// eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+						`ConfigItem is invalid in Config constructor. Expected instance of ConfigItem, got ${typeof item}`,
 					);
 				}
-			})
+			});
 		}
 
 		if (scheme instanceof Scheme)
@@ -43,15 +44,16 @@ export class Config
 		}
 		else
 		{
-			console.error('Scheme is invalid in Config constructor. Expected instance of Scheme, got ' + (typeof scheme));
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+			console.error(`Scheme is invalid in Config constructor. Expected instance of Scheme, got ${typeof scheme}`);
 		}
 	}
 
-	static create(entityTypeId: number, items: ConfigItemData[], scheme: Scheme)
+	static create(entityTypeId: number, items: ConfigItemData[], scheme: Scheme): Config
 	{
 		const configItems = [];
 		items.forEach((item: ConfigItemData) => {
-			configItems.push(new ConfigItem(item))
+			configItems.push(new ConfigItem(item));
 		});
 
 		return new Config(entityTypeId, configItems, scheme);
@@ -67,6 +69,11 @@ export class Config
 		return this.#items;
 	}
 
+	getActiveItems(): ConfigItem[]
+	{
+		return this.#items.filter((item) => item.isActive());
+	}
+
 	getScheme(): Scheme
 	{
 		return this.#scheme;
@@ -74,18 +81,21 @@ export class Config
 
 	updateFromSchemeItem(schemeItem: SchemeItem = null): Config
 	{
-		if (!schemeItem)
+		let selectedSchemeItem = null;
+		if (schemeItem)
 		{
-			schemeItem = this.getScheme().getCurrentItem();
+			selectedSchemeItem = schemeItem;
+			this.getScheme().setCurrentItemId(schemeItem.getId());
 		}
 		else
 		{
-			this.getScheme().setCurrentItemId(schemeItem.getId());
+			selectedSchemeItem = this.getScheme().getCurrentItem();
 		}
-		const activeEntityTypeIds = schemeItem.getEntityTypeIds();
+
+		const activeEntityTypeIds = selectedSchemeItem.getEntityTypeIds();
 
 		this.#items.forEach((item) => {
-			const isActive = activeEntityTypeIds.indexOf(item.getEntityTypeId()) > -1;
+			const isActive = activeEntityTypeIds.includes(item.getEntityTypeId());
 			item.setEnableSync(isActive);
 			item.setActive(isActive);
 		});
@@ -121,7 +131,7 @@ export class Config
 	{
 		this.#items = [];
 		items.forEach((item) => {
-			this.#items.push(new ConfigItem(item))
+			this.#items.push(new ConfigItem(item));
 		});
 
 		return this;

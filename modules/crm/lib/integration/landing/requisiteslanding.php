@@ -15,7 +15,6 @@ class RequisitesLanding
 	protected int $companyId;
 	protected int $requisiteId;
 	protected int $bankRequisiteId;
-	protected array $prepareBlockData;
 	protected bool $isEnabled = false;
 
 	/**
@@ -30,7 +29,6 @@ class RequisitesLanding
 		$this->companyId = $companyId;
 		$this->requisiteId = $requisiteId;
 		$this->bankRequisiteId = $bankRequisiteId;
-		$this->prepareBlockData = $this->getPrepareBlockData();
 		$this->isEnabled = Loader::includeModule('landing');
 		if ($this->isEnabled)
 		{
@@ -169,7 +167,7 @@ class RequisitesLanding
 			'DONT_LEAVE_FRAME' => 'N',
 			'BINDING_TYPE' => '',
 			'PREPARE_BLOCKS' => true,
-			'PREPARE_BLOCKS_DATA' => $this->prepareBlockData,
+			'PREPARE_BLOCKS_DATA' => $this->getPrepareBlockData(),
 		];
 		$success = $demoCmp->actionSelect(self::LANDING_TEMPLATE_NAME);
 		Landing\Rights::setOn();
@@ -204,7 +202,7 @@ class RequisitesLanding
 			'SITE_TYPE' => 'PAGE',
 			'XML_ID' => $this->getLandingXmlId(),
 			'PREPARE_BLOCKS' => true,
-			'PREPARE_BLOCKS_DATA' => $this->prepareBlockData,
+			'PREPARE_BLOCKS_DATA' => $this->getPrepareBlockData(),
 		]);
 
 		if ($result->isSuccess() && $result->getId())

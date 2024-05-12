@@ -38,7 +38,7 @@ final class SupersetInitializer
 		$canSendAnotherRequest = ($status === self::SUPERSET_STATUS_LOAD && self::needCheckSupersetStatus());
 		if (!self::isSupersetExist() || $canSendAnotherRequest)
 		{
-			SupersetInitializerLogger::logInfo("portal make superset startup", ['current_status' => $status]);
+			SupersetInitializerLogger::logInfo('Portal make superset startup', ['current_status' => $status]);
 			self::fixLastStartupAttempt();
 			self::startSupersetInitialize($status !== self::SUPERSET_STATUS_LOAD);
 
@@ -142,9 +142,10 @@ final class SupersetInitializer
 	}
 
 	/**
+	 * @param string $supersetAddress Address of enabled superset. Used for logs. Not required
 	 * @return void
 	 */
-	public static function enableSuperset(): void
+	public static function enableSuperset(string $supersetAddress = ''): void
 	{
 		if (self::getSupersetStatus() === self::SUPERSET_STATUS_READY)
 		{
@@ -152,6 +153,14 @@ final class SupersetInitializer
 		}
 
 		self::setSupersetStatus(self::SUPERSET_STATUS_READY);
+
+		$logParams = [];
+		if (!empty($supersetAddress))
+		{
+			$logParams['superset_address'] = $supersetAddress;
+		}
+		SupersetInitializerLogger::logInfo('Superset successfully started', $logParams);
+
 		self::onSupersetCreated();
 	}
 
@@ -215,14 +224,14 @@ final class SupersetInitializer
 		$response = $proxyIntegrator->startSuperset($accessKey);
 		if ($response->getStatus() === IntegratorResponse::STATUS_CREATED)
 		{
-			self::enableSuperset();
+			self::enableSuperset($response->getData()['superset_address'] ?? '');
 
 			return $response->getStatus();
 		}
 
 		if (!$response->hasErrors())
 		{
-			Option::set('biconnector', ProxyAuth::SUPERSET_PROXY_TOKEN_OPTION, $response->getData());
+			Option::set('biconnector', ProxyAuth::SUPERSET_PROXY_TOKEN_OPTION, $response->getData()['token']);
 		}
 		else
 		{

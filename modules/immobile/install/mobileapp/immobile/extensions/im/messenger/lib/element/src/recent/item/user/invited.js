@@ -6,7 +6,7 @@ jn.define('im/messenger/lib/element/recent/item/user/invited', (require, exports
 	const { Loc } = require('loc');
 
 	const { UserItem } = require('im/messenger/lib/element/recent/item/user');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		InviteResendAction,
 		InviteCancelAction,
@@ -58,7 +58,7 @@ jn.define('im/messenger/lib/element/recent/item/user/invited', (require, exports
 		createActions()
 		{
 			const item = this.getModelItem();
-			const isInvitedByCurrentUser = item && item.invitation.originator === core.getUserId();
+			const isInvitedByCurrentUser = item && item.invitation.originator === serviceLocator.get('core').getUserId();
 			if (isInvitedByCurrentUser && item.invitation.canResend === true)
 			{
 				this.actions.push(InviteResendAction);

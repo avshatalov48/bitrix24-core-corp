@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 	const { NotifyManager } = require('notify-manager');
 	include('InAppNotifier');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { FileDownloadMenuSvg } = require('im/messenger/assets/file-download-menu');
 	const { DiskService } = require('im/messenger/provider/service');
@@ -28,7 +28,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 		{
 			this.fileId = fileId;
 			this.options = options;
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.diskService = new DiskService();
 
 			this.menu = new ContextMenu({

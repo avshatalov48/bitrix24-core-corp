@@ -14,6 +14,11 @@ $categoryID = isset($arResult['VARIABLES']['category_id'])
 
 $isRecurring = isset($arResult['IS_RECURRING']) && $arResult['IS_RECURRING'] === 'Y';
 
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_CALENDAR,
+];
+
 /** @var CMain $APPLICATION */
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
@@ -39,7 +44,8 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_REPORT_LIST' => $arResult['PATH_TO_REPORT_LIST'] ?? '',
 		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
 		'PATH_TO_EVENT_LIST' => $arResult['PATH_TO_EVENT_LIST'] ?? '',
-		'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? ''
+		'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
+		'ANALYTICS' => $analytics,
 	),
 	$component
 );
@@ -190,7 +196,8 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 					'TEXT' => Loc::getMessage('CRM_CALENDAR_SETTINGS'),
 					'ONCLICK' => Calendar::getCalendarSettingsOpenJs($settingsParams)
 				)
-			)
+			),
+			'ANALYTICS' => $analytics,
 		),
 		$component
 	);

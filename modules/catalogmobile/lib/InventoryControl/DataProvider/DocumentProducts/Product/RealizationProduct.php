@@ -129,7 +129,7 @@ final class RealizationProduct extends BaseProduct
 				?? 0
 			;
 
-			$records[] = new DocumentProductRecord([
+			$records[] = DocumentProductRecord::make([
 				'id' => $documentProduct['ID'],
 				'documentId' => $documentId,
 				'productId' => (int)$documentProduct['ELEMENT_ID'],
@@ -217,7 +217,7 @@ final class RealizationProduct extends BaseProduct
 				}
 			}
 
-			$defaultStore = StoreTable::getDefaultStoreId();
+			$defaultStoreId = StoreTable::getDefaultStoreId();
 
 			$basketIdsFilter = self::getEntityProductsBasketIdFilter($payment);
 			$deliverableProducts = $productManager->getRealizationableItems();
@@ -235,12 +235,15 @@ final class RealizationProduct extends BaseProduct
 				$reserve = $deliverableProduct['RESERVE'] ? current($deliverableProduct['RESERVE']) : [];
 				if (empty($reserve['STORE_ID']))
 				{
-					$currentProductStoreInfo = $productStoreInfo[$deliverableProduct['PRODUCT_ID']];
+					$currentProductStoreInfo = $productStoreInfo[$deliverableProduct['PRODUCT_ID']] ?? [];
 					$filledStores = array_filter($currentProductStoreInfo, static function($element) {
 						return (int)$element['AMOUNT'] > 0;
 					});
-					$currentStore = $filledStores ? current($filledStores) : $defaultStore;
-					$deliverableProduct['STORE_ID'] = (int)$currentStore['STORE_ID'];
+					$deliverableProduct['STORE_ID'] =
+						$filledStores
+							? (int)current($filledStores)['STORE_ID']
+							: $defaultStoreId
+					;
 				}
 				else
 				{
@@ -273,7 +276,7 @@ final class RealizationProduct extends BaseProduct
 					?? 0
 				;
 
-				$records[] = new DocumentProductRecord([
+				$records[] = DocumentProductRecord::make([
 					'id' => uniqid('bx_', true),
 					'documentId' => null,
 					'productId' => (int)$deliverableProduct['PRODUCT_ID'],

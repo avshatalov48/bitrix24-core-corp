@@ -2,8 +2,7 @@
 
 return [
 	'extensions' => [
-		'in-app-url',
-		'apptheme',
-		'layout/ui/collapsible-text',
+		'tokens',
+		'layout/ui/editable-text-block',
 	],
 ];

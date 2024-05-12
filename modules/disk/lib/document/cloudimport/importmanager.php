@@ -167,7 +167,8 @@ final class ImportManager implements IErrorable
 		$downloadedContentSize = $entry->getDownloadedContentSize();
 		$contentSize = $entry->getContentSize();
 
-		if($contentSize == 0 && $this->documentHandler instanceof Document\GoogleHandler)
+		// add 1024 as bugfix on same return google wrong size for empty doc file
+		if (($contentSize == 0 || $contentSize == 1024) && $this->documentHandler instanceof Document\GoogleHandler)
 		{
 			return $this->uploadEmptyFileFromGoogle($entry, $fileData);
 		}

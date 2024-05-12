@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_IDEAL"] = "Optimal";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_VERY_LOW"] = "Sehr niedrig";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_LOW"] = "Niedrig";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_DESIRABLE"] = "Maximal wünschenswert";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_HIGH"] = "Hoch";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_VERY_HIGH"] = "Sehr hoch";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_CRITICAL"] = "Kritisch";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_EMAIL"] = "E-Mail";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_PHONE"] = "Telefon";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMPANY"] = "Unternehmen";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_POST"] = "Position";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_RESPONSIBLE"] = "Verantwortlich";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS"] = "Kommentar";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS_HIDE"] = "ausblenden";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS_SHOW"] = "anzeigen";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_WON_DEALS"] = "Gesamtbetrag der gewonnenen Aufträge";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_CONVERSION"] = "Konvertierung";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_PIE_TITLE"] = "Last per Kanal";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_WEB"] = "Website";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMPANY_TYPE"] = "Unternehmenstyp";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_INDUSTRY"] = "Branche";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_TITLE"] = "Maximale gewünschte Last";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_SAVE"] = "Speichern";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_CANCEL"] = "Abbrechen";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_DESCRIPTION"] = "Maximale gewünschte Last bedeutet die Anzahl der Aktivitäten pro Auftrag, die für Ihr Unternehmen akzeptabel ist.";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_HELP"] = "Der Wert der maximalen gewünschten Last kann explizit angegeben oder aber automatisch kalkuliert werden, indem eine durchschnittliche Anzahl der Aktivitäten pro Auftrag genommen wird.";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_AUTO"] = "Automatisch";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_MANUAL"] = "Manuell";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_SHOW_DEAL_CATEGORIES"] = "Pipelines anzeigen";
+?>

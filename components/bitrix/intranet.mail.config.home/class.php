@@ -15,7 +15,7 @@ class CIntranetMailConfigHomeComponent extends CBitrixComponent
 
 		\CBitrixComponent::includeComponentClass('bitrix:intranet.mail.config');
 
-		$APPLICATION->setTitle(getMessage(isModuleInstalled('bitrix24') ? 'INTR_MAIL_B24_PAGE_TITLE' : 'NTR_MAIL_PAGE_TITLE'));
+		$APPLICATION->setTitle(getMessage(isModuleInstalled('bitrix24') ? 'INTR_MAIL_B24_PAGE_TITLE_MSGVER_1' : 'NTR_MAIL_PAGE_TITLE'));
 
 		if (!CModule::includeModule('mail'))
 		{

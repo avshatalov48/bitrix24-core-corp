@@ -2,7 +2,7 @@
  * @module im/messenger/provider/service/classes/sync/date
  */
 jn.define('im/messenger/provider/service/classes/sync/date', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		DateHelper,
 	} = require('im/messenger/lib/helper');
@@ -31,8 +31,8 @@ jn.define('im/messenger/provider/service/classes/sync/date', (require, exports, 
 
 		constructor()
 		{
-			this.store = core.getStore();
-			this.optionRepository = core.getRepository().option;
+			this.store = serviceLocator.get('core').getStore();
+			this.optionRepository = serviceLocator.get('core').getRepository().option;
 		}
 
 		async updateLastSyncDate()

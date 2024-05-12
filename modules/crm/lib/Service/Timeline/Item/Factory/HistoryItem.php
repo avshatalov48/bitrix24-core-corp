@@ -11,11 +11,12 @@ use Bitrix\Crm\Timeline\CalendarSharing;
 use Bitrix\Crm\Timeline\DeliveryCategoryType;
 use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Crm\Timeline\OrderCategoryType;
+use Bitrix\Crm\Timeline\OrderPaymentController;
 use Bitrix\Crm\Timeline\ProductCompilationType;
 use Bitrix\Crm\Timeline\Tasks;
+use Bitrix\Crm\Timeline\TimelineMarkType;
 use Bitrix\Crm\Timeline\TimelineType;
 use CCrmOwnerType;
-use Bitrix\Crm\Timeline\OrderPaymentController;
 
 class HistoryItem
 {
@@ -92,6 +93,11 @@ class HistoryItem
 		if ($typeId === TimelineType::CONVERSION)
 		{
 			return new Item\LogMessage\Conversion($context, $model);
+		}
+
+		if ($typeId === TimelineType::RESTORATION)
+		{
+			return new Item\LogMessage\Restoration($context, $model);
 		}
 
 		if ($typeId === TimelineType::COMMENT)
@@ -477,6 +483,14 @@ class HistoryItem
 				AI\Call\CategoryType::RECORD_TRANSCRIPT_SUMMARY_FINISHED => new Item\AI\Call\TranscriptSummaryResult($context, $model),
 				AI\Call\CategoryType::FILLING_ENTITY_FIELDS_FINISHED => new Item\AI\Call\EntityFieldsFillingResult($context, $model),
 			};
+		}
+
+		if (
+			$typeId === TimelineType::MARK
+			&& in_array($typeCategoryId, [TimelineMarkType::SUCCESS, TimelineMarkType::FAILED], true)
+		)
+		{
+			return new Item\LogMessage\ElementCompletion($context, $model);
 		}
 
 		return new Item\Compatible\HistoryItem(

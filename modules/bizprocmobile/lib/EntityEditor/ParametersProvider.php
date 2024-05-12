@@ -12,6 +12,9 @@ class ParametersProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 	private array $fields = [];
 	private array $data = [];
 
+	private bool $isReadOnly = false;
+	private bool $useSectionBorder = false;
+
 	public function __construct(array $parameters, int $templateId, string $signedDocument)
 	{
 		foreach ($parameters as $name => $property)
@@ -30,6 +33,16 @@ class ParametersProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 
 		$this->data['TEMPLATE_ID_' . $templateId] = $templateId;
 		$this->data['SIGNED_DOCUMENT'] = $signedDocument;
+	}
+
+	public function setIsReadOnly(bool $readonly): void
+	{
+		$this->isReadOnly = $readonly;
+	}
+
+	public function setUseSectionBorder(bool $useSectionBorder): void
+	{
+		$this->useSectionBorder = $useSectionBorder;
 	}
 
 	public function getGUID(): string
@@ -61,9 +74,12 @@ class ParametersProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 				'elements' => [
 					[
 						'name' => 'main',
-						'title' => Loc::getMessage('M_BP_LIB_ENTITY_EDITOR_PARAMETERS_PROVIDER_MAIN_SECTION_TITLE'),
+						'title' => Loc::getMessage('M_BP_LIB_ENTITY_EDITOR_PARAMETERS_PROVIDER_MAIN_SECTION_TITLE_1'),
 						'type' => 'section',
 						'elements' => $this->getEntityFields(),
+						'data' => [
+							'showBorder' => $this->useSectionBorder,
+						],
 					]
 				],
 			],
@@ -73,5 +89,10 @@ class ParametersProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 	public function getEntityData(): array
 	{
 		return $this->data;
+	}
+
+	public function isReadOnly(): bool
+	{
+		return $this->isReadOnly;
 	}
 }

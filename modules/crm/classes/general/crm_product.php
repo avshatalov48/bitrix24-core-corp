@@ -1434,7 +1434,8 @@ class CCrmProduct
 			'DATE_CREATE' => 'DATE_CREATE',
 			'MODIFIED_BY' => 'MODIFIED_BY',
 			'CREATED_BY' => 'CREATED_BY',
-			'SHOW_COUNTER' => 'SHOW_COUNTER'
+			'SHOW_COUNTER' => 'SHOW_COUNTER',
+			'TYPE' => 'TYPE',
 		);
 	}
 

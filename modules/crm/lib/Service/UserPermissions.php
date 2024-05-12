@@ -12,6 +12,9 @@ use Bitrix\Crm\Security\AttributesProvider;
 use Bitrix\Crm\Security\EntityPermission\MyCompany;
 use Bitrix\Crm\Security\Manager;
 use Bitrix\Crm\Security\QueryBuilder;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
+use Bitrix\Crm\Security\QueryBuilderFactory;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 
 class UserPermissions
@@ -835,6 +838,74 @@ class UserPermissions
 		return null;
 	}
 
+	public function applyAvailableItemsGetListParameters(
+		?array $parameters,
+		array $permissionEntityTypes,
+		?string $operation = self::OPERATION_READ,
+		?string $primary = 'ID'
+	): array
+	{
+		$optionsBuilder = new OptionsBuilder(
+			new QueryBuilder\Result\RawQueryResult(
+				identityColumnName: $primary
+			)
+		);
+
+		if ($operation)
+		{
+			$optionsBuilder->setOperations((array)$operation);
+		}
+
+		$queryBuilder = $this->createListQueryBuilder($permissionEntityTypes, $optionsBuilder->build());
+		$result = $queryBuilder->build();
+
+		if (!$result->hasRestrictions())
+		{
+			// no need to apply filter
+			return $parameters ?? [];
+		}
+
+		if (!$result->hasAccess())
+		{
+			$parameters['filter'] = $parameters['filter'] ?? [];
+			$parameters['filter'] = [
+				$parameters['filter'],
+				'@' . $primary => [0],
+			];
+
+			return $parameters;
+		}
+		if ($result->isOrmConditionSupport())
+		{
+			$rf = new ReferenceField(
+				'ENTITY',
+				$result->getEntity(),
+				$result->getOrmConditions(),
+				['join_type' => 'INNER']
+			);
+			$currentRuntime = $parameters['runtime'] ?? [];
+
+			$runtime = array_merge(
+				['permissions' => $rf],
+				$currentRuntime
+			);
+
+			$parameters = array_merge($parameters, ['runtime' => $runtime]);
+		}
+		else
+		{
+			$currentFilter = $parameters['filter'] ?? [];
+
+			$parameters['filter'] = $this->addRestrictionFilter(
+				$currentFilter,
+				$primary,
+				$result->getSqlExpression()
+			);
+		}
+
+		return $parameters;
+	}
+
 	public function applyAvailableItemsFilter(
 		?array $filter,
 		array $permissionEntityTypes,
@@ -842,19 +913,24 @@ class UserPermissions
 		?string $primary = 'ID'
 	): array
 	{
-		$builderOptions = new \Bitrix\Crm\Security\QueryBuilder\Options();
-		$builderOptions->setNeedReturnRawQuery(true);
+		$filter = $filter ?? [];
+		$optionsBuilder = new OptionsBuilder(
+			new QueryBuilder\Result\RawQueryResult(
+				identityColumnName: $primary
+			)
+		);
+
 		if ($operation)
 		{
-			$builderOptions->setOperations((array)$operation);
+			$optionsBuilder->setOperations((array)$operation);
 		}
-		$queryBuilder = $this->createListQueryBuilder($permissionEntityTypes, $builderOptions);
+		$queryBuilder = $this->createListQueryBuilder($permissionEntityTypes, $optionsBuilder->build());
 		$result = $queryBuilder->build();
 
 		if (!$result->hasRestrictions())
 		{
 			// no need to apply filter
-			return (array)$filter;
+			return $filter;
 		}
 
 		if ($result->hasAccess())
@@ -867,21 +943,30 @@ class UserPermissions
 			$expression = [0];
 		}
 
-		if (is_array($filter))
+		return $this->addRestrictionFilter($filter, $primary, $expression);
+	}
+
+	private function addRestrictionFilter(array $filter, string $primary, $restrictExpression): array
+	{
+		if (empty($filter))
 		{
-			$filter = [
+			return ['@' . $primary => $restrictExpression];
+		}
+
+		if (array_key_exists('@' . $primary, $filter))
+		{
+			return [
 				$filter,
-				'@' . $primary => $expression,
+				['@' . $primary => $restrictExpression]
 			];
 		}
 		else
 		{
-			$filter = [
-				'@' . $primary => $expression,
-			];
+			return array_merge(
+				$filter,
+				['@' . $primary => $restrictExpression]
+			);
 		}
-
-		return $filter;
 	}
 
 	/**
@@ -923,10 +1008,12 @@ class UserPermissions
 
 	public function createListQueryBuilder(
 		$permissionEntityTypes,
-		QueryBuilder\Options $options = null
+		QueryBuilder\QueryBuilderOptions $options = null
 	): QueryBuilder
 	{
-		return new QueryBuilder((array)$permissionEntityTypes, $this, $options);
+		$queryBuilderFactory = QueryBuilderFactory::getInstance();
+
+		return $queryBuilderFactory->make((array)$permissionEntityTypes, $this, $options);
 	}
 
 	public function getAttributesProvider(): AttributesProvider

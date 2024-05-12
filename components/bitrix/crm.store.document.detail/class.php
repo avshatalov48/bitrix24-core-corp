@@ -478,19 +478,13 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			],
 			[
 				'name' => 'ID',
-				'title' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_FIELD_ID'),
-				'type' => 'hidden',
-				'editable' => false,
-			],
-			[
-				'name' => 'ORDER_ID',
-				'title' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_ORDER_ID'),
+				'title' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_FIELD_ID_MSGVER_1'),
 				'type' => 'hidden',
 				'editable' => false,
 			],
 			[
 				'name' => 'XML_ID',
-				'title' => 'XML_ID',
+				'title' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_FIELD_XML_ID_MSGVER_1'),
 				'type' => 'hidden',
 				'editable' => false,
 			],

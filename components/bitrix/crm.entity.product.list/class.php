@@ -1877,10 +1877,18 @@ final class CCrmEntityProductListComponent
 		$allowedUserTypes = Catalog\UI\PropertyProduct::getAllowedPropertyUserTypes();
 
 		$iterator = Iblock\PropertyTable::getList([
-			'select' => ['ID', 'NAME', 'CODE', 'PROPERTY_TYPE', 'USER_TYPE'],
+			'select' => [
+				'ID',
+				'IBLOCK_ID',
+				'NAME',
+				'CODE',
+				'SORT',
+				'PROPERTY_TYPE',
+				'USER_TYPE',
+			],
 			'filter' => [
 				'=IBLOCK_ID' => $iblockIds,
-				'ACTIVE' => 'Y',
+				'=ACTIVE' => 'Y',
 				[
 					'LOGIC' => 'OR',
 					'=USER_TYPE' => null,
@@ -1896,9 +1904,11 @@ final class CCrmEntityProductListComponent
 			'order' => [
 				'IBLOCK_ID' => 'ASC',
 				'SORT' => 'ASC',
-				'NAME' => 'ASC'
+				'NAME' => 'ASC',
 			],
-			'cache' => ['ttl' => 86400],
+			'cache' => [
+				'ttl' => 86400,
+			],
 		]);
 		while ($prop = $iterator->fetch())
 		{
@@ -1921,6 +1931,7 @@ final class CCrmEntityProductListComponent
 				$result[$headerId]['align'] = 'left';
 			}
 		}
+		unset($iterator);
 
 		return $result;
 	}

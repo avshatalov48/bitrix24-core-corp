@@ -29,6 +29,6 @@ $MESS["IM_MESSENGER_OPEN_EMAIL"] = "View e-mail";
 $MESS["IM_MESSENGER_OPEN_MESSENGER"] = "Open Chat and Calls";
 $MESS["IM_MESSENGER_OPEN_MESSENGER_CP"] = "Open Web Messenger";
 $MESS["IM_MESSENGER_OPEN_MOBILE"] = "Download free mobile app";
-$MESS["IM_MESSENGER_OPEN_NETWORK"] = "Go to Bitrix24.Network";
+$MESS["IM_MESSENGER_OPEN_NETWORK_MSGVER_1"] = "Go to Bitrix24 Network";
 $MESS["IM_MESSENGER_OPEN_OL"] = "View Open Channel chat";
 $MESS["IM_MESSENGER_OPEN_SEARCH"] = "Search employees and chats";

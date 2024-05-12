@@ -44,7 +44,7 @@ class Sorter
 			{
 				$sortedToolList[$key] = $this->tools[$key];
 			}
-			elseif (is_string($value) && $this->tools[$value])
+			elseif (is_string($value) && isset($this->tools[$value]))
 			{
 				$sortedToolList[$value] = $this->tools[$value];
 			}

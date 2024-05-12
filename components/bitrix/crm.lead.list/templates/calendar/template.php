@@ -38,7 +38,6 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
@@ -235,19 +234,6 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 	unset($resultItem);
 }
 
-?><script type="text/javascript">
-	BX.ready(
-		function()
-		{
-			BX.Crm.AnalyticTracker.config =
-				{
-					id: "lead_calendar",
-					settings: { params: <?=CUtil::PhpToJSObject($arResult['ANALYTIC_TRACKER'])?> }
-				};
-		}
-	);
-</script><?
-
 //region Filter
 //Skip rendering of grid filter for internal grid request (filter already created)
 if(!Bitrix\Main\Grid\Context::isInternalRequest()
@@ -280,7 +266,12 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 			'LAZY_LOAD' => [
 				'GET_LIST' => $lazyLoadPath . '&action=list',
 				'GET_FIELD' => $lazyLoadPath . '&action=field',
+				'GET_FIELDS' => $lazyLoadPath . '&action=fields',
 			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
+			'RESTRICTED_FIELDS' => $arResult['RESTRICTED_FIELDS'] ?? [],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [

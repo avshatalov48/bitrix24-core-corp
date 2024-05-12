@@ -9,12 +9,9 @@ use Bitrix\MobileApp\Mobile;
 final class Settings
 {
 	public const BETA_API_VERSION = 52;
-	public const NEW_DASHBOARD_API_VERSION = 52;
-
 	public const IS_BETA_AVAILABLE = 'isBetaAvailable';
 	public const IS_BETA_ACTIVE = 'isBetaActive';
 	public const IS_NEW_CHECKLIST_ACTIVE = 'isNewChecklistActive';
-	public const IS_NEW_DASHBOARD_ACTIVE = 'isNewDashboardActive';
 
 	protected int $userId;
 
@@ -37,17 +34,6 @@ final class Settings
 			$userId = CurrentUser::get()->getId();
 		}
 		$this->userId = $userId;
-	}
-
-	public function isNewDashboardActive(): bool
-	{
-		return
-			Settings::getInstance()->isBetaActive()
-			|| (
-				Mobile::getInstance()::getApiVersion() >= Settings::NEW_DASHBOARD_API_VERSION
-				&& (Option::get('tasksmobile', Settings::IS_NEW_DASHBOARD_ACTIVE, 'Y', '-') === 'Y')
-			)
-		;
 	}
 
 	public function isBetaAvailable(): bool

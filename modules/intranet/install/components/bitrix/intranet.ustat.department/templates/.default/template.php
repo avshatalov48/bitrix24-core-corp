@@ -332,7 +332,20 @@ BX.ready(function(){
 	BX.bind(BX('pulse-company-general-help-icon'), 'click', function()
 	{
 		var content = BX.create('DIV', {
-			html: '<?=(isset($arResult['SECTION_DATA'][$arResult['SECTION']])) ? GetMessageJS('INTRANET_USTAT_SECTION_'.$arResult['SECTION'].'_HELP_GENERAL') : GetMessageJS('INTRANET_USTAT_COMPANY_HELP_GENERAL')?>',
+			html: '<?php
+				if ($arResult['SECTION'] === 'DISK')
+				{
+					echo GetMessageJS('INTRANET_USTAT_SECTION_DISK_HELP_GENERAL_MSGVER_1');
+				}
+				elseif (isset($arResult['SECTION_DATA'][$arResult['SECTION']]))
+				{
+					echo GetMessageJS('INTRANET_USTAT_SECTION_'.$arResult['SECTION'].'_HELP_GENERAL');
+				}
+				else
+				{
+					echo GetMessageJS('INTRANET_USTAT_COMPANY_HELP_GENERAL');
+				}
+				?>',
 			props: {
 				className: 'pulse-info-index-help'
 			}
@@ -461,7 +474,23 @@ BX.ready(function(){
 	BX.bind(BX('pulse-company-involvement-help-icon'), 'click', function()
 	{
 		var content = BX.create('DIV', {
-			html: '<?=(isset($arResult['SECTION_DATA'][$arResult['SECTION']])) ? GetMessageJS('INTRANET_USTAT_SECTION_'.$arResult['SECTION'].'_HELP_INVOLVEMENT') : GetMessageJS('INTRANET_USTAT_COMPANY_HELP_INVOLVEMENT')?>',
+			html: '<?php
+			if (isset($arResult['SECTION_DATA'][$arResult['SECTION']]))
+			{
+				if ($arResult['SECTION'] === 'DISK')
+				{
+					echo GetMessageJS('INTRANET_USTAT_SECTION_DISK_HELP_INVOLVEMENT_MSGVER_1');
+				}
+				else
+				{
+					echo GetMessageJS('INTRANET_USTAT_SECTION_'.$arResult['SECTION'].'_HELP_INVOLVEMENT');
+				}
+			}
+			else
+			{
+				echo GetMessageJS('INTRANET_USTAT_COMPANY_HELP_INVOLVEMENT');
+			}
+			?>',
 			props: {
 				className: 'pulse-info-index-help'
 			}

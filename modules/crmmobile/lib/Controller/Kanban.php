@@ -2,6 +2,7 @@
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Loader;
 use Bitrix\Mobile\UI\StatefulList\BaseController;
@@ -61,6 +62,8 @@ class Kanban extends BaseController
 			new ActionFilter\Csrf(),
 			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
+			new IntranetUser(),
 		];
 	}
+
 }

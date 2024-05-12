@@ -1,5 +1,5 @@
 <?php
-$MESS["CRM_LEAD_LIST_BATCH_CONVERSION_AUTOCREATION_DISABLED_MSGVER_1"] = "Bulk conversion requires the option \"Auto create contacts, companies, deals, invoices and estimates\" to be enabled on the CRM settings page (Settings > Other Settings > General > Auto generation settings).";
+$MESS["CRM_LEAD_LIST_BATCH_CONVERSION_AUTOCREATION_DISABLED_MSGVER_1"] = "Bulk conversion requires the option \"Auto create contacts, companies, deals, invoices and estimates\" to be enabled on the CRM settings page (Settings > Other Settings > General > Auto generation entities).";
 $MESS["CRM_LEAD_LIST_BATCH_CONVERSION_CONFIG_IS_NOT_SUPPORTED"] = "Leads can not be converted with the selected settings.";
 $MESS["CRM_LEAD_LIST_DELETION_ACCESS_ERROR"] = "The delete operation has been aborted because there were insufficient permissions.";
 $MESS["CRM_LEAD_LIST_DELETION_COMPLETED_SUMMARY"] = "Leads have been deleted. Leads processed: #PROCESSED_ITEMS#.";

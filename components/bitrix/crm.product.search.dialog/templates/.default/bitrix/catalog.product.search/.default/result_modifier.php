@@ -21,8 +21,7 @@ if (is_array($arResult['PROPS']))
 {
 	foreach ($arResult['PROPS'] as $propIndex => $prop)
 	{
-		if ((!isset($prop['USER_TYPE'])
-				|| empty($prop['USER_TYPE'])
+		if ((empty($prop['USER_TYPE'])
 				|| (is_array($prop['PROPERTY_USER_TYPE'])
 					&& array_key_exists('GetPublicViewHTML', $prop['PROPERTY_USER_TYPE']))
 			)
@@ -42,7 +41,7 @@ $arResult['PUBLIC_PROPS'] = &$props;
 
 unset($gridOptions, $visibleColumnsMap);
 
-function isPublicHeaderItem($headerId, $priceTypeId, &$propsInfo)
+function isPublicHeaderItem($headerId, $priceTypeId, &$propsInfo): bool
 {
 	$headerId = trim(strval($headerId));
 	$priceTypeId = intval($priceTypeId);
@@ -120,7 +119,11 @@ $arArrays = array();
 $arElements = array();
 $arSections = array();
 
-$arProducts = is_array($arResult['PRODUCTS']) ? $arResult['PRODUCTS'] : array();
+$arProducts = $arResult['PRODUCTS'] ?? [];
+if (!is_array($arProducts))
+{
+	$arProducts = [];
+}
 
 $elementsNamesCache = array();
 $sectionsNamesCache = array();
@@ -183,7 +186,8 @@ foreach ($arProducts as $productID => $arItems)
 	{
 		continue;
 	}
-	if (is_array($arItems['PRICES']) && isset($arItems['PRICES'][$priceTypeId]))
+
+	if (isset($arItems['PRICES'][$priceTypeId]))
 	{
 		if (is_array($arItems['PRICES'][$priceTypeId])
 			&& isset($arItems['PRICES'][$priceTypeId]['PRICE']))

@@ -34,6 +34,7 @@ class CrmTimelineMenuBarComponent extends \CBitrixComponent
 		$this->arResult['guid'] = $this->guid;
 		$this->arResult['entityTypeId'] = $this->entityTypeId;
 		$this->arResult['entityId'] = $this->entityId;
+		$this->arResult['entityCategoryId'] = $this->entityCategoryId;
 		$this->arResult['isReadonly'] = $this->isReadonly;
 	}
 

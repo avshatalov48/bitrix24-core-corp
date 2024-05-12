@@ -11,6 +11,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 	const { BasePickerCache } = require('selector/utils/picker-cache');
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { Color } = require('selector/providers/common/src/entity-color');
+	const { getColor } = require('layout/ui/user/empty-avatar');
 	const { Loc } = require('loc');
 
 	const specialChars = '!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}';
@@ -21,6 +22,16 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 		return `${currentDomain}${path}${name}.png`;
 	};
+
+	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
+	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
+	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/user.png';
+
+	const isDefaultImage = (image) => image && (
+		image.includes(EMPTY_AVATAR)
+		|| image.includes(DEFAULT_AVATAR)
+		|| image.includes(DEFAULT_SELECTOR_AVATAR)
+	);
 
 	/**
 	 * @class CommonSelectorProvider
@@ -55,6 +66,16 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			return '';
 		}
 
+		getColor(entityId, entityType)
+		{
+			if (entityType === 'user' && this.options.useLettersForEmptyAvatar)
+			{
+				return getColor(entityId);
+			}
+
+			return Color(entityType);
+		}
+
 		setQuery(value)
 		{
 			this.queryString = value;
@@ -74,6 +95,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			}
 
 			this.options = options;
+			this.options.useLettersForEmptyAvatar = Boolean(options.useLettersForEmptyAvatar);
 			this.cache = new BasePickerCache(this.cacheId());
 		}
 
@@ -535,22 +557,23 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					.reduce((result, entityId) => {
 						const groupSelected = selected[entityId].map((original) => {
 							const item = { ...original };
+
+							item.color = this.getColor(item.id, entityId);
+
 							if (typeof item.id !== 'undefined')
 							{
 								item.id = `${entityId}/${item.id}`;
 							}
 
-							if (!item.imageUrl)
+							if (!item.imageUrl && !this.options.useLettersForEmptyAvatar)
 							{
 								item.imageUrl = getImage(entityId);
 							}
 
-							item.color = Color(entityId);
-
 							return item;
 						});
 
-						return result.concat(groupSelected);
+						return [...result, ...groupSelected];
 					}, []);
 			}
 
@@ -589,8 +612,8 @@ jn.define('selector/providers/common', (require, exports, module) => {
 						subtitle: item.subtitle,
 						shortTitle: item.shortTitle,
 						params: item.params,
-						imageUrl: item.imageUrl,
-						defaultImage: item.imageUrl.includes(getImage(entityId)),
+						imageUrl: isDefaultImage(item.imageUrl) && this.options.useLettersForEmptyAvatar ? null : item.imageUrl,
+						defaultImage: !this.options.useLettersForEmptyAvatar && item.imageUrl.includes(getImage(entityId)),
 					});
 				}
 
@@ -665,7 +688,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				shortTitle: stringify(entity.title),
 				sectionCode: 'common',
 				height: 64,
-				color: Color(entity.entityId),
+				color: this.getColor(entity.id, entity.entityId),
 				styles: {
 					title: {
 						font: {
@@ -692,14 +715,13 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					if (entity.entityType === 'extranet')
 					{
 						item.styles.title.font = { color: Color('userExtranet', 'title') };
-						item.color = Color('userExtranet');
+						item.color = this.getColor(entity.id, 'userExtranet');
 					}
-					item.subtitle = stringify(entity.customData.position);
-					item.shortTitle = stringify(entity.customData.name);
-					item.lastName = stringify(entity.customData.lastName);
-					item.name = stringify(entity.customData.name);
-
-					item.position = stringify(entity.customData.position);
+					item.subtitle = stringify(entity.customData?.position);
+					item.shortTitle = stringify(entity.customData?.name);
+					item.lastName = stringify(entity.customData?.lastName);
+					item.name = stringify(entity.customData?.name);
+					item.position = stringify(entity.customData?.position);
 
 					break;
 				}
@@ -747,6 +769,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 					break;
 				}
+
 				case 'product':
 				case 'store':
 				{
@@ -763,9 +786,13 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					}
 
 					item.subtitle = parts.join(' - ');
+
 					break;
 				}
-				// No default
+
+				default:
+					// no default
+					break;
 			}
 
 			if (item.imageUrl || item.avatar)
@@ -776,7 +803,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			// Note: Android doesn't support svg images in selector widget
 			if (!item.imageUrl || item.imageUrl.endsWith('.svg'))
 			{
-				item.imageUrl = getImage(entity.entityId);
+				item.imageUrl = this.options.useLettersForEmptyAvatar ? null : getImage(entity.entityId);
 			}
 
 			if (this.isSingleChoose())

@@ -9,6 +9,6 @@ $APPLICATION->SetTitle($arResult['LINE_NAME']);
 
 ?>
 <div id="imopenlines-page-placeholder" class="imopenlines-page-placeholder"></div>
-<script type="text/javascript">
+<script>
 	<?=$arResult['WIDGET_CODE']?>
 </script>

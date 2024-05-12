@@ -7,6 +7,6 @@ $MESS["TRANSFORMER_COMMAND_CHECK_LICENSE"] = "Cannot complete action. Please che
 $MESS["TRANSFORMER_COMMAND_CHECK_SERVER_SETTINGS"] = "Cannot complete action. Please check the file converter server settings, or contact your Bitrix24 administrator.";
 $MESS["TRANSFORMER_COMMAND_FILE_CORRUPTED"] = "Cannot convert file because it is corrupted.";
 $MESS["TRANSFORMER_COMMAND_FILE_TOO_BIG"] = "Maximum file size exceeded.";
-$MESS["TRANSFORMER_COMMAND_INSTALL_TRANSFORMERCONTROLLER"] = "Please install the Transformercontroller module to proceed.";
+$MESS["TRANSFORMER_COMMAND_INSTALL_TRANSFORMERCONTROLLER"] = "Please install the \"File conversion server\" module to proceed.";
 $MESS["TRANSFORMER_COMMAND_REFRESH_AND_TRY_LATER"] = "Cannot complete action. Please refresh the page and try again.";
 $MESS["TRANSFORMER_COMMAND_TRY_LATER"] = "Cannot complete action. Please try again later.";

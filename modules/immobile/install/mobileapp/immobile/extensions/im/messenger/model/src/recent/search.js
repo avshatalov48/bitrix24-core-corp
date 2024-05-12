@@ -66,7 +66,7 @@ jn.define('im/messenger/model/recent/search', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<RecentSearchSetData, RecentSearchSetActions>} payload
 			 */
 			set: (state, payload) => {
 				logger.log('searchModel: set mutation', payload);
@@ -80,7 +80,7 @@ jn.define('im/messenger/model/recent/search', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param payload
+			 * @param {MutationPayload<RecentSearchClearData, RecentSearchClearActions>} payload
 			 */
 			clear: (state, payload) => {
 				logger.log('searchModel: clear mutation', payload);

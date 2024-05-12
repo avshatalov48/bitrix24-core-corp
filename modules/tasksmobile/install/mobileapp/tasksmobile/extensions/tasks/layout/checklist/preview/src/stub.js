@@ -16,6 +16,7 @@ jn.define('tasks/layout/checklist/preview/src/stub', (require, exports, module) 
 		const defaultTemplate = View(
 			{
 				style: {
+					testId: 'create_checklist',
 					flexDirection: 'row',
 				},
 			},

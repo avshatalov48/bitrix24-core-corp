@@ -96,7 +96,7 @@ class ApacheSupersetDashboardSettingComponent
 					"color" => Buttons\Color::LIGHT_BORDER,
 					"size"  => Buttons\Size::MEDIUM,
 					"click" => new Buttons\JsCode(
-						"top.BX.Helper.show('redirect=detail&code=19123608');"
+						"top.BX.Helper.show('redirect=detail&code=20337242');"
 					),
 					"text" => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_DASHBOARD_HELP')
 				]

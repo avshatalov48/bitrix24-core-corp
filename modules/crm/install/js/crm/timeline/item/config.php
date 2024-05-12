@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Application;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -10,6 +12,7 @@ return [
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
 		'ui.analytics',
+		'crm.integration.analytics',
 		'ui.notification',
 		'ui.dialogs.messagebox',
 		'crm.activity.file-uploader-popup',
@@ -43,6 +46,7 @@ return [
 		return [
 			'lang_additional' => [
 				'AI_APP_COLLECTION_MARKET_LINK' => \Bitrix\Crm\Integration\AI\AIManager::getAiAppCollectionMarketLink(),
+				'PORTAL_ZONE' => mb_strtolower(Application::getInstance()->getLicense()->getRegion() ?? ''),
 			]
 		];
 	}

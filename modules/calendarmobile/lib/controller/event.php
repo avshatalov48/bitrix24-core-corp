@@ -129,11 +129,13 @@ class Event extends Controller
 	{
 		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
 		
-		return new \Bitrix\CalendarMobile\Dto\Sharing([
+		return \Bitrix\CalendarMobile\Dto\Sharing::make([
 			'isEnabled' => !empty($sharing->getActiveLinkShortUrl()),
 			'isRestriction' => !\Bitrix\Calendar\Integration\Bitrix24Manager::isFeatureEnabled('calendar_sharing'),
-			'shortUrl' =>  $sharing->getActiveLinkShortUrl(),
-			'settings' => $sharing->getLinkSettings()
+			'shortUrl' => $sharing->getActiveLinkShortUrl(),
+			'userInfo' => $sharing->getUserInfo(),
+			'settings' => $sharing->getLinkSettings(),
+			'options' => $sharing->getOptions(),
 		]);
 	}
 

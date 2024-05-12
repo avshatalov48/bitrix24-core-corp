@@ -1,4 +1,5 @@
-import { Sorter } from "crm.kanban.sort";
+import { Sorter } from 'crm.kanban.sort';
+import { Type } from 'main.core';
 
 export default class PullOperation
 {
@@ -9,13 +10,11 @@ export default class PullOperation
 
 	static createInstance(data: Object): PullOperation
 	{
-		const instance = new PullOperation(data.grid);
-
-		instance.setItemId(data.itemId);
-		instance.setAction(data.action);
-		instance.setActionParams(data.actionParams);
-
-		return instance;
+		return (new PullOperation(data.grid))
+			.setItemId(data.itemId)
+			.setAction(data.action)
+			.setActionParams(data.actionParams)
+		;
 	}
 
 	constructor(grid: BX.CRM.Kanban.Grid): void
@@ -26,6 +25,7 @@ export default class PullOperation
 	setItemId(itemId: Number): PullOperation
 	{
 		this.itemId = itemId;
+
 		return this;
 	}
 
@@ -37,6 +37,7 @@ export default class PullOperation
 	setAction(action: String): PullOperation
 	{
 		this.action = action;
+
 		return this;
 	}
 
@@ -48,6 +49,7 @@ export default class PullOperation
 	setActionParams(actionParams: Object): PullOperation
 	{
 		this.actionParams = actionParams;
+
 		return this;
 	}
 
@@ -58,14 +60,18 @@ export default class PullOperation
 
 	execute(): void
 	{
-		if (this.getAction() === 'updateItem')
+		const action = this.getAction();
+
+		if (action === 'updateItem')
 		{
-			return this.updateItem();
+			this.updateItem();
+
+			return;
 		}
 
-		if (this.getAction() === 'addItem')
+		if (action === 'addItem')
 		{
-			return this.addItem();
+			this.addItem();
 		}
 	}
 
@@ -81,7 +87,8 @@ export default class PullOperation
 		}
 
 		const insertItemParams = {};
-		if (paramsItem.data.lastActivity && paramsItem.data.lastActivity.timestamp !== item.data.lastActivity.timestamp)
+		const { lastActivity, columnId: newColumnId, price } = paramsItem.data;
+		if (Type.isObjectLike(lastActivity) && lastActivity.timestamp !== item.data.lastActivity.timestamp)
 		{
 			insertItemParams.canShowLastActivitySortTour = true;
 		}
@@ -89,7 +96,7 @@ export default class PullOperation
 		const oldPrice = parseFloat(item.data.price);
 		const oldColumnId = item.columnId;
 
-		for (let key in paramsItem.data)
+		for (const key in paramsItem.data)
 		{
 			if (key in item.data)
 			{
@@ -104,9 +111,8 @@ export default class PullOperation
 
 		this.grid.resetMultiSelectMode();
 
-		const newColumnId = paramsItem.data.columnId;
 		const newColumn = this.grid.getColumn(newColumnId);
-		const newPrice = parseFloat(paramsItem.data.price);
+		const newPrice = parseFloat(price);
 
 		insertItemParams.newColumnId = newColumnId;
 		this.grid.insertItem(item, insertItemParams);
@@ -118,18 +124,7 @@ export default class PullOperation
 			return;
 		}
 
-		if (oldColumnId !== newColumnId)
-		{
-			const oldColumn = this.grid.getColumn(oldColumnId);
-			oldColumn.decPrice(oldPrice);
-			oldColumn.renderSubTitle();
-			if (newColumn)
-			{
-				newColumn.incPrice(newPrice);
-				newColumn.renderSubTitle();
-			}
-		}
-		else
+		if (oldColumnId === newColumnId)
 		{
 			if (oldPrice < newPrice)
 			{
@@ -141,6 +136,17 @@ export default class PullOperation
 				newColumn.decPrice(oldPrice - newPrice);
 				newColumn.renderSubTitle();
 			}
+
+			return;
+		}
+
+		const oldColumn = this.grid.getColumn(oldColumnId);
+		oldColumn.decPrice(oldPrice);
+		oldColumn.renderSubTitle();
+		if (newColumn)
+		{
+			newColumn.incPrice(newPrice);
+			newColumn.renderSubTitle();
 		}
 	}
 

@@ -26,7 +26,6 @@ jn.define('im/messenger/controller/search/experimental/service/server-search-ser
 			this.config = config;
 
 			/**
-			 * @private
 			 * @type {StoreUpdater}
 			 */
 			this.storeUpdater = new StoreUpdater();

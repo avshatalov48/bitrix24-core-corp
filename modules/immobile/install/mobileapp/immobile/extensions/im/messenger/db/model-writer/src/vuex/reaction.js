@@ -5,7 +5,8 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, module) => {
 	const { Type } = require('type');
-
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('repository--reaction');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
 	class ReactionWriter extends Writer
@@ -29,7 +30,7 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<ReactionsSetData, ReactionsSetActions>} mutation.payload
 		 */
 		addRouter(mutation)
 		{
@@ -70,7 +71,8 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 				return;
 			}
 
-			this.repository.reaction.saveFromModel(reactionList);
+			this.repository.reaction.saveFromModel(reactionList)
+				.catch((error) => logger.error('ReactionWriter.addRouter.saveFromModel.catch:', error));
 		}
 	}
 

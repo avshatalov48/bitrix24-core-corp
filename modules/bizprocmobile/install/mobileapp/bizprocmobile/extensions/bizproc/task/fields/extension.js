@@ -2,7 +2,6 @@
  * @module bizproc/task/fields
  */
 jn.define('bizproc/task/fields', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 	const { EventEmitter } = require('event-emitter');
@@ -55,25 +54,15 @@ jn.define('bizproc/task/fields', (require, exports, module) => {
 
 		render()
 		{
-			return View(
-				{
-					style: {
-						borderRadius: 12,
-						borderWidth: 1,
-						borderColor: AppTheme.colors.bgSeparatorPrimary,
-						backgroundColor: AppTheme.colors.bgContentSecondary,
-					},
+			return EntityManager.create({
+				uid: this.uid,
+				layout: this.props.layout,
+				editorProps: this.props.editor,
+				isEmbedded: true,
+				refCallback: (ref) => {
+					this.editor = ref;
 				},
-				EntityManager.create({
-					uid: this.uid,
-					layout: this.props.layout,
-					editorProps: this.props.editor,
-					isEmbedded: true,
-					refCallback: (ref) => {
-						this.editor = ref;
-					},
-				}),
-			);
+			});
 		}
 
 		handleChangeFields()

@@ -1117,12 +1117,10 @@ class ProductLoader
 			{
 				return $field;
 			}
-			$crmOwnerTypeProvidersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
+
 			$ownerTypeId = $entityTypes[0];
-			if (isset($crmOwnerTypeProvidersMap[$ownerTypeId]))
-			{
-				$provider = $crmOwnerTypeProvidersMap[$ownerTypeId];
-			}
+			$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($ownerTypeId);
+
 			if ($provider)
 			{
 				$field['PROVIDER'] = $provider;

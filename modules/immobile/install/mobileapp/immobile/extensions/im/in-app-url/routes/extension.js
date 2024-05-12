@@ -4,13 +4,11 @@
 jn.define('im/in-app-url/routes', (require, exports, module) => {
 	const { Loc } = require('loc');
 
-	const {
-		EventType,
-	} = require('im/messenger/const');
+	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
 	const openDialog = (dialogId) => {
-		MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId });
+		MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId }, ComponentCode.imMessenger);
 	};
 
 	const openMessageAttach = (messageId) => {

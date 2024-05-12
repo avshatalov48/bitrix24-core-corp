@@ -10,6 +10,7 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\Translation;
 use Bitrix\Main\Text\Encoding;
+use CCrmEntitySelectorHelper;
 use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
@@ -666,6 +667,8 @@ class EntityBankDetail
 					[FieldCategory::BANK_DETAIL]
 				);
 				//endregion Register volatile duplicate criterion fields
+
+				CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(CCrmOwnerType::Requisite, $entityId);
 			}
 		}
 
@@ -899,7 +902,7 @@ class EntityBankDetail
 				$entityAfterUpdate = EntityRequisite::getOwnerEntityById($parentInfoAfterUpdate['ENTITY_ID']);
 			}
 		}
-		unset($parentInfoBeforeUpdate, $parentInfoAfterUpdate);
+		unset($parentInfoAfterUpdate);
 		$entityTypeIdModified = $entityIdModified = false;
 		$entityTypeId = $entityAfterUpdate['ENTITY_TYPE_ID'];
 		if (
@@ -990,6 +993,11 @@ class EntityBankDetail
 				);
 				//endregion Register volatile duplicate criterion fields
 			}
+
+			CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(
+				$parentInfoBeforeUpdate['ENTITY_TYPE_ID'],
+				$parentInfoBeforeUpdate['ENTITY_ID'])
+			;
 		}
 
 		//region Send event
@@ -1011,8 +1019,9 @@ class EntityBankDetail
 		);
 		$parentInfo = self::getOwnerEntityById($id);
 		if ($parentInfo['ENTITY_TYPE_ID'] === CCrmOwnerType::Requisite)
+		{
 			$entityInfo = EntityRequisite::getOwnerEntityById($parentInfo['ENTITY_ID']);
-		unset($parentInfo);
+		}
 
 		$result = BankDetailTable::delete($id);
 		if ($result->isSuccess()
@@ -1032,6 +1041,11 @@ class EntityBankDetail
 		//region Send event
 		if ($result->isSuccess())
 		{
+			CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(
+				$parentInfo['ENTITY_TYPE_ID'],
+				$parentInfo['ENTITY_ID'])
+			;
+
 			$event = new Main\Event('crm', 'OnAfterBankDetailDelete', array('id' => $id));
 			$event->send();
 		}
@@ -1614,21 +1628,26 @@ class EntityBankDetail
 
 	public static function getOwnerEntityById($id)
 	{
-		$result = array();
+		$result = [
+			'ENTITY_TYPE_ID' => 0,
+			'ENTITY_ID' => 0,
+		];
 
 		if ($id <= 0)
-			return array();
+		{
+			return $result;
+		}
 
-		$row = BankDetailTable::getList(array(
+		$res = BankDetailTable::getList(array(
 				'filter' => array('=ID' => $id),
 				'select' => array('ID', 'ENTITY_TYPE_ID', 'ENTITY_ID'),
 				'limit' => 1
 		));
 
-		$r = $row->fetch();
+		$row = $res->fetch();
 
-		$result['ENTITY_TYPE_ID'] = isset($r['ENTITY_TYPE_ID']) ? (int)$r['ENTITY_TYPE_ID'] : 0;
-		$result['ENTITY_ID'] = isset($r['ENTITY_ID']) ? (int)$r['ENTITY_ID'] : 0;
+		$result['ENTITY_TYPE_ID'] = (int)($row['ENTITY_TYPE_ID'] ?? 0);
+		$result['ENTITY_ID'] = (int)($row['ENTITY_ID'] ?? 0);
 
 		return $result;
 	}

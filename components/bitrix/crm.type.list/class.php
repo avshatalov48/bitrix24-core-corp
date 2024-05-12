@@ -4,11 +4,11 @@ use Bitrix\Crm\Filter;
 use Bitrix\Crm\Integration\Intranet\CustomSection\CustomSectionQueries;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Type;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar;
 
@@ -215,6 +215,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
 		$grid['SHOW_ROW_CHECKBOXES'] = false;
 		$grid['SHOW_ROW_ACTIONS_MENU'] = true;
+		$grid['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] = true;
 
 		return $grid;
 	}

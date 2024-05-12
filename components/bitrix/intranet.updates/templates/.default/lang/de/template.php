@@ -1,0 +1,29 @@
+<?
+$MESS["SUP_ACTIVE"] = "Lizenzschlüssel ist gültig";
+$MESS["SUP_ACTIVE_PERIOD"] = "von #DATE_FROM# bis zum #DATE_TO#";
+$MESS["SUP_SERVER"] = "Update-Server";
+$MESS["SUP_SUBI_CHECK"] = "Letzte Überprüfung der Updates:";
+$MESS["SUP_SUBI_UPD"] = "Updates wurden zuletzt installiert:";
+$MESS["UPDATES_BUTTON"] = "Updates installieren";
+$MESS["SUP_SU_RECOMEND"] = "Empfohlene Updates";
+$MESS["SUP_SU_RECOMEND_MOD"] = "<b>#NUM#</b> für Module";
+$MESS["SUP_SU_RECOMEND_LAN"] = "<b>#NUM#</b> für die Sprachdateien";
+$MESS["SUP_SU_RECOMEND_NO"] = "keine";
+$MESS["UPDATES_TITLE"] = "Updates";
+$MESS["SUP_ACTIVE_PERIOD_TO"] = "bis zum #DATE_TO#";
+$MESS["SUP_SUBU_UPDATE"] = "Das Update-System aktualisieren";
+$MESS["SUP_SUBU_HINT"] = "Eine neue Version des Update-Systems ist verfügbar. Sie müssen diese Version vor den Updates selbst installieren.";
+$MESS["SUP_SUBU_BUTTON"] = "Die neue SiteUpdate Version installieren";
+$MESS["SUP_SU_UPD_BUTTON"] = "Empfohlene Updates installieren";
+$MESS["SUP_SUB_SUCCESS"] = "Updates wurden erfolgreich installiert.";
+$MESS["SUP_SUB_ERROR"] = "Einige Updates konnten nicht installiert werden.";
+$MESS["SUP_SUB_STOP"] = "Stopp";
+$MESS["SUP_INITIAL"] = "Initialisierung...";
+$MESS["SUP_SU_UPD_INSMED1"] = "Update wird installiert";
+$MESS["SUP_SUBT_LICENCE"] = "Lizenzvereinbarung";
+$MESS["SUP_SUBT_LICENCE_HINT"] = "Sie müssen die neue Lizenzvereinbarung akzeptieren, bevor Sie das Update-System nutzen würden.";
+$MESS["SUP_SUBT_LICENCE_BUTTON"] = "Lizenzvereinbarung anzeigen";
+$MESS["SUP_SUBT_AGREE"] = "Ich akzeptieren die Lizenzvereinbarung";
+$MESS["SUP_APPLY"] = "Anwenden";
+$MESS["SUP_UPDATES_HINT"] = "Updates für Ihr Bitrix24 werden jetzt installiert. Schließen Sie bitte nicht diese Seite, solange das System die Updates noch installiert.";
+?>

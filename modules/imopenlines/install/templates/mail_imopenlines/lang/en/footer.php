@@ -1,0 +1,4 @@
+<?
+$MESS["IMOL_MAIL_BITRIX24_IMAGEFILE"] = "bitrix-logo-en.gif";
+$MESS["IMOL_MAIL_BITRIX24_IMAGEFILE_ALT"] = "Bitrix24";
+?>

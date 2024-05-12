@@ -1,14 +1,22 @@
-import { Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
 import { Dialog } from 'crm.entity-selector';
-import { DialogOptions } from 'ui.entity-selector';
-
-import type { EditorOptions } from './editor-options';
+import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
+import { Menu, Popup } from 'main.popup';
 
 import 'ui.design-tokens';
+import { DialogOptions } from 'ui.entity-selector';
+import type { EditorOptions } from './editor-options';
 import './editor.css';
+import MenuPopup from './menu-popup';
+import TextPopup from './text-popup';
+import type { FilledPlaceholder } from './types';
 
-const SELECTOR_TARGET_NAME = 'crm-template-editor-element-pill';
+const UPDATE_ACTION = 'update';
+const DELETE_ACTION = 'delete';
+
+const HEADER_POSITION = 'HEADER';
+const PREVIEW_POSITION = 'PREVIEW';
+const FOOTER_POSITION = 'FOOTER';
 
 export class Editor
 {
@@ -17,8 +25,13 @@ export class Editor
 	#entityTypeId: number = null;
 	#entityId: number = null;
 	#categoryId: ?number = null;
-	#placeHolderMaskRe: ?RegExp = null;
+	#canUseFieldsDialog: boolean = true;
+	#canUseFieldValueInput: boolean = true;
+	placeholders: string[] = [];
+	filledPlaceholders: FilledPlaceholder[] = [];
+	onSelect = () => {};
 
+	// @todo replace this variables with a generic container
 	#headerContainerEl: ?HTMLElement = null;
 	#bodyContainerEl: ?HTMLElement = null;
 	#footerContainerEl: ?HTMLElement = null;
@@ -29,6 +42,9 @@ export class Editor
 	#bodyRaw: ?string = null;
 	#footerRaw: ?string = null;
 
+	#popupMenu: ?Menu = null;
+	#inputPopup: ?Popup = null;
+
 	constructor(params: EditorOptions)
 	{
 		this.#assertValidParams(params);
@@ -37,10 +53,14 @@ export class Editor
 		this.#target = params.target;
 		this.#entityTypeId = params.entityTypeId;
 		this.#entityId = params.entityId;
-		this.#categoryId = Type.isNumber(params.entityId) ? params.entityId : null;
-		this.#placeHolderMaskRe = Type.isStringFilled(params.placeHolderMaskRe)
-			? params.placeHolderMaskRe
-			: /{{\s+(\d+)\s+}}/g; // {{ 1 }}, {{ 2 }}, {{ 3 }} ... default regex
+		this.#categoryId = Type.isNumber(params.categoryId) ? params.categoryId : null;
+		this.onSelect = params.onSelect;
+
+		this.#canUseFieldsDialog = Boolean(params.canUseFieldsDialog ?? true);
+		this.#canUseFieldValueInput = Boolean(params.canUseFieldValueInput ?? true);
+
+		this.onPlaceholderClick = this.onPlaceholderClick.bind(this);
+		this.onShowInputPopup = this.onShowInputPopup.bind(this);
 
 		this.#placeHoldersDialogDefaultOptions = {
 			multiple: false,
@@ -62,7 +82,20 @@ export class Editor
 		};
 
 		this.#createContainer();
-		this.#bindEvents();
+	}
+
+	setPlaceholders(placeholders: string[]): this
+	{
+		this.placeholders = placeholders;
+
+		return this;
+	}
+
+	setFilledPlaceholders(filledPlaceholders: FilledPlaceholder[]): this
+	{
+		this.filledPlaceholders = filledPlaceholders;
+
+		return this;
 	}
 
 	// region Public methods
@@ -99,12 +132,17 @@ export class Editor
 		Dom.append(this.#createContainerWithSelectors(input), this.#footerContainerEl);
 	}
 
-	getData(): Object
+	getData(): ?Object
 	{
+		if (this.placeholders === null)
+		{
+			return null;
+		}
+
 		return {
-			header: this.#getPlainText(this.#headerContainerEl),
-			body: this.#getPlainText(this.#bodyContainerEl),
-			footer: this.#getPlainText(this.#footerContainerEl),
+			header: this.#getPlainText(HEADER_POSITION),
+			body: this.#getPlainText(PREVIEW_POSITION),
+			footer: this.#getPlainText(FOOTER_POSITION),
 		};
 	}
 
@@ -136,77 +174,379 @@ export class Editor
 		this.#footerContainerEl = Tag.render`<div class="crm-template-editor-footer"></div>`;
 		Dom.append(this.#footerContainerEl, containerEl);
 
+		Dom.clean(this.#target);
 		Dom.append(containerEl, this.#target);
 	}
 
-	#createContainerWithSelectors(input: string): HTMLElement
+	#createContainerWithSelectors(input: string, position: string = PREVIEW_POSITION): ?HTMLElement
 	{
-		const placeHolders = input.match(this.#placeHolderMaskRe);
-		if (!placeHolders)
+		const placeholders = this.#getPlaceholders(position);
+		if (placeholders === null)
 		{
-			return input;
+			return null;
 		}
 
-		const result: string = input.replace(
-			this.#placeHolderMaskRe,
-			`<span class="${SELECTOR_TARGET_NAME}">${Loc.getMessage('CRM_TEMPLATE_EDITOR_EMPTY_PLACEHOLDER_LABEL')}</span>`,
-		);
-
-		const container = Tag.render`<div>${result}</div>`;
+		const container = this.#getInputContainer(input, position);
 		const dlgOptions = this.#placeHoldersDialogDefaultOptions;
-		const elements = container.querySelectorAll(`.${SELECTOR_TARGET_NAME}`);
-		elements.forEach((element?: Node): void => {
-			dlgOptions.events = {
-				'Item:onSelect': (event: BaseEvent): void => {
-					const item = event.getData().item;
 
-					// eslint-disable-next-line no-param-reassign
-					element.textContent = item.getTitle();
-					Dom.attr(element, 'placeholder-id', item.id);
-					Dom.addClass(element, '--selected');
-				},
-				'Item:onDeselect': (event: BaseEvent): void => {
-					// eslint-disable-next-line no-param-reassign
-					element.textContent = Loc.getMessage('CRM_TEMPLATE_EDITOR_EMPTY_PLACEHOLDER_LABEL');
-					Dom.attr(element, 'placeholder-id', '');
-					Dom.removeClass(element, '--selected');
-				},
-			};
-			dlgOptions.targetNode = element;
+		placeholders.forEach((placeholder, key) => {
+			const element = [...container.childNodes].find(
+				(node) => node.dataset && Number(node.dataset.templatePlaceholder) === key,
+			);
 
-			const dlg = new Dialog(dlgOptions);
+			if (!element)
+			{
+				return;
+			}
 
-			Event.bind(element, 'click', () => dlg.show());
+			this.#prepareDlgOptions(dlgOptions, element, position);
+
+			const dialog = new Dialog(dlgOptions);
+
+			Event.bind(element, 'click', (event) => {
+				this.onPlaceholderClick({ dialog, event });
+			});
 		});
 
 		return container;
 	}
 
-	#getPlainText(container: HTMLElement): ?string
+	onPlaceholderClick({ dialog, event }): void
 	{
-		if (!Type.isDomNode(container))
+		this.#inputPopup?.destroy();
+
+		const filledPlaceholder = this.#getFilledPlaceholderByElement(event.target, PREVIEW_POSITION);
+		const isTextItemFirst = Type.isStringFilled(filledPlaceholder?.FIELD_VALUE);
+
+		if (this.#canUseFieldsDialog && this.#canUseFieldValueInput)
+		{
+			this.#popupMenu = new MenuPopup({
+				bindElement: event.target,
+				isTextItemFirst,
+				onEditorItemClick: () => {
+					this.onShowDialogPopup(filledPlaceholder, dialog);
+				},
+				onTextItemClick: (element: HTMLElement) => {
+					this.onShowInputPopup(element);
+				},
+			});
+
+			this.#popupMenu.show();
+		}
+		else if (this.#canUseFieldsDialog)
+		{
+			this.onShowDialogPopup(filledPlaceholder, dialog);
+		}
+		else if (this.#canUseFieldValueInput)
+		{
+			this.onShowInputPopup(event.target);
+		}
+	}
+
+	onShowDialogPopup(filledPlaceholder: FilledPlaceholder, dialog: Dialog): void
+	{
+		if (Type.isStringFilled(filledPlaceholder?.FIELD_VALUE))
+		{
+			dialog.getPreselectedItems().forEach((preselectedItem) => {
+				const item = dialog.getItem(preselectedItem);
+				if (item)
+				{
+					item.deselect();
+				}
+			});
+		}
+
+		dialog.show();
+	}
+
+	onShowInputPopup(bindElement: HTMLElement): void
+	{
+		const filledPlaceholder = this.#getFilledPlaceholderByElement(bindElement);
+		const value = Type.isStringFilled(filledPlaceholder?.FIELD_VALUE) ? filledPlaceholder.FIELD_VALUE : '';
+
+		this.#inputPopup = new TextPopup({
+			bindElement,
+			value,
+			onApply: (newValue: string) => {
+				this.#onApplyInputPopup(newValue, bindElement);
+			},
+		});
+
+		this.#inputPopup.show();
+	}
+
+	#onApplyInputPopup(value: string, bindElement: HTMLElement): void
+	{
+		const placeholderId = this.#getPlaceholderIdByElement(bindElement, PREVIEW_POSITION);
+
+		const params = {
+			id: placeholderId,
+			parentTitle: null,
+			text: value,
+			title: value,
+			entityType: BX.CrmEntityType.resolveName(this.#entityTypeId).toLowerCase(),
+		};
+
+		// eslint-disable-next-line no-param-reassign
+		bindElement.textContent = value;
+		Dom.addClass(bindElement, '--selected');
+
+		this.#adjustFilledPlaceholders(params);
+		this.onSelect(params);
+	}
+
+	#getInputContainer(input: string, position: string): ?HTMLElement
+	{
+		const placeholders = this.#getPlaceholders(position);
+		if (placeholders === null)
 		{
 			return null;
 		}
 
-		const containerCopy = Runtime.clone(container);
-		const elements = containerCopy.querySelectorAll(`.${SELECTOR_TARGET_NAME}`);
-		elements.forEach((element?: Node): void => {
+		let i = 0;
+		placeholders.forEach((placeholder) => {
+			const filledPlaceholder = this.#getFilledPlaceholderById(placeholder);
+
+			let title = Loc.getMessage('CRM_TEMPLATE_EDITOR_EMPTY_PLACEHOLDER_LABEL');
+			let spanClass = 'crm-template-editor-element-pill';
+			if (filledPlaceholder)
+			{
+				if (
+					Type.isStringFilled(filledPlaceholder.PARENT_TITLE)
+					&& Type.isStringFilled(filledPlaceholder.TITLE))
+				{
+					title = `${filledPlaceholder.PARENT_TITLE}: ${filledPlaceholder.TITLE}`;
+				}
+				else if (Type.isStringFilled(filledPlaceholder.TITLE))
+				{
+					title = filledPlaceholder.TITLE;
+				}
+				else if (Type.isStringFilled(filledPlaceholder.FIELD_NAME))
+				{
+					title = filledPlaceholder.FIELD_NAME;
+				}
+				else
+				{
+					title = filledPlaceholder.FIELD_VALUE;
+				}
+
+				title = Text.encode(title);
+				spanClass += ' --selected';
+			}
+
+			const replaceValue = `<span class="${spanClass}" data-template-placeholder="${i++}">${title}</span>`;
+
 			// eslint-disable-next-line no-param-reassign
-			element.textContent = element?.hasAttribute('placeholder-id')
-				? `{${element.getAttribute('placeholder-id')}}`
-				: '';
+			input = input.replace(placeholder, replaceValue);
 		});
 
-		return containerCopy.textContent;
+		return Tag.render`<div>${input}</div>`;
 	}
 
-	// region Event handlers
-	#bindEvents(): void
+	#getPlaceholders(position: string): ?[]
 	{
-		// TODO: not implemented yet
+		const allPlaceholders = Type.isPlainObject(this.placeholders) ? this.placeholders : {};
+		const placeholders = Type.isArrayFilled(allPlaceholders[position]) ? allPlaceholders[position] : [];
+
+		return Type.isArrayLike(placeholders) ? placeholders : null;
 	}
-	// endregion
+
+	#prepareDlgOptions(dlgOptions: DialogOptions, element: HTMLElement, position: string): void
+	{
+		const placeholders = this.#getPlaceholders(position);
+		const placeholderId = placeholders[element.dataset.templatePlaceholder] ?? null;
+		if (placeholderId)
+		{
+			const filledPlaceholder = this.#getFilledPlaceholderById(placeholderId);
+			if (filledPlaceholder)
+			{
+				// eslint-disable-next-line no-param-reassign
+				dlgOptions.preselectedItems = [
+					[
+						filledPlaceholder.FIELD_ENTITY_TYPE,
+						filledPlaceholder.FIELD_NAME,
+					],
+				];
+			}
+		}
+
+		// eslint-disable-next-line no-param-reassign
+		dlgOptions.events = {
+			onShow: () => {
+				const keyframes = [
+					{ transform: 'rotate(0)' },
+					{ transform: 'rotate(90deg)' },
+					{ transform: 'rotate(180deg)' },
+				];
+				const options = {
+					duration: 200,
+					pseudoElement: '::after',
+				};
+
+				element.animate(keyframes, options);
+				Dom.addClass(element, '--flipped');
+			},
+			onHide: () => {
+				const keyframes = [
+					{ transform: 'rotate(180deg)' },
+					{ transform: 'rotate(90deg)' },
+					{ transform: 'rotate(0)' },
+				];
+				const options = {
+					duration: 200,
+					pseudoElement: '::after',
+				};
+
+				element.animate(keyframes, options);
+				Dom.removeClass(element, '--flipped');
+			},
+			'Item:onSelect': (event: BaseEvent): void => {
+				Dom.addClass(element, '--selected');
+
+				const item = event.getData().item;
+				const parentTitle = item.supertitle.text;
+				const title = item.title.text;
+
+				// eslint-disable-next-line no-param-reassign
+				element.textContent = `${parentTitle}: ${title}`;
+
+				const value = item.id;
+				const entityType = item.entityId;
+
+				const params = {
+					id: placeholderId,
+					value,
+					parentTitle,
+					title,
+					entityType,
+				};
+
+				this.#adjustFilledPlaceholders(params);
+				this.onSelect(params);
+			},
+		};
+
+		// eslint-disable-next-line no-param-reassign
+		dlgOptions.targetNode = element;
+	}
+
+	#adjustFilledPlaceholders({ id, value, text, parentTitle, title }, action: string = UPDATE_ACTION): void
+	{
+		if (action === DELETE_ACTION)
+		{
+			this.#deleteFromFilledPlaceholders(id, value);
+
+			return;
+		}
+
+		this.#updateForFilledPlaceholders({ id, value, text, parentTitle, title });
+	}
+
+	#deleteFromFilledPlaceholders(id: string, value: string): void
+	{
+		this.filledPlaceholders = this.filledPlaceholders.filter(
+			(filledPlaceholder) => {
+				return filledPlaceholder.PLACEHOLDER_ID !== id || filledPlaceholder.FIELD_NAME !== value;
+			},
+		);
+	}
+
+	#updateForFilledPlaceholders({ id, value, text, parentTitle, title }): void
+	{
+		const filledPlaceholder = this.#getFilledPlaceholderById(id);
+
+		if (filledPlaceholder)
+		{
+			filledPlaceholder.FIELD_NAME = value ?? null;
+			filledPlaceholder.FIELD_VALUE = text ?? null;
+			filledPlaceholder.PARENT_TITLE = parentTitle;
+			filledPlaceholder.TITLE = title;
+		}
+		else
+		{
+			this.filledPlaceholders.push({
+				PLACEHOLDER_ID: id,
+				FIELD_NAME: value,
+				FIELD_VALUE: text,
+				PARENT_TITLE: parentTitle,
+				TITLE: title,
+			});
+		}
+	}
+
+	#getFilledPlaceholderByElement(element: HTMLElement, position: string = PREVIEW_POSITION): ?FilledPlaceholder
+	{
+		const placeholderId = this.#getPlaceholderIdByElement(element, position);
+
+		return this.#getFilledPlaceholderById(placeholderId);
+	}
+
+	#getPlaceholderIdByElement(element: HTMLElement, position: string = PREVIEW_POSITION): ?string
+	{
+		const placeholders = this.#getPlaceholders(position);
+
+		return placeholders[element.dataset.templatePlaceholder] ?? null;
+	}
+
+	#getFilledPlaceholderById(placeholderId: string): ?FilledPlaceholder
+	{
+		return this.filledPlaceholders.find(
+			(filledPlaceholderItem) => filledPlaceholderItem.PLACEHOLDER_ID === placeholderId,
+		);
+	}
+
+	#getPlainText(position: string): ?string
+	{
+		let text = this.#getRawTextByPosition(position);
+		if (text === null)
+		{
+			return null;
+		}
+
+		if (Type.isArrayFilled(this.filledPlaceholders))
+		{
+			this.filledPlaceholders.forEach((filledPlaceholder) => {
+				if (Type.isStringFilled(filledPlaceholder.FIELD_NAME))
+				{
+					text = text.replace(filledPlaceholder.PLACEHOLDER_ID, `{${filledPlaceholder.FIELD_NAME}}`);
+				}
+				else if (Type.isStringFilled(filledPlaceholder.FIELD_VALUE))
+				{
+					text = text.replace(filledPlaceholder.PLACEHOLDER_ID, filledPlaceholder.FIELD_VALUE);
+				}
+			});
+		}
+
+		const placeholders = this.placeholders[position];
+		if (Type.isArrayFilled(placeholders))
+		{
+			placeholders.forEach((placeholder) => {
+				text = text.replace(placeholder, ' ');
+			});
+		}
+
+		return text;
+	}
+
+	#getRawTextByPosition(position: string): ?string
+	{
+		if (position === HEADER_POSITION)
+		{
+			return this.#headerRaw;
+		}
+
+		if (position === PREVIEW_POSITION)
+		{
+			return this.#bodyRaw;
+		}
+
+		if (position === FOOTER_POSITION)
+		{
+			return this.#footerRaw;
+		}
+
+		return null;
+	}
 
 	#assertValidParams(params: EditorOptions): void
 	{
@@ -228,6 +568,11 @@ export class Editor
 		if (!Type.isNumber(params.entityId) || params.entityId <= 0)
 		{
 			throw new TypeError('BX.Crm.Template.Editor: The "entityId" argument is not correct');
+		}
+
+		if (!Type.isFunction(params.onSelect))
+		{
+			throw new TypeError('BX.Crm.Template.Editor: The "onSelect" argument is not correct');
 		}
 	}
 }

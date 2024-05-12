@@ -173,15 +173,3 @@ $arComponentParameters = array(
 	),
 );
 $arComponentParameters["PARAMETERS"]["DATE_TIME_FORMAT"] = CComponentUtil::GetDateTimeFormatField(GetMessage("INTR_IRM_PARAM_DATE_TIME_FORMAT"), 'ADDITIONAL_SETTINGS');
-
-if (IsModuleInstalled("video"))
-{
-	$arComponentParameters["PARAMETERS"]["PATH_TO_VIDEO_CALL"] = array(
-			"NAME" => GetMessage("INTR_IRM_PARAM_PATH_TO_VIDEO_CALL"),
-			"TYPE" => "STRING",
-			"DEFAULT" => "/company/personal/video/#USER_ID#/",
-			"PARENT" => "ADDITIONAL_SETTINGS",
-		); 
-}
-
-?>

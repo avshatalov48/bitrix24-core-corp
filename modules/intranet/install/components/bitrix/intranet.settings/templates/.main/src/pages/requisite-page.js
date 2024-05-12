@@ -5,7 +5,7 @@ import { LandingButtonFactory } from '../requisite/landing-button-factory';
 import { LandingCard } from '../requisite/landing-card';
 import { Event, Dom, Loc, Tag, Type } from 'main.core';
 import { Section, Row } from 'ui.section';
-import { BaseSettingsPage } from 'ui.form-elements.field';
+import {BaseSettingsPage, SettingsRow, SettingsSection} from 'ui.form-elements.field';
 import 'ui.icon-set.crm';
 
 export class RequisitePage extends BaseSettingsPage
@@ -32,11 +32,15 @@ export class RequisitePage extends BaseSettingsPage
 
 	appendSections(contentNode: HTMLElement): void
 	{
-		let reqSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_REQUISITE'),
-			titleIconClasses: 'ui-icon-set --suitcase',
-			isOpen: true,
-			canCollapse: false,
+		if (!this.hasValue('sectionRequisite'))
+		{
+			return;
+		}
+
+		let reqSection = new Section(this.getValue('sectionRequisite'));
+		const sectionField = new SettingsSection({
+			parent: this,
+			section: reqSection,
 		});
 
 		const description = new BX.UI.Alert({
@@ -104,9 +108,14 @@ export class RequisitePage extends BaseSettingsPage
 			}
 		}
 
-		reqSection.append(this.addCompanyLinkRender());
+		new SettingsRow({
+			row: new Row({
+				content: this.addCompanyLinkRender(),
+			}),
+			parent: sectionField,
+		});
 
-		reqSection.renderTo(contentNode);
+		sectionField.renderTo(contentNode);
 	}
 
 	addCompanyLinkRender(): HTMLElement
@@ -122,7 +131,7 @@ export class RequisitePage extends BaseSettingsPage
 			this.getAnalytic()?.addEventConfigRequisite(AnalyticSettingsEvent.OPEN_ADD_COMPANY);
 		});
 
-		return Tag.render`<div class="ui-section__mt-16 ui-section__link_box">${link}</div>`;
+		return Tag.render`<div class="ui-section__link_box">${link}</div>`;
 	}
 
 	cardRender(params): HTMLElement

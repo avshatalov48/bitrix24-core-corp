@@ -16,6 +16,7 @@ declare type MentionItem = {
 	imageColor: string,
 	displayedDate: string,
 	titleColor: string,
+	testId: string,
 }
 
 declare type MentionPanelEvents = {

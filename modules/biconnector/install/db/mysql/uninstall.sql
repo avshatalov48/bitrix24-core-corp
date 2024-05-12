@@ -6,3 +6,4 @@ DROP TABLE IF EXISTS b_biconnector_dictionary_cache;
 DROP TABLE IF EXISTS b_biconnector_dictionary_data;
 DROP TABLE IF EXISTS b_biconnector_log;
 DROP TABLE IF EXISTS b_biconnector_superset_dashboard;
+DROP TABLE IF EXISTS b_biconnector_superset_user;

@@ -138,7 +138,7 @@ class CIntranetMailSetupComponent extends CBitrixComponent
 	{
 		global $USER, $APPLICATION;
 
-		$APPLICATION->SetTitle(GetMessage(IsModuleInstalled('bitrix24') ? 'INTR_MAIL_B24_PAGE_TITLE' : 'NTR_MAIL_PAGE_TITLE'));
+		$APPLICATION->SetTitle(GetMessage(IsModuleInstalled('bitrix24') ? 'INTR_MAIL_B24_PAGE_TITLE_MSGVER_1' : 'NTR_MAIL_PAGE_TITLE'));
 
 		$this->arParams['SERVICES'] = CIntranetMailSetupHelper::getMailServices();
 		$this->arParams['MAILBOX']  = CIntranetMailSetupHelper::getUserMailbox($USER->GetID());
@@ -155,7 +155,7 @@ class CIntranetMailSetupComponent extends CBitrixComponent
 	{
 		global $USER, $APPLICATION;
 
-		$APPLICATION->SetTitle(GetMessage(IsModuleInstalled('bitrix24') ? 'INTR_MAIL_B24_PAGE_TITLE' : 'NTR_MAIL_PAGE_TITLE'));
+		$APPLICATION->SetTitle(GetMessage(IsModuleInstalled('bitrix24') ? 'INTR_MAIL_B24_PAGE_TITLE_MSGVER_1' : 'NTR_MAIL_PAGE_TITLE'));
 
 		$this->arParams['SERVICES'] = CIntranetMailSetupHelper::getMailServices();
 		$this->arParams['MAILBOX']  = CIntranetMailSetupHelper::getUserMailbox($USER->GetID());
@@ -662,7 +662,7 @@ class CIntranetMailSetupComponent extends CBitrixComponent
 
 		if ($serviceId)
 		{
-			$status = self::checkDomainStatus($settings, $error); // не нужно при посте
+			$status = self::checkDomainStatus($settings, $error); // РЅРµ РЅСѓР¶РЅРѕ РїСЂРё РїРѕСЃС‚Рµ
 			if ($error)
 				$errors[] = $error;
 		}

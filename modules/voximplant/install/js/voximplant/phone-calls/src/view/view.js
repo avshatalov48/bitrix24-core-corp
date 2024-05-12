@@ -525,8 +525,9 @@ export class PhoneCallView
 	{
 		this.elements = this.getInitialElements();
 
-		window.removeEventListener('beforeunload', this._unloadHandler);
-		BX.removeCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+		let unloadHandler = this.isDesktop() ? this.#onWindowUnload : this._onBeforeUnloadHandler;
+		window.removeEventListener('beforeunload', unloadHandler);
+		BX.removeCustomEvent(window, "onLocalStorageSet", this.#onExternalEvent);
 		BX.removeCustomEvent("onPullEvent-crm", this._onPullEventCrmHandler);
 
 		this.init();
@@ -3843,12 +3844,18 @@ export class PhoneCallView
 
 	autoCloseAfterTimeout()
 	{
+		console.log('Auto close after timeout', this.commentShown, this.autoCloseTimer, BX.localStorage.get(lsKeys.callInited));
 		if (this.commentShown)
 		{
 				this._onAddCommentButtonClick();
 		}
 
-		this.close();
+		if (!BX.localStorage.get(lsKeys.callInited))
+		{
+			this.close();
+		}
+
+		this.autoCloseTimer = null;
 	};
 
 	updateAutoCloseTimer()
@@ -3936,7 +3943,7 @@ export class PhoneCallView
 			}
 			if (!this.slave)
 			{
-				window.removeEventListener('beforeunload', this._unloadHandler); //master window unload
+				window.removeEventListener('beforeunload', this.#onWindowUnload); //master window unload
 			}
 		}
 		else

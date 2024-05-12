@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\DocumentGenerator\Components\Support\PlaceholderFilter;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main\Loader;
@@ -9,6 +10,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 class DocumentsPlaceholderComponent extends CBitrixComponent
 {
+	private const TITLE_CHAIN_SEPARATOR = ' -> ';
+
 	/** @var Template */
 	protected $template;
 	protected $moduleId;
@@ -176,7 +179,7 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 						'PLACEHOLDER' => '{'.htmlspecialcharsbx($placeholder).'}',
 						//'TITLE' => htmlspecialcharsbx($field['TITLE']),
 						'COPY' => '<a class="docgen-placeholder-copy" onclick="BX.DocumentGenerator.Placeholders.Copy(this, \''.CUtil::JSEscape($placeholder).'\');">'.Loc::getMessage('DOCGEN_PLACEHOLDERS_COPY_ACTION_TITLE').'</a>',
-						'TITLE' => implode(' -> ', array_map('htmlspecialcharsbx', $field['GROUP'])),
+						'TITLE' => implode(self::TITLE_CHAIN_SEPARATOR, array_map('htmlspecialcharsbx', $field['GROUP'])),
 						'VALUE' => htmlspecialcharsbx($field['VALUE']),
 						'TYPE' => $this->getTypeName($field['TYPE']),
 					],
@@ -259,71 +262,13 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 		}
 		elseif($this->dataProvider)
 		{
-			$placeholders = \Bitrix\DocumentGenerator\DataProviderManager::getInstance()->getDefaultTemplateFields($this->dataProvider, [], [], false);
+			$placeholders = DataProviderManager::getInstance()->getDefaultTemplateFields($this->dataProvider, [], [], false);
 		}
 
 		$filterOptions = new Bitrix\Main\UI\Filter\Options($this->filterId);
 		$requestFilter = $filterOptions->getFilter($this->getDefaultFilterFields());
 
-		$placeholderChain = '';
-		foreach($requestFilter as $name => $value)
-		{
-			if(mb_strpos($name, 'provider') === 0 && mb_strlen($name) > 8 && !empty($value))
-			{
-				$placeholderChain .= '.'.$value;
-			}
-		}
-
-		if(!empty($placeholderChain))
-		{
-			$placeholderChain = 'this.SOURCE'.$placeholderChain;
-		}
-
-		$functionName = 'stripos';
-		if(defined('BX_UTF') && BX_UTF && function_exists('mb_stripos'))
-		{
-			$functionName = 'mb_stripos';
-		}
-		if(!empty($requestFilter))
-		{
-			foreach($placeholders as $placeholder => $field)
-			{
-				if(!empty($field['TITLE']))
-				{
-					$title = $field['TITLE'];
-				}
-				else
-				{
-					$title = $placeholder;
-				}
-				if(!empty($placeholderChain) && mb_strpos($field['VALUE'], $placeholderChain) !== 0)
-				{
-					unset($placeholders[$placeholder]);
-					continue;
-				}
-				if(isset($requestFilter['placeholder']) && $functionName($placeholder, $requestFilter['placeholder']) === false)
-				{
-					unset($placeholders[$placeholder]);
-					continue;
-				}
-				if(!empty($requestFilter['title']) && (!empty($title) && $functionName($title, $requestFilter['title']) === false || empty($title)))
-				{
-					unset($placeholders[$placeholder]);
-					continue;
-				}
-				if(isset($requestFilter['FIND']) && !empty($requestFilter['FIND']) && (
-					(!empty($title) && $functionName($title, $requestFilter['FIND']) === false || empty($title)) &&
-					$functionName($placeholder, $requestFilter['FIND']) === false
-					)
-				)
-				{
-					unset($placeholders[$placeholder]);
-					continue;
-				}
-			}
-		}
-
-		return $placeholders;
+		return (new PlaceholderFilter(self::TITLE_CHAIN_SEPARATOR))->filter($placeholders, $requestFilter);
 	}
 
 	/**

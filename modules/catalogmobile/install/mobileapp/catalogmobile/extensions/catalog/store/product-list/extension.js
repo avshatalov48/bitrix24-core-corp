@@ -14,8 +14,7 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 	const { StoreProductSelectorAdapter } = require('catalog/store/product-list/services/product-selector-adapter');
 	const { StoreProductListWizardAdapter } = require('catalog/store/product-list/services/wizard-adapter');
 	const { clone } = require('utils/object');
-	const { Alert } = require('alert');
-	const { ButtonType } = require('alert/confirm');
+	const { confirmDestructiveAction } = require('alert');
 	const { Loc } = require('loc');
 
 	/**
@@ -213,23 +212,13 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 
 		confirmRemovingItem(productRow)
 		{
-			Alert.confirm(
-				'',
-				BX.message('CSPL_PRODUCT_DELETE_CONFIRMATION'),
-				[
-					{
-						text: BX.message('CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL'),
-						type: ButtonType.CANCEL,
-					},
-					{
-						text: BX.message('CSPL_PRODUCT_DELETE_CONFIRMATION_OK'),
-						type: ButtonType.DESTRUCTIVE,
-						onPress: () => {
-							this.removeItem(productRow);
-						},
-					},
-				],
-			);
+			confirmDestructiveAction({
+				title: '',
+				description: Loc.getMessage('CSPL_PRODUCT_DELETE_CONFIRMATION'),
+				onDestruct: () => {
+					this.removeItem(productRow);
+				},
+			});
 		}
 
 		removeItem(productRow)

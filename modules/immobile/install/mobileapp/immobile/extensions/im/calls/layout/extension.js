@@ -273,6 +273,7 @@
 		ReplaceSpeaker: "replaceSpeaker",
 		SetCentralUser: "setCentralUser",
 		SelectAudioDevice: "selectAudioDevice",
+		ToggleSubscriptionRemoteVideo: "toggleSubscriptionRemoteVideo"
 	};
 
 	class CallLayout extends LayoutComponent
@@ -302,6 +303,7 @@
 			this.state = {
 				screenWidth: 0,
 				screenHeight: 0,
+				toggleListPrev: [],
 				width: "100%",
 				height: "100%",
 				status: props.status || "none",
@@ -312,6 +314,7 @@
 				remoteStream: null,
 				localStream: null,
 				mirrorLocalVideo: true,
+				hideLocalVideo: false,
 				showParticipants: true,
 				showUserSelector: true,
 				centralUserId: this.userId,
@@ -441,6 +444,13 @@
 				localStream: this.videoStreams.hasOwnProperty(this.userId) ? this.videoStreams[this.userId] : null,
 			});
 			this.emit(EventName.SetCentralUser, [userId]);
+			console.log(this.userRegistry, typeof this.userRegistry.users, 'userReg')
+
+			const userIds = [];
+			this.userRegistry.users.forEach(user => {
+				userIds.push(user.id)
+			})
+			this.toggleSubscriptionRemoteVideo(userIds)
 		}
 
 		pinUser(userId)
@@ -628,6 +638,13 @@
 			});
 		}
 
+		setHideLocalVideo(hideLocalVideo)
+		{
+			this.setState({
+				hideLocalVideo: hideLocalVideo,
+			});
+		}
+
 		setMuted(isMuted)
 		{
 			this.localUserModel.microphoneState = !isMuted;
@@ -680,10 +697,18 @@
 					this.switchPresenter();
 				}
 			}
+
 			this.setState({
 				connectedUsers: this.getConnectedUsers(),
+				floorRequestUsers: this.getFloorRequestUsers(),
 				status: newCallStatus,
 			});
+
+			const userIds = [];
+			this.userRegistry.users.forEach(user => {
+				userIds.push(user.id)
+			})
+			this.toggleSubscriptionRemoteVideo(userIds)
 		}
 
 		getUserTalking(userId)
@@ -795,6 +820,68 @@
 			}
 		}
 
+		toggleSubscriptionRemoteVideo(ids)
+		{
+			if (!ids.length) return;
+
+			const toggleList = [];
+			const leftUserId = this.getLeftUser(this.centralUserId)
+			const rigthUserId = this.getRightUser(this.centralUserId)
+
+			const checkNecessityAddUser = (newState) => {
+				const currentUser = this.state.toggleListPrev.find(user => user.id === newState.id);
+
+				return !!(!currentUser ||
+					(
+						currentUser &&
+						(
+							currentUser.quality !== newState.quality ||
+							currentUser.isShowVideo !== newState.isShowVideo
+						)
+					));
+
+
+			}
+
+			ids.forEach(id => {
+				const userModel = this.userRegistry.get(id);
+
+				if (!userModel || userModel.localUser || userModel.state !== "Connected") return;
+
+				const isActiveUser = id === this.centralUserId || id === leftUserId || id === rigthUserId;
+
+				if (isActiveUser)
+				{
+					toggleList.push({
+						id,
+						quality: id === this.centralUserId ? 2 : 1,
+						isShowVideo: true,
+					})
+
+
+				}
+
+				if (!isActiveUser) {
+					toggleList.push( {
+						id,
+						quality: 1,
+						isShowVideo: false,
+					})
+				}
+			})
+
+
+
+			const filterToggleList = toggleList.filter(item => checkNecessityAddUser(item))
+
+			this.state.toggleListPrev = toggleList;
+
+
+			if (filterToggleList.length) {
+				this.emit(EventName.ToggleSubscriptionRemoteVideo, [filterToggleList])
+			}
+		}
+
 		setVideoStream(userId, stream, mirrorLocalVideo = false)
 		{
 			let userModel = this.userRegistry.get(userId);
@@ -856,7 +943,7 @@
 
 		renderLocalStream(showInFrame)
 		{
-			if (!this.state.localStream)
+			if (!this.state.localStream || this.state.hideLocalVideo)
 			{
 				return null;
 			}
@@ -1276,7 +1363,11 @@
 			let avatar = {};
 			if (!this.state.remoteStream)
 			{
-				if (this.userRegistry.get(this.state.centralUserId).avatar && !isAvatarBlank(this.userRegistry.get(this.state.centralUserId).avatar))
+				if (this.videoStreams[this.state.centralUserId] && this.state.centralUserId != userId)
+				{
+					this.state.remoteStream = this.videoStreams[this.state.centralUserId];
+				}
+				else if (this.userRegistry.get(this.state.centralUserId).avatar && !isAvatarBlank(this.userRegistry.get(this.state.centralUserId).avatar))
 				{
 					avatar.backgroundImage = this.userRegistry.get(this.state.centralUserId).avatar;
 				}
@@ -1634,7 +1725,9 @@
 					style: {
 						bottom: (isLandscape ? 99 : 146) + (getSafeArea().bottom > 0 ? Math.min(getSafeArea().bottom, 10) : 0),
 						...styles.userSelector,
-						...(this.state.panelVisible ? {} : {
+						...(this.state.panelVisible ? {
+							display: "flex"
+						} : {
 							display: "none",
 							position: "relative", // display: none + position: absolute does not work
 						}),
@@ -1669,7 +1762,9 @@
 						left: 16 + getSafeArea().left,
 						bottom: 89 + (getSafeArea().bottom > 0 ? Math.min(getSafeArea().bottom, 10) : 0),
 						...styles.centralUser,
-						...(this.state.panelVisible ? {} : {
+						...(this.state.panelVisible ? {
+							display: "flex"
+						} : {
 							display: "none",
 							position: "relative", // display: none + position: absolute does not work
 						}),
@@ -1789,18 +1884,28 @@
 				iconClass: "copyInvite",
 				onClick: () => console.log("e")
 			});*/
-			menuItems.push({
-				text: BX.message("MOBILE_CALL_MENU_SOUND_OUTPUT")
-					.replace("#DEVICE_NAME#", this.getSoundDeviceName(CallUtil.getSdkAudioManager().currentDevice)),
-				iconClass: this.getSoundDeviceIcon(CallUtil.getSdkAudioManager().currentDevice),
-				onClick: () =>
-				{
-					if (callMenu)
+
+			// todo: update after testing on iOS
+			// for iOS we want to use system controls and we can use Application.getPlatform()
+			// to determine if we need to hide below item
+			// but we also need to test if this UX solution is comfortable
+			// so we will use extra flag for iOS
+			if (CallUtil.getSdkAudioManager().showSoundOutputMenu !== false)
+			{
+				menuItems.push({
+					text: BX.message("MOBILE_CALL_MENU_SOUND_OUTPUT")
+						.replace("#DEVICE_NAME#", this.getSoundDeviceName(CallUtil.getSdkAudioManager().currentDevice)),
+					iconClass: this.getSoundDeviceIcon(CallUtil.getSdkAudioManager().currentDevice),
+					onClick: () =>
 					{
-						callMenu.close().then(() => this.showSoundOutputMenu());
-					}
-				},
-			});
+						if (callMenu)
+						{
+							callMenu.close().then(() => this.showSoundOutputMenu());
+						}
+					},
+				});
+			}
+
 			menuItems.push({
 				separator: true,
 			});

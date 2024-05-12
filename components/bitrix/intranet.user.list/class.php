@@ -1513,6 +1513,9 @@ class CIntranetUserListComponent extends UserList
 		//TODO: replace to new \Bitrix\Main\Filter\Filter::getFieldArrays after main will be stable
 		$result['FILTER'] = $this->getFilterFields($entityFilter, $usedFields);
 		$result['ROWS'] = [];
+		$result['GRID_COLUMNS'] = [];
+		$result['ROWS_COUNT'] = 0;
+		$result['NAV_OBJECT'] = null;
 
 		$gridFilter = $filterOptions->getFilter($result['FILTER']);
 		$gridFilter['EXTRANET'] = $gridFilter['EXTRANET'] ?? null;

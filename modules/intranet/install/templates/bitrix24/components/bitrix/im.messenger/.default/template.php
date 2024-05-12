@@ -14,7 +14,7 @@ if ($v2MessengerEnabled)
 {
 	\Bitrix\Main\UI\Extension::load("im.v2.application.quick-access");
 }
-\Bitrix\Main\UI\Extension::load(['ui.tutor', 'ui.design-tokens', 'im.public']);
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'im.public']);
 $this->SetViewTarget("im-fullscreen");
 ?>
 <div class="bx-desktop bx-im-fullscreen-popup" id="im-workarea-popup">
@@ -144,31 +144,7 @@ $this->SetViewTarget("im", 100);
 		<div class="bx-im-scroll-wrap" id="bx-im-external-recent-list"></div>
 	</div>
 
-	<div class="bx-im-bottom-block" id="bx-im-bottom-block">
-		<div id="ui-tutor-btn-wrap" class="ui-tutor-btn-wrap"></div>
-		<div id="tutorial_feedback" style="display: none;">
-			<?
-			$feedbackFormIdTutorial = 'tutorial_feedback';
-			$APPLICATION->IncludeComponent(
-				'bitrix:ui.feedback.form',
-				'',
-				[
-					'ID' => $feedbackFormIdTutorial,
-					'FORMS' => [
-						['zones' => ['com.br'], 'id' => '140','lang' => 'br', 'sec' => 'y3ri4i'],
-						['zones' => ['es'], 'id' => '142','lang' => 'la', 'sec' => 'gt3i4o'],
-						['zones' => ['de'], 'id' => '144','lang' => 'de', 'sec' => 'tuuz7v'],
-						['zones' => ['ua'], 'id' => '148','lang' => 'ua', 'sec' => 'mbt3n2'],
-						['zones' => ['ru', 'by', 'kz'], 'id' => '138','lang' => 'ru', 'sec' => 'ike989'],
-						['zones' => ['en'], 'id' => '146','lang' => 'en', 'sec' => '7fjsmc'],
-					],
-					'PRESETS' => [],
-					'VIEW_TARGET' => null
-				]
-			);?>
-
-		</div>
-	</div>
+	<div class="bx-im-bottom-block" id="bx-im-bottom-block"></div>
 	<svg width="0" height="0" style="display: block">
 		<defs>
 			<clipPath id="clip-avatar">
@@ -186,39 +162,9 @@ $this->SetViewTarget("im", 100);
 <?$frame = $this->createFrame("im")->begin("");
 	$arResult['EXTERNAL_RECENT_LIST'] = "bx-im-external-recent-list";
 ?>
-<?
-$tutorialDataJson = '';
-try
-{
-	$externalData = \CUserOptions::GetOption('external', 'notification', []);
-	$tutorialDataJson = \Bitrix\Main\Web\Json::encode([
-		'tutorialData' => \Bitrix\Main\Web\Json::decode($externalData['tutorials'] ?? ''),
-		'eventService' => \Bitrix\Main\Web\Json::decode($externalData['eventService'] ?? ''),
-		'lastCheckTime' => $externalData['lastCheckTime'] ?? '',
-	]);
-}
-catch(\Bitrix\Main\ArgumentException $exception)
-{
-	$tutorialDataJson = '{}';
-}
-
-$helpdeskUrl = "";
-if (\Bitrix\Main\Loader::includeModule("ui"))
-{
-	$helpdeskUrl = \Bitrix\UI\Util::getHelpdeskUrl(true);
-}
-?>
 <script>
 	BX.ready(function() {
 		BX.Intranet.Bitrix24.ImBar.init(<?= \Bitrix\Main\Web\Json::encode($v2MessengerEnabled) ?>);
-		if(BX.UI && BX.UI.Tutor && BX.UI.Tutor.Manager)
-		{
-			BX.UI.Tutor.Manager.init(
-				<?=$tutorialDataJson;?>,
-				"<?=$helpdeskUrl?>",
-				"<?=CUtil::JSEscape($feedbackFormIdTutorial)?>"
-			);
-		}
 	});
 	<?php
 		if ($v2MessengerEnabled)

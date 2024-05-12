@@ -83,6 +83,26 @@ class Product
 		return \CCrmCurrency::MoneyToString($this->getSumAccount(), $currencyId);
 	}
 
+	public function getProductParentId(): ?int
+	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return null;
+		}
+		if ($this->getType() !== ProductTable::TYPE_OFFER)
+		{
+			return null;
+		}
+		$productId = $this->getProductId();
+		if ($productId <= 0)
+		{
+			return null;
+		}
+		$parentProduct = \CCatalogSku::getProductList($productId);
+
+		return ($parentProduct[$productId]['ID'] ?? null);
+	}
+
 	public static function fetchFromTableByFilter(array $filter = []): ?self
 	{
 		return static::fetchFromTable([
@@ -219,6 +239,10 @@ class Product
 				'Name' => 'XML ID',
 				'Type' => FieldType::STRING,
 				'Default' => '',
+			],
+			'PRODUCT_PARENT_ID' => [
+				'Name' => Loc::getMessage('CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_PRODUCT_PARENT_ID'),
+				'Type' => FieldType::INT,
 			],
  		];
 

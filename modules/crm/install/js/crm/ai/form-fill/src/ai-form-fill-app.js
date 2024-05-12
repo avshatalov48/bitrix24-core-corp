@@ -1,9 +1,9 @@
+import { Call } from 'crm.ai.call';
+import { Slider } from 'crm.ai.slider';
 import { addCustomEvent, Loc, removeAllCustomEvents, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 import { AiFormFillApplication } from './app';
 import SliderButtonsAdapter from './services/slider-buttons-adapter';
-import { Call } from 'crm.ai.call';
-import { Slider } from 'crm.ai.slider';
 
 export let sliderButtonsAdapter: ?SliderButtonsAdapter = null;
 
@@ -16,8 +16,6 @@ interface CreateOptions
 	activityId: number;
 	ownerId: number;
 	ownerTypeId: number;
-	crmMode: string,
-	callId: string,
 }
 
 class ConflictFieldsliderCreator
@@ -145,8 +143,7 @@ class ConflictFieldsliderCreator
 			this.#containerId,
 			{
 				mergeUuid: this.#options.mergeUuid,
-				crmMode: this.#options.crmMode,
-				callId: this.#options.callId,
+				activityId: this.#options.activityId,
 			},
 		);
 		this.#app.start();

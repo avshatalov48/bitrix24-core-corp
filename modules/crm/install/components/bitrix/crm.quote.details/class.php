@@ -116,6 +116,11 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		return true;
 	}
 
+	protected function getDeleteMessage(): string
+	{
+		return Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_MSGVER_1');
+	}
+
 	protected function getEntityEditorMessages(): array
 	{
 		return [
@@ -288,6 +293,9 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				'containerId' => $convertButton->getMainButton()->getAttribute('id'),
 				'labelId' => $convertButton->getMainButton()->getAttribute('id'),
 				'buttonId' => $convertButton->getMenuButton()->getAttribute('id'),
+				'analytics' => [
+					'c_element' => \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CONVERT_BUTTON,
+				],
 			],
 			'converter' => [
 				'configItems' => $conversionConfig->toJson(),
@@ -307,6 +315,9 @@ class CrmQuoteDetailsComponent extends FactoryBased
 						'syncEditorEntityListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_ENTITY_LIST'),
 						'continueButton' => Loc::getMessage('CRM_COMMON_CONTINUE'),
 						'cancelButton' => Loc::getMessage('CRM_COMMON_CANCEL'),
+					],
+					'analytics' => [
+						'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 					],
 				],
 			],
@@ -388,36 +399,6 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		$parameters['buttons'] = $buttons;
 
 		return $parameters;
-	}
-
-	protected function getSettingsToolbarButton(): Buttons\SettingsButton
-	{
-		$items = [];
-		$itemCopyUrl = Container::getInstance()->getRouter()->getItemCopyUrl(
-			$this->getEntityTypeID(),
-			$this->item->getId(),
-		);
-		$userPermissions = Container::getInstance()->getUserPermissions();
-		if ($itemCopyUrl && $userPermissions->canAddItem($this->item))
-		{
-			$items[] = [
-				'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
-				'href' => $itemCopyUrl,
-			];
-		}
-		if ($userPermissions->canDeleteItem($this->item))
-		{
-			$items[] = [
-				'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE_MSGVER_1'),
-				'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
-			];
-		}
-
-		return new Buttons\SettingsButton([
-			'menu' => [
-				'items' => $items,
-			],
-		]);
 	}
 
 	protected function getActionsToolbarButton(): Buttons\Button
@@ -608,7 +589,12 @@ class CrmQuoteDetailsComponent extends FactoryBased
 							'ENABLE_TOOLBAR' => true,
 							'PRESERVE_HISTORY' => true,
 							// compatible entity-specific event name
-							'ADD_EVENT_NAME' => 'CrmCreateDealFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE)
+							'ADD_EVENT_NAME' => 'CrmCreateDealFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE),
+							'ANALYTICS' => [
+								// we dont know where from this component was opened from - it could be anywhere on portal
+								// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+								'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+							],
 						], 'crm.deal.list')
 					],
 				],
@@ -639,6 +625,11 @@ class CrmQuoteDetailsComponent extends FactoryBased
 							// compatible entity-specific event name
 							'ADD_EVENT_NAME' => 'CrmCreateInvoiceFrom'
 								. mb_convert_case($this->getEntityName(), MB_CASE_TITLE),
+							'ANALYTICS' => [
+								// we dont know where from this component was opened from - it could be anywhere on portal
+								// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+								'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+							],
 						], 'crm.invoice.list'),
 					],
 				],

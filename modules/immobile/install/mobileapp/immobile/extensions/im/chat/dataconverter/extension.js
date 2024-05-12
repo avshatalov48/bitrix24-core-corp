@@ -17,7 +17,7 @@ ChatDataConverter.init = function(config)
 	this.isIntranetInvitationAdmin = config.isIntranetInvitationAdmin === true;
 	this.listType = config.listType === 'lines' ? 'lines' : 'recent';
 	this.updateRuntimeData = typeof config.updateRuntimeDataFunction === 'function' ? config.updateRuntimeDataFunction : (element) => {};
-	this.imagePath = `${component.path}images`;
+	this.imagePath = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/png';
 };
 
 ChatDataConverter.getElementFormat = function(element)

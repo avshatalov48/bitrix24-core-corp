@@ -20,6 +20,8 @@ jn.define('im/messenger/const/bot', (require, exports, module) => {
 	const BotCode = Object.freeze({
 		marta: 'marta',
 		giphy: 'giphy',
+		support: 'support',
+		copilot: 'copilot',
 	});
 
 	const BotCommand = Object.freeze({

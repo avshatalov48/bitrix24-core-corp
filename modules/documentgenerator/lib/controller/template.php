@@ -4,6 +4,7 @@
 
 namespace Bitrix\DocumentGenerator\Controller;
 
+use Bitrix\DocumentGenerator\Body;
 use Bitrix\DocumentGenerator\Body\Docx;
 use Bitrix\DocumentGenerator\DataProvider\Rest;
 use Bitrix\DocumentGenerator\DataProviderManager;
@@ -165,6 +166,7 @@ class Template extends Base
 			}
 		}
 		$fields['bodyType'] = Docx::class;
+		$fields['isDefault'] = 'N';
 		$fields['createdBy'] = Driver::getInstance()->getUserId();
 		$converter = new Converter(Converter::TO_UPPER | Converter::KEYS | Converter::TO_SNAKE);
 		$templateData = $converter->process($fields);
@@ -227,6 +229,20 @@ class Template extends Base
 		{
 			$fields['providers'] = [];
 		}
+
+		if (
+			isset($templateData['FILE_ID'])
+			&& is_numeric($templateData['FILE_ID'])
+			&& (int)$templateData['FILE_ID'] > 0
+			&& is_numeric($template->FILE_ID)
+			&& (int)$template->FILE_ID > 0
+			&& (int)$templateData['FILE_ID'] !== (int)$template->FILE_ID
+		)
+		{
+			// even if the template was default previously, it won't be default anymore, since we want to change its body
+			$templateData['IS_DEFAULT'] = 'N';
+		}
+
 		$result = $this->add($templateData, $fields['providers'], $fields['users']);
 		if($result->isSuccess())
 		{
@@ -279,6 +295,7 @@ class Template extends Base
 				return null;
 			}
 			$template = $templates[$code];
+
 			$result = $this->installDefaultTemplate($template);
 		}
 		if(!$result->isSuccess())
@@ -290,32 +307,6 @@ class Template extends Base
 	}
 
 	/**
-	 * Install template if template with the same code does not already exist
-	 *
-	 * @param array $template
-	 * @return Result
-	 */
-	public function installDefaultTemplateIfNotExists(array $template): Result
-	{
-		$code = $template['CODE'] ?? null;
-		if (!empty($code))
-		{
-			$existedRecord = TemplateTable::query()
-				->where('CODE', $code)
-				->setSelect(['ID'])
-				->setLimit(1)
-				->fetch()
-			;
-			if ($existedRecord)
-			{
-				return new Result();
-			}
-		}
-
-		return $this->installDefaultTemplate($template);
-	}
-
-	/**
 	 * Install default template.
 	 *
 	 * @param array $template
@@ -324,7 +315,12 @@ class Template extends Base
 	public function installDefaultTemplate(array $template)
 	{
 		$result = new Result();
-		/** @var \Bitrix\DocumentGenerator\Body $body */
+		if (!isset($template['BODY_TYPE']) || !is_a($template['BODY_TYPE'], Body::class, true))
+		{
+			return $result->addError(new Error('Template body type is invalid'));
+		}
+
+		/** @var Body $body */
 		$body = new $template['BODY_TYPE']('');
 		$bodyFile = new \Bitrix\Main\IO\File(Path::combine(Application::getDocumentRoot(), $template['FILE']));
 		if($bodyFile->isExists())
@@ -393,6 +389,7 @@ class Template extends Base
 				unset($template['ID']);
 			}
 			$template['IS_DELETED'] = 'N';
+			$template['IS_DEFAULT'] = 'Y';
 			$providers = $template['PROVIDERS'];
 			unset($template['PROVIDER_NAMES']);
 			unset($template['PROVIDERS']);
@@ -406,6 +403,53 @@ class Template extends Base
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @internal
+	 */
+	final public function updateBodyOfDefaultTemplate(array $defaultTemplateDescription): Result
+	{
+		$result = new Result();
+
+		$id = (int)($defaultTemplateDescription['ID'] ?? 0);
+		if ($id <= 0)
+		{
+			return $result->addError(new Error('ID not found'));
+		}
+
+		$oldTemplate = TemplateTable::query()->setSelect(['IS_DEFAULT'])->where('ID', $id)->fetchObject();
+		if ($oldTemplate?->getIsDefault() !== true)
+		{
+			return $result->addError(new Error('Template not found or its not default'));
+		}
+
+		if (
+			!isset($defaultTemplateDescription['BODY_TYPE'])
+			|| !is_a($defaultTemplateDescription['BODY_TYPE'], Body::class, true)
+		)
+		{
+			return $result->addError(new Error('Template body type is invalid'));
+		}
+
+		/** @var Body $body */
+		$body = new $defaultTemplateDescription['BODY_TYPE']('');
+		$bodyFile = new \Bitrix\Main\IO\File(Path::combine(Application::getDocumentRoot(), $defaultTemplateDescription['FILE']));
+		if (!$bodyFile->isExists() || !$bodyFile->isReadable())
+		{
+			return $result->addError(new Error('File '.$bodyFile->getPath().' is not exist'));
+		}
+
+		$fileArray = \CFile::MakeFileArray($bodyFile->getPath(), $body->getFileMimeType());
+		$fileArray['isTemplate'] = true;
+
+		$fileSaveResult = FileTable::saveFile($fileArray);
+		if (!$fileSaveResult->isSuccess())
+		{
+			return $fileSaveResult;
+		}
+
+		return $this->add(['ID' => $id, 'FILE_ID' => $fileSaveResult->getId()]);
 	}
 
 	/**
@@ -480,13 +524,13 @@ class Template extends Base
 
 		$templates = array_values($templates);
 
-		$providers = DataProviderManager::getInstance()->getList();
+		$availableProviders = DataProviderManager::getInstance()->getList();
 		$extendedProviders = [];
-		foreach($providers as $provider)
+		foreach($availableProviders as $singleAvailableProvider)
 		{
-			if(isset($provider['ORIGINAL']))
+			if(isset($singleAvailableProvider['ORIGINAL']))
 			{
-				$extendedProviders[$provider['ORIGINAL']][] = $provider;
+				$extendedProviders[$singleAvailableProvider['ORIGINAL']][] = $singleAvailableProvider;
 			}
 		}
 		$buffer = $names = $codes = [];
@@ -508,7 +552,7 @@ class Template extends Base
 				}
 				else
 				{
-					$template['PROVIDER_NAMES'][] = $providers[mb_strtolower($provider)]['NAME'];
+					$template['PROVIDER_NAMES'][] = $availableProviders[mb_strtolower($provider)]['NAME'];
 				}
 			}
 			$buffer[$template['CODE']] = $template;
@@ -522,6 +566,7 @@ class Template extends Base
 				'NAME',
 				'CODE',
 				'IS_DELETED',
+				'IS_DEFAULT',
 			],
 			'order' => [
 				'ID' => 'desc'
@@ -539,6 +584,7 @@ class Template extends Base
 				if($oldTemplate['CODE'] == $unFoundTemplate['CODE'] && $oldTemplate['NAME'] == $unFoundTemplate['NAME'])
 				{
 					$templates[$code]['IS_DELETED'] = $oldTemplate['IS_DELETED'];
+					$templates[$code]['IS_DEFAULT'] = $oldTemplate['IS_DEFAULT'];
 					$templates[$code]['ID'] = $oldTemplate['ID'];
 					$templates[$code]['FILE_ID'] = $oldTemplate['FILE_ID'];
 					unset($unFoundTemplates[$code]);

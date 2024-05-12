@@ -132,7 +132,12 @@ class CrmField extends BaseField
 
 	protected function convertToWebType($value): ?string
 	{
-		if ($this->isCrmModuleIncluded && is_array($value) && count($value) === 2)
+		if (
+			$this->isCrmModuleIncluded
+			&& is_array($value)
+			&& count($value) === 2
+			&& isset($value[0], $value[1])
+		)
 		{
 			$typeAbbr = null;
 			$id = 0;
@@ -156,7 +161,7 @@ class CrmField extends BaseField
 			{
 				if (count($this->allowedEntityTypes) === 1)
 				{
-					return $id;
+					return (string)$id;
 				}
 
 				return $typeAbbr . '_' . $id;

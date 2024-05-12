@@ -2,7 +2,6 @@
 
 namespace Bitrix\BIConnector\Integration\Superset\Integrator;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Result;
@@ -14,6 +13,8 @@ use Bitrix\Main\Web\Json;
 
 final class ProxySender extends MicroService\BaseSender
 {
+	private const API_VERSION = 2;
+
 	protected function getServiceUrl(): string
 	{
 		return SupersetServiceLocation::getCurrentServiceUrl();
@@ -27,7 +28,7 @@ final class ProxySender extends MicroService\BaseSender
 	/**
 	 * @inheritDoc
 	 */
-	public function performRequest($action, array $parameters = []): Result
+	public function performRequest($action, array $parameters = [], Dto\User $user = null): Result
 	{
 		$httpClient = $this->buildHttpClient();
 
@@ -41,6 +42,11 @@ final class ProxySender extends MicroService\BaseSender
 		$request["BX_TYPE"] = Client::getPortalType();
 		$request["BX_LICENCE"] = Client::getLicenseCode();
 		$request["SERVER_NAME"] = Client::getServerName();
+		if ($user && $user->clientId)
+		{
+			$request["BX_CLIENT_ID"] = $user->clientId;
+		}
+		$request["BX_VERSION"] = self::API_VERSION;
 		$request["BX_HASH"] = Client::signRequest($request);
 
 		$result = $httpClient->query(HttpClient::HTTP_POST, $url, $request);
@@ -48,7 +54,7 @@ final class ProxySender extends MicroService\BaseSender
 		return $this->buildResult($httpClient, $result);
 	}
 
-	public function performMultipartRequest($action, array $parameters = []): Result
+	public function performMultipartRequest($action, array $parameters = [], Dto\User $user = null): Result
 	{
 		$httpClient = $this->buildHttpClient();
 		$url = $this->getServiceUrl() . $this->getProxyPath() . $action;
@@ -69,6 +75,13 @@ final class ProxySender extends MicroService\BaseSender
 			'BX_LICENCE' => Client::getLicenseCode(),
 			'SERVER_NAME' => Client::getServerName(),
 		];
+
+		if ($user && $user->clientId)
+		{
+			$data['BX_CLIENT_ID'] = $user->clientId;
+		}
+
+		$data['BX_VERSION'] = self::API_VERSION;
 		$data['BX_HASH'] = Client::signRequest($data);
 		$data[] = [
 			'resource' => $fileData,

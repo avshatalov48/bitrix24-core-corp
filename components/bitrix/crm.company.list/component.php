@@ -16,7 +16,6 @@ use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
@@ -452,7 +451,8 @@ if (!$bInternal)
 			'ID' => $arResult['GRID_ID'],
 			'categoryID' => $arResult['CATEGORY_ID'],
 			'flags' => $filterFlags,
-			'UNSUPPORTED_FIELDS' => []
+			'UNSUPPORTED_FIELDS' => [],
+			'MYCOMPANY_MODE' => $isMyCompanyMode,
 		],)
 	);
 	$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Company())
@@ -749,8 +749,11 @@ if ($factory && $category)
 
 $CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
-$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
-	->sections($factory);
+if (!$isMyCompanyMode)
+{
+	$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
+		->sections($factory);
+}
 
 $arBPData = [];
 if ($isBizProcInstalled)
@@ -788,11 +791,13 @@ if ($isBizProcInstalled)
 $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Company);
 
 //region Check and fill fields restriction
-$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
-	$arResult['GRID_ID'] ?? '',
+$params = [
+	$arResult['GRID_ID'],
 	$arResult['HEADERS'] ?? [],
 	$entityFilter ?? null
-);
+];
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(...$params);
+$arResult['RESTRICTED_FIELDS'] = $fieldRestrictionManager->getFilterFields(...$params);
 //endregion
 
 // list all filds for export
@@ -2216,10 +2221,31 @@ foreach($arResult['COMPANY'] as &$arCompany)
 		);
 	}
 
-	$arCompany['PATH_TO_COMPANY_COPY'] =  CHTTP::urlAddParams(
-		$arCompany['PATH_TO_COMPANY_EDIT'],
-		['copy' => 1]
-	);
+	$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Company)
+		->setSection(
+			!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+				? $arParams['ANALYTICS']['c_section']
+				: null
+		)
+		->setSubSection(
+			!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+				? $arParams['ANALYTICS']['c_sub_section']
+				: null
+		)
+		->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+		->setP3WithBooleanValue('myCompany', $isMyCompanyMode)
+	;
+	if ($category && $category->getCode())
+	{
+		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+	}
+	$arCompany['PATH_TO_COMPANY_COPY'] = $analyticsEventBuilder
+		->buildUri($arCompany['PATH_TO_COMPANY_EDIT'])
+		->addParams([
+			'copy' => 1,
+		])
+		->getUri()
+	;
 
 	$arCompany['PATH_TO_COMPANY_DELETE'] =  CHTTP::urlAddParams(
 		$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_COMPANY_LIST'],
@@ -2613,10 +2639,6 @@ if (is_array($arResult['COMPANY_ID']) && !empty($arResult['COMPANY_ID']))
 
 if (!$isInExportMode)
 {
-	$arResult['ANALYTIC_TRACKER'] = array(
-		'lead_enabled' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isEnabled() ? 'Y' : 'N'
-	);
-
 	$arResult['NEED_FOR_REBUILD_DUP_INDEX'] =
 		$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] =
 		$arResult['NEED_FOR_REBUILD_COMPANY_ATTRS'] =

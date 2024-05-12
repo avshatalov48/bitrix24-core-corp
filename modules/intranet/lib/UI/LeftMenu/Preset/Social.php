@@ -23,6 +23,7 @@ class Social extends PresetAbstract
 			'menu_marketing',
 			'menu_sites',
 			'menu_shop',
+			'menu_sign_b2e',
 			'menu_sign',
 			'menu_company',
 			'menu_bizproc_sect',

@@ -20,6 +20,11 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 				methodParams.SKIP_OPENLINES = options.skipOpenlines ? 'Y' : 'N';
 			}
 
+			if (Type.isBoolean(options.onlyCopilot))
+			{
+				methodParams.ONLY_COPILOT = options.onlyCopilot ? 'Y' : 'N';
+			}
+
 			if (options.lastMessageDate)
 			{
 				methodParams.LAST_MESSAGE_DATE = options.lastMessageDate;

@@ -29,7 +29,7 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		return COLORS[id % COLORS.length];
 	};
 
-	// const SPECIAL_SYMBOLS_PATTERN = /[!"#$%&'()*,./:;<>?@[\\\]^`{|}~-]/;
+	const SPECIAL_SYMBOLS_PATTERN = /[!"#$%&'()*,./:;<>?@[\\\]^`{|}~-]/;
 
 	/**
 	 * @param {string} name
@@ -48,13 +48,11 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 
 			for (const letter of word)
 			{
-				// ToDo unify logic with web and messenger
-				// if (
-				// 	!SPECIAL_SYMBOLS_PATTERN.test(letter)
-				// 	&& !WordSeparator.hasEmojiWord(letter)
-				// )
-				initials += letter;
-				break;
+				if (!SPECIAL_SYMBOLS_PATTERN.test(letter))
+				{
+					initials += letter;
+					break;
+				}
 			}
 		}
 
@@ -126,5 +124,5 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		}),
 	);
 
-	module.exports = { EmptyAvatar };
+	module.exports = { EmptyAvatar, getColor };
 });

@@ -134,3 +134,7 @@
 	font-weight: 400;
 	line-height: normal;
 }
+
+.ui-entity-editor-content-block .ui-tag-selector-outer-container {
+	border-radius: var(--ui-border-radius-3xs);
+}

@@ -64,6 +64,7 @@ $editorsContainerId = $guid . '_editors_container';
 $jsParams = [
 	'entityTypeId' => $arResult['entityTypeId'],
 	'entityId' => $arResult['entityId'],
+	'entityCategoryId' => $arResult['entityCategoryId'],
 	'isReadonly' => $arResult['isReadonly'],
 	'containerId' => $editorsContainerId,
 	'menuId' => $menuId,

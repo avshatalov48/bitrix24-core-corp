@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_activity_fileUploader,crm_activity_settingsPopup,ui_notification,ui_vue3,crm_timeline_tools,main_date,main_popup,crm_field_itemSelector,main_core,main_core_events,ui_entitySelector) {
+(function (exports,crm_activity_fileUploader,crm_activity_settingsPopup,ui_notification,ui_vue3,crm_ai_copilotTextarea,crm_timeline_tools,main_date,main_popup,crm_field_itemSelector,main_core,main_core_events,ui_entitySelector) {
 	'use strict';
 
 	const TodoEditorActionBtn = {
@@ -276,10 +277,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    additionalButtons: Array,
 	    popupMode: Boolean,
 	    currentUser: Object,
-	    pingSettings: Object
+	    pingSettings: Object,
+	    copilotSettings: Object
 	  },
 	  data() {
 	    var _this$deadline;
+	    const isCopilotEnabled = main_core.Type.isPlainObject(this.copilotSettings);
 	    return {
 	      description: this.defaultDescription,
 	      currentDeadline: (_this$deadline = this.deadline) !== null && _this$deadline !== void 0 ? _this$deadline : new Date(),
@@ -287,7 +290,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      responsibleUserId: this.currentUser.userId,
 	      showFileUploader: false,
 	      isTextareaToLong: false,
-	      wasUsed: false
+	      wasUsed: false,
+	      isCopilotEnabled: isCopilotEnabled,
+	      placeholderText: main_core.Loc.getMessage(isCopilotEnabled ? 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER_WITH_COPILOT' : 'CRM_ACTIVITY_TODO_ADD_PLACEHOLDER')
 	    };
 	  },
 	  computed: {
@@ -337,6 +342,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.$refs.textarea.focus();
 	    },
 	    onDeadlineClick() {
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 	      BX.calendar({
 	        node: this.$refs.deadline,
 	        bTime: true,
@@ -383,25 +389,46 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    },
 	    onTextareaInput(event) {
-	      this.setDescription(event.target.value);
-	      this.onChangeDescription(event.target.value);
+	      const value = event.target.value;
+	      this.setDescription(value);
+	      this.onChangeDescription(value);
+	    },
+	    onCopilotTextareaValueChange(event) {
+	      const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
+	      const id = event.getData().id;
+	      if (this.wasUsed && copilotId === id) {
+	        const value = event.getData().value;
+	        this.setDescription(value);
+	        this.onChangeDescription(value);
+	      }
 	    }
 	  },
 	  mounted() {
 	    this.$Bitrix.eventEmitter.subscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
+	    if (this.isCopilotEnabled) {
+	      this.copilotTextarea = new crm_ai_copilotTextarea.CopilotTextarea({
+	        id: main_core.Text.getRandom(),
+	        target: this.$refs.textarea,
+	        copilotParams: this.copilotSettings
+	      });
+	      main_core_events.EventEmitter.subscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+	    }
 	  },
 	  beforeUnmount() {
 	    this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
+	    if (this.isCopilotEnabled) {
+	      main_core_events.EventEmitter.unsubscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+	    }
 	  },
 	  template: `
 		<label class="crm-activity__todo-editor_body">
 			<textarea
-				rows="1"
+				rows="2"
 				ref="textarea"
 				@focus="onTextareaFocus"
 				@keydown="onTextareaKeydown"
 				class="crm-activity__todo-editor_textarea"
-				:placeholder="$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER')"
+				:placeholder="placeholderText"
 				@input="onTextareaInput"
 				:value="description"
 				:class="{ '--has-scroll': isTextareaToLong }"
@@ -480,6 +507,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _ownerId = /*#__PURE__*/new WeakMap();
 	var _currentUser = /*#__PURE__*/new WeakMap();
 	var _pingSettings = /*#__PURE__*/new WeakMap();
+	var _copilotSettings = /*#__PURE__*/new WeakMap();
 	var _defaultDescription = /*#__PURE__*/new WeakMap();
 	var _deadline = /*#__PURE__*/new WeakMap();
 	var _parentActivityId = /*#__PURE__*/new WeakMap();
@@ -491,10 +519,10 @@ this.BX.Crm = this.BX.Crm || {};
 	var _settings = /*#__PURE__*/new WeakMap();
 	var _enableCalendarSync = /*#__PURE__*/new WeakMap();
 	var _popupMode = /*#__PURE__*/new WeakMap();
+	var _bindEvents = /*#__PURE__*/new WeakSet();
 	var _getAdditionalButtons = /*#__PURE__*/new WeakSet();
 	var _getSettingsButton = /*#__PURE__*/new WeakSet();
 	var _onSettingsButtonClick = /*#__PURE__*/new WeakSet();
-	var _getSettingsSection = /*#__PURE__*/new WeakSet();
 	var _getFileUploaderButton = /*#__PURE__*/new WeakSet();
 	var _getSaveActionData = /*#__PURE__*/new WeakSet();
 	var _getSaveActionPath = /*#__PURE__*/new WeakSet();
@@ -518,7 +546,7 @@ this.BX.Crm = this.BX.Crm || {};
 	   * @event onSaveHotkeyPressed
 	   */
 
-	  function TodoEditor$$1(params) {
+	  function TodoEditor$$1(_params) {
 	    babelHelpers.classCallCheck(this, TodoEditor$$1);
 	    _classPrivateMethodInitSpec(this, _onFileUploadButtonClick);
 	    _classPrivateMethodInitSpec(this, _getClassname);
@@ -536,10 +564,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec(this, _getSaveActionPath);
 	    _classPrivateMethodInitSpec(this, _getSaveActionData);
 	    _classPrivateMethodInitSpec(this, _getFileUploaderButton);
-	    _classPrivateMethodInitSpec(this, _getSettingsSection);
 	    _classPrivateMethodInitSpec(this, _onSettingsButtonClick);
 	    _classPrivateMethodInitSpec(this, _getSettingsButton);
 	    _classPrivateMethodInitSpec(this, _getAdditionalButtons);
+	    _classPrivateMethodInitSpec(this, _bindEvents);
 	    _classPrivateFieldInitSpec(this, _container, {
 	      writable: true,
 	      value: null
@@ -573,6 +601,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    _classPrivateFieldInitSpec(this, _pingSettings, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec(this, _copilotSettings, {
 	      writable: true,
 	      value: null
 	    });
@@ -620,44 +652,37 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: false
 	    });
-	    if (!main_core.Type.isDomNode(params.container)) {
+	    if (!main_core.Type.isDomNode(_params.container)) {
 	      throw new Error('TodoEditor container must be a DOM Node');
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _container, params.container);
-	    babelHelpers.classPrivateFieldSet(this, _borderColor, _classPrivateMethodGet(this, _isValidBorderColor, _isValidBorderColor2).call(this, params.borderColor) ? params.borderColor : TodoEditor$$1.BorderColor.DEFAULT);
+	    babelHelpers.classPrivateFieldSet(this, _container, _params.container);
+	    babelHelpers.classPrivateFieldSet(this, _borderColor, _classPrivateMethodGet(this, _isValidBorderColor, _isValidBorderColor2).call(this, _params.borderColor) ? _params.borderColor : TodoEditor$$1.BorderColor.DEFAULT);
 	    main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(this, _container), _classPrivateMethodGet(this, _getClassname, _getClassname2).call(this));
-	    if (!main_core.Type.isNumber(params.ownerTypeId)) {
-	      throw new Error('OwnerTypeId must be set');
+	    if (!main_core.Type.isNumber(_params.ownerTypeId)) {
+	      throw new TypeError('OwnerTypeId must be set');
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _ownerTypeId, params.ownerTypeId);
-	    if (!main_core.Type.isNumber(params.ownerId)) {
-	      throw new Error('OwnerId must be set');
+	    babelHelpers.classPrivateFieldSet(this, _ownerTypeId, _params.ownerTypeId);
+	    if (!main_core.Type.isNumber(_params.ownerId)) {
+	      throw new TypeError('OwnerId must be set');
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _ownerId, params.ownerId);
-	    if (!main_core.Type.isObjectLike(params.currentUser)) {
-	      throw new Error('Current user must be set');
+	    babelHelpers.classPrivateFieldSet(this, _ownerId, _params.ownerId);
+	    if (!main_core.Type.isObjectLike(_params.currentUser)) {
+	      throw new TypeError('Current user must be set');
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _currentUser, params.currentUser);
-	    if (!main_core.Type.isObjectLike(params.pingSettings) || Object.keys(params.pingSettings).length === 0) {
+	    babelHelpers.classPrivateFieldSet(this, _currentUser, _params.currentUser);
+	    if (!main_core.Type.isObjectLike(_params.pingSettings) || Object.keys(_params.pingSettings).length === 0) {
 	      throw new Error('Ping settings must be set');
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _pingSettings, params.pingSettings || {});
-	    babelHelpers.classPrivateFieldSet(this, _defaultDescription, main_core.Type.isString(params.defaultDescription) ? params.defaultDescription : _classPrivateMethodGet(this, _getDefaultDescription, _getDefaultDescription2).call(this));
-	    babelHelpers.classPrivateFieldSet(this, _deadline, main_core.Type.isDate(params.deadline) ? params.deadline : null);
+	    babelHelpers.classPrivateFieldSet(this, _pingSettings, _params.pingSettings || {});
+	    babelHelpers.classPrivateFieldSet(this, _copilotSettings, _params.copilotSettings || null);
+	    babelHelpers.classPrivateFieldSet(this, _defaultDescription, main_core.Type.isString(_params.defaultDescription) ? _params.defaultDescription : _classPrivateMethodGet(this, _getDefaultDescription, _getDefaultDescription2).call(this));
+	    babelHelpers.classPrivateFieldSet(this, _deadline, main_core.Type.isDate(_params.deadline) ? _params.deadline : null);
 	    if (!babelHelpers.classPrivateFieldGet(this, _deadline)) {
 	      this.setDefaultDeadLine(false);
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _eventEmitter, new main_core_events.EventEmitter());
-	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).setEventNamespace('Crm.Activity.TodoEditor');
-	    if (main_core.Type.isObject(params.events)) {
-	      for (const eventName in params.events) {
-	        if (main_core.Type.isFunction(params.events[eventName])) {
-	          babelHelpers.classPrivateFieldGet(this, _eventEmitter).subscribe(eventName, params.events[eventName]);
-	        }
-	      }
-	    }
-	    babelHelpers.classPrivateFieldSet(this, _enableCalendarSync, main_core.Type.isBoolean(params.enableCalendarSync) ? params.enableCalendarSync : false);
-	    babelHelpers.classPrivateFieldSet(this, _popupMode, main_core.Type.isBoolean(params.popupMode) ? params.popupMode : false);
+	    _classPrivateMethodGet(this, _bindEvents, _bindEvents2).call(this, _params);
+	    babelHelpers.classPrivateFieldSet(this, _enableCalendarSync, main_core.Type.isBoolean(_params.enableCalendarSync) ? _params.enableCalendarSync : false);
+	    babelHelpers.classPrivateFieldSet(this, _popupMode, main_core.Type.isBoolean(_params.popupMode) ? _params.popupMode : false);
 	  }
 	  babelHelpers.createClass(TodoEditor$$1, [{
 	    key: "setMode",
@@ -680,7 +705,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        additionalButtons: _classPrivateMethodGet(this, _getAdditionalButtons, _getAdditionalButtons2).call(this),
 	        popupMode: babelHelpers.classPrivateFieldGet(this, _popupMode),
 	        currentUser: babelHelpers.classPrivateFieldGet(this, _currentUser),
-	        pingSettings: babelHelpers.classPrivateFieldGet(this, _pingSettings)
+	        pingSettings: babelHelpers.classPrivateFieldGet(this, _pingSettings),
+	        copilotSettings: babelHelpers.classPrivateFieldGet(this, _copilotSettings)
 	      }));
 	      babelHelpers.classPrivateFieldSet(this, _layoutComponent, babelHelpers.classPrivateFieldGet(this, _layoutApp).mount(babelHelpers.classPrivateFieldGet(this, _container)));
 	    }
@@ -710,14 +736,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          main_core.ajax.runAction(_classPrivateMethodGet(this, _getSaveActionPath, _getSaveActionPath2).call(this), {
 	            data
 	          }).then(resolve).catch(reject);
-	        });
+	        }).catch(reject);
 	      }).catch(response => {
 	        ui_notification.UI.Notification.Center.notify({
 	          content: response.errors[0].message,
 	          autoHideDelay: 5000
 	        });
 
-	        //so that on error returned promise is marked as rejected
+	        // so that on error returned promise is marked as rejected
 	        throw response;
 	      }).finally(() => {
 	        babelHelpers.classPrivateFieldSet(this, _loadingPromise, null);
@@ -769,6 +795,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "setDefaultDeadLine",
 	    value: function setDefaultDeadLine(isNeedUpdateLayout = true) {
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 	      let defaultDate = BX.parseDate(main_core.Loc.getMessage('CRM_TIMELINE_TODO_EDITOR_DEFAULT_DATETIME'));
 	      if (main_core.Type.isDate(defaultDate)) {
 	        babelHelpers.classPrivateFieldSet(this, _deadline, defaultDate);
@@ -822,7 +849,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            'File:onRemove': event => {
 	              babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
 	            },
-	            'onUploadStart': event => {
+	            onUploadStart: event => {
 	              babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
 	            }
 	            // TODO: not implemented yet
@@ -848,6 +875,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return TodoEditor$$1;
 	}();
+	function _bindEvents2(params) {
+	  babelHelpers.classPrivateFieldSet(this, _eventEmitter, new main_core_events.EventEmitter());
+	  babelHelpers.classPrivateFieldGet(this, _eventEmitter).setEventNamespace('Crm.Activity.TodoEditor');
+	  if (main_core.Type.isObject(params.events)) {
+	    for (const eventName in params.events) {
+	      if (main_core.Type.isFunction(params.events[eventName])) {
+	        babelHelpers.classPrivateFieldGet(this, _eventEmitter).subscribe(eventName, params.events[eventName]);
+	      }
+	    }
+	  }
+	}
 	function _getAdditionalButtons2() {
 	  const buttons = [];
 	  if (babelHelpers.classPrivateFieldGet(this, _enableCalendarSync)) {
@@ -1027,5 +1065,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditor = TodoEditor$1;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX.Crm.Activity,BX,BX.Vue3,BX.Crm.Timeline,BX.Main,BX.Main,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX.Crm.Activity,BX,BX.Vue3,BX.Crm.AI,BX.Crm.Timeline,BX.Main,BX.Main,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector));
 //# sourceMappingURL=todo-editor.bundle.js.map

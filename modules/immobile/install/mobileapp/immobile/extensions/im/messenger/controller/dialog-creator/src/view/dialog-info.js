@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, exports, module) => {
 
 	const { Loc } = require('loc');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { List } = require('im/messenger/lib/ui/base/list');
 	const { cross } = require('im/messenger/assets/common');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -27,7 +27,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 
 			/** @type DialogDTO */
 			this.dialogDTO = props.dialogDTO;
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		render()

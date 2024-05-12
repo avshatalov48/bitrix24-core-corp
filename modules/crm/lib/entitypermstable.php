@@ -63,4 +63,28 @@ class EntityPermsTable extends DataManager
 			Query::buildFilterSql($entity, $filter)
 		));
 	}
+
+	public static function deleteByIds(array $ids): void
+	{
+		if (empty($ids))
+		{
+			return;
+		}
+
+		$ids = array_map(fn($val) => (int)$val, $ids);
+
+		$entity = static::getEntity();
+		$connection = $entity->getConnection();
+
+		$whereStr = Query::buildFilterSql($entity, ['@ID' => $ids]);
+		$tableName = $connection->getSqlHelper()->quote($entity->getDbTableName());
+
+		$sql = sprintf(
+			'DELETE FROM %s WHERE %s',
+			$tableName,
+			$whereStr
+		);
+
+		$connection->query($sql);
+	}
 }

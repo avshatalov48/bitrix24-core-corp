@@ -3,6 +3,7 @@ namespace  Bitrix\ImOpenLines\Integrations\Report\Statistics\Entity;
 
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Entity\DateField;
+use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\StringField;
@@ -37,7 +38,7 @@ class DialogStatTable extends DataManager
 	public static function getMap(): array
 	{
 		return array(
-			new DateField('DATE',  array('primary' => true)),
+			new DatetimeField('DATE',  array('primary' => true)),
 			new IntegerField('OPEN_LINE_ID', array('primary' => true)),
 			new StringField('SOURCE_ID', array('primary' => true)),
 			new IntegerField('OPERATOR_ID', array('primary' => true)),

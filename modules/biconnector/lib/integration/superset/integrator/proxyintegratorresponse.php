@@ -10,6 +10,7 @@ final class ProxyIntegratorResponse extends IntegratorResponse
 	public const HTTP_STATUS_ETERNAL_SERVER_ERROR = 500;
 	public const HTTP_STATUS_UNAUTHORIZED = 401;
 	public const HTTP_STATUS_FORBIDDEN = 403;
+	public const HTTP_STATUS_NOT_FOUND = 404;
 	public const HTTP_STATUS_SERVICE_FROZEN = 555;
 
 	protected static function parseInnerStatus(mixed $status): int

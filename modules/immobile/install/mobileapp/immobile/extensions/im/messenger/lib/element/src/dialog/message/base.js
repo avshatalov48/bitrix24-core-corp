@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { OwnMessageStatus } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
@@ -12,6 +12,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { defaultUserIcon } = require('im/messenger/assets/common');
 	const { ColorUtils } = require('im/messenger/lib/utils');
 	const { ReactionType } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
 
 	const MessageAlign = Object.freeze({
 		center: 'center',
@@ -88,7 +90,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setFontColor(options.fontColor)
 				.setIsBackgroundOn(options.isBackgroundOn)
 				.setShowReaction(options.showReaction)
-				.setCanBeQuoted(true)
+				.setCanBeQuoted(options.canBeQuoted)
 				.setRoundedCorners(true)
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
@@ -96,6 +98,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			;
 		}
 
+		/**
+		 * @abstract
+		 * @return {string}
+		 */
 		getType()
 		{
 			throw new Error('Message: getType() must be override in subclass.');
@@ -139,7 +145,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setUsername(authorId)
 		{
-			const user = core.getStore().getters['usersModel/getById'](authorId);
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 
 			this.username = (user && user.name) ? user.name : '';
 
@@ -148,7 +154,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setAvatar(authorId)
 		{
-			const user = core.getStore().getters['usersModel/getById'](authorId);
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 
 			this.avatarUrl = (user && user.avatar) ? user.avatar : '';
 
@@ -157,7 +163,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setUserColor(authorId)
 		{
-			const user = core.getStore().getters['usersModel/getById'](authorId);
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 
 			this.userColor = (user && user.color) ? user.color : '#048bd0';
 
@@ -205,7 +211,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			let messageText = text;
 
 			// TODO: remove after native support for attachments
-			const modelMessage = core.store.getters['messagesModel/getById'](this.id);
+			const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](this.id);
 
 			const attach = modelMessage?.params?.ATTACH ? modelMessage.params.ATTACH[0] : null;
 
@@ -228,9 +234,19 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 				const openAttachText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_ATTACH_SHOW');
 				// link to avoid processing by the general rules for /mobile/ (open in full screen widget)
-				const openAttachUrl = `${core.getHost()}/immobile/in-app/message-attach/${modelMessage.id}`;
+				const openAttachUrl = `${serviceLocator.get('core').getHost()}/immobile/in-app/message-attach/${modelMessage.id}`;
 				const attachIcon = String.fromCodePoint(128_206);
 				messageText += `${attachIcon} [b][url=${openAttachUrl}]${openAttachText}[/url][/b]`;
+			}
+
+			if (
+				Feature.isDevelopmentEnvironment
+				&& DeveloperSettings.getSettingValue('showMessageId')
+				&& modelMessage.id
+			)
+			{
+				const messageId = modelMessage.id || modelMessage.templateId;
+				messageText += `\n\n[[b]ID:[/b] ${messageId}]`;
 			}
 
 			const message = parser.decodeMessageFromText(messageText, options);
@@ -320,7 +336,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 						reaction.users = reactionsList.reactionUsers
 							.get(reactionType)
 							.map((userId) => {
-								const userModel = core.getStore().getters['usersModel/getById'](userId);
+								const userModel = serviceLocator.get('core').getStore().getters['usersModel/getById'](userId);
 
 								const result = {
 									isCurrentUser: userId === MessengerParams.getUserId(),
@@ -417,7 +433,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setShowUsername(modelMessage, shouldShowUserName)
 		{
-			const isYourMessage = modelMessage.authorId === core.getUserId();
+			const isYourMessage = modelMessage.authorId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
 				this.showUsername = false;
@@ -435,7 +451,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setShowAvatar(modelMessage, shouldShowAvatar)
 		{
-			const isYourMessage = modelMessage.authorId === core.getUserId();
+			const isYourMessage = modelMessage.authorId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
 				this.showAvatar = false;
@@ -609,7 +625,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setStatus(modelMessage)
 		{
-			if (modelMessage.authorId !== core.getUserId())
+			if (modelMessage.authorId !== serviceLocator.get('core').getUserId())
 			{
 				return this;
 			}
@@ -666,7 +682,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				if (forward.userId)
 				{
 					const authorId = forward.userId;
-					const user = core.getStore().getters['usersModel/getById'](authorId);
+					const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 					if (user)
 					{
 						this.forwardText = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD')} ${user.name || user.lastName || user.firstName}`;

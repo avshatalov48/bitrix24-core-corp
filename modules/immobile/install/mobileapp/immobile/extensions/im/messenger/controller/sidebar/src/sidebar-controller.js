@@ -9,12 +9,12 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 	const { buttonIcons } = require('im/messenger/assets/common');
 	const { ButtonFactory } = require('im/messenger/lib/ui/base/buttons');
 	const { chevronRight } = require('assets/common');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Moment } = require('utils/date');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, DialogType } = require('im/messenger/const');
 	const { Loc } = require('loc');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
@@ -32,8 +32,8 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		constructor(options)
 		{
 			this.options = options;
-			this.store = core.getStore();
-			this.storeManager = core.getStoreManager();
+			this.store = serviceLocator.get('core').getStore();
+			this.storeManager = serviceLocator.get('core').getStoreManager();
 			this.sidebarService = new SidebarService(this.store, options.dialogId);
 			this.sidebarRestService = new SidebarRestService(options.dialogId);
 			this.sidebarUserService = null;
@@ -43,6 +43,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 			this.isNotes = false;
 			this.isBot = false;
 			this.isNetwork = false;
+			this.isCopilot = false;
 		}
 
 		/**
@@ -51,7 +52,15 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		 */
 		get styleBtn()
 		{
-			return this.isGroupDialog ? { width: 83.75 } : { width: 113 };
+			const style = this.isGroupDialog ? { width: 83.75 } : { width: 113 };
+
+			if (this.isCopilot)
+			{
+				style.border = { color: AppTheme.colors.accentSoftCopilot };
+				style.text = { color: AppTheme.colors.accentMainCopilot };
+			}
+
+			return style;
 		}
 
 		open()
@@ -127,6 +136,12 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				{
 					this.isNotes = true;
 				}
+			}
+
+			const dialogState = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (dialogState)
+			{
+				this.isCopilot = dialogState.type === DialogType.copilot;
 			}
 		}
 
@@ -234,6 +249,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 				isGroupDialog: this.isGroupDialog,
 				isNotes: this.isNotes,
 				isBot: this.isBot,
+				isCopilot: this.isCopilot,
 				headData: {
 					...this.sidebarUserService.getAvatarDataById(),
 					...this.sidebarUserService.getTitleDataById(),
@@ -255,6 +271,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		createButtons()
 		{
 			const isShowCallBtn = !this.isNotes
+				&& !this.isCopilot
 				&& !this.permission.isBot
 				&& !this.permission.isNetwork
 				&& !this.permission.isYou
@@ -314,18 +331,19 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 		 */
 		createMuteBtn(isMite = this.sidebarService.isMuteDialog())
 		{
+			const color = this.isCopilot ? AppTheme.colors.accentMainCopilot : AppTheme.colors.accentMainPrimaryalt;
 			if (this.isGroupDialog)
 			{
 				return isMite ? ButtonFactory.createIconButton(
 					{
-						icon: buttonIcons.muteOff(),
+						icon: buttonIcons.muteOff(color),
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_MUTE'),
 						callback: () => this.onClickMuteBtn(),
 						style: this.styleBtn,
 					},
 				) : ButtonFactory.createIconButton(
 					{
-						icon: buttonIcons.muteOn(),
+						icon: buttonIcons.muteOn(color),
 						text: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_BTN_MUTE'),
 						callback: () => this.onClickMuteBtn(),
 						style: this.styleBtn,

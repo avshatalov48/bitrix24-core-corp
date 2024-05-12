@@ -114,7 +114,7 @@ use \Bitrix\Main\Localization\Loc;
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		BX.bind(BX('imol_welcome_bot'), 'change', function(e){
 			<?

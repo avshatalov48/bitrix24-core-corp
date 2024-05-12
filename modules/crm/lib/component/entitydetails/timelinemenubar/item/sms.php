@@ -84,8 +84,7 @@ class Sms extends Item
 			$extension =  \Bitrix\Main\UI\Extension::getConfig('documentgenerator.selector');
 			if ($extension)
 			{
-				$providersMap = $documentGeneratorManager->getCrmOwnerTypeProvidersMap();
-				$provider = $providersMap[$this->getEntityTypeId()] ?? null;
+				$provider = $documentGeneratorManager->getCrmOwnerTypeProvider($this->getEntityTypeId(), false);
 				if(!$provider)
 				{
 					$isDocumentsEnabled = false;

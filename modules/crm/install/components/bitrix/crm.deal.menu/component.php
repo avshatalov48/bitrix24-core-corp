@@ -338,13 +338,26 @@ if ($arParams['TYPE'] === 'details')
 
 	if($bAdd)
 	{
-		$copyUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_DEAL_DETAILS'],
-				array('deal_id' => $arParams['ELEMENT_ID'])
-			),
-			array('copy' => 1)
-		);
+		$copyUrl = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Deal)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_SETTINGS_BUTTON)
+			->buildUri(
+				CComponentEngine::makePathFromTemplate($arParams['PATH_TO_DEAL_DETAILS'], ['deal_id' => $arParams['ELEMENT_ID']])
+			)
+			->addParams([
+				'copy' => 1,
+			])
+			->getUri()
+		;
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('DEAL_COPY'),
@@ -551,7 +564,22 @@ if($arParams['TYPE'] === 'list')
 	}
 	elseif($categoryCount === 1)
 	{
-		$link = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $categoryIDs[0]]);
+		$link = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Deal)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_BUTTON)
+			->buildUri($baseCreateUrl)
+			->addParams(['category_id' => $categoryIDs[0]])
+			->getUri()
+		;
 
 		if($arResult['RC']['CAN_USE'])
 		{

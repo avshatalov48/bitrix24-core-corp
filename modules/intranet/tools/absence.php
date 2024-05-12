@@ -260,7 +260,7 @@ endif;
 					<?CUtil::InitJSCore(array('popup'));?>
 					<a href="javascript:void(0)" onclick="ShowSingleSelector" id="single-user-choice"><?=GetMessage("INTR_USER_CHOOSE")?></a>
 					<script type="text/javascript">// user_selector:
-						var multiPopup, singlePopup, taskIFramePopup;
+						var multiPopup, singlePopup;
 						function onSingleSelect(arUser)
 						{
 							BX("user_id").value = arUser.id;

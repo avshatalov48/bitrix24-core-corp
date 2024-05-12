@@ -51,6 +51,7 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-remove', (require, exp
 
 			return View(
 				{
+					testId: 'bin_block',
 					style: {
 						padding: 4,
 					},

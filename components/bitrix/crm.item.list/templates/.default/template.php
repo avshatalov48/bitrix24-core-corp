@@ -92,11 +92,11 @@ $this->getComponent()->addToolbar($this);
 
 $messages = array_merge(Container::getInstance()->getLocalization()->loadMessages(), Loc::loadLanguageFile(__FILE__));
 
-if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
+if (!empty($arResult['restrictedFieldsEngine']))
 {
 	Extension::load(['crm.restriction.filter-fields']);
 
-	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
+	echo $arResult['restrictedFieldsEngine'];
 }
 ?>
 

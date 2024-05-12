@@ -237,85 +237,45 @@ jn.define('tasks/entry', (require, exports, module) => {
 				getProjectData: data.getProjectData || true,
 			};
 
-			return Entry.getIsNewDashboardActive().then((isNewDashboardActive) => {
-				PageManager.openComponent('JSStackComponent', {
-					componentCode: Entry.getTaskListComponentCode(isNewDashboardActive),
-					canOpenInDefault: true,
-					title: (extendedData.groupName || Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_TITLE')),
-					scriptPath: Entry.getTaskListScriptPath(isNewDashboardActive),
-					rootWidget: Entry.getTaskListRootWidget(isNewDashboardActive),
-					params: {
-						COMPONENT_CODE: Entry.getTaskListComponentCode(isNewDashboardActive),
-						GROUP_ID: extendedData.groupId,
-						USER_ID: extendedData.ownerId,
-						DATA: extendedData,
-						SITE_ID: siteId,
-						SITE_DIR: siteDir,
-						LANGUAGE_ID: languageId,
-						PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
-					},
-				});
+			PageManager.openComponent('JSStackComponent', {
+				componentCode: Entry.getTaskListComponentCode(),
+				canOpenInDefault: true,
+				title: (extendedData.groupName || Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_TITLE')),
+				scriptPath: Entry.getTaskListScriptPath(),
+				rootWidget: Entry.getTaskListRootWidget(),
+				params: {
+					COMPONENT_CODE: Entry.getTaskListComponentCode(),
+					GROUP_ID: extendedData.groupId,
+					USER_ID: extendedData.ownerId,
+					DATA: extendedData,
+					SITE_ID: siteId,
+					SITE_DIR: siteDir,
+					LANGUAGE_ID: languageId,
+					PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+				},
 			});
 		}
 
-		static getIsNewDashboardActive()
+		static getTaskListComponentCode()
 		{
-			return new Promise((resolve) => {
-				const has = Object.prototype.hasOwnProperty;
-				const storage = Application.storageById('tasksmobile');
-				const cacheSettings = storage.getObject('settings');
-
-				if (has.call(cacheSettings, 'isNewDashboardActive'))
-				{
-					resolve(cacheSettings.isNewDashboardActive);
-				}
-				else
-				{
-					BX.ajax.runAction('tasksmobile.Settings.isNewDashboardActive')
-						.then((result) => {
-							cacheSettings.isNewDashboardActive = result.data;
-							storage.setObject('settings', cacheSettings);
-							resolve(result.data);
-						})
-						.catch(() => resolve(false))
-					;
-				}
-			});
+			return 'tasks.dashboard';
 		}
 
-		static getTaskListComponentCode(isNewDashboardActive)
+		static getTaskListScriptPath()
 		{
-			return (isNewDashboardActive ? 'tasks.dashboard' : 'tasks.list');
-		}
-
-		static getTaskListScriptPath(isNewDashboardActive)
-		{
-			const componentName = (isNewDashboardActive ? 'tasks:tasks.dashboard' : 'tasks:tasks.list.legacy');
+			const componentName = 'tasks:tasks.dashboard';
 
 			return availableComponents[componentName].publicUrl;
 		}
 
-		static getTaskListRootWidget(isNewDashboardActive)
+		static getTaskListRootWidget()
 		{
-			if (isNewDashboardActive)
-			{
-				return {
-					name: 'layout',
-					settings: {
-						objectName: 'layout',
-						useSearch: true,
-						useLargeTitleMode: true,
-					},
-				};
-			}
-
 			return {
-				name: 'tasks.list',
+				name: 'layout',
 				settings: {
-					objectName: 'list',
+					objectName: 'layout',
 					useSearch: true,
 					useLargeTitleMode: true,
-					emptyListMode: true,
 				},
 			};
 		}

@@ -1,10 +1,10 @@
-import type { ConverterParams } from "./converter";
-import { Converter } from "./converter";
-import { Config } from "./config";
-import type { SchemeData } from "./scheme";
-import { Scheme } from "./scheme";
-import { Reflection } from "main.core";
-import type { ConfigItemData } from "./config-item";
+import { Config } from './config';
+import type { ConfigItemData } from './config-item';
+import type { ConverterParams } from './converter';
+import { Converter } from './converter';
+import { EntitySelector } from './entity-selector';
+import type { SchemeData } from './scheme';
+import { Scheme } from './scheme';
 
 let instance = null;
 
@@ -13,19 +13,10 @@ let instance = null;
  */
 export class Manager
 {
-	#converters: Object<number, Converter>;
-
-	constructor() {
-		this.#converters = {};
-	}
+	#converters: Object<string, Converter> = {};
 
 	static get Instance(): Manager
 	{
-		if ((window.top !== window) && Reflection.getClass('top.BX.Crm.Conversion.Manager'))
-		{
-			return window.top.BX.Crm.Conversion.Manager.Instance;
-		}
-
 		if (instance === null)
 		{
 			instance = new Manager();
@@ -40,18 +31,42 @@ export class Manager
 			configItems: ConfigItemData[],
 			scheme: SchemeData,
 			params: ConverterParams,
-		}
+		},
 	): Converter
 	{
 		const config = Config.create(entityTypeId, params.configItems, Scheme.create(params.scheme));
 
-		this.#converters[entityTypeId] = new Converter(entityTypeId, config, params.params);
+		const converter = new Converter(entityTypeId, config, params.params);
 
-		return this.#converters[entityTypeId];
+		this.#converters[converter.getId()] = converter;
+
+		return converter;
 	}
 
-	getConverter(entityTypeId: number): ?Converter
+	getConverter(converterId: string): ?Converter
 	{
-		return this.#converters[entityTypeId] || null;
+		return this.#converters[converterId];
+	}
+
+	createEntitySelector(converterId: string, dstEntityTypeIds: number[], entityId: number): ?EntitySelector
+	{
+		const converter = this.getConverter(converterId);
+		if (!converter)
+		{
+			console.error('Converter with given id not found', converterId, this);
+
+			return null;
+		}
+
+		// check whether converter supports this type of scheme
+		const schemeItem = converter.getConfig().getScheme().getItemForEntityTypeIds(dstEntityTypeIds);
+		if (!schemeItem)
+		{
+			console.error('Could not find scheme item', dstEntityTypeIds, converter);
+
+			return null;
+		}
+
+		return new EntitySelector(converter, entityId, dstEntityTypeIds);
 	}
 }

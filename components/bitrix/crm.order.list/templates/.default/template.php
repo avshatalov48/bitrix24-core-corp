@@ -9,6 +9,7 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Uri;
 
 /**
  * Bitrix vars
@@ -934,6 +935,13 @@ if (isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 	}
 }
 
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.order.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -951,11 +959,15 @@ $APPLICATION->IncludeComponent(
 		'AJAX_LOADER' => $arParams['AJAX_LOADER'] ?? null,
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-		'FILTER_PARAMS' => array(
-			'LAZY_LOAD' => array(
-				'GET_LIST' => '/bitrix/components/bitrix/crm.order.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.order.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			)
+		'FILTER_PARAMS' => [
+			'LAZY_LOAD' => [
+				'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+				'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+				'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
+			],
+		],
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+			$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
 		),
 		'ENABLE_LIVE_SEARCH' => true,
 		'ACTION_PANEL' => $controlPanel,

@@ -48,7 +48,7 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 		`;
 
 		Event.bind(link, 'click', () => {
-			top.BX.Helper.show('redirect=detail&code=19123608');
+			top.BX.Helper.show('redirect=detail&code=20337242&anchor=Encryptionkey');
 		});
 
 		Dom.replace(hint.querySelector('link'), link);

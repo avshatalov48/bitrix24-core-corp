@@ -4,6 +4,7 @@
 jn.define('tasks/layout/task/fields/datePlanStart', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { DateTimeField } = require('layout/ui/fields/datetime');
+	const { dayMonth, shortTime } = require('utils/date/formats');
 
 	class DatePlanStart extends LayoutComponent
 	{
@@ -50,7 +51,7 @@ jn.define('tasks/layout/task/fields/datePlanStart', (require, exports, module) =
 				config: {
 					deepMergeStyles: this.props.deepMergeStyles,
 					enableTime: true,
-					dateFormat: 'd MMMM, HH:mm',
+					dateFormat: `${dayMonth()} ${shortTime()}`,
 				},
 				testId: 'datePlanStart',
 				onChange: this.handleOnChange,

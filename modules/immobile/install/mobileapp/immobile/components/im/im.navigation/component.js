@@ -1,6 +1,6 @@
-"use strict";
-(()=>{
+'use strict';
 
+(() => {
 	console.log('Navigation is loaded.');
 
 	const { EntityReady } = jn.require('entity-ready');
@@ -19,21 +19,21 @@
 			this.previousTab = 'none';
 
 			this.tabMapping = {
-				'chats': 'im.messenger',
-				'openlines': 'im.openlines.recent',
-				'notifications': 'im.notify',
+				chats: 'im.messenger',
+				openlines: 'im.openlines.recent',
+				notifications: 'im.notify',
+				copilot: 'im.copilot.messenger',
 			};
 			this.componentMapping = null;
 
 			// navigation
-			tabs.on("onTabSelected", this.onTabSelected.bind(this));
-			BX.addCustomEvent("onTabChange", this.onTabChange.bind(this));
+			tabs.on('onTabSelected', this.onTabSelected.bind(this));
+			BX.addCustomEvent('onTabChange', this.onTabChange.bind(this));
 
 			// counters
-			BX.addCustomEvent("ImRecent::counter::list", this.onUpdateCounters.bind(this));
-			BX.addCustomEvent("onUpdateCounters", this.onUpdateCounters.bind(this));
-			BX.postComponentEvent("requestCounters", [{component: 'im.navigation'}], "communication");
-
+			BX.addCustomEvent('ImRecent::counter::list', this.onUpdateCounters.bind(this));
+			BX.addCustomEvent('onUpdateCounters', this.onUpdateCounters.bind(this));
+			BX.postComponentEvent('requestCounters', [{ component: 'im.navigation' }], 'communication');
 
 			EntityReady.ready('im.navigation');
 			this.isReady = true;
@@ -54,8 +54,7 @@
 				PageManager.getNavigator().makeTabActive();
 			}
 
-			BX.onViewLoaded(() =>
-			{
+			BX.onViewLoaded(() => {
 				console.log('onTabChange', 'change tab', id);
 
 				const previousTab = this.currentTab;
@@ -74,6 +73,7 @@
 			if (!changed)
 			{
 				console.log('onTabSelected', 'select active element', this.currentTab);
+
 				return true;
 			}
 
@@ -89,9 +89,9 @@
 		onUpdateCounters(counters, delay)
 		{
 			let needUpdate = false;
-			let params = Object.assign({}, counters);
+			const params = { ...counters };
 
-			for (let element in params)
+			for (const element in params)
 			{
 				if (!params.hasOwnProperty(element))
 				{
@@ -154,6 +154,7 @@
 				{
 					this.updateCountersTimeout = setTimeout(this.update.bind(this), 300);
 				}
+
 				return true;
 			}
 
@@ -162,19 +163,17 @@
 			clearTimeout(this.updateCountersTimeout);
 			this.updateCountersTimeout = null;
 
-			console.info("AppCounters.update: update counters:", this.counters);
+			console.info('AppCounters.update: update counters:', this.counters);
 
-			['chats', 'openlines', 'notifications'].forEach(tab =>
-			{
-				const counter = this.counters[tab]? this.counters[tab]: 0;
+			['chats', 'openlines', 'notifications', 'copilot'].forEach((tab) => {
+				const counter = this.counters[tab] ? this.counters[tab] : 0;
 				tabs.updateItem(tab, {
-					counter: counter,
-					label: counter? counter.toString(): '',
+					counter,
+					label: counter ? counter.toString() : '',
 				});
 			});
 		}
 	}
 
 	window.Navigation = new NavigationManager();
-
 })();

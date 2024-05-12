@@ -152,7 +152,11 @@ class SaleTarget
 
 		if ($found)
 		{
-			SaleTargetTable::update($found['ID'], $fields);
+			$updateResult = SaleTargetTable::update($found['ID'], $fields);
+			if (!$updateResult->isSuccess())
+			{
+				$result->addErrors($updateResult->getErrors());
+			}
 
 			$fields['ID'] = $found['ID'];
 			$fields['CREATED'] = $found['CREATED'];

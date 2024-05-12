@@ -11,11 +11,8 @@ export default {
 	mergeUuid(state): string {
 		return state.mergeUuid;
 	},
-	crmMode(state): string {
-		return state.crmMode;
-	},
-	callId(state): string {
-		return state.callId;
+	activityId(state): number {
+		return state.activityId;
 	},
 	getEntityInfo(state): ?EntityInfo {
 		return state.entityInfo;

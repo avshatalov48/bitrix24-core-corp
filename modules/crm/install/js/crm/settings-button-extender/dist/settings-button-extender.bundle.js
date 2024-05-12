@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,crm_activity_todoNotificationSkipMenu,crm_activity_todoPingSettingsMenu,main_core_events,main_core,crm_kanban_restriction,crm_kanban_sort,main_popup) {
 	'use strict';
@@ -148,15 +147,14 @@ this.BX = this.BX || {};
 	function _showColumn2(column) {
 	  return new Promise((resolve, reject) => {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isColumnExists)[_isColumnExists](column)) {
-	      reject(`Column ${column} does not exists`);
+	      reject(new Error(`Column ${column} does not exists`));
 	      return;
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isColumnShowed)[_isColumnShowed](column)) {
-	      reject(`Column ${column} is showed already`);
+	      reject(new Error(`Column ${column} is showed already`));
 	      return;
 	    }
-	    const settingsWindowCheckbox = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getSettingsWindow().getItems().find(checkbox => checkbox.getId() === column);
-	    settingsWindowCheckbox == null ? void 0 : settingsWindowCheckbox.select();
+	    babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getSettingsWindow().select(column);
 	    const showedColumns = babelHelpers.classPrivateFieldLooseBase(this, _getShowedColumnList)[_getShowedColumnList]();
 	    showedColumns.push(column);
 	    babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getSettingsWindow().saveColumns(showedColumns, resolve);

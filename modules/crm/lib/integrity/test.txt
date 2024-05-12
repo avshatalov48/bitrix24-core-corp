@@ -3,9 +3,9 @@ $c = new \Bitrix\Crm\Integrity\LeadDuplicateChecker();
 $a = \Bitrix\Crm\EntityAdapterFactory::create();
 $a->setFields(
    array(
-      //'LAST_NAME' => 'Íèêèôîðîâ',
-      //'NAME' => 'Åâãåíèé',
-      //'SECOND_NAME' => 'Ïåòðîâè÷',
+      //'LAST_NAME' => 'ÐÐ¸ÐºÐ¸Ñ„Ð¾Ñ€Ð¾Ð²',
+      //'NAME' => 'Ð•Ð²Ð³ÐµÐ½Ð¸Ð¹',
+      //'SECOND_NAME' => 'ÐŸÐµÑ‚Ñ€Ð¾Ð²Ð¸Ñ‡',
       //'COMPANY_TITLE' => 'Lorem Ipsum'
       'FM' => array(
         'EMAIL' => array(array('VALUE' => 'Lorem@example.com'))

@@ -2,8 +2,9 @@
  * @module crm/entity-tab
  */
 jn.define('crm/entity-tab', (require, exports, module) => {
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const AppTheme = require('apptheme');
+	const { AnalyticsEvent } = require('analytics');
 	const { magnifierWithMenuAndDot } = require('assets/common');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
@@ -131,6 +132,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.onDetailCardUpdateHandler = this.onDetailCardUpdate.bind(this);
 			this.onDetailCardCreateHandler = this.onDetailCardCreate.bind(this);
 		}
+
+		/**
+		 * @abstract
+		 * @return {string}
+		 */
+		getView()
+		{}
 
 		componentWillReceiveProps(nextProps)
 		{
@@ -952,10 +960,20 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
-			EntityDetailOpener.open(
-				{ ...params, entityTypeId, entityId, categoryId, tabs, permissions },
-				{ titleParams },
-			);
+			EntityDetailOpener.open({
+				payload: { ...params, entityTypeId, entityId, categoryId, tabs, permissions },
+				widgetParams: { titleParams },
+				analytics: this.getAnalytics().setElement('list_item'),
+			});
+		}
+
+		getAnalytics()
+		{
+			return new AnalyticsEvent()
+				.setTool('crm')
+				.setCategory('entity_operations')
+				.setSection(`${this.entityTypeName.toLowerCase()}_section`)
+				.setSubSection(this.getView());
 		}
 
 		showForbiddenCreateNotification(entityTypeId = null)
@@ -990,7 +1008,12 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					: null
 				;
 
-				EntityDetailOpener.open({ entityTypeId, categoryId });
+				EntityDetailOpener.open({
+					payload: { entityTypeId, categoryId },
+					analytics: this.getAnalytics()
+						.setEvent('entity_add_open')
+						.setElement('floating_create_button'),
+				});
 			}
 			else if (entityType.hasRestrictions)
 			{
@@ -1220,6 +1243,10 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					showArrow: true,
 					onClickCallback: (action, entityId, { parentWidget }) => {
 						parentWidget.close(async () => {
+							const analytics = this.getAnalytics()
+								.setEvent('entity_convert')
+								.setElement('element_context_menu');
+
 							const conversionAction = await onAction({
 								entityId,
 								entityTypeId,
@@ -1228,6 +1255,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 									return Promise.resolve();
 								},
+								analytics,
 							});
 
 							conversionAction();
@@ -1263,11 +1291,15 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				showArrow: true,
 				onClickCallback: (action, itemId, { parentWidget }) => {
 					const categoryId = this.getCategoryId(entityTypeId);
+					const analytics = this.getAnalytics()
+						.setEvent('entity_add_open')
+						.setElement('element_context_menu');
 
 					parentWidget.close(() => copyEntityOnAction({
 						entityTypeId,
 						entityId: itemId,
 						categoryId,
+						analytics,
 					}));
 				},
 				onDisableClick: () => this.showForbiddenCreateNotification(entityTypeId),
@@ -1396,27 +1428,18 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		deleteItemConfirmHandler(action, itemId)
 		{
 			return new Promise((resolve, reject) => {
-				Alert.confirm(
-					this.getEntityMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE'),
-					Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONFIRMATION'),
-					[
-						{
-							type: 'cancel',
-							onPress: reject,
-						},
-						{
-							text: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONFIRMATION_OK'),
-							type: 'destructive',
-							onPress: () => {
-								this.deleteItem(itemId);
-								resolve({
-									action: 'delete',
-									id: itemId,
-								});
-							},
-						},
-					],
-				);
+				confirmDestructiveAction({
+					title: this.getEntityMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE'),
+					description: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONFIRMATION'),
+					onDestruct: () => {
+						this.deleteItem(itemId);
+						resolve({
+							action: 'delete',
+							id: itemId,
+						});
+					},
+					onCancel: reject,
+				});
 			});
 		}
 

@@ -79,54 +79,7 @@ class LeadConversionWizard extends EntityConversionWizard
 			$resultData = $converter->getResultData();
 			if($this->isRedirectToShowEnabled())
 			{
-				if(isset($resultData[\CCrmOwnerType::DealName]))
-				{
-					if ($this->isMobileContext)
-					{
-						$this->redirectUrl = "/mobile/crm/deal/?page=view&deal_id=".$resultData[\CCrmOwnerType::DealName];
-					}
-					else
-					{
-						$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(
-							\CCrmOwnerType::Deal,
-							$resultData[\CCrmOwnerType::DealName],
-							false,
-							array('ENABLE_SLIDER' => $this->enableSlider)
-						);
-					}
-				}
-				elseif(isset($resultData[\CCrmOwnerType::ContactName]))
-				{
-					if ($this->isMobileContext)
-					{
-						$this->redirectUrl = "/mobile/crm/contact/?page=view&contact_id=".$resultData[\CCrmOwnerType::ContactName];
-					}
-					else
-					{
-						$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(
-							\CCrmOwnerType::Contact,
-							$resultData[\CCrmOwnerType::ContactName],
-							false,
-							array('ENABLE_SLIDER' => $this->enableSlider)
-						);
-					}
-				}
-				elseif(isset($resultData[\CCrmOwnerType::CompanyName]))
-				{
-					if ($this->isMobileContext)
-					{
-						$this->redirectUrl = "/mobile/crm/company/?page=view&company_id=".$resultData[\CCrmOwnerType::CompanyName];
-					}
-					else
-					{
-						$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(
-							\CCrmOwnerType::Company,
-							$resultData[\CCrmOwnerType::CompanyName],
-							false,
-							array('ENABLE_SLIDER' => $this->enableSlider)
-						);
-					}
-				}
+				$this->redirectUrl = (string)$this->getRedirectUrlByResultData($resultData);
 
 				$this->eventParams = array(
 					'name' => 'onCrmEntityConvert',
@@ -142,49 +95,13 @@ class LeadConversionWizard extends EntityConversionWizard
 		catch(EntityConversionException $e)
 		{
 			$this->exception = $e;
-			if($e->getTargetType() === EntityConversionException::TARG_DST)
-			{
-				if ($this->isMobileContext)
-				{
-					switch($e->getDestinationEntityTypeID())
-					{
-						case (\CCrmOwnerType::Deal):
-						{
-							$this->redirectUrl = "/mobile/crm/deal/?page=edit&lead_id=".$converter->getEntityID();
-							break;
-						}
-						case (\CCrmOwnerType::Contact):
-						{
-							$this->redirectUrl = "/mobile/crm/contact/?page=edit&lead_id=".$converter->getEntityID();
-							break;
-						}
-						case (\CCrmOwnerType::Company):
-						{
-							$this->redirectUrl = "/mobile/crm/company/?page=edit&lead_id=".$converter->getEntityID();
-							break;
-						}
-					}
-				}
-				else
-				{
-					//Required for Deal category
-					$config = $converter->getConfig();
-					$options = array(
-						'ENTITY_SETTINGS' => $config->getEntityInitData($e->getDestinationEntityTypeID()),
-						'ENABLE_SLIDER' => $this->enableSlider
-					);
 
-					$this->redirectUrl = \CCrmUrlUtil::AddUrlParams(
-						\CCrmOwnerType::GetEntityEditPath(
-							$e->getDestinationEntityTypeID(),
-							0,
-							false,
-							$options
-						),
-						array('lead_id' => $converter->getEntityID(), 'entityTypeId' => $e->getDestinationEntityTypeID())
-					);
-				}
-			}
+			$uri = $this->getRedirectUrlByConversionException($e)?->addParams([
+				'lead_id' => $converter->getEntityID(),
+				'entityTypeId' => $e->getDestinationEntityTypeID(),
+			]);
+
+			$this->redirectUrl = (string)$uri;
 		}
 		catch(\Exception $e)
 		{

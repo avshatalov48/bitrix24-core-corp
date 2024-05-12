@@ -5,11 +5,13 @@ namespace Bitrix\Crm\Integration\AI\Operation;
 use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
-use Bitrix\Crm\Integration\AI\Analytics;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
 use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Result;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\AudioToTextEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
@@ -128,7 +130,6 @@ final class TranscribeCallRecording extends AbstractOperation
 		}
 
 		$uri = new Uri($file['SRC']);
-		//todo check with 'clouds' installed
 		if (empty($uri->getHost()))
 		{
 			// it seems that file is stored locally in /upload
@@ -221,7 +222,7 @@ final class TranscribeCallRecording extends AbstractOperation
 
 			if ($withSendAnalytics)
 			{
-				self::sendAnalyticsWrapper($activityId, Analytics::STATUS_ERROR_GPT);
+				self::sendCallParsingAnalyticsEvent($activityId, Dictionary::STATUS_ERROR_GPT, $result->isManualLaunch());
 			}
 		}
 	}
@@ -231,5 +232,10 @@ final class TranscribeCallRecording extends AbstractOperation
 		return new TranscribeCallRecordingPayload([
 			'transcription' => $result->getPrettifiedData(),
 		]);
+	}
+
+	protected static function getJobFinishEventBuilder(): AIBaseEvent
+	{
+		return new AudioToTextEvent();
 	}
 }

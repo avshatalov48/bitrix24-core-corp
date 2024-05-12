@@ -5,10 +5,12 @@ namespace Bitrix\Crm\Integration\AI\Operation;
 use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
-use Bitrix\Crm\Integration\AI\Analytics;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Result;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\SummaryEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
@@ -123,7 +125,7 @@ class SummarizeCallTranscription extends AbstractOperation
 
 			if ($withSendAnalytics)
 			{
-				self::sendAnalyticsWrapper($activityId, Analytics::STATUS_ERROR_GPT);
+				self::sendCallParsingAnalyticsEvent($activityId, Dictionary::STATUS_ERROR_GPT, $result->isManualLaunch());
 			}
 		}
 	}
@@ -133,5 +135,10 @@ class SummarizeCallTranscription extends AbstractOperation
 		return new SummarizeCallTranscriptionPayload([
 			'summary' => $result->getPrettifiedData(),
 		]);
+	}
+
+	protected static function getJobFinishEventBuilder(): AIBaseEvent
+	{
+		return new SummaryEvent();
 	}
 }

@@ -27,6 +27,11 @@ final class ObjectCaster extends Caster
 	{
 		$className = $this->type;
 
-		return new $className($value);
+		if (!is_array($value) && $value instanceof $className)
+		{
+			return $value;
+		}
+
+		return $className::make($value);
 	}
 }

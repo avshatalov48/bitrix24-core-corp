@@ -27,5 +27,8 @@ return [
 		'./src/bb-code',
 		'./src/setting',
 		'./src/promo',
+		'./src/copilot-button',
+		'./src/component-code',
+		'./src/cache',
 	],
 ];

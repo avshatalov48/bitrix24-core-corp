@@ -59,6 +59,11 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 			this.renderAdditionalContent = this.renderAdditionalContent.bind(this);
 		}
 
+		getAnalytics()
+		{
+			return this.props?.settings?.analytics;
+		}
+
 		get showBorder()
 		{
 			return BX.prop.getBoolean(this.props.settings, 'showBorder', true);
@@ -129,6 +134,8 @@ jn.define('layout/ui/entity-editor/control/field', (require, exports, module) =>
 				entityTypeId: this.getDataParam('entityTypeId', 0),
 				categoryId: this.getDataParam('categoryId', 0),
 				isNewEntity: this.isNewEntity(),
+				useEditableTextBlock: this.type === 'textarea',
+				analytics: this.getAnalytics(),
 			};
 		}
 

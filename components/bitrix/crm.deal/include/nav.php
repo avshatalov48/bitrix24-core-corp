@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 global $APPLICATION;
+
 if (!isset($arResult['INTERNAL']) || !$arResult['INTERNAL'])
 {
 	$defaultTitle = GetMessage('CRM_DEAL_NAV_TITLE_LIST_SHORT');
@@ -18,7 +19,7 @@ if (!isset($arResult['INTERNAL']) || !$arResult['INTERNAL'])
 		if (!empty($arResult['ELEMENT']['ID']))
 			$APPLICATION->SetTitle(GetMessage('CRM_DEAL_NAV_TITLE_EDIT', array('#NAME#' => $arResult['ELEMENT']['TITLE'])));
 		else
-			$APPLICATION->SetTitle(GetMessage('CRM_DEAL_NAV_TITLE_ADD')); 
+			$APPLICATION->SetTitle(GetMessage('CRM_DEAL_NAV_TITLE_ADD'));
 	}
 	elseif ($arParams['IS_RECURRING'] === 'Y')
 	{

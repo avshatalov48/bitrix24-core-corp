@@ -29,7 +29,6 @@ class LiveChat
 
 	public function openSession()
 	{
-		\CUtil::decodeURIComponent($_GET);
 		$context = Main\Application::getInstance()->getContext();
 		$request = $context->getRequest();
 
@@ -400,7 +399,7 @@ class LiveChat
 
 		if ($withTagScript)
 		{
-			$text = '<script type="text/javascript">'.$text.'</script>';
+			$text = '<script>'.$text.'</script>';
 		}
 		return $text;
 	}

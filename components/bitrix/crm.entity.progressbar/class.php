@@ -3,7 +3,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 CModule::IncludeModule("crm");
 
 use Bitrix\Crm\Color\PhaseColorScheme;
-use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -171,6 +170,7 @@ class CCrmEntityProgressBarComponent extends CBitrixComponent
 		$this->arResult['CONVERSION_SCHEME'] = $conversionScheme;
 		$this->arResult['CONVERSION_TYPE_ID'] = isset($this->arParams['CONVERSION_TYPE_ID'])
 			? (int)$this->arParams['CONVERSION_TYPE_ID'] : 0;
+		$this->arResult['CONVERTER_ID'] = $this->arParams['CONVERTER_ID'] ?? null;
 		//endregion
 
 		$this->arResult['SERVICE_URL'] = $this->serviceUrl;

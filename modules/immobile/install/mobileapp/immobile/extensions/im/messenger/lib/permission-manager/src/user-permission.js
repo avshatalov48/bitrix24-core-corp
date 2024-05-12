@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/permission-manager/user-permission', (require, exports, module) => {
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	class UserPermission
 	{
@@ -22,7 +22,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		{
 			if (Type.isNumber(userData))
 			{
-				this.store = core.getStore();
+				this.store = serviceLocator.get('core').getStore();
 				const userState = this.store.getters['usersModel/getById'](userData);
 
 				if (Type.isUndefined(userState))

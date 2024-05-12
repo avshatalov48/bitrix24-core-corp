@@ -2,7 +2,7 @@
  * @module im/messenger/provider/service/classes/message/action
  */
 jn.define('im/messenger/provider/service/classes/message/action', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
@@ -17,7 +17,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 	{
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			/** @type {QueueService} */
 			this.queueServiceInstanse = null;
 		}
@@ -42,7 +42,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 			await this.saveMessage(modelMessage);
 
 			let clientDonePromise;
-			if (this.isViewedByOthersUsers(modelMessage))
+			if (this.isViewedByOtherUsers(modelMessage))
 			{
 				// eslint-disable-next-line no-param-reassign
 				modelMessage.text = Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED');
@@ -58,11 +58,12 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 			clientDonePromise
 				.then(() => this.deleteRequest(modelMessage.id))
 				.catch((errors) => {
-					Logger.error('ActionService.delete error: ', errors);
+					Logger.error('ActionService.delete.deleteRequest.catch: ', errors);
 
 					this.restoreMessage(modelMessage.id, dialogId);
 				})
 				.finally(() => this.deleteTemporaryMessage(modelMessage.id))
+				.catch((errors) => Logger.error('ActionService.delete.deleteTemporaryMessage.catch: ', errors))
 			;
 		}
 
@@ -82,16 +83,17 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 			clientDonePromise
 				.then(() => this.updateRequest(getMessageStateModel.id, text))
 				.catch((errors) => {
-					Logger.error('ActionService.update error: ', errors);
+					Logger.error('ActionService.updateText.updateRequest.catch: ', errors);
 
 					this.restoreMessage(getMessageStateModel.id, dialogId);
 				})
 				.finally(() => this.deleteTemporaryMessage(getMessageStateModel.id))
+				.catch((errors) => Logger.error('ActionService.updateText.deleteTemporaryMessage.catch: ', errors))
 			;
 		}
 
 		/**
-		 * @desc call rest request delete message
+		 * @desc call a rest request delete message
 		 * @param {number|string} messageId
 		 * @return {Promise}
 		 */
@@ -163,7 +165,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		}
 
 		/**
-		 * @desc save message in local or vuex store
+		 * @desc save a message in local or vuex store
 		 * @param {MessagesModelState} modelMessage
 		 * @return {Promise}
 		 */
@@ -175,7 +177,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		}
 
 		/**
-		 * @desc save message in vuex store
+		 * @desc save a message in vuex store
 		 * @param {MessagesModelState} modelMessage
 		 */
 		async saveMessageToVuexStore(modelMessage)
@@ -184,7 +186,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		}
 
 		/**
-		 * @desc update message and recent
+		 * @desc update a message and recent
 		 * @param {MessagesModelState} modelMessage
 		 * @param {string} dialogId
 		 * @param {string} text
@@ -291,7 +293,9 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		/**
 		 * @desc update dialog store and clear views
 		 * @param {DialoguesModelState} dialogItem
-		 * @param {MessagePullHandlerUpdateDialogParams} params
+		 * @param {Object} params
+		 * @param {Object} params.message
+		 * @param {Number} params.counter
 		 * @return {Promise<any>}
 		 */
 		async updateDialog(dialogItem, params)
@@ -330,10 +334,10 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		}
 
 		/**
-		 * @desc is have views on message
+		 * @desc is have views on a message
 		 * @param {MessagesModelState} modelMessage
 		 */
-		isViewedByOthersUsers(modelMessage)
+		isViewedByOtherUsers(modelMessage)
 		{
 			return modelMessage.viewedByOthers;
 		}
@@ -363,7 +367,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				return false;
 			}
 
-			if (this.isViewedByOthersUsers(tempMessage))
+			if (this.isViewedByOtherUsers(tempMessage))
 			{
 				return this.store.dispatch('messagesModel/update', {
 					id: messageId,

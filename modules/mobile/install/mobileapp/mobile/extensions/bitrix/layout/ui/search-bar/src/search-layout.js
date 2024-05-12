@@ -2,56 +2,51 @@
  * @module layout/ui/search-bar/search-layout
  */
 jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { debounce } = require('utils/function');
-	const { clone, isEqual, mergeImmutable } = require('utils/object');
+	const { isEqual } = require('utils/object');
 	const { PropTypes } = require('utils/validation');
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const { Preset } = require('layout/ui/search-bar/preset');
-	const { Counter } = require('layout/ui/search-bar/counter');
 	const {
-		MoreButton,
 		MINIMAL_SEARCH_LENGTH,
 		DEFAULT_ICON_BACKGROUND,
 		ENTER_PRESSED_EVENT,
 	} = require('layout/ui/search-bar/ui');
-	const { PureComponent } = require('layout/pure-component');
+	const { SearchLayoutView } = require('layout/ui/search-bar/search-layout-view');
 
 	/**
 	 * @class SearchLayout
-	 * @typedef {LayoutComponent<SearchBarProps, SearchBarState>}
 	 */
-	class SearchLayout extends PureComponent
+	class SearchLayout
 	{
 		// region init
 
 		constructor(props)
 		{
-			super(props);
+			this.props = props;
 
 			this.setupNativeSearchField();
 
-			this.state = {
-				counters: [],
-				presets: [],
-				text: '',
-				presetId: (this.props.presetId || null),
-				counterId: (this.props.counterId || null),
-				selectedPresetBackground: null,
-				presetsLoaded: false,
-			};
+			this.counters = [];
+			this.presets = [];
+			this.selectedPresetBackground = null;
+			this.presetsLoaded = false;
+
+			this.text = '';
+			this.presetId = (props.presetId || null);
+			this.counterId = (props.counterId || null);
 
 			this.presetsBackendProvider = {
-				route: this.props.searchDataAction,
-				params: this.props.searchDataActionParams || {},
+				route: props.searchDataAction,
+				params: props.searchDataActionParams || {},
 			};
 
 			this.show = this.show.bind(this);
 			this.onCancel = this.onCancel.bind(this);
-			this.onPresetClick = this.onPresetClick.bind(this);
 			this.onTextChanged = this.onTextChanged.bind(this);
+			this.onPresetClick = this.onPresetClick.bind(this);
+			this.search = this.search.bind(this);
 
-			this.debounceSearch = debounce(() => this.search(false), 500, this);
+			this.debounceSearch = debounce(() => this.search(), 500, this);
 		}
 
 		get nativeSearchField()
@@ -87,14 +82,30 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		/**
 		 * @public
 		 */
+
 		show()
 		{
-			this.fetchPresets();
-
 			const search = this.nativeSearchField;
+			search.text = this.text;
 
-			search.text = this.state.text;
-			search.show(this, 44);
+			this.createSearchLayoutView();
+			search.show(this.searchLayoutView, 44);
+			this.fetchPresets();
+		}
+
+		createSearchLayoutView()
+		{
+			const params = {
+				presetsLoaded: this.presetsLoaded,
+				counters: this.counters,
+				counterId: this.counterId,
+				presets: this.presets,
+				presetId: this.presetId,
+				search: this.search,
+				text: this.text,
+				onPresetClick: this.onPresetClick,
+			};
+			this.searchLayoutView = new SearchLayoutView(params);
 		}
 
 		/**
@@ -113,7 +124,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		{
 			if (this.hasChanges())
 			{
-				return this.state.selectedPresetBackground || DEFAULT_ICON_BACKGROUND;
+				return this.selectedPresetBackground || DEFAULT_ICON_BACKGROUND;
 			}
 
 			return null;
@@ -125,12 +136,12 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		getDefaultPresetId()
 		{
-			if (!this.state.presetsLoaded)
+			if (!this.presetsLoaded)
 			{
 				return null;
 			}
 
-			const defaultPreset = this.state.presets.find((preset) => (preset.default === true && preset.disabled !== true));
+			const defaultPreset = this.presets.find((preset) => (preset.default === true && preset.disabled !== true));
 
 			return (defaultPreset ? defaultPreset.id : null);
 		}
@@ -144,7 +155,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			let stateWasChanged = false;
 			const propertyExists = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
 
-			this.state.counters.forEach(({ code, value }, index) => {
+			this.counters.forEach(({ code, value }, index) => {
 				if (!propertyExists(counters, code))
 				{
 					return;
@@ -153,14 +164,14 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 				const nextValue = counters[code];
 				if (nextValue > 0 && nextValue !== value)
 				{
-					this.state.counters[index].value = nextValue;
+					this.counters[index].value = nextValue;
 					stateWasChanged = true;
 				}
 			});
 
 			if (stateWasChanged)
 			{
-				this.setState({});
+				this.searchLayoutView.setPresets({ counters: this.counters });
 			}
 		}
 
@@ -174,18 +185,29 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		fetchPresets(force = false)
 		{
-			if (this.state.presetsLoaded && !force)
+			const executor = this.getRunActionExecutor();
+			const cacheExpired = executor.getCache().getData() === null;
+			if (this.presetsLoaded && !force && !cacheExpired)
 			{
 				return;
 			}
 
+			executor.call(true);
+		}
+
+		/**
+		 * @private
+		 * @return {RunActionExecutor}
+		 */
+		getRunActionExecutor()
+		{
 			const { route, params } = this.presetsBackendProvider;
 
-			new RunActionExecutor(route, params)
+			return new RunActionExecutor(route, params)
 				.setCacheId(this.getCacheId())
 				.setCacheHandler((response) => this.onLoadPresets(response))
 				.setHandler((response) => this.onLoadPresets(response))
-				.call(true);
+				.setCacheTtl(3600);
 		}
 
 		/**
@@ -209,17 +231,14 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			}
 
 			const { counters, presets } = response.data;
-			if (this.state.presetsLoaded)
+			this.counters = counters;
+			this.presets = presets;
+
+			if (!this.presetsLoaded || !isEqual(this.counters, counters) || !isEqual(this.presets, presets))
 			{
-				if (!isEqual(this.state.counters, counters) || !isEqual(this.state.presets, presets))
-				{
-					this.setState({ counters, presets });
-				}
+				this.searchLayoutView.setPresets(presets, counters);
 			}
-			else
-			{
-				this.setState({ counters, presets, presetsLoaded: true });
-			}
+			this.presetsLoaded = true;
 		}
 
 		// endregion
@@ -231,24 +250,13 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		onCancel()
 		{
-			const patch = {
-				text: '',
-				counterId: null,
-				presetId: this.getDefaultPresetId(),
-			};
-
-			const newState = mergeImmutable(this.state, patch);
-
-			if (isEqual(this.state, newState))
-			{
-				return;
-			}
-
-			this.setState(newState);
+			this.text = '';
+			this.counterId = null;
+			this.presetId = this.getDefaultPresetId();
 
 			if (this.props.onCancel)
 			{
-				this.props.onCancel(patch);
+				this.props.onCancel({ text: this.text, counterId: this.counterId, presetId: this.presetId });
 			}
 		}
 
@@ -257,9 +265,24 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		onTextChanged({ text = '' })
 		{
-			this.state.text = text;
+			this.text = text;
 
 			this.debounceSearch();
+		}
+
+		onPresetClick(patch)
+		{
+			this.counterId = patch.counterId;
+			this.selectedPresetBackground = patch.selectedPresetBackground;
+			if (this.presetId === patch.presetId)
+			{
+				this.presetId = null;
+			}
+			else
+			{
+				this.presetId = patch.presetId;
+			}
+			this.search();
 		}
 
 		/**
@@ -267,23 +290,24 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		search()
 		{
-			const { text, presetId, counterId } = this.state;
-			if (text.length > 0 && text.length < MINIMAL_SEARCH_LENGTH)
+			if (this.text.length > 0 && this.text.length < MINIMAL_SEARCH_LENGTH)
 			{
 				return;
 			}
 
-			if (text.length > 0 && this.hasRestrictions())
+			if (this.text.length > 0 && this.hasRestrictions())
 			{
-				this.state.text = '';
+				this.text = '';
 				this.nativeSearchField.text = '';
 
 				return;
 			}
 
+			this.searchLayoutView.setPresetId(this.presetId, this.counterId);
+
 			if (this.props.onSearch)
 			{
-				this.props.onSearch({ text, presetId, counterId });
+				this.props.onSearch({ text: this.text, counterId: this.counterId, presetId: this.presetId });
 			}
 		}
 
@@ -303,152 +327,20 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 
 		// endregion
 
-		// region render
-
-		render()
-		{
-			const presets = this.getPreparedPresets();
-
-			return View(
-				{
-					testId: 'search-presets-list-wrapper',
-					style: styles.wrapper,
-				},
-				View(
-					{},
-					ScrollView(
-						{
-							horizontal: true,
-							style: styles.presetsScrollView,
-						},
-						View(
-							{
-								testId: 'search-presets-list',
-								style: styles.presetsWrapper,
-							},
-							this.renderLoader(),
-							...this.renderDefaultPreset(presets),
-							...this.renderCounters(),
-							...this.renderPresets(presets),
-							this.renderMoreButton(),
-						),
-					),
-				),
-			);
-		}
-
-		renderLoader()
-		{
-			if (this.state.presetsLoaded)
-			{
-				return null;
-			}
-
-			return Loader({
-				style: {
-					width: 50,
-					height: 50,
-				},
-				tintColor: AppTheme.colors.base3,
-				animating: true,
-				size: 'small',
-			});
-		}
-
-		renderDefaultPreset(presets)
-		{
-			return presets.filter((preset) => preset.isDefault());
-		}
-
-		/**
-		 * @returns {Counter[]}
-		 */
-		renderCounters()
-		{
-			const counters = clone(this.state.counters);
-
-			return counters.map((counter) => new Counter({
-				...counter,
-				active: (this.state.counterId === counter.code),
-				onClick: this.onPresetClick,
-			}));
-		}
-
-		renderPresets(presets)
-		{
-			return presets.filter((preset) => !preset.isDefault());
-		}
-
-		renderMoreButton()
-		{
-			if (!this.props.onMoreButtonClick)
-			{
-				return null;
-			}
-
-			return MoreButton({
-				onClick: () => this.props.onMoreButtonClick(),
-			});
-		}
-
-		/**
-		 * @returns {Preset[]}
-		 */
-		getPreparedPresets()
-		{
-			if (!this.state.presetsLoaded)
-			{
-				return [];
-			}
-
-			const presets = clone(this.state.presets);
-
-			return presets.map((preset, index) => new Preset({
-				...preset,
-				active: (this.state.presetId === preset.id),
-				onClick: this.onPresetClick,
-				last: (index === presets.length - 1),
-			}));
-		}
-
-		/**
-		 * @private
-		 * @param {{
-		 * 	presetId: string | null,
-		 * 	counterId: string | null,
-		 * 	searchButtonBackgroundColor: string | undefined
-		 * }} params
-		 * @param {Boolean} active
-		 */
-		onPresetClick(params, active)
-		{
-			const { counterId, presetId, searchButtonBackgroundColor } = params;
-
-			const patch = {
-				counterId: active && counterId ? counterId : null,
-				presetId: active && presetId ? presetId : null,
-				selectedPresetBackground: active && searchButtonBackgroundColor ? searchButtonBackgroundColor : null,
-			};
-
-			this.setState(patch, () => this.search());
-		}
-
-		// endregion
-
 		/**
 		 * @private
 		 * @return {boolean}
 		 */
 		hasChanges()
 		{
-			if (this.state.text.length > 0)
+			if (this.text.length > 0)
 			{
 				return true;
 			}
 
-			if (this.state.presetsLoaded)
+			if (this.presetsLoaded)
 			{
-				return this.state.presetId !== this.getDefaultPresetId();
+				return this.presetId !== this.getDefaultPresetId();
 			}
 
 			return false;
@@ -465,48 +357,6 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		onMoreButtonClick: PropTypes.func,
 		presetId: PropTypes.string,
 		counterId: PropTypes.string,
-	};
-
-	const styles = {
-		wrapper: {
-			height: 44,
-			width: '100%',
-			backgroundColor: AppTheme.colors.bgNavigation,
-		},
-		presetsScrollView: {
-			height: 44,
-		},
-		presetsWrapper: {
-			flexDirection: 'row',
-			alignItems: 'center',
-			marginTop: 0,
-			paddingRight: 10,
-		},
-		contentWrapper: {
-			borderTopLeftRadius: 20,
-			borderTopRightRadius: 20,
-		},
-		listWrapper: {
-			width: '100%',
-			height: 600,
-		},
-		emptyResultsWrapper: {
-			justifyContent: 'center',
-			alignItems: 'center',
-			width: '100%',
-			height: '100%',
-		},
-		emptyResultsIcon: {
-			width: 86,
-			height: 86,
-			marginTop: -86,
-		},
-		searchContentTitle: {
-			fontSize: 13,
-			color: AppTheme.colors.baseWhiteFixed,
-			marginBottom: 10,
-			marginLeft: 20,
-		},
 	};
 
 	module.exports = { SearchLayout };

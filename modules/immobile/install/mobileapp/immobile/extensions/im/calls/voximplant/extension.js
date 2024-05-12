@@ -860,6 +860,7 @@
 			{
 				// Call declined by the same user elsewhere
 				this.joinStatus = BX.Call.JoinStatus.None;
+				this.eventEmitter.emit(BX.Call.Event.onHangup);
 				return;
 			}
 

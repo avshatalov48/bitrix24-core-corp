@@ -17,5 +17,6 @@ return [
 		'utils/prop',
 		'assets/common',
 		'utils/copy',
+		'utils/validation',
 	],
 ];

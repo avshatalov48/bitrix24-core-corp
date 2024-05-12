@@ -220,41 +220,47 @@ BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerTyp
  */
 BX.Crm.KanbanComponent.leadConvert = function(schema)
 {
-	var data = this.currentData;
+	const data = this.currentData;
 
 	if (!data || !data.item)
 	{
 		return;
 	}
 
-	var id = data.item.getId();
+	if (!data.grid || !data.grid.data || !data.grid.data.converterId)
+	{
+		console.error('Converter id not found in data', data);
+
+		return;
+	}
+
+	const id = data.item.getId();
 
 	this.successClosePopup = true;
 	this.currentPopup.close();
 
-	if (schema === "SELECT")
+	const converter = BX.Crm.Conversion.Manager.Instance.getConverter(data.grid.data.converterId);
+	if (!converter)
 	{
-		BX.CrmLeadConverter.getCurrent().openEntitySelector
-		(
-			function(result)
-			{
-				BX.Crm.KanbanComponent.currentPopupItem = null;
-				BX.CrmLeadConverter.getCurrent().convert(
-					id,
-					result.config,
-					"",
-					result.data
-				);
-			}
+		console.error('Converter with given id not found', data.grid.data.converterId, BX.Crm.Conversion.Manager.Instance);
+
+		return;
+	}
+
+	converter.setAnalyticsElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_DRAG_N_DROP);
+
+	if (schema === 'SELECT')
+	{
+		const selector = BX.Crm.Conversion.Manager.Instance.createEntitySelector(
+			converter.getId(),
+			[BX.CrmEntityType.enumeration.contact, BX.CrmEntityType.enumeration.company],
+			id,
 		);
+		void selector.show();
 	}
 	else
 	{
-		BX.CrmLeadConverter.getCurrent().convert(
-			id,
-			BX.CrmLeadConversionScheme.createConfig(schema),
-			""
-		);
+		converter.convertBySchemeItemId(schema, id);
 	}
 };
 

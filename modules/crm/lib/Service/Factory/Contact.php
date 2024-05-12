@@ -532,6 +532,10 @@ class Contact extends Service\Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearEntitySelectorPrepareRequisiteDataCache(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmContactDelete')
 			)
 			->addAction(

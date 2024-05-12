@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,rest_client,ui_label,main_popup,ui_hint,crm_audioPlayer,ui_alerts,ui_textcrop,currency_currencyCore,ui_icons_generator,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,main_loader,ui_vue3,crm_timeline_editors_commentEditor,crm_field_itemSelector,main_date,crm_timeline_tools,ui_infoHelper,ui_analytics,ui_buttons,ui_feedback_form,ui_entitySelector,crm_activity_fileUploaderPopup,crm_activity_settingsPopup,crm_activity_todoEditor,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,ui_notification,ui_dialogs_messagebox,crm_ai_call,main_core) {
+(function (exports,ui_cnt,rest_client,ui_label,main_popup,ui_hint,crm_audioPlayer,crm_ai_copilotTextarea,ui_alerts,ui_textcrop,currency_currencyCore,ui_icons_generator,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,main_loader,ui_vue3,crm_timeline_editors_commentEditor,crm_field_itemSelector,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,crm_integration_analytics,ui_analytics,ui_buttons,ui_feedback_form,ui_entitySelector,crm_activity_fileUploaderPopup,crm_activity_settingsPopup,crm_activity_todoEditor,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,ui_notification,ui_dialogs_messagebox,crm_ai_call,main_core) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -3396,7 +3396,6 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "YELLOW", 'yellow');
 	babelHelpers.defineProperty(EditableDescriptionBackgroundColor, "WHITE", 'white');
 
-	/* eslint-disable */
 	const EditableDescription = {
 	  components: {
 	    Button
@@ -3426,6 +3425,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: ''
+	    },
+	    copilotSettings: {
+	      type: Array,
+	      required: false,
+	      default: []
 	    }
 	  },
 	  data() {
@@ -3435,13 +3439,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      isEdit: false,
 	      isSaving: false,
 	      isLongText: false,
-	      isCollapsed: false
+	      isCollapsed: false,
+	      isCopilotEnabled: main_core.Type.isPlainObject(this.copilotSettings),
+	      placeholderText: main_core.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER')
 	    };
 	  },
 	  inject: ['isReadOnly', 'isLogMessage'],
 	  computed: {
 	    className() {
-	      return ['crm-timeline__editable-text', [`${this.heightClassnameModifier}`, `${this.bgColorClassnameModifier}`], {
+	      return ['crm-timeline__editable-text', [String(this.heightClassnameModifier), String(this.bgColorClassnameModifier)], {
 	        '--is-read-only': this.isLogMessage,
 	        '--is-edit': this.isEdit,
 	        '--is-long': this.isLongText,
@@ -3504,10 +3510,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    startEditing() {
+	      this.destroyCopilot();
 	      this.isEdit = true;
 	      this.isCollapsed = true;
 	      this.$nextTick(() => {
 	        const textarea = this.$refs.textarea;
+	        this.createCopilot(textarea);
 	        this.adjustHeight(textarea);
 	        textarea.focus();
 	      });
@@ -3522,7 +3530,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    adjustHeight(elem) {
 	      elem.style.height = 0;
-	      elem.style.height = elem.scrollHeight + "px";
+	      elem.style.height = `${elem.scrollHeight}px`;
 	    },
 	    onPressEnter(event) {
 	      if (event.ctrlKey === true || main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true)) {
@@ -3539,6 +3547,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      this.isSaving = true;
 	      const encodedTrimText = this.value.trim();
+
+	      // eslint-disable-next-line promise/catch-or-return
 	      this.executeSaveAction(encodedTrimText).then(() => {
 	        this.isEdit = false;
 	        this.oldValue = encodedTrimText;
@@ -3565,6 +3575,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
 	      actionDescription.actionParams.value = text;
 	      const action = new Action(actionDescription);
+
+	      // eslint-disable-next-line consistent-return
 	      return action.execute(this);
 	    },
 	    cancelEditing() {
@@ -3588,16 +3600,43 @@ this.BX.Crm = this.BX.Crm || {};
 	    checkIsLongText() {
 	      var _this$$refs$rootEleme;
 	      const textBlock = this.$refs.text;
-	      if (!textBlock) return false;
+	      if (!textBlock) {
+	        return false;
+	      }
 	      const textBlockMaxHeightStyle = window.getComputedStyle(textBlock).getPropertyValue('--crm-timeline__editable-text_max-height');
 	      const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
 	      const parentComputedStyles = this.$refs.rootElement ? window.getComputedStyle(this.$refs.rootElement) : {};
+
+	      // eslint-disable-next-line no-unsafe-optional-chaining
 	      const parentHeight = ((_this$$refs$rootEleme = this.$refs.rootElement) === null || _this$$refs$rootEleme === void 0 ? void 0 : _this$$refs$rootEleme.offsetHeight) - parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
 	      return parentHeight > textBlockMaxHeight;
 	    },
 	    isInViewport() {
 	      const rect = this.$el.getBoundingClientRect();
 	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+	    },
+	    onCopilotTextareaValueChange(event) {
+	      const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
+	      const id = event.getData().id;
+	      if (this.isEdit && copilotId === id) {
+	        this.value = event.getData().value;
+	      }
+	    },
+	    createCopilot(textarea) {
+	      if (this.isCopilotEnabled) {
+	        this.copilotTextarea = new crm_ai_copilotTextarea.CopilotTextarea({
+	          id: main_core.Text.getRandom(),
+	          target: textarea,
+	          copilotParams: this.copilotSettings
+	        });
+	        main_core_events.EventEmitter.subscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+	      }
+	    },
+	    destroyCopilot() {
+	      if (this.isCopilotEnabled) {
+	        main_core_events.EventEmitter.unsubscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+	        delete this.copilotTextarea;
+	      }
 	    }
 	  },
 	  watch: {
@@ -3610,7 +3649,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    },
 	    value() {
-	      if (!this.isEdit) return;
+	      if (!this.isEdit) {
+	        return;
+	      }
 	      this.$nextTick(() => {
 	        this.adjustHeight(this.$refs.textarea);
 	      });
@@ -3630,6 +3671,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.$nextTick(() => {
 	      this.isLongText = this.checkIsLongText();
 	    });
+	  },
+	  beforeUnmount() {
+	    this.destroyCopilot();
 	  },
 	  template: `
 		<div class="crm-timeline__editable-text_wrapper">
@@ -3657,7 +3701,7 @@ this.BX.Crm = this.BX.Crm || {};
 							ref="textarea"
 							v-model="value"
 							:disabled="!isEdit || isSaving"
-							:placeholder="$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER')"
+							:placeholder="placeholderText"
 							@keydown.esc="cancelEditing"
 							@keydown.enter="onPressEnter"
 							class="crm-timeline__editable-text_text"
@@ -4237,7 +4281,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    // todo remove after fixing main
 	    browserToUserOffset() {
 	      const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
-	      return userToUTCOffset + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
+	      return userToUTCOffset + main_core.Text.toInteger(new Date().getTimezoneOffset() * 60);
 	    }
 	  },
 	  watch: {
@@ -5235,8 +5279,11 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Base);
 
 	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _isCancellationInProgress = /*#__PURE__*/new WeakMap();
+	var _cancelSigningProcess = /*#__PURE__*/new WeakSet();
 	var _deleteEntry = /*#__PURE__*/new WeakSet();
 	var _showSigningProcess = /*#__PURE__*/new WeakSet();
 	var _modifyDocument = /*#__PURE__*/new WeakSet();
@@ -5255,6 +5302,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _modifyDocument);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _showSigningProcess);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _deleteEntry);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _cancelSigningProcess);
+	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _isCancellationInProgress, {
+	      writable: true,
+	      value: void 0
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(SignB2eDocument, [{
@@ -5272,7 +5324,42 @@ this.BX.Crm = this.BX.Crm || {};
 	      const documentId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.documentId);
 	      const processUri = actionData === null || actionData === void 0 ? void 0 : actionData.processUri;
 	      const documentHash = (actionData === null || actionData === void 0 ? void 0 : actionData.documentHash) || '';
-	      if ((action === 'SignB2eDocument:ShowSigningProcess' || action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0) {
+	      if (action === 'Activity:SignB2eDocument:ShowSigningCancel') {
+	        if (babelHelpers.classPrivateFieldGet(this, _isCancellationInProgress)) {
+	          return;
+	        }
+	        const documentUid = actionData === null || actionData === void 0 ? void 0 : actionData.documentUid;
+	        const signingCancelationDialog = new ui_dialogs_messagebox.MessageBox({
+	          title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
+	          message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
+	          modal: true
+	        });
+	        const cancellationButton = item.getLayoutFooterButtonById(actionData.buttonId);
+	        const cancellationButtonUI = cancellationButton.getUiButton();
+	        signingCancelationDialog.setButtons([new BX.UI.Button({
+	          text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
+	          color: BX.UI.Button.Color.DANGER,
+	          onclick: event => {
+	            babelHelpers.classPrivateFieldSet(this, _isCancellationInProgress, true);
+	            cancellationButtonUI.setState(ui_buttons.ButtonState.WAITING);
+	            signingCancelationDialog.close();
+	            _classPrivateMethodGet$5(this, _cancelSigningProcess, _cancelSigningProcess2).call(this, documentUid).then(() => {
+	              main_core.Dom.hide(cancellationButton.buttonContainerRef);
+	            }).catch(() => {
+	              cancellationButtonUI.setState(null);
+	            }).finally(() => {
+	              babelHelpers.classPrivateFieldSet(this, _isCancellationInProgress, false);
+	            });
+	          }
+	        }), new BX.UI.Button({
+	          text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
+	          color: BX.UI.Button.Color.LIGHT_BORDER,
+	          onclick: () => {
+	            signingCancelationDialog.close();
+	          }
+	        })]);
+	        signingCancelationDialog.show();
+	      } else if ((action === 'SignB2eDocument:ShowSigningProcess' || action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0) {
 	        _classPrivateMethodGet$5(this, _showSigningProcess, _showSigningProcess2).call(this, processUri);
 	      } else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0) {
 	        _classPrivateMethodGet$5(this, _modifyDocument, _modifyDocument2).call(this, actionData);
@@ -5310,6 +5397,36 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return SignB2eDocument;
 	}(Base);
+	function _cancelSigningProcess2(documentUid) {
+	  return new Promise((resolve, reject) => {
+	    main_core.ajax.runAction('sign.api_v1.document.signing.stop', {
+	      data: {
+	        uid: documentUid
+	      },
+	      preparePost: false,
+	      headers: [{
+	        name: 'Content-Type',
+	        value: 'application/json'
+	      }]
+	    }).then(response => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_SUCCESS'),
+	        autoHideDelay: 5000
+	      });
+	      resolve(response);
+	    }, response => {
+	      response.errors.forEach(error => {
+	        ui_notification.UI.Notification.Center.notify({
+	          content: error.message,
+	          autoHideDelay: 5000
+	        });
+	      });
+	      reject(response.errors);
+	    }).catch(() => {
+	      reject();
+	    });
+	  });
+	}
 	function _deleteEntry2(entryId) {
 	  console.log(`delete entry${entryId}`);
 	}
@@ -5556,7 +5673,7 @@ this.BX.Crm = this.BX.Crm || {};
 	let _ = t => t,
 	  _t;
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
@@ -5601,7 +5718,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _copyPublicLink);
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _openDocument$1);
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _onJsEvent);
-	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _popupConfirm, {
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _popupConfirm, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -5962,12 +6079,13 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const COPILOT_BUTTON_DISABLE_DELAY = 5000;
 	const COPILOT_HELPDESK_CODE = 18799442;
 	var _isCopilotTourShown = /*#__PURE__*/new WeakMap();
+	var _isCopilotBannerShown = /*#__PURE__*/new WeakMap();
 	var _makeCall = /*#__PURE__*/new WeakSet();
 	var _scheduleCall = /*#__PURE__*/new WeakSet();
 	var _openTranscript = /*#__PURE__*/new WeakSet();
@@ -5976,16 +6094,26 @@ this.BX.Crm = this.BX.Crm || {};
 	var _launchCallRecordingTranscription = /*#__PURE__*/new WeakSet();
 	var _showAdditionalInfo = /*#__PURE__*/new WeakSet();
 	var _showCopilotTourIfNeeded = /*#__PURE__*/new WeakSet();
+	var _showMarketMessageBox = /*#__PURE__*/new WeakSet();
+	var _showFeedbackMessageBox = /*#__PURE__*/new WeakSet();
+	var _showCopilotBanner = /*#__PURE__*/new WeakSet();
 	var _emitTimelineCopilotTourEvent = /*#__PURE__*/new WeakSet();
 	var _sendAiCallParsingData = /*#__PURE__*/new WeakSet();
+	var _isSliderCodeExist = /*#__PURE__*/new WeakSet();
+	var _isAiMarketplaceAppsExist = /*#__PURE__*/new WeakSet();
 	let Call = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Call, _Base);
 	  function Call(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Call);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this, ...args));
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _isAiMarketplaceAppsExist);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _isSliderCodeExist);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _sendAiCallParsingData);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _emitTimelineCopilotTourEvent);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotBanner);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showFeedbackMessageBox);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showMarketMessageBox);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotTourIfNeeded);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _launchCallRecordingTranscription);
@@ -5994,7 +6122,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openTranscript);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _scheduleCall);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _makeCall);
-	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _isCopilotTourShown, {
+	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotTourShown, {
+	      writable: true,
+	      value: false
+	    });
+	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotBannerShown, {
 	      writable: true,
 	      value: false
 	    });
@@ -6113,21 +6245,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    ownerTypeId: actionData.ownerTypeId,
 	    ownerId: actionData.ownerId
 	  };
-	  const ownerType = BX.CrmEntityType.resolveName(data.ownerTypeId).toLowerCase();
-	  const crmMode = main_core.Type.isStringFilled(actionData.crmMode) ? actionData.crmMode : '';
-	  const callId = main_core.Type.isStringFilled(actionData.callId) ? actionData.callId : '';
 
 	  // start call record transcription
 	  aiCopilotBtnUI.setState(ui_buttons.ButtonState.AI_WAITING);
 	  main_core.ajax.runAction('crm.timeline.ai.launchRecordingTranscription', {
 	    data
 	  }).then(() => {
-	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, ownerType, crmMode, callId, 'success');
+	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, data.ownerTypeId, data.activityId, 'success');
 	  }).catch(response => {
 	    let errorType = 'error';
 	    const customData = response.errors[0].customData;
 	    if (customData) {
-	      _classPrivateMethodGet$8(this, _showAdditionalInfo, _showAdditionalInfo2).call(this, customData);
+	      customData.isCopilotBannerNeedShow = actionData.isCopilotBannerNeedShow || false;
+	      _classPrivateMethodGet$8(this, _showAdditionalInfo, _showAdditionalInfo2).call(this, customData, item, actionData);
 	      aiCopilotBtnUI.setState(ui_buttons.ButtonState.ACTIVE);
 	      errorType = 'error_no_limits';
 	    } else {
@@ -6141,65 +6271,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      }, COPILOT_BUTTON_DISABLE_DELAY);
 	      errorType = 'error_b24';
 	    }
-	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, ownerType, crmMode, callId, errorType);
+	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, data.ownerTypeId, data.activityId, errorType);
 	    throw response;
 	  });
 	}
-	function _showAdditionalInfo2(data) {
-	  if (Object.hasOwn(data, 'sliderCode') && main_core.Type.isStringFilled(data.sliderCode)) {
+	function _showAdditionalInfo2(data, item, actionData) {
+	  if (_classPrivateMethodGet$8(this, _isSliderCodeExist, _isSliderCodeExist2).call(this, data)) {
 	    BX.UI.InfoHelper.show(data.sliderCode);
-	  } else if (Object.hasOwn(data, 'isAiMarketplaceAppsExist') && main_core.Type.isBoolean(data.isAiMarketplaceAppsExist)) {
-	    if (data.isAiMarketplaceAppsExist) {
-	      ui_dialogs_messagebox.MessageBox.show({
-	        title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
-	        message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
-	          '[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
-	          '[/helpdesklink]': '</a>'
-	        }),
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	        okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
-	        onOk: () => {
-	          return crm_router.Router.openSlider(main_core.Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK'));
-	        },
-	        onCancel: messageBox => {
-	          messageBox.close();
-	        }
-	      });
+	  } else if (_classPrivateMethodGet$8(this, _isAiMarketplaceAppsExist, _isAiMarketplaceAppsExist2).call(this, data)) {
+	    if (!babelHelpers.classPrivateFieldGet(this, _isCopilotBannerShown) && data.isCopilotBannerNeedShow) {
+	      _classPrivateMethodGet$8(this, _showCopilotBanner, _showCopilotBanner2).call(this, item, actionData);
 	    } else {
-	      ui_dialogs_messagebox.MessageBox.show({
-	        title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'),
-	        message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'),
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	        okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'),
-	        onOk: messageBox => {
-	          messageBox.close();
-	          BX.UI.Feedback.Form.open({
-	            id: 'b24_ai_provider_partner_crm_feedback',
-	            defaultForm: {
-	              id: 682,
-	              lang: 'en',
-	              sec: '3sd3le'
-	            },
-	            forms: [{
-	              zones: ['cn'],
-	              id: 678,
-	              lang: 'cn',
-	              sec: 'wyufoe'
-	            }, {
-	              zones: ['vn'],
-	              id: 680,
-	              lang: 'vn',
-	              sec: '2v97xr'
-	            }]
-	          });
-	        },
-	        onCancel: messageBox => {
-	          messageBox.close();
-	        }
-	      });
+	      _classPrivateMethodGet$8(this, _showMarketMessageBox, _showMarketMessageBox2).call(this);
 	    }
+	  } else {
+	    _classPrivateMethodGet$8(this, _showFeedbackMessageBox, _showFeedbackMessageBox2).call(this);
 	  }
 	}
 	function _showCopilotTourIfNeeded2(item) {
@@ -6236,6 +6322,89 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }, 50);
 	}
+	function _showMarketMessageBox2() {
+	  ui_dialogs_messagebox.MessageBox.show({
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
+	      '[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
+	      '[/helpdesklink]': '</a>'
+	    }),
+	    modal: true,
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	    okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
+	    onOk: () => {
+	      return crm_router.Router.openSlider(main_core.Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK'));
+	    },
+	    onCancel: messageBox => {
+	      messageBox.close();
+	    }
+	  });
+	}
+	function _showFeedbackMessageBox2() {
+	  ui_dialogs_messagebox.MessageBox.show({
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'),
+	    modal: true,
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	    okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'),
+	    onOk: messageBox => {
+	      messageBox.close();
+	      BX.UI.Feedback.Form.open({
+	        id: 'b24_ai_provider_partner_crm_feedback',
+	        defaultForm: {
+	          id: 682,
+	          lang: 'en',
+	          sec: '3sd3le'
+	        },
+	        forms: [{
+	          zones: ['cn'],
+	          id: 678,
+	          lang: 'cn',
+	          sec: 'wyufoe'
+	        }, {
+	          zones: ['vn'],
+	          id: 680,
+	          lang: 'vn',
+	          sec: '2v97xr'
+	        }]
+	      });
+	    },
+	    onCancel: messageBox => {
+	      messageBox.close();
+	    }
+	  });
+	}
+	async function _showCopilotBanner2(item, actionData) {
+	  const {
+	    AppsInstallerBanner,
+	    AppsInstallerBannerEvents
+	  } = await main_core.Runtime.loadExtension('ai.copilot-banner');
+	  const portalZone = main_core.Loc.getMessage('PORTAL_ZONE');
+	  const copilotBannerOptions = {
+	    isWestZone: portalZone !== 'ru' && portalZone !== 'by' && portalZone !== 'kz'
+	  };
+	  const copilotBanner = new AppsInstallerBanner(copilotBannerOptions);
+	  copilotBanner.show();
+	  copilotBanner.subscribe(AppsInstallerBannerEvents.actionStart, () => {
+	    // eslint-disable-next-line no-console
+	    console.info('Install app started');
+	  });
+	  copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishSuccess, () => {
+	    setTimeout(() => {
+	      new ai_engine.Engine().setBannerLaunched().then(() => {}).catch(() => {});
+
+	      // eslint-disable-next-line no-console
+	      console.info('App installed successfully');
+	      babelHelpers.classPrivateFieldSet(this, _isCopilotBannerShown, true);
+	    }, 500);
+	  });
+	  copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishFailed, () => {
+	    console.error('Install app failed. Try installing the application manually.');
+	    setTimeout(() => {
+	      _classPrivateMethodGet$8(this, _showMarketMessageBox, _showMarketMessageBox2).call(this);
+	    }, 500);
+	  });
+	}
 	function _emitTimelineCopilotTourEvent2(container) {
 	  main_core_events.EventEmitter.emit('BX.Crm.Timeline.Call:onShowCopilotTour', {
 	    target: container,
@@ -6243,23 +6412,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    delay: 1500
 	  });
 	}
-	function _sendAiCallParsingData2(ownerType, crmMode, callId, result) {
-	  ui_analytics.sendData({
-	    event: 'call_parsing',
-	    tool: 'AI',
-	    category: 'crm_operations',
-	    type: 'manual',
-	    c_section: 'crm',
-	    c_element: 'copilot_button',
-	    c_sub_section: ownerType,
-	    p1: crmMode,
-	    p2: callId,
-	    status: result
-	  });
+	function _sendAiCallParsingData2(ownerType, activityId, result) {
+	  ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, result).setElement(crm_integration_analytics.Dictionary.ELEMENT_COPILOT_BUTTON).buildData());
+	}
+	function _isSliderCodeExist2(data) {
+	  return Object.hasOwn(data, 'sliderCode') && main_core.Type.isStringFilled(data.sliderCode);
+	}
+	function _isAiMarketplaceAppsExist2(data) {
+	  return Object.hasOwn(data, 'isAiMarketplaceAppsExist') && main_core.Type.isBoolean(data.isAiMarketplaceAppsExist) && data.isAiMarketplaceAppsExist;
 	}
 
 	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _settingsPopup = /*#__PURE__*/new WeakMap();
@@ -6284,11 +6448,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showResponsibleUserSelector);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showSettingsPopup);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showFileUploaderPopup);
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _settingsPopup, {
+	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _settingsPopup, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _responsibleUserSelectorDialog, {
+	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _responsibleUserSelectorDialog, {
 	      writable: true,
 	      value: null
 	    });
@@ -6705,7 +6869,7 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$f(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _item = /*#__PURE__*/new WeakMap();
@@ -6718,11 +6882,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, DealProductList);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DealProductList).call(this, ...args));
 	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _addProductToDeal);
-	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _item, {
+	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _item, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _productsGrid, {
+	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _productsGrid, {
 	      writable: true,
 	      value: null
 	    });
@@ -7092,7 +7256,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _classPrivateMethodInitSpec$f(obj, privateSet) { _checkPrivateRedeclaration$i(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$i(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$f(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _needCheckRequestStatus = /*#__PURE__*/new WeakMap();
@@ -7124,15 +7288,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribeShipmentEvents);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribePullEvents);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _makeCall$1);
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _needCheckRequestStatus, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _needCheckRequestStatus, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _checkRequestStatusTimeout, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _checkRequestStatusTimeout, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _isPullSubscribed, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _isPullSubscribed, {
 	      writable: true,
 	      value: false
 	    });
@@ -7912,19 +8076,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (!main_core.Type.isInteger(mergeUuid) || mergeUuid <= 0) {
 	    return;
 	  }
-	  const label = main_core.Type.isStringFilled(actionData.label) ? actionData.label : '';
-	  const crmMode = main_core.Type.isStringFilled(actionData.crmMode) ? actionData.crmMode : '';
-	  const callId = main_core.Type.isStringFilled(actionData.callId) ? actionData.callId : '';
 	  top.BX.Runtime.loadExtension('crm.ai.form-fill').then(exports => {
 	    const {
 	      createAiFormFillApplicationInsideSlider
 	    } = exports;
 	    createAiFormFillApplicationInsideSlider({
 	      ...actionData,
-	      mergeUuid,
-	      label,
-	      crmMode,
-	      callId
+	      mergeUuid
 	    });
 	  }).catch(() => {
 	    throw new Error('Cant load createAiFormFillApplicationInsideSlider extension');
@@ -7958,9 +8116,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (!main_core.Type.isInteger(mergeUuid) || mergeUuid <= 0) {
 	    return;
 	  }
-	  const ownerType = BX.CrmEntityType.resolveName(actionData.ownerTypeId).toLowerCase();
-	  const crmMode = main_core.Type.isStringFilled(actionData.crmMode) ? actionData.crmMode : '';
-	  const callId = main_core.Type.isStringFilled(actionData.callId) ? actionData.callId : '';
+	  const activityId = main_core.Text.toInteger(actionData.activityId) > 0 ? main_core.Text.toInteger(actionData.activityId) : 0;
 	  animationCallbacks === null || animationCallbacks === void 0 ? void 0 : (_animationCallbacks$o = animationCallbacks.onStart) === null || _animationCallbacks$o === void 0 ? void 0 : _animationCallbacks$o.call(animationCallbacks);
 	  main_core.Runtime.loadExtension('crm.ai.feedback').then(exports => {
 	    const {
@@ -7968,13 +8124,80 @@ this.BX.Crm = this.BX.Crm || {};
 	    } = exports;
 
 	    /** @see BX.Crm.AI.Feedback.showSendFeedbackPopup */
-	    showSendFeedbackPopup(mergeUuid, ownerType, crmMode, callId);
+	    showSendFeedbackPopup(mergeUuid, actionData.ownerTypeId, activityId);
 	  }).catch(() => {
 	    console.error('Cant load showSendFeedbackPopup extension');
 	  }).finally(() => {
 	    var _animationCallbacks$o2;
-	    return (_animationCallbacks$o2 = animationCallbacks.onStop) === null || _animationCallbacks$o2 === void 0 ? void 0 : _animationCallbacks$o2.call(animationCallbacks);
+	    return animationCallbacks === null || animationCallbacks === void 0 ? void 0 : (_animationCallbacks$o2 = animationCallbacks.onStop) === null || _animationCallbacks$o2 === void 0 ? void 0 : _animationCallbacks$o2.call(animationCallbacks);
 	  });
+	}
+
+	function _classPrivateMethodInitSpec$m(obj, privateSet) { _checkPrivateRedeclaration$p(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$p(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$m(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _changePlayerState$1 = /*#__PURE__*/new WeakSet();
+	var _scheduleCall$1 = /*#__PURE__*/new WeakSet();
+	let Visit = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Visit, _Base);
+	  function Visit(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Visit);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Visit).call(this, ...args));
+	    _classPrivateMethodInitSpec$m(babelHelpers.assertThisInitialized(_this), _scheduleCall$1);
+	    _classPrivateMethodInitSpec$m(babelHelpers.assertThisInitialized(_this), _changePlayerState$1);
+	    return _this;
+	  }
+	  babelHelpers.createClass(Visit, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:Visit:ChangePlayerState' && actionData && actionData.recordId) {
+	        _classPrivateMethodGet$m(this, _changePlayerState$1, _changePlayerState2$1).call(this, item, actionData.recordId);
+	      }
+	      if (action === 'Activity:Visit:Schedule' && actionData) {
+	        _classPrivateMethodGet$m(this, _scheduleCall$1, _scheduleCall2$1).call(this, actionData.activityId, actionData.scheduleDate);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:Visit';
+	    }
+	  }]);
+	  return Visit;
+	}(Base);
+	function _changePlayerState2$1(item, recordId) {
+	  const player = item.getLayoutContentBlockById('audio');
+	  if (!player) {
+	    return;
+	  }
+	  if (recordId !== player.id) {
+	    return;
+	  }
+	  if (player.state === 'play') {
+	    player.pause();
+	  } else {
+	    player.play();
+	  }
+	}
+	function _scheduleCall2$1(activityId, scheduleDate) {
+	  var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
+	  const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
+	  if (menuBar) {
+	    menuBar.setActiveItemById('todo');
+	    const todoEditor = menuBar.getItemById('todo');
+	    todoEditor.focus();
+	    todoEditor.setParentActivityId(activityId);
+	    todoEditor.setDeadLine(scheduleDate);
+	  }
 	}
 
 	ControllerManager.registerController(Activity);
@@ -8001,6 +8224,7 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(TranscriptSummaryResult);
 	ControllerManager.registerController(EntityFieldsFillingResult);
 	ControllerManager.registerController(SignB2eDocument);
+	ControllerManager.registerController(Visit);
 
 	exports.Item = Item;
 	exports.ConfigurableItem = ConfigurableItem;
@@ -8008,5 +8232,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.Main,BX,BX.Crm,BX.UI,BX.UI,BX.Currency,BX.UI.Icons.Generator,BX.UI.IconSet,BX,BX,BX,BX.Vue3,BX.Crm.Timeline.Editors,BX.Crm.Field,BX.Main,BX.Crm.Timeline,BX,BX.UI.Analytics,BX.UI,BX,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX,BX.UI.Dialogs,BX.Crm.AI,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.Main,BX,BX.Crm,BX.Crm.AI,BX.UI,BX.UI,BX.Currency,BX.UI.Icons.Generator,BX.UI.IconSet,BX,BX,BX,BX.Vue3,BX.Crm.Timeline.Editors,BX.Crm.Field,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI,BX,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX,BX.UI.Dialogs,BX.Crm.AI,BX));
 //# sourceMappingURL=index.bundle.js.map

@@ -15,6 +15,12 @@ if (!\Bitrix\Crm\Settings\LeadSettings::isEnabled())
 \Bitrix\Crm\Settings\Crm::markAsInitiated();
 
 $isSlider = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
+
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+];
+
 if (!$isSlider)
 {
 	/** @var CMain $APPLICATION */
@@ -41,7 +47,8 @@ if (!$isSlider)
 			'PATH_TO_REPORT_LIST' => $arResult['PATH_TO_REPORT_LIST'] ?? '',
 			'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
 			'PATH_TO_EVENT_LIST' => $arResult['PATH_TO_EVENT_LIST'] ?? '',
-			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? ''
+			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -94,6 +101,7 @@ else
 			'ELEMENT_ID' => (int)($arResult['VARIABLES']['lead_id'] ?? 0),
 			'TYPE' => 'list',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -131,7 +139,8 @@ else
 				'PATH_TO_LEAD_CALENDAR' => $arResult['PATH_TO_LEAD_CALENDAR'],
 				'PATH_TO_LEAD_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID']
+				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
+				'ANALYTICS' => $analytics,
 			],
 			'USE_UI_TOOLBAR' => 'Y',
 		]

@@ -211,12 +211,28 @@ if ($arParams['TYPE'] === 'list')
 {
 	$arResult['BUTTONS'][] = [
 		'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
-		'LINK' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
-			[
-				'quote_id' => 0
-			]
-		),
+		'LINK' => \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Quote)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_BUTTON)
+			->buildUri(
+				CComponentEngine::makePathFromTemplate(
+					$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
+					[
+						'quote_id' => 0
+					]
+				)
+			)
+			->getUri()
+		,
 		'HIGHLIGHT' => true,
 		'IS_DISABLED' => !$bAdd,
 		'HINT' => Loc::getMessage('CRM_QUOTE_ADD_HINT_MSGVER_1')

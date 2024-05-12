@@ -346,6 +346,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 			return new SidebarTabView({
 				dialogId: this.props.dialogId,
 				isNotes: this.props.isNotes,
+				isCopilot: this.props.isCopilot,
 			});
 		}
 

@@ -9,6 +9,7 @@ use Bitrix\BizprocMobile\UI\TaskView;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\UI\EntityEditor\FormWrapper;
 use Bitrix\Mobile\UI\StatefulList\BaseController;
 use Bitrix\Bizproc;
@@ -24,36 +25,35 @@ class Task extends BaseController
 		return [];
 	}
 
-	public function loadDetailsAction(int $taskId)
+	public function loadDetailsAction(int $taskId, int $targetUserId = null)
 	{
-		$currentUserId = $this->getCurrentUser()->getId();
+		$currentUserId = (int)($this->getCurrentUser()->getId());
+		$targetUserId = $targetUserId !== null && $targetUserId > 0 ? $targetUserId : $currentUserId;
 
 		$taskService = new Bizproc\Api\Service\TaskService(
 			new Bizproc\Api\Service\TaskAccessService($currentUserId)
 		);
 
-		$tasksRequest = new Bizproc\Api\Request\TaskService\GetUserTasksRequest(
-			additionalSelectFields: ['NAME', 'DESCRIPTION'],
-			filter: [
-				'ID' => $taskId,
-				'USER_ID' => $currentUserId,
-			],
-		);
-		$getTasksResult = $taskService->getTasks($tasksRequest);
-		if (!$getTasksResult->isSuccess())
+		$taskRequest = new Bizproc\Api\Request\TaskService\GetUserTaskRequest($taskId, $targetUserId);
+
+		$getTaskResponse = $taskService->getUserTask($taskRequest);
+		if (!$getTaskResponse->isSuccess())
 		{
-			$this->addErrors($getTasksResult->getErrors());
+			$this->addErrors($getTaskResponse->getErrors());
 
 			return null;
 		}
 
-		$task = current($getTasksResult->getTasks());
+		$task = $getTaskResponse->getTask();
 
-		if (!$task)
+		if ($currentUserId !== $targetUserId)
 		{
-			$this->addError(new Error('Task not found')); // todo: localize
+			if (isset($task['PARAMETERS']['AccessControl']) && $task['PARAMETERS']['AccessControl'] === 'Y')
+			{
+				$task['DESCRIPTION'] = '';
+			}
 
-			return null;
+			unset($task['FIELDS'], $task['BUTTONS']);
 		}
 
 		$provider = null;
@@ -67,8 +67,15 @@ class Task extends BaseController
 
 		return [
 			'task' => new TaskView($task),
-			'allCount' => $this->countParallelTasks($task['WORKFLOW_ID'], $currentUserId),
+			'allCount' => $this->countParallelTasks($task['WORKFLOW_ID'], $targetUserId),
 			'editor' => $provider ? (new FormWrapper($provider))->getResult() : null,
+			'taskResponsibleMessage' => Loc::getMessage(
+				'M_BP_LIB_CONTROLLER_TASK_RESPONSIBLE',
+				['#USER#' => $this->getUserFormatName($targetUserId)]
+			),
+			'rights' => [
+				'delegate' => ((int)$task['DELEGATION_TYPE'] !== \CBPTaskDelegationType::None) || $this->isCurrentUserAdmin(),
+			],
 		];
 	}
 
@@ -109,7 +116,22 @@ class Task extends BaseController
 		$getTasksResult = $taskService->doTask($request);
 		if (!$getTasksResult->isSuccess())
 		{
-			$this->addErrors($getTasksResult->getErrors());
+			foreach ($getTasksResult->getErrors() as $error)
+			{
+				if ($error->getCode() === 'TASK_NOT_FOUND_ERROR')
+				{
+					$this->addError(
+						new Error(
+							Loc::getMessage('M_BP_LIB_CONTROLLER_TASK_ERROR_TASK_NOT_FOUND'),
+							'TASK_NOT_FOUND_ERROR'
+						)
+					);
+				}
+				else
+				{
+					$this->addError($error);
+				}
+			}
 
 			return null;
 		}
@@ -127,5 +149,44 @@ class Task extends BaseController
 			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 		];
+	}
+
+	private function getUserFormatName(int $userId)
+	{
+		$format = \CSite::GetNameFormat(false);
+		$user = \CUser::GetList(
+			'id',
+			'asc',
+			['ID_EQUAL_EXACT' => $userId],
+			[
+				'FIELDS' => [
+					'TITLE',
+					'NAME',
+					'LAST_NAME',
+					'SECOND_NAME',
+					'NAME_SHORT',
+					'LAST_NAME_SHORT',
+					'SECOND_NAME_SHORT',
+					'EMAIL',
+					'ID'
+				],
+			]
+		)->Fetch();
+
+		return $user ? \CUser::FormatName($format, $user, true, false) : '';
+	}
+
+	private function isCurrentUserAdmin(): bool
+	{
+		$currentUser = $this->getCurrentUser();
+		if ($currentUser)
+		{
+			return (
+				$currentUser->isAdmin()
+				|| (Loader::includeModule('bitrix24') && \CBitrix24::IsPortalAdmin($currentUser->getId()))
+			);
+		}
+
+		return false;
 	}
 }

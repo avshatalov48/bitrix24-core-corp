@@ -31,7 +31,6 @@ use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
@@ -792,11 +791,13 @@ if ($isBizProcInstalled)
 }
 
 //region Check and fill fields restriction
-$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
+$params = [
 	$arResult['GRID_ID'] ?? '',
 	$arResult['HEADERS'] ?? [],
 	$entityFilter ?? null
-);
+];
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(...$params);
+$arResult['RESTRICTED_FIELDS'] = $fieldRestrictionManager->getFilterFields(...$params);
 //endregion
 
 // list all filds for export
@@ -2472,10 +2473,25 @@ foreach($arResult['LEAD'] as &$arLead)
 		);
 	}
 
-	$arLead['PATH_TO_LEAD_COPY'] =  CHTTP::urlAddParams(
-		$arLead['PATH_TO_LEAD_EDIT'],
-		array('copy' => 1)
-	);
+	$arLead['PATH_TO_LEAD_COPY'] =
+		\Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Lead)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			->buildUri($arLead['PATH_TO_LEAD_EDIT'])
+			->addParams([
+				'copy' => 1,
+			])
+			->getUri()
+	;
 
 	$arLead['PATH_TO_LEAD_CONVERT'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_LEAD_CONVERT'],
@@ -2927,10 +2943,6 @@ if (isset($arResult['LEAD_ID']) && !empty($arResult['LEAD_ID']))
 
 if (!$isInExportMode)
 {
-	$arResult['ANALYTIC_TRACKER'] = array(
-		'lead_enabled' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isEnabled() ? 'Y' : 'N'
-	);
-
 	$arResult['CONVERSION'] = array();
 	if($arResult['CAN_CONVERT'])
 	{
@@ -2948,6 +2960,7 @@ if (!$isInExportMode)
 			);
 		}
 		$arResult['CONVERSION']['CONFIGS'] = LeadConversionDispatcher::getJavaScriptConfigurations();
+		$arResult['CONVERTER_ID_PREFIX'] = $arResult['GRID_ID'];
 	}
 
 	$arResult['NEED_FOR_REBUILD_DUP_INDEX'] =

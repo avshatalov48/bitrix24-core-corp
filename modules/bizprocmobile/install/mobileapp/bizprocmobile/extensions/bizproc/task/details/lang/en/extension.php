@@ -1,13 +1,6 @@
 <?php
 $MESS["BPMOBILE_TASK_DETAILS_ACTION_DELEGATE"] = "Delegate";
-$MESS["BPMOBILE_TASK_DETAILS_ALERT_CANCEL"] = "Cancel";
-$MESS["BPMOBILE_TASK_DETAILS_ALERT_DISCARD"] = "Exit without saving";
 $MESS["BPMOBILE_TASK_DETAILS_ALERT_TEXT"] = "Do you want to save the changes? All the changes will be lost if you exit now.";
-$MESS["BPMOBILE_TASK_DETAILS_ALERT_TITLE"] = "Save the changes";
-$MESS["BPMOBILE_TASK_DETAILS_COMMENTS_DEVELOPING"] = "Coming soon!";
-$MESS["BPMOBILE_TASK_DETAILS_COMMENTS_DEVELOPING_1"] = "Comments are coming soon";
-$MESS["BPMOBILE_TASK_DETAILS_COMMENTS_LIKE"] = "Like";
-$MESS["BPMOBILE_TASK_DETAILS_COMMENTS_TITLE"] = "Comments";
 $MESS["BPMOBILE_TASK_DETAILS_TIMELINE"] = "Log";
 $MESS["BPMOBILE_TASK_DETAILS_TITLE"] = "Assignment";
 $MESS['BPMOBILE_TASK_DETAILS_RPA'] = "Assignment can only be completed in web version";

@@ -56,7 +56,6 @@ $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_COMPANY"] = "Are you sure you wan
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_CONTACT"] = "Are you sure you want to delete the contact?";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_DEAL"] = "Are you sure you want to delete the deal?";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_LEAD"] = "Are you sure you want to delete the lead?";
-$MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_OK"] = "Delete";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_QUOTE_MSGVER_1"] = "Are you sure you want to delete the estimate?";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_SMART_INVOICE"] = "Are you sure you want to delete the invoice?";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONTACT"] = "Delete contact";

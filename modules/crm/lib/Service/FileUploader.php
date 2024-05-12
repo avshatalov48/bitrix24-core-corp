@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Field;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -24,6 +25,37 @@ class FileUploader
 	protected function registerShutdownFunction(): void
 	{
 		register_shutdown_function([$this, 'deleteTemporaryFiles']);
+	}
+
+	/**
+	 * Check whether is bFileId references is a valid file for $field
+	 *
+	 * @param Field $field
+	 * @param int $bFileId
+	 * @return Result
+	 */
+	final public function checkFileById(Field $field, int $bFileId): Result
+	{
+		$fileData = null;
+		$fileDBRow = null;
+		if ($bFileId > 0)
+		{
+			$fileData = $this->cfile::MakeFileArray($bFileId);
+			$fileDBRow = $this->cfile::GetFileArray($bFileId);
+		}
+
+		if (empty($fileData) || empty($fileDBRow))
+		{
+			return (new Result())->addError(new Error('File not found', ErrorCode::FILE_NOT_FOUND));
+		}
+
+		$moduleId = $fileDBRow['MODULE_ID'] ?? null;
+		if ($moduleId !== 'crm')
+		{
+			return (new Result())->addError(new Error('File should be bound to CRM module', 'WRONG_FILE_MODULE_ID'));
+		}
+
+		return $this->checkFile($field, $fileData);
 	}
 
 	/**

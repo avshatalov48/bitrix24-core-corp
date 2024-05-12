@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contact-list', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { AnalyticsEvent } = require('analytics');
 	const { contacts } = require('native/contacts');
 	const { NotifyManager } = require('notify-manager');
 	const { get, isEmpty, mergeImmutable } = require('utils/object');
@@ -95,7 +96,7 @@ jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contac
 
 						promise.then(() => {
 							detailCard.markChanged();
-
+							detailCard.mergeAnalyticsParams(new AnalyticsEvent().setP3('importButton_true'));
 							NotifyManager.hideLoadingIndicator(
 								true,
 								getEntityMessage('M_CRM_ENTITY_ACTION_IMPORT_SUCCESS', detailCard.getEntityTypeId()),

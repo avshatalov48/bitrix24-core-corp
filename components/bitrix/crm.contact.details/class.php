@@ -320,7 +320,12 @@ class CCrmContactDetailsComponent
 								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 								'ENABLE_TOOLBAR' => true,
 								'PRESERVE_HISTORY' => true,
-								'ADD_EVENT_NAME' => 'CrmCreateDealFromContact'
+								'ADD_EVENT_NAME' => 'CrmCreateDealFromContact',
+								'ANALYTICS' => [
+									// we dont know where from this component was opened from - it could be anywhere on portal
+									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+								],
 							], 'crm.deal.list')
 						]
 					]
@@ -348,6 +353,11 @@ class CCrmContactDetailsComponent
 								'ENABLE_TOOLBAR' => true,
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateQuoteFromContact',
+								'ANALYTICS' => [
+									// we dont know where from this component was opened from - it could be anywhere on portal
+									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+								],
 							], 'crm.quote.list'),
 						],
 					],
@@ -395,6 +405,11 @@ class CCrmContactDetailsComponent
 								'ENABLE_TOOLBAR' => 'Y',
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromContact',
+								'ANALYTICS' => [
+									// we dont know where from this component was opened from - it could be anywhere on portal
+									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+								],
 							], 'crm.invoice.list'),
 						],
 					],
@@ -441,6 +456,11 @@ class CCrmContactDetailsComponent
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateOrderFromContact',
 								'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
+								'ANALYTICS' => [
+									// we dont know where from this component was opened from - it could be anywhere on portal
+									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+								],
 							], 'crm.order.list')
 						)
 					)
@@ -448,36 +468,57 @@ class CCrmContactDetailsComponent
 			}
 			if (CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
 			{
-				$this->arResult['TABS'][] = array(
+				$bpTab = [
 					'id' => 'tab_bizproc',
 					'name' => Loc::getMessage('CRM_CONTACT_TAB_BIZPROC'),
-					'loader' => array(
+					'loader' => [
 						'serviceUrl' => '/bitrix/components/bitrix/bizproc.document/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
-						'componentData' => array(
+						'componentData' => [
 							'template' => 'frame',
-							'params' => array(
+							'params' => [
 								'MODULE_ID' => 'crm',
 								'ENTITY' => 'CCrmDocumentContact',
 								'DOCUMENT_TYPE' => 'CONTACT',
 								'DOCUMENT_ID' => 'CONTACT_'.$this->entityID
-							)
-						)
-					)
-				);
-				$this->arResult['BIZPROC_STARTER_DATA'] = array(
-					'templates' => CBPDocument::getTemplatesForStart(
-						$this->userID,
-						array('crm', 'CCrmDocumentContact', 'CONTACT'),
-						array('crm', 'CCrmDocumentContact', 'CONTACT_'.$this->entityID),
-						[
-							'DocumentStates' => []
+							]
 						]
-					),
-					'moduleId' => 'crm',
-					'entity' => 'CCrmDocumentContact',
-					'documentType' => 'CONTACT',
-					'documentId' => 'CONTACT_'.$this->entityID
-				);
+					]
+				];
+
+				$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+				if (!$toolsManager->checkBizprocAvailability())
+				{
+					$bpTab['availabilityLock'] = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+						->getBizprocAvailabilityLock()
+					;
+					unset($bpTab['loader']);
+				}
+
+				$this->arResult['TABS'][] = $bpTab;
+
+				if (isset($bpTab['availabilityLock']))
+				{
+					$this->arResult['BIZPROC_STARTER_DATA'] = [
+						'availabilityLock' => $bpTab['availabilityLock'],
+					];
+				}
+				else
+				{
+					$this->arResult['BIZPROC_STARTER_DATA'] = [
+						'templates' => CBPDocument::getTemplatesForStart(
+							$this->userID,
+							['crm', 'CCrmDocumentContact', 'CONTACT'],
+							['crm', 'CCrmDocumentContact', 'CONTACT_' . $this->entityID],
+							[
+								'DocumentStates' => [],
+							]
+						),
+						'moduleId' => 'crm',
+						'entity' => 'CCrmDocumentContact',
+						'documentType' => 'CONTACT',
+						'documentId' => 'CONTACT_' . $this->entityID,
+					];
+				}
 			}
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_tree',

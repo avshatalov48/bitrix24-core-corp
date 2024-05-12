@@ -9,6 +9,8 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { DialogDTO } = require('im/messenger/controller/dialog-creator/dialog-dto');
 	const AppTheme = require('apptheme');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { AnalyticsEvent } = require('analytics');
 
 	class NavigationSelector
 	{
@@ -35,7 +37,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					this.layout.close();
 				},
 				onItemSelected: (itemData) => {
-					MessengerEmitter.emit(EventType.messenger.openDialog, itemData);
+					MessengerEmitter.emit(EventType.messenger.openDialog, itemData, 'im.messenger');
 					this.layout.close();
 				},
 				onCreateOpenChat: () => {
@@ -57,13 +59,8 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					);
 				},
 				onClickInviteButton: () => {
-					IntranetInvite.openRegisterSlider({
-						originator: 'im.chat.create',
-						registerUrl: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
-						rootStructureSectionId: BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
-						adminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
-						disableAdminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
-						sharingMessage: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
+					openIntranetInviteWidget({
+						analytics: new AnalyticsEvent().setSection('chat'),
 						parentLayout: this.layout,
 					});
 				},

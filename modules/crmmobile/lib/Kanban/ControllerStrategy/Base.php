@@ -163,4 +163,9 @@ abstract class Base implements StrategyInterface
 	{
 		return Kanban::getInstance($this->getEntityType(), $this->getFilterParams());
 	}
+
+	public function getCurrentFilter()
+	{
+		return $this->params['filter'];
+	}
 }

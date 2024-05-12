@@ -8,12 +8,16 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * Class QueueTable
@@ -122,6 +126,18 @@ final class QueueTable extends DataManager
 				->configureStorageValues('N', 'Y')
 				->configureDefaultValue(false)
 			,
+			(new BooleanField('IS_MANUAL_LAUNCH'))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(true)
+			,
+			(new DatetimeField('CREATED_TIME'))
+				->configureRequired()
+				->configureDefaultValue(fn() => new DateTime())
+			,
+			(new DatetimeField('FINISHED_TIME'))
+				->configureNullable()
+			,
 		];
 	}
 
@@ -130,6 +146,41 @@ final class QueueTable extends DataManager
 		parent::cleanCache();
 
 		JobRepository::getInstance()->cleanRuntimeCache();
+	}
+
+	public static function onBeforeAdd(Event $event): void
+	{
+		self::fillFinishedTime($event);
+	}
+
+	public static function onBeforeUpdate(Event $event): void
+	{
+		self::fillFinishedTime($event);
+	}
+
+	private static function fillFinishedTime(Event $event): void
+	{
+		$object = $event->getParameter('object');
+		if (!($object instanceof EO_Queue))
+		{
+			return;
+		}
+
+		if ($object->state === State::ACTUAL || $object->state === State::CHANGED)
+		{
+			$object->fill([
+				'EXECUTION_STATUS',
+				'FINISHED_TIME',
+			]);
+		}
+
+		if (
+			$object->getExecutionStatus() !== self::EXECUTION_STATUS_PENDING
+			&& !($object->getFinishedTime() instanceof DateTime)
+		)
+		{
+			$object->setFinishedTime(new DateTime());
+		}
 	}
 
 	public static function deletePending(ItemIdentifier $target): Result

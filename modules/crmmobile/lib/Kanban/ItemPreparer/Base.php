@@ -112,12 +112,12 @@ abstract class Base
 			return null;
 		}
 
-		$dtoField = new Field([
+		$dtoField = Field::make([
 			'name' => 'CLIENT',
 			'title' => Loc::getMessage('CRMMOBILE_KANBAN_ITEM_PREPARER_BASE_CLIENT'),
 			'type' => 'client',
-			'value' =>  $client,
-			'config' =>  [
+			'value' => $client,
+			'config' => [
 				'owner' => [
 					'id' => $this->getItemId($item),
 				],

@@ -9,12 +9,15 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 	const { isFunction } = require('utils/object');
 	const { Type } = require('type');
 	const { EventEmitter } = require('event-emitter');
+	const { Haptics } = require('haptics');
 
 	class TaskButtons extends PureComponent
 	{
 		constructor(props)
 		{
 			super(props);
+
+			this.testId = 'MBP_TASK_BUTTONS';
 
 			this.customEventEmitter = EventEmitter.createWithUid('bizproc');
 			this.onTaskTouch = this.onTaskTouch.bind(this);
@@ -101,13 +104,19 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 					{
 						return this.renderDeclineButton(
 							button.TEXT,
-							() => this.onTaskButtonAction(task, button),
+							() => {
+								Haptics.notifySuccess();
+								this.onTaskButtonAction(task, button);
+							},
 						);
 					}
 
 					return this.renderAcceptButton(
 						button.TEXT,
-						() => this.onTaskButtonAction(task, button),
+						() => {
+							Haptics.impactMedium();
+							this.onTaskButtonAction(task, button);
+						},
 					);
 				});
 			}
@@ -278,7 +287,7 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 		{
 			this.customEventEmitter.emit(
 				'Task:onTouch',
-				{ task: this.task },
+				{ task: this.task, isInline: this.props.isInline },
 			);
 
 			BX.ajax.runAction('bizprocmobile.Task.do', {
@@ -289,10 +298,13 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 					this.props.onComplete(response.data);
 				}
 			}).catch(({ errors }) => {
-				Alert.alert(errors.pop().message);
 				if (isFunction(this.props.onFail))
 				{
-					this.props.onFail();
+					this.props.onFail(errors);
+				}
+				else
+				{
+					Alert.alert(errors.pop().message);
 				}
 			});
 		}

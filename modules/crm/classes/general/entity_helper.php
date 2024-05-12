@@ -283,7 +283,6 @@ class CCrmEntityHelper
 
 		$previousSemantics = (string)($params['previousStageSemantics'] ?? PhaseSemantics::UNDEFINED);
 		$currentSemantics = (string)($params['currentStageSemantics'] ?? PhaseSemantics::UNDEFINED);
-
 		if (
 			$previousSemantics !== $currentSemantics
 			&& PhaseSemantics::isFinal($currentSemantics)
@@ -291,7 +290,7 @@ class CCrmEntityHelper
 		{
 			Timeline\MarkController::getInstance()->onItemMoveToFinalStage(
 				$itemIdentifier,
-				$currentSemantics,
+				(string)($params['currentFields']['STAGE_ID'] ?? ''),
 				$authorId,
 			);
 		}

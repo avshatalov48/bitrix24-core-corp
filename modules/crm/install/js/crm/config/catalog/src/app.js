@@ -67,6 +67,8 @@ export default Vue.extend({
 			isBitrix24: false,
 			busProductCardHelpLink: '',
 			defaultProductVatIncluded: null,
+			defaultProductVatId: null,
+			vats: [],
 		};
 	},
 	computed: {
@@ -416,6 +418,8 @@ export default Vue.extend({
 			 * Other settings
 			 */
 			this.defaultProductVatIncluded = data.defaultProductVatIncluded;
+			this.vats = data.vats;
+			this.defaultProductVatId = data.defaultProductVatId;
 			this.productCardSliderEnabled = data.productCardSliderEnabled;
 			this.costPriceCalculationMethod = data.costPriceCalculationMethod;
 			this.isEmptyCostPriceCalculationMethod = !Type.isStringFilled(this.costPriceCalculationMethod);
@@ -441,7 +445,7 @@ export default Vue.extend({
 			if (Type.isStringFilled(this.costPriceCalculationMethod) && this.showNegativeStoreAmountPopup)
 			{
 				const text = Loc.getMessage(
-					'CRM_CFG_C_SETTINGS_NEGATIVE_STORE_BALANCE_POPUP_TEXT',
+					'CRM_CFG_C_SETTINGS_NEGATIVE_STORE_BALANCE_POPUP_TEXT_MSGVER_1',
 					{
 						'#STORE_BALANCE_LIST_LINK#': '<help-link></help-link>',
 					},
@@ -504,6 +508,7 @@ export default Vue.extend({
 							reservationSettings: this.makeReservationSettings(),
 							productCardSliderEnabled: this.productCardSliderEnabled,
 							defaultProductVatIncluded: this.defaultProductVatIncluded,
+							defaultProductVatId: this.defaultProductVatId,
 							checkRightsOnDecreaseStoreAmount: this.checkRightsOnDecreaseStoreAmount,
 							costPriceCalculationMethod: this.costPriceCalculationMethod,
 						},
@@ -612,6 +617,14 @@ export default Vue.extend({
 		{
 			return this.getHintContent(
 				Loc.getMessage('CRM_CFG_C_SETTINGS_CAN_BUY_ZERO_HINT'),
+				HELP_ARTICLE_ID,
+				'products',
+			);
+		},
+		getDefaultVatHint()
+		{
+			return this.getHintContent(
+				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_VAT_HINT'),
 				HELP_ARTICLE_ID,
 				'products',
 			);
@@ -783,11 +796,11 @@ export default Vue.extend({
 								style="display: flex; align-items: center"
 								class="ui-slider-heading-4"
 							>
-								{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_TITLE}}
+								{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_TITLE_MSGVER_1}}
 							</div>
 							<div class="catalog-settings-editor-content-block">
 								<div class="ui-ctl-label-text">
-									<label>{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CALCULATION_MODE}}</label>
+									<label>{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CALCULATION_MODE_MSGVER_1}}</label>
 									<span
 										class="ui-hint"
 										data-hint-html=""
@@ -799,13 +812,13 @@ export default Vue.extend({
 								</div>
 								<div v-if="!isEmptyCostPriceCalculationMethod" class="ui-alert ui-alert-primary ui-alert-icon-info">
 									<span class="ui-alert-message">
-										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_INFO}}
+										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_INFO_MSGVER_1}}
 										<span v-html='getDocumentationProductBatchLink()'></span>
 									</span>									
 								</div>
 								<div v-if="!isHiddenCostPriceCalculationMethodChangeWarning" class="ui-alert ui-alert-warning ui-alert-icon-warning">
 									<span class="ui-alert-message">
-										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_WARNING}}
+										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_WARNING_MSGVER_1}}
 										<span v-html='getDocumentationProductBatchLink()'></span>
 									</span>
 								</div>
@@ -889,20 +902,6 @@ export default Vue.extend({
 								</label>
 							</div>
 						</div>
-						<div class="catalog-settings-editor-checkbox-content-block">
-							<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
-								<input
-									v-model="defaultProductVatIncluded"
-									@click="markAsChanged"
-									id="default_product_vat_included"
-									type="checkbox"
-									class="ui-ctl-element"
-								>
-								<label for="default_product_vat_included" class="ui-ctl-label-text">
-									{{loc.CRM_CFG_C_SETTINGS_PRODUCT_CARD_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS}}
-								</label>
-							</div>
-						</div>
 						<div
 							v-if="isDefaultQuantityTraceVisible"
 							class="catalog-settings-editor-checkbox-content-block"
@@ -965,6 +964,48 @@ export default Vue.extend({
 								>
 									<span class="ui-hint-icon"></span>
 								</span>
+							</div>
+						</div>
+						<div class="catalog-settings-editor-checkbox-content-block">
+							<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
+								<input
+									v-model="defaultProductVatIncluded"
+									@click="markAsChanged"
+									id="default_product_vat_included"
+									type="checkbox"
+									class="ui-ctl-element"
+								>
+								<label for="default_product_vat_included" class="ui-ctl-label-text">
+									{{loc.CRM_CFG_C_SETTINGS_PRODUCT_CARD_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS}}
+								</label>
+							</div>
+						</div>
+						<div class="catalog-settings-editor-content-block">
+							<div class="ui-ctl-label-text">
+								<label>{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_VAT}}</label>
+								<span
+									class="ui-hint"
+									data-hint-html=""
+									data-hint-interactivity=""
+									:data-hint="getDefaultVatHint()"
+								>
+									<span class="ui-hint-icon"></span>
+								</span>
+							</div>
+							<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+								<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+								<select
+									v-model="defaultProductVatId"
+									class="ui-ctl-element"
+									@change="markAsChanged"
+								>
+									<option
+										v-for="vat in vats"
+										:value="vat.ID"
+									>
+										{{vat.NAME}}
+									</option>
+								</select>
 							</div>
 						</div>
 					</div>

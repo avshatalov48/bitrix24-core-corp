@@ -1,11 +1,14 @@
-<?
+<?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
-use Bitrix\Main\Localization\Loc;
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CMain $APPLICATION */
+
+use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;use Bitrix\Main\Localization\Loc;
 
 $this->IncludeLangFile();
 
@@ -21,7 +24,7 @@ $this->IncludeLangFile();
 	'ui.buttons.icons',
 ]);
 
-if($arResult['IS_SLIDER'])
+if(isset($arResult['IS_SLIDER']) && $arResult['IS_SLIDER'])
 {
 	$APPLICATION->RestartBuffer();
 	?>
@@ -35,7 +38,7 @@ if($arResult['IS_SLIDER'])
 			window.location = "<?=CUtil::JSEscape((new \Bitrix\Main\Web\Uri(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
 		}
 	</script>
-	<?$APPLICATION->ShowHead(); ?>
+	<?php $APPLICATION->ShowHead(); ?>
 </head>
 <body>
 <div class="docs-template-load-slider">
@@ -45,21 +48,23 @@ if($arResult['IS_SLIDER'])
 				<div class="pagetitle">
 					<span id="pagetitle" class="pagetitle-item docs-preview-pagetitle-item"><?=htmlspecialcharsbx($arResult['TITLE']);?></span>
 				</div>
-				<?if(Bitrix24Manager::isEnabled())
+				<?php if(Bitrix24Manager::isEnabled())
 				{
-					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('', '<?=\htmlspecialcharsbx(\CUtil::JSEscape($arResult['TEMPLATE']['NAME']))?>', '<?=\htmlspecialcharsbx(\CUtil::JSEscape($arResult['params']['defaultCode']))?>');"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_FEEDBACK');?></button>
-					<?
+					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('', '<?=\htmlspecialcharsbx(\CUtil::JSEscape($arResult['TEMPLATE']['NAME']))?>', '<?=\htmlspecialcharsbx(\CUtil::JSEscape($arResult['params']['defaultCode'] ?? ''))?>');"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_FEEDBACK');?></button>
+					<?php
 				}?>
 			</div>
 		</div>
 	</div>
 	<div class="docs-template-load-wrap docs-template-load-wrap-slider">
-<?}
+<?php
+}
 else
 {
 	$APPLICATION->SetTitle(htmlspecialcharsbx($arResult['TITLE']));?>
 	<div class="docs-template-load-wrap">
-<?}
+<?php
+}
 if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 {
 	?><style>
@@ -69,19 +74,19 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 	.docs-template-load-drag {
 		display: none;
 	}
-</style><?
+</style><?php
 }
 ?>
-	<div class="docs-template-error-message" id="upload-template-error-message"<?
-	if($arResult['ERROR'])
+	<div class="docs-template-error-message" id="upload-template-error-message"<?php
+	if(!empty($arResult['ERROR']))
 	{
 		?> style="display: block;"><?=htmlspecialcharsbx($arResult['ERROR']);
 	}
 	else
 	{
-		?>><?
+		?>><?php
 	}?></div>
-	<?if(!$arResult['ERROR'])
+	<?php if(empty($arResult['ERROR']))
 	{?>
 		<form>
 			<input type="file" name="body" id="upload-template-button" />
@@ -110,19 +115,19 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 						<span class="docs-template-load-result-name" id="upload-template-file-name"><?=($arResult['TEMPLATE']['fileName'] ? htmlspecialcharsbx($arResult['TEMPLATE']['fileName']) : '');?></span>
 					</div>
 					<div class="docs-template-load-result-size" id="upload-template-file-size"><?=($arResult['TEMPLATE']['fileSize'] ? CFile::FormatSize($arResult['TEMPLATE']['fileSize']) : '')?></div>
-					<?if($arResult['params']['defaultCode'])
+					<?php if(!empty($arResult['params']['defaultCode']))
 					{
 						?><div class="docs-template-load-result-default">
 							<span class="docs-template-load-result-default-text" id="upload-template-reinstall"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_REINSTALL');?></span>
-						</div><?
+						</div><?php
 					}
-					if($arResult['TEMPLATE']['FILE_ID'] > 0)
+					if(isset($arResult['TEMPLATE']['FILE_ID']) && $arResult['TEMPLATE']['FILE_ID'] > 0)
 					{
 					?>
 					<div class="docs-template-download-file">
 						<span class="docs-template-load-result-default-text" id="upload-template-download-file"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_DOWNLOAD');?></span>
 					</div>
-					<?}?>
+					<?php } ?>
 					<div class="docs-template-download-file" id="upload-template-delete-file">
 						<span class="docs-template-load-result-default-text"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_UPLOAD_NEW');?></span>
 					</div>
@@ -155,11 +160,13 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 					</div>
 					<div class="docs-template-load-product-type-select-wrap">
 						<select class="docs-template-load-select docs-template-load-indentation-14" id="docs-template-products-table-variant-select">
-							<? foreach ($arResult["PRODUCTS_TABLE_VARIANT"] as $type) : ?>
+							<?php
+							foreach ($arResult["PRODUCTS_TABLE_VARIANT"] as $type) : ?>
 								<option value="<?= $type; ?>"
 									<?= ($arResult['TEMPLATE']['PRODUCTS_TABLE_VARIANT'] === $type) ? 'selected="selected"' : ''; ?>
 								> <?= Loc::getMessage('DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT'.($type ? '_'.ToUpper($type) : '')) ?> </option>
-							<? endforeach; ?>
+							<?php
+							endforeach; ?>
 						</select>
 					</div>
 				</div>
@@ -188,7 +195,7 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 					</div>
 				</div>
 			</div>
-			<?
+			<?php
 			$APPLICATION->IncludeComponent(
 				"bitrix:main.ui.selector",
 				".default",
@@ -233,12 +240,14 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 					</div>
 					<div class="docs-template-load-num-select-wrap">
 						<select class="docs-template-load-select docs-template-load-indentation-14" id="docs-template-region-select">
-							<?foreach ($arResult['REGIONS'] as $code => $description)
+							<?php
+							foreach ($arResult['REGIONS'] as $code => $description)
 							{?>
 								<option value="<?=htmlspecialcharsbx($code);?>"
 									<?=($arResult['TEMPLATE']['REGION'] == $code) ? 'selected="selected"' : ''; ?>
 								><?= htmlspecialcharsbx($description['TITLE']); ?></option>
-							<?}?>
+							<?php
+							}?>
 						</select>
 						<div class="docs-template-load-num-btn-block">
 							<div class="docs-template-load-num-btn<?=(!is_numeric($arResult['TEMPLATE']['REGION']) ? ' template-edit-hidden' : '');?>" id="docs-template-region-edit-btn"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_TEMPLATE_NUMERATOR_EDIT');?></div>
@@ -254,11 +263,13 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 					</div>
 					<div class="docs-template-load-num-select-wrap">
 						<select class="docs-template-load-select docs-template-load-indentation-14" id="docs-template-num-select">
-							<? foreach ($arResult["numeratorList"] as $numeratorData) : ?>
+							<?php
+							foreach ($arResult["numeratorList"] as $numeratorData) : ?>
 								<option value="<?= (int)$numeratorData['id']; ?>"
 									<?= ($arResult['TEMPLATE']['NUMERATOR_ID'] == $numeratorData['id']) ? 'selected="selected"' : ''; ?>
 								><?= htmlspecialcharsbx($numeratorData['name']); ?></option>
-							<? endforeach; ?>
+							<?php
+							endforeach; ?>
 						</select>
 						<div class="docs-template-load-num-btn-block">
 							<div class="docs-template-load-num-btn" id="docs-template-numerator-edit-btn"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_TEMPLATE_NUMERATOR_EDIT');?></div>
@@ -267,9 +278,10 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 					</div>
 				</div>
 			</div>
-			<div class="docs-template-load-buttons<?if($arResult['IS_SLIDER'])
+			<div class="docs-template-load-buttons<?php
+			if (isset($arResult['IS_SLIDER']) && $arResult['IS_SLIDER'])
 			{
-				?> docs-template-load-buttons-slider<?
+				?> docs-template-load-buttons-slider<?php
 			}?>" id="add-template-buttons-block">
 				<div class="docs-template-load-buttons-inner">
 					<button class="ui-btn ui-btn-md ui-btn-success" id="add-template-save-button"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_SAVE');?></button>
@@ -283,25 +295,27 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 				BX.DocumentGenerator.UploadTemplate.init(<?=CUtil::PhpToJSObject($arResult['params']);?>);
 				BX.DocumentGenerator.UploadTemplate.moduleId = '<?=CUtil::JSEscape($arParams['MODULE']);?>';
 				BX.DocumentGenerator.UploadTemplate.providers = <?=\CUtil::PhpToJSObject($arResult['PROVIDERS']);?>;
-				<?if($arResult['TEMPLATE'])
+				<?php if(!empty($arResult['TEMPLATE']))
 				{
 					?>BX.DocumentGenerator.UploadTemplate.setTemplateData(<?=CUtil::PhpToJSObject($arResult['TEMPLATE']);?>);
-				<?
+				<?php
 				}?>
 				BX.DocumentGenerator.UploadTemplate.initProviderPopup();
-				<?
+				<?php
 				$regions = \Bitrix\Main\Engine\Response\Converter::toJson()->process($arResult['REGIONS']);
 				?>
 				BX.DocumentGenerator.UploadTemplate.regions = <?=\CUtil::PhpToJSObject($regions);?>;
 				<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
 			});
 		</script>
-	<?}?>
+	<?php
+	}?>
 	</div>
-<?if($arResult['IS_SLIDER'])
+<?php
+if(isset($arResult['IS_SLIDER']) && $arResult['IS_SLIDER'])
 {
 	?></div>
 	</body>
-	</html><?
+	</html><?php
 	\CMain::FinalActions();
 }

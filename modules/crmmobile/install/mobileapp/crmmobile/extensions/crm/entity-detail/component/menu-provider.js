@@ -3,7 +3,8 @@
  * @module crm/entity-detail/component/menu-provider
  */
 jn.define('crm/entity-detail/component/menu-provider', (require, exports, module) => {
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
+	const { AnalyticsEvent } = require('analytics');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { NotifyManager } = require('notify-manager');
 	const { TypeId } = require('crm/type');
@@ -100,7 +101,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 					id: 'excludeItem',
 					sectionCode: 'action',
 					onItemSelected: () => excludeEntity(detailCard),
-					title: BX.message('M_CRM_ENTITY_ACTION_EXCLUDE'),
+					title: Loc.getMessage('M_CRM_ENTITY_ACTION_EXCLUDE'),
 					iconUrl: `${component.path}/icons/exclude2.png`,
 					disable: !canExclude,
 				});
@@ -121,7 +122,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 					id: 'disableManualOpportunity',
 					sectionCode: 'action',
 					onItemSelected: () => detailCard.customEventEmitter.emit('EntityDetails::onChangeManualOpportunity'),
-					title: BX.message('M_CRM_CHANGE_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC'),
+					title: Loc.getMessage('M_CRM_CHANGE_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC'),
 					checked: entityModel.IS_MANUAL_OPPORTUNITY !== 'Y',
 					iconUrl: `${component.path}/icons/manual_opportunity.png`,
 					disable: !canUpdate,
@@ -252,6 +253,9 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 		const entityId = detailCard.getEntityId();
 		const { categoryId } = detailCard.getComponentParams();
 		const { id, title, iconUrl, onAction } = getActionToCopyEntity(entityTypeId);
+		const analytics = new AnalyticsEvent()
+			.setSubSection('element_card')
+			.setElement('top_context_menu');
 
 		return {
 			id,
@@ -259,7 +263,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 			iconUrl,
 			disable: !canCreate,
 			sectionCode: 'action',
-			onItemSelected: () => onAction({ entityTypeId, entityId, categoryId }),
+			onItemSelected: () => onAction({ entityTypeId, entityId, categoryId, analytics }),
 		};
 	};
 
@@ -308,22 +312,14 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 	 */
 	const askAboutUnsavedChanges = () => {
 		return new Promise((resolve, reject) => {
-			Alert.confirm(
-				BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_TITLE2'),
-				BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_TEXT2'),
-				[
-					{
-						text: BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_OK'),
-						type: 'destructive',
-						onPress: resolve,
-					},
-					{
-						text: BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_CANCEL'),
-						type: 'cancel',
-						onPress: reject,
-					},
-				],
-			);
+			confirmDestructiveAction({
+				title: Loc.getMessage('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_TITLE2'),
+				description: Loc.getMessage('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_TEXT2'),
+				destructionText: Loc.getMessage('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_OK'),
+				cancelText: Loc.getMessage('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_CANCEL'),
+				onDestruct: resolve,
+				onCancel: reject,
+			});
 		});
 	};
 
@@ -331,40 +327,23 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 	 * @param {DetailCardComponent} detailCard
 	 */
 	const excludeEntity = (detailCard) => {
-		Alert.confirm(
-			BX.message('M_CRM_ENTITY_ACTION_EXCLUDE'),
-			getEntityMessage('M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION', detailCard.getEntityTypeId()),
-			[
-				{
-					text: BX.message('M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_OK'),
-					type: 'destructive',
-					onPress: () => runActionWithClose('excludeEntity', detailCard),
-				},
-				{
-					type: 'cancel',
-				},
-			],
-		);
+		confirmDestructiveAction({
+			title: Loc.getMessage('M_CRM_ENTITY_ACTION_EXCLUDE'),
+			description: getEntityMessage('M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION', detailCard.getEntityTypeId()),
+			destructionText: Loc.getMessage('M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_OK'),
+			onDestruct: () => runActionWithClose('excludeEntity', detailCard),
+		});
 	};
 
 	/**
 	 * @param {DetailCardComponent} detailCard
 	 */
 	const deleteEntity = (detailCard) => {
-		Alert.confirm(
-			getEntityMessage('M_CRM_ENTITY_ACTION_DELETE', detailCard.getEntityTypeId()),
-			getEntityMessage('M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION', detailCard.getEntityTypeId()),
-			[
-				{
-					text: BX.message('M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_OK'),
-					type: 'destructive',
-					onPress: () => runActionWithClose('deleteEntity', detailCard),
-				},
-				{
-					type: 'cancel',
-				},
-			],
-		);
+		confirmDestructiveAction({
+			title: getEntityMessage('M_CRM_ENTITY_ACTION_DELETE', detailCard.getEntityTypeId()),
+			description: getEntityMessage('M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION', detailCard.getEntityTypeId()),
+			onDestruct: () => runActionWithClose('deleteEntity', detailCard),
+		});
 	};
 
 	/**

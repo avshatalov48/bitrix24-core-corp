@@ -209,7 +209,22 @@ function user_action_menu<?=$user_action_menu_number?> (button, number, user_id,
 	var popupUserMenuItems = [
 		<?if ($arUser["ACTIVITY_STATUS"] == "active" || $arUser["ACTIVITY_STATUS"] == "extranet"):?>
 			<?if (CBXFeatures::IsFeatureEnabled("Tasks")):?>
-				{ text : "<?=GetMessage("INTR_ISP_TASK")?>", onclick : function() { this.popupWindow.close(); taskIFramePopup.add({RESPONSIBLE_ID: user_id});}},
+				{ text : "<?=GetMessage("INTR_ISP_TASK")?>", onclick : function() {
+					this.popupWindow.close();
+					let pathToTaskAdd = `/company/personal/user/${user_id}/tasks/task/edit/0/`;
+					pathToTaskAdd = BX.Uri.addParam(pathToTaskAdd, {
+						RESPONSIBLE_ID: user_id,
+					});
+
+					if (BX.SidePanel)
+					{
+						BX.SidePanel.Instance.open(pathToTaskAdd);
+					}
+					else
+					{
+						window.top.location.href = pathToTaskAdd;
+					}
+				}},
 			<?endif?>
 			<?if ($arResult["CAN_MESSAGE"]):?>
 				{ text : "<?=GetMessage("INTR_ISP_PM")?>", onclick : function() {if (typeof BXIM !== 'undefined') { BXIM.openMessenger(user_id); return false; } else { window.open('<?echo ($url ?? null) ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false; }}},

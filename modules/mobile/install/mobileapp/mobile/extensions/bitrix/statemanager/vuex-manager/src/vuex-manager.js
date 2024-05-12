@@ -6,13 +6,18 @@
  * @module statemanager/vuex-manager/vuex-manager
  */
 jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) => {
-
+	const { Type } = require('type');
 	const { MutationManager } = require('statemanager/vuex-manager/mutation-manager');
 	const { StateStorage } = require('statemanager/vuex-manager/storage/base');
 	const { SharedStorage } = require('statemanager/vuex-manager/storage/shared-storage');
 	const { Uuid } = require('utils/uuid');
 	const { Logger } = require('utils/logger');
 	const { Store } = require('statemanager/vuex');
+
+	const StateStorageSaveStrategy = Object.freeze({
+		afterEachMutation: 'afterEachMutation', // saving the state into storage after each mutation
+		whenNewStoreInit: 'whenNewStoreInit', // saving the state into storage before creating a new manager
+	});
 
 	/**
 	 * @class VuexManager
@@ -26,45 +31,79 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 		constructor(store)
 		{
 			this.logger = new Logger();
+			// this.logger.enable('log');
+			this.logger.enable('info');
 			this.logger.enable('warn');
 
 			if (!(store instanceof Store))
 			{
-				throw new Error('VuexManager: store must be an instance of Store.');
+				throw new TypeError('VuexManager: store must be an instance of Store.');
 			}
 
-			this._store = store;
-			this._unsubscribeStoreMutations = () => {};
-			this._mutation = null;
-			this._handleMutation = this._onMutation.bind(this);
-			this._storage = null;
+			/** @private */
+			this.vuexStore = store;
+			/** @private */
+			this.unsubscribeStoreMutations = () => {};
+			/** @private */
+			this.mutation = null;
+			/** @private */
+			this.handleMutation = this.onMutation.bind(this);
+			/** @private */
+			this.handleCreateInitialState = this.#createInitialState.bind(this);
+			/** @private */
+			this.storage = null;
 
-			this._storageNamespace = 'vuex-manager-store-';
-			this._eventNamespace = 'VuexManager::store::';
+			/** @private */
+			this.storageNamespace = 'vuex-manager-store-';
+			/** @private */
+			this.eventNamespace = 'VuexManager::store::';
 
-			this._multiContextOptions = {
+			/** @private */
+			this.multiContextOptions = {
 				storeName: null,
+				sharedModuleList: new Set(),
 				shareState: false,
 				stateStorage: SharedStorage,
+				stateStorageSaveStrategy: StateStorageSaveStrategy.afterEachMutation,
+				isMainManager: true,
 				clearStateStorage: false,
 				onBeforeReplaceState: (state) => state,
 			};
 
-			this._contextUuid = null;
-			this._storageKey = null;
-			this._eventPrefix = null;
+			/** @private */
+			this.contextUuid = null;
+			/** @private */
+			this.storageKey = null;
+			/** @private */
+			this.eventPrefix = null;
 
-			this._shouldPostMutation = true;
+			/** @private */
+			this.shouldPostMutation = true;
 		}
 
 		get isMultiContextMode()
 		{
-			return this._multiContextOptions.storeName !== null;
+			return this.multiContextOptions.storeName !== null;
 		}
 
 		get store()
 		{
-			return this._store;
+			return this.vuexStore;
+		}
+
+		/**
+		 * @return {VuexManager}
+		 */
+		setLogger(logger)
+		{
+			if (!(logger instanceof Logger))
+			{
+				throw new TypeError('VuexManager.setLogger: logger must be an instance of Logger');
+			}
+
+			this.logger = logger;
+
+			return this;
 		}
 
 		/**
@@ -73,12 +112,20 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 		 * @param {object} options
 		 * @param {string} options.storeName - The unique name of the store.
 		 * @param {boolean} [options.shareState=false] - Should the VuexManager pass state in the mutation event?
+		 * @param {Set} [options.sharedModuleList=new Set()] - List of modules whose mutations the VuexManager shares
+		 * with other contexts.
 		 *
 		 * @param {Storage} [options.stateStorage=SharedStorage] - The class that will be used to store state
 		 * and initialize it in a new JS-context.
 		 *
 		 * @param {boolean} [options.clearStateStorage=false] - Should the VuexManager clear the state store
 		 * before initialization?
+		 *
+		 * @param {string} [options.stateStorageSaveStrategy] - When is it necessary to save the state
+		 * required for initialization in other contexts? Use only with buildAsync() after it
+		 *
+		 * @param {boolean} [options.isMainManager=true] - A flag indicating that this manager is initialized first
+		 * (used in whenNewStoreInit storage save strategy)
 		 *
 		 * @param {function} [options.onBeforeReplaceState=(state) => state] -
 		 * A handler that is called after raising the state from storage
@@ -89,20 +136,30 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 		 */
 		enableMultiContext(options = {})
 		{
-			const isValidStoreName = typeof options.storeName === 'string' && options.storeName.length !== 0;
+			const isValidStoreName = Type.isStringFilled(options.storeName);
 			if (!isValidStoreName)
 			{
 				throw new Error('VuexManager: options.storeName must be a filled string.');
 			}
 
-			if (typeof options.shareState !== 'undefined')
+			if (!Type.isUndefined(options.sharedModuleList))
 			{
-				if (typeof options.shareState !== 'boolean')
+				if (!(options.sharedModuleList instanceof Set))
 				{
-					throw new Error('VuexManager: options.shareState must be a boolean value.');
+					throw new TypeError('VuexManager: options.sharedModuleList must be a Set of string.');
 				}
 
-				this._multiContextOptions.shareState = options.shareState;
+				this.multiContextOptions.sharedModuleList = options.sharedModuleList;
+			}
+
+			if (!Type.isUndefined(options.shareState))
+			{
+				if (!Type.isBoolean(options.shareState))
+				{
+					throw new TypeError('VuexManager: options.shareState must be a boolean value.');
+				}
+
+				this.multiContextOptions.shareState = options.shareState;
 
 				if (options.shareState)
 				{
@@ -110,89 +167,189 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 				}
 			}
 
-			if (typeof options.clearStateStorage !== 'undefined')
+			if (!Type.isUndefined(options.clearStateStorage))
 			{
-				if (typeof options.clearStateStorage !== 'boolean')
+				if (!Type.isBoolean(options.clearStateStorage))
 				{
-					throw new Error('VuexManager: options.clearStateStorage must be a boolean value.');
+					throw new TypeError('VuexManager: options.clearStateStorage must be a boolean value.');
 				}
 
-				this._multiContextOptions.clearStateStorage = options.clearStateStorage;
+				this.multiContextOptions.clearStateStorage = options.clearStateStorage;
 			}
 
-			if (typeof options.onBeforeReplaceState !== 'undefined')
+			if (!Type.isUndefined(options.stateStorageSaveStrategy))
 			{
-				if (typeof options.onBeforeReplaceState !== 'function')
+				if (!StateStorageSaveStrategy[options.stateStorageSaveStrategy])
 				{
-					throw new Error('VuexManager: options.onBeforeReplaceState must be a function.');
+					throw new TypeError('VuexManager: unknown synchronization strategy');
 				}
 
-				this._multiContextOptions.onBeforeReplaceState = options.onBeforeReplaceState;
+				this.multiContextOptions.stateStorageSaveStrategy = options.stateStorageSaveStrategy;
 			}
 
-			if (typeof options.stateStorage !== 'undefined')
+			if (!Type.isUndefined(options.isMainManager))
 			{
-				if ((typeof options.stateStorage !== 'object') || !(options.stateStorage instanceof StateStorage))
+				if (!Type.isBoolean(options.isMainManager))
 				{
-					throw new Error('VuexManager: options.stateStorage must be an instance of StateStorage.');
+					throw new TypeError('VuexManager: options.isMainManager must be a boolean value.');
 				}
 
-				this._multiContextOptions.stateStorage = options.stateStorage;
+				this.multiContextOptions.isMainManager = options.isMainManager;
 			}
 
-			this._multiContextOptions.storeName = options.storeName;
+			if (!Type.isUndefined(options.onBeforeReplaceState))
+			{
+				if (!Type.isFunction(options.onBeforeReplaceState))
+				{
+					throw new TypeError('VuexManager: options.onBeforeReplaceState must be a function.');
+				}
 
-			this._storageKey = this._storageNamespace + this._multiContextOptions.storeName;
-			this._eventPrefix = this._eventNamespace + this._multiContextOptions.storeName + '::';
-			this._mutationEventName = this._eventPrefix + 'mutation';
-			this._contextUuid = Uuid.getV4();
+				this.multiContextOptions.onBeforeReplaceState = options.onBeforeReplaceState;
+			}
 
-			this.logger.warn('VuexManager: multi context mode enabled for store', this._multiContextOptions.storeName);
+			if (!Type.isUndefined(options.stateStorage))
+			{
+				if (!Type.isObject(options.stateStorage) || !(options.stateStorage instanceof StateStorage))
+				{
+					throw new TypeError('VuexManager: options.stateStorage must be an instance of StateStorage.');
+				}
+
+				this.multiContextOptions.stateStorage = options.stateStorage;
+			}
+
+			this.multiContextOptions.storeName = options.storeName;
+
+			this.storageKey = `${this.storageNamespace}${this.multiContextOptions.storeName}`;
+			this.eventPrefix = `${this.eventNamespace}${this.multiContextOptions.storeName}::`;
+			this.mutationEventName = `${this.eventPrefix}mutation`;
+			this.requestInitialStateEventName = `${this.eventPrefix}init-state`;
+			this.initialStateReadyEventName = `${this.eventPrefix}init-state-ready`;
+			this.contextUuid = Uuid.getV4();
+
+			this.logger.warn(
+				'VuexManager: multi context mode enabled for store',
+				this.multiContextOptions.storeName,
+				this.multiContextOptions,
+			);
 
 			return this;
+		}
+
+		/**
+		 * @deprecated use buildAsync instead
+		 * @see buildAsync
+		 *
+		 * @return {VuexManager}
+		 */
+		build()
+		{
+			this.logger.warn('VuexManager: build() method is deprecated, use buildAsync() instead');
+
+			return this.#build();
 		}
 
 		/**
 		 * Sets a mutation handler and subscribes to mutations from other JS-contexts
 		 * if the multi context mode is enabled.
 		 *
-		 * @return {VuexManager}
+		 * @return {Promise}
 		 */
-		build()
+		async buildAsync()
 		{
-			this._mutation = new MutationManager();
+			if (this.multiContextOptions.stateStorageSaveStrategy === StateStorageSaveStrategy.whenNewStoreInit)
+			{
+				if (this.multiContextOptions.isMainManager)
+				{
+					this.#registerRequestInitialStateHandler();
+				}
+				else
+				{
+					await this.#requestInitialState();
+				}
+			}
+
+			return this.#build();
+		}
+
+		#build()
+		{
+			this.mutation = new MutationManager();
 
 			if (!this.isMultiContextMode)
 			{
-				this._unsubscribeStoreMutations = this._store.subscribe(this._mutation.getHandler());
+				this.unsubscribeStoreMutations = this.vuexStore.subscribe(this.mutation.getHandler());
 
 				return this;
 			}
 
-			this._storage = new this._multiContextOptions.stateStorage({
-				key: this._storageKey,
+			// eslint-disable-next-line new-cap
+			this.storage = new this.multiContextOptions.stateStorage({
+				key: this.storageKey,
 			});
 
-			if (this._multiContextOptions.clearStateStorage)
+			if (this.multiContextOptions.clearStateStorage)
 			{
 				this.clearStateStorage();
 			}
 			else
 			{
-				let state = this._storage.getState();
+				let state = this.storage.getState();
 				if (state)
 				{
-					state = this._multiContextOptions.onBeforeReplaceState(state);
+					state = this.multiContextOptions.onBeforeReplaceState(state);
 
-					this._store.replaceState(state);
+					this.vuexStore.replaceState(state);
 				}
 			}
 
-			BX.addCustomEvent(this._mutationEventName, this._handleMutation);
+			BX.addCustomEvent(this.mutationEventName, this.handleMutation);
 
-			this._unsubscribeStoreMutations = this._store.subscribe(this._getMultiContextMutationHandler().bind(this));
+			this.unsubscribeStoreMutations = this.vuexStore.subscribe(this.getMultiContextMutationHandler().bind(this));
 
 			return this;
+		}
+
+		async #requestInitialState()
+		{
+			let resolvePromise;
+			const promise = new Promise((resolve, reject) => {
+				resolvePromise = resolve;
+			});
+
+			const stateReadyHandler = () => {
+				BX.removeCustomEvent(this.initialStateReadyEventName, stateReadyHandler);
+
+				resolvePromise();
+			};
+
+			const requestInitialStateEvent = {
+				contextUuid: this.contextUuid,
+			};
+
+			BX.addCustomEvent(this.initialStateReadyEventName, stateReadyHandler);
+			BX.postComponentEvent(this.requestInitialStateEventName, [requestInitialStateEvent]);
+
+			return promise;
+		}
+
+		#registerRequestInitialStateHandler()
+		{
+			BX.addCustomEvent(this.requestInitialStateEventName, this.handleCreateInitialState);
+
+			this.logger.info('VuexManager: ready to initialize state for other contexts');
+		}
+
+		#createInitialState(requestInitialStateEvent)
+		{
+			const {
+				contextUuid,
+			} = requestInitialStateEvent;
+
+			this.saveState();
+
+			BX.postComponentEvent(this.initialStateReadyEventName, []);
+
+			this.logger.info('VuexManager: an initializing state was created based on the context request', contextUuid);
 		}
 
 		/**
@@ -200,67 +357,124 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 		 */
 		disassemble()
 		{
-			this._unsubscribeStoreMutations();
-			this._mutation = null;
+			this.unsubscribeStoreMutations();
+			this.mutation = null;
 
 			if (this.isMultiContextMode)
 			{
-				BX.removeCustomEvent(this._mutationEventName, this._handleMutation);
+				BX.removeCustomEvent(this.mutationEventName, this.handleMutation);
 			}
 		}
 
 		on(mutationName, listener)
 		{
-			this._mutation.on(mutationName, listener);
+			this.mutation.on(mutationName, listener);
 
 			return this;
 		}
 
 		once(mutationName, listener)
 		{
-			this._mutation.once(mutationName, listener);
+			this.mutation.once(mutationName, listener);
 
 			return this;
 		}
 
 		off(mutationName, listener)
 		{
-			this._mutation.off(mutationName, listener);
+			this.mutation.off(mutationName, listener);
 
 			return this;
 		}
 
 		clearStateStorage()
 		{
-			this._storage.clearState();
+			this.storage.clearState();
 		}
 
-		_getMultiContextMutationHandler()
+		/**
+		 * @private
+		 * @return {(function(*, *): void)|*}
+		 */
+		getMultiContextMutationHandler()
 		{
 			return (mutation, state) => {
-				if (this._shouldPostMutation)
-				{
-					this._storage.setState(state);
+				const moduleName = mutation.type.split('/')[0];
+				const sharedState = this.createSharedState(state);
 
-					this._postMutation(mutation, this._multiContextOptions.shareState ? state : {});
+				const isSharedMutation = this.multiContextOptions.sharedModuleList.size === 0
+					|| this.multiContextOptions.sharedModuleList.has(moduleName)
+				;
+				if (this.shouldPostMutation && isSharedMutation)
+				{
+					if (this.multiContextOptions.stateStorageSaveStrategy === StateStorageSaveStrategy.afterEachMutation)
+					{
+						const dateStart = Date.now();
+
+						this.storage.setState(sharedState);
+
+						const dateFinish = Date.now();
+						const storageTime = dateFinish - dateStart;
+
+						this.logger.log(`VuexManager: initialization state saved in ${storageTime} ms.`);
+					}
+
+					this.postMutation(mutation, this.multiContextOptions.shareState ? sharedState : {});
 				}
 
-				this._mutation._handle(mutation, this._multiContextOptions.shareState ? state : {});
+				this.mutation._handle(mutation, this.multiContextOptions.shareState ? sharedState : {});
 			};
 		}
 
-		_postMutation(mutation, state)
+		saveState()
+		{
+			const state = this.vuexStore.state;
+			const sharedState = this.createSharedState(state);
+			this.storage.setState(sharedState);
+
+			this.logger.info('VuexManager.saveState:', sharedState);
+		}
+
+		/**
+		 * @private
+		 * @param state
+		 */
+		createSharedState(state)
+		{
+			if (this.multiContextOptions.sharedModuleList.size === 0)
+			{
+				return state;
+			}
+
+			const sharedState = {};
+			this.multiContextOptions.sharedModuleList.forEach((sharedModuleName) => {
+				sharedState[sharedModuleName] = state[sharedModuleName];
+			});
+
+			return sharedState;
+		}
+
+		/**
+		 * @private
+		 * @param mutation
+		 * @param state
+		 */
+		postMutation(mutation, state)
 		{
 			const eventData = {
 				mutation,
 				state,
-				parentContextUuid: this._contextUuid,
+				parentContextUuid: this.contextUuid,
 			};
 
-			BX.postComponentEvent(this._mutationEventName, [eventData]);
+			BX.postComponentEvent(this.mutationEventName, [eventData]);
 		}
 
-		_onMutation(event)
+		/**
+		 * @private
+		 * @param event
+		 */
+		onMutation(event)
 		{
 			const {
 				mutation,
@@ -268,7 +482,7 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 				parentContextUuid,
 			} = event;
 
-			if (parentContextUuid === this._contextUuid)
+			if (parentContextUuid === this.contextUuid)
 			{
 				this.logger.log('VuexManager: ignore own mutation', mutation, state);
 
@@ -280,14 +494,17 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 
 			this.logger.log('VuexManager: mutation received', mutation, state);
 
-			//in order not to post mutations obtained from other contexts again
-			this._shouldPostMutation = false;
+			// in order not to post mutations obtained from other contexts again
+			this.shouldPostMutation = false;
 
-			this._store.commit(mutationName, payload);
+			this.vuexStore.commit(mutationName, payload);
 
-			this._shouldPostMutation = true;
+			this.shouldPostMutation = true;
 		}
 	}
 
-	module.exports = { VuexManager };
+	module.exports = {
+		VuexManager,
+		StateStorageSaveStrategy,
+	};
 });

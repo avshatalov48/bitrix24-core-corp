@@ -3,10 +3,13 @@
  */
 jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const { stringify } = require('utils/string');
 	const { isEqual } = require('utils/object');
 	const { throttle } = require('utils/function');
+	const { Loc } = require('loc');
+	const { Haptics } = require('haptics');
+	const { Notify } = require('notify');
 
 	const { funnelIcon } = require('assets/stages');
 	const { NavigationLoader } = require('navigation-loader');
@@ -113,7 +116,7 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 				this.layout.enableNavigationBarBorder(false);
 				this.layout.setRightButtons([
 					{
-						name: BX.message('CATEGORY_DETAIL_SAVE'),
+						name: Loc.getMessage('CATEGORY_DETAIL_SAVE'),
 						type: 'text',
 						color: AppTheme.colors.accentMainLinks,
 						callback: () => this.saveAndClose(),
@@ -165,7 +168,7 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 
 		getTitleForNavigation(props)
 		{
-			return BX.message('CATEGORY_DETAIL_FUNNEL_NOT_LOADED2');
+			return Loc.getMessage('CATEGORY_DETAIL_FUNNEL_NOT_LOADED2');
 		}
 
 		render()
@@ -240,7 +243,7 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 				new EntityName({
 					focus: this.hasDefaultName(),
 					name: this.changedFields.name || this.kanbanSettingsName,
-					placeholder: BX.message('CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2'),
+					placeholder: Loc.getMessage('CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2'),
 					required: true,
 					showRequired: false,
 					iconColor: AppTheme.colors.base3,
@@ -268,7 +271,7 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 
 		hasDefaultName()
 		{
-			return this.kanbanSettingsName === BX.message('CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2');
+			return this.kanbanSettingsName === Loc.getMessage('CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2');
 		}
 
 		renderStageList()
@@ -286,13 +289,13 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 					},
 				},
 				this.renderCreateStageButton({
-					buttonText: BX.message('CATEGORY_DETAIL_CREATE_PROCESS_STAGE'),
+					buttonText: Loc.getMessage('CATEGORY_DETAIL_CREATE_PROCESS_STAGE'),
 					onClick: () => {
 						this.createStageAndOpenStageDetail(SEMANTICS.PROCESS, 'processStages');
 					},
 				}),
 				this.renderCreateStageButton({
-					buttonText: BX.message('CATEGORY_DETAIL_CREATE_FAILED_STAGE'),
+					buttonText: Loc.getMessage('CATEGORY_DETAIL_CREATE_FAILED_STAGE'),
 					onClick: () => {
 						this.createStageAndOpenStageDetail(SEMANTICS.FAILED, 'failedStages');
 					},
@@ -365,7 +368,7 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 					},
 				},
 				icon: svgImages.deleteIcon,
-				text: BX.message('CATEGORY_DETAIL_DELETE2'),
+				text: Loc.getMessage('CATEGORY_DETAIL_DELETE2'),
 				onClick: () => this.openAlertOnDeleteCategory(),
 			});
 		}
@@ -374,28 +377,19 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 		{
 			if (this.isDefault)
 			{
-				const title = BX.message('CATEGORY_DETAIL_IS_DEFAULT_TITLE2_MSGVER_1');
-				const text = BX.message('CATEGORY_DETAIL_IS_DEFAULT_TEXT');
+				const title = Loc.getMessage('CATEGORY_DETAIL_IS_DEFAULT_TITLE2_MSGVER_1');
+				const text = Loc.getMessage('CATEGORY_DETAIL_IS_DEFAULT_TEXT');
 
 				Haptics.notifyWarning();
 				Notify.showUniqueMessage(text, title, { time: 5 });
 			}
 			else
 			{
-				Alert.confirm(
-					'',
-					BX.message('CATEGORY_DETAIL_DELETE_CATEGORY2'),
-					[
-						{
-							type: 'cancel',
-						},
-						{
-							text: BX.message('CATEGORY_DETAIL_DELETE_CATEGORY_OK'),
-							type: 'destructive',
-							onPress: () => this.deleteCategoryHandler(this.kanbanSettingsId).then(this.layoutClose),
-						},
-					],
-				);
+				confirmDestructiveAction({
+					title: '',
+					description: Loc.getMessage('CATEGORY_DETAIL_DELETE_CATEGORY2'),
+					onDestruct: () => this.deleteCategoryHandler(this.kanbanSettingsId).then(this.layoutClose),
+				});
 			}
 		}
 

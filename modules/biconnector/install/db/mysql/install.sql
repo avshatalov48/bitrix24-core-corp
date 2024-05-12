@@ -101,10 +101,19 @@ CREATE TABLE b_biconnector_superset_dashboard
 	APP_ID VARCHAR(128) NULL,
 	SOURCE_ID INT NULL,
 	DATE_CREATE DATETIME NOT NULL,
+	DATE_MODIFY DATETIME NOT NULL,
 	FILTER_PERIOD TEXT NULL,
 	CREATED_BY_ID INT NULL,
 	PRIMARY KEY pk_b_biconnector_superset_dashboard(ID),
 	INDEX ix_b_biconnector_superset_dashboard_app_id(APP_ID),
 	INDEX ix_b_biconnector_superset_dashboard_external_id(EXTERNAL_ID),
 	INDEX ix_b_biconnector_superset_dashboard_source_id(SOURCE_ID)
+);
+
+CREATE TABLE b_biconnector_superset_user
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	USER_ID INT NOT NULL,
+	CLIENT_ID VARCHAR (32) NOT NULL,
+	PRIMARY KEY pk_b_biconnector_superset_user(ID)
 );

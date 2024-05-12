@@ -16,7 +16,10 @@ use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
@@ -1366,10 +1369,10 @@ class CAllCrmLead
 			/** @var \CCrmPerms $arOptions['PERMS'] */
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
-				->setOperations((array)$mPermType)
-				->setAliasPrefix((string)$sAliasPrefix)
+		$builderOptions = OptionsBuilder::makeFromArray((array)$arOptions)
+			->setOperations((array)$mPermType)
+			->setAliasPrefix((string)$sAliasPrefix)
+			->build()
 		;
 
 		$queryBuilder = Crm\Service\Container::getInstance()

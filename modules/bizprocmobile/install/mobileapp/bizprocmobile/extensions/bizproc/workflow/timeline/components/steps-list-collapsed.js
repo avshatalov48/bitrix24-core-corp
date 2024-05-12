@@ -61,7 +61,16 @@ jn.define('bizproc/workflow/timeline/components/steps-list-collapsed', (require,
 		}
 
 		/**
-		 * @return {{value: ?number, iconContent: ?string, backgroundColor: ?string, color: ?string, trunkColor: ?string, hasTail: ?boolean, tailColor: ?string, size: ?number} | {}}
+		 * @return {{
+		 * 		value: ?number,
+		 * 		iconContent: ?string,
+		 * 		backgroundColor: ?string,
+		 * 		color: ?string,
+		 * 		trunkColor: ?string,
+		 * 		hasTail: ?boolean,
+		 * 		tailColor: ?string,
+		 * 		size: ?number
+		 * 	}}
 		 */
 		get counterOptions()
 		{
@@ -123,14 +132,16 @@ jn.define('bizproc/workflow/timeline/components/steps-list-collapsed', (require,
 				{
 					testId: this.props.collapsedButtonTestId,
 					style: {
-						width: 139,
+						minWidth: 139,
 						height: 22,
+						alignSelf: 'flex-start',
 						justifyContent: 'center',
 						position: 'relative',
 						borderStyle: 'solid',
 						borderColor: AppTheme.colors.base5,
 						borderWidth: 1,
 						borderRadius: 4,
+						paddingHorizontal: 33,
 					},
 					onTouchesBegan: () => {
 						if (this.collapsedButtonAnimation)
@@ -232,13 +243,31 @@ jn.define('bizproc/workflow/timeline/components/steps-list-collapsed', (require,
 		{
 			if (this.isCollapsed())
 			{
+				const onAnimationStarted = () => {
+					if (this.props.onStepsExpanding && Type.isFunction(this.props.onStepsExpanding))
+					{
+						this.props.onStepsExpanding();
+					}
+				};
+
+				const onAnimationOver = () => {
+					this.setState({ stepsState: StepsState.EXPANDED });
+
+					if (this.props.onStepsExpanded && Type.isFunction(this.props.onStepsExpanded))
+					{
+						this.props.onStepsExpanded();
+					}
+				};
+
 				this.setState({ stepsState: StepsState.EXPANDING }, () => {
 					const runAnimations = parallel(this.showSteps.bind(this), this.hideCollapsedStep.bind(this));
+
+					onAnimationStarted();
 					runAnimations()
-						.then(() => this.setState({ stepsState: StepsState.EXPANDED }))
+						.then(onAnimationOver)
 						.catch((err) => {
 							console.error(err);
-							this.setState({ stepsState: StepsState.EXPANDED });
+							onAnimationOver();
 						})
 					;
 				});

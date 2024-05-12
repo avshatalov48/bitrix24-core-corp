@@ -1,3 +1,6 @@
+import {DialogId} from "../../types/common";
+import {PayloadData} from "./base";
+
 export enum DialogType {
 	user = 'user',
 	chat = 'chat',
@@ -14,10 +17,11 @@ export enum DialogType {
 	tasks = 'tasks',
 	thread = 'thread',
 	mail = 'mail',
+	copilot = 'copilot',
 }
 
 export type DialoguesModelState = {
-	dialogId: string,
+	dialogId: DialogId,
 	chatId: number,
 	type: DialogType,
 	name: string,
@@ -54,6 +58,7 @@ export type DialoguesModelState = {
 	hasNextPage: boolean,
 	role: string,
 	permissions: DialogPermissions,
+	aiProvider: string,
 };
 
 export type LastMessageViews = {
@@ -86,6 +91,7 @@ export type DialogPermissions = {
 export type DialoguesModelActions =
 	'dialoguesModel/setState'
 	| 'dialoguesModel/set'
+	| 'dialoguesModel/setFromLocalDatabase'
 	| 'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
@@ -102,3 +108,47 @@ export type DialoguesModelMutation =
 	'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
+
+
+export type DialoguesSetStateActions = 'setState';
+export interface DialoguesSetStateData extends PayloadData
+{
+	collection: Record<DialogId, DialoguesModelState>,
+}
+
+export type DialoguesAddActions =
+	'set'
+	| 'add'
+;
+export interface DialoguesAddData extends PayloadData
+{
+	dialogId: DialogId;
+	fields: DialoguesModelState;
+}
+
+export type DialoguesUpdateActions =
+	'set'
+	| 'update'
+	| 'updateWritingList'
+	| 'decreaseCounter'
+	| 'updateUserCounter'
+	| 'mute'
+	| 'unmute'
+	| 'addParticipants'
+	| 'removeParticipants'
+	| 'clearLastMessageViews'
+	| 'incrementLastMessageViews'
+	| 'setLastMessageViews'
+	| 'clearAllCounters'
+;
+export interface DialoguesUpdateData extends PayloadData
+{
+	dialogId: DialogId,
+	fields: Partial<DialoguesModelState>,
+}
+
+export type DialoguesDeleteActions = 'delete';
+export interface DialoguesDeleteData extends PayloadData
+{
+	dialogId: DialogId,
+}

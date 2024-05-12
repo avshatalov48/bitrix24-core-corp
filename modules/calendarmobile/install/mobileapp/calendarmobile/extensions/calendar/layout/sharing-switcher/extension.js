@@ -4,7 +4,8 @@
 jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
+	const { lighten, withPressed } = require('utils/color');
 	const { ModelSharingStatus } = require('calendar/model/sharing');
 	const { BooleanField } = require('layout/ui/fields/boolean');
 
@@ -13,26 +14,30 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 	 */
 	class SharingSwitcher extends LayoutComponent
 	{
+		constructor(props)
+		{
+			super(props);
+
+			this.onOpenLinkClickHandler = this.onOpenLinkClickHandler.bind(this);
+		}
+
+		get model()
+		{
+			return this.props.model;
+		}
+
 		askChangeSharingOff()
 		{
 			return new Promise((resolve, reject) => {
 				if (this.props.isOn)
 				{
-					Alert.confirm(
-						'',
-						Loc.getMessage('L_MS_CONFIRMATION_TEXT_1'),
-						[
-							{
-								type: 'cancel',
-								onPress: () => reject(),
-							},
-							{
-								text: BX.message('L_MS_CONFIRMATION_BUTTON_OK'),
-								type: 'destructive',
-								onPress: () => resolve(),
-							},
-						],
-					);
+					confirmDestructiveAction({
+						title: '',
+						description: Loc.getMessage('L_MS_CONFIRMATION_TEXT_1'),
+						destructionText: Loc.getMessage('L_MS_CONFIRMATION_BUTTON_OK'),
+						onDestruct: () => resolve(),
+						onCancel: () => reject(),
+					});
 				}
 				else
 				{
@@ -66,15 +71,11 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 						},
 					},
 					View(
-						{
-							style: {
-								display: 'flex',
-								justifySelf: 'flex-start',
-							},
-						},
+						{},
 						isCalendarContext ? this.renderSwitcher() : this.renderTitle(),
 					),
 					this.renderDescription(),
+					this.model.isEnabled() && this.renderOpenLink(),
 				),
 				this.renderCalendarIcon(),
 			);
@@ -141,7 +142,7 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 				Text(
 					{
 						style: {
-							fontSize: 15,
+							fontSize: 14,
 							fontWeight: '400',
 							color: AppTheme.colors.base2,
 						},
@@ -149,6 +150,37 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 					},
 				),
 			);
+		}
+
+		renderOpenLink()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						paddingTop: 15,
+						paddingBottom: 10,
+					},
+					clickable: true,
+					onClick: this.onOpenLinkClickHandler,
+				},
+				Text(
+					{
+						text: Loc.getMessage('CALENDARMOBILE_SHARING_SWITCHER_OPEN_LINK'),
+						style: {
+							color: withPressed(AppTheme.colors.accentMainLinks),
+							borderBottomColor: lighten(AppTheme.colors.accentMainLinks, 0.4),
+							borderBottomWidth: 2,
+							borderStyle: 'dash',
+						},
+					},
+				),
+			);
+		}
+
+		onOpenLinkClickHandler()
+		{
+			Application.openUrl(this.model.getPublicShortUrl());
 		}
 
 		renderCalendarIcon()
@@ -159,7 +191,7 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 						content: icons.calendar,
 					},
 					style: {
-						width: 117,
+						width: '35%',
 						height: 96,
 					},
 				},
@@ -199,7 +231,7 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 			alignItems: 'flex-start',
 			backgroundColor: AppTheme.colors.accentSoftBlue2,
 			paddingTop: 10,
-			paddingBottom: 35,
+			paddingBottom: 10,
 		},
 	};
 

@@ -113,7 +113,7 @@ class CIntranetMailConfigDomainComponent extends CBitrixComponent
 
 		if ($serviceId)
 		{
-			$status = self::checkDomainStatus($settings, $error); // не нужно при посте
+			$status = self::checkDomainStatus($settings, $error); // РЅРµ РЅСѓР¶РЅРѕ РїСЂРё РїРѕСЃС‚Рµ
 			if ($error)
 				$errors[] = $error;
 		}

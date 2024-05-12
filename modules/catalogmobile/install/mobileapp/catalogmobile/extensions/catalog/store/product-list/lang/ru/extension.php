@@ -22,8 +22,6 @@ $MESS['CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE'] = 'Найти по штрихкод
 $MESS['CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE_2'] = 'Сканировать штрихкод';
 $MESS['CSPL_PRODUCT_NOT_FOUND_BY_BARCODE'] = 'Товар с таким штрихкодом не найден';
 $MESS['CSPL_PRODUCT_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить запись из документа?';
-$MESS['CSPL_PRODUCT_DELETE_CONFIRMATION_OK'] = 'Удалить';
-$MESS['CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL'] = 'Отмена';
 $MESS['CSPL_INSUFFICIENT_PERMISSIONS_FOR_PRODUCT_ADD'] = 'Недостаточно прав для создания товара';
 $MESS['CSPL_SELECT_VARIATION_BUTTON'] = 'Выбрать';
 

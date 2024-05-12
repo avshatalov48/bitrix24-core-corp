@@ -6,10 +6,9 @@
  * @module im/messenger/lib/parser/parser
  */
 jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { Type } = require('type');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 	const { parserQuote } = require('im/messenger/lib/parser/functions/quote');
@@ -25,6 +24,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { parserDisk } = require('im/messenger/lib/parser/functions/disk');
 	const { parsedElements } = require('im/messenger/lib/parser/utils/parsed-elements');
 	const { parserSmile } = require('im/messenger/lib/parser/functions/smile');
+	const { parserContext } = require('im/messenger/lib/parser/functions/context');
 
 	const parser = {
 		decodeMessageFromText(text, options = {})
@@ -34,17 +34,17 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				return [];
 			}
 
-			//TODO: support bb code [context]
+			// TODO: support bb code [context]
 			text = text.replace(
 				/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gi,
-				(whole, dialogId, messageId, message) => message
+				(whole, dialogId, messageId, message) => message,
 			);
 
-			//TODO: support bb code [call]
+			// TODO: support bb code [call]
 			text = parserCall.simplify(text);
 
-			//TODO: support bb code [chat]
-			text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, (whole, imol, chatId, text) => {
+			// TODO: support bb code [chat]
+			text = text.replace(/\[chat=(imol\|)?(\d+)](.*?)\[\/chat]/gi, (whole, imol, chatId, text) => {
 				if (imol)
 				{
 					return text;
@@ -53,6 +53,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				return whole;
 			});
 
+			text = parserUrl.prepareGifUrl(text);
 			text = parserSmile.decodeSmile(text, options);
 			text = parserMention.decode(text);
 			text = parserQuote.decodeArrowQuote(text);
@@ -65,9 +66,12 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			return elementList;
 		},
 
-		simplifyMessage(modelMessage)
+		simplifyMessage(modelMessage, messageFiles = null)
 		{
-			const messageFiles = core.getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
+			if (!messageFiles)
+			{
+				messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
+			}
 
 			return this.simplify({
 				text: modelMessage.text,
@@ -81,11 +85,12 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			if (!Type.isPlainObject(config))
 			{
 				Logger.error('parser.simplify: the first parameter must be a object', config);
+
 				return 'parser.simplify: the first parameter must be a parameter object';
 			}
 
 			let {
-				text
+				text,
 			} = config;
 			const {
 				attach = false,
@@ -93,6 +98,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				replaces = [],
 				showIconIfEmptyText = true,
 				showPhraseMessageWasDeleted = true,
+				showFilePrefix = true,
 			} = config;
 
 			if (!Type.isString(text))
@@ -102,7 +108,8 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			if (!text)
 			{
-				text = parserEmoji.addIconToShortText({text, attach, files});
+				text = parserEmoji.addIconToShortText({ text, attach, files, showFilePrefix });
+
 				return text.trim();
 			}
 
@@ -116,7 +123,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserAction.simplifyPut(text);
 			text = parserAction.simplifySend(text);
 			text = parserMention.simplify(text);
-			//text = parserFont.simplify(text); //mobile application can display bb-codes in a quote
+			text = parserFont.simplify(text);
 			text = parserLines.simplify(text);
 			text = parserCall.simplify(text);
 			text = parserImage.simplifyLink(text);
@@ -127,8 +134,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserEmoji.addIconToShortText({
 				text,
 				attach,
-				files
+				files,
+				showFilePrefix,
 			});
+
+			text = parserContext.simplify(text);
 
 			if (text.length === 0 && showPhraseMessageWasDeleted)
 			{
@@ -147,14 +157,14 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 		{
 			const {
 				id,
-				params
+				params,
 			} = modelMessage;
 			let {
 				text,
 			} = modelMessage;
 
 			const attach = params.ATTACH || false;
-			const files = core.getStore().getters['messagesModel/getMessageFiles'](id);
+			const files = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
 
 			text = text.trim();
 
@@ -170,11 +180,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserEmoji.addIconToShortText({
 				text,
 				attach,
-				files
+				files,
 			});
 
 			return text.trim();
-		}
+		},
 	};
 
 	module.exports = {

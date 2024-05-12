@@ -11,7 +11,6 @@ $APPLICATION->IncludeComponent(
 	'',
 	array(
 		'IBLOCK_ID' => $arResult['CATALOG_ID'],
-		'CHECK_PERMISSIONS' => 'N'
 	),
 	$component,
 	array('HIDE_ICONS'=>true)

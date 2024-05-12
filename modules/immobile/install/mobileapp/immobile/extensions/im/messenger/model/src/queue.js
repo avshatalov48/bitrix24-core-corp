@@ -98,7 +98,7 @@ jn.define('im/messenger/model/queue', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<QueueAddData, QueueAddActions>} payload
 			 */
 			add: (state, payload) => {
 				const {
@@ -111,7 +111,7 @@ jn.define('im/messenger/model/queue', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<QueueDeleteByIdData, QueueDeleteByIdActions>} payload
 			 */
 			deleteById: (state, payload) => {
 				const {

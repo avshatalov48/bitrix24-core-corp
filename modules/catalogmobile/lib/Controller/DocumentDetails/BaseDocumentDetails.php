@@ -71,7 +71,7 @@ abstract class BaseDocumentDetails extends Controller
 
 		foreach ($products as $product)
 		{
-			$productDto = new DocumentProductRecord($product);
+			$productDto = DocumentProductRecord::make($product);
 			$sku = ServiceContainer::getRepositoryFacade()->loadVariation((int)$productDto->productId);
 			if (!$sku)
 			{
@@ -256,7 +256,7 @@ abstract class BaseDocumentDetails extends Controller
 
 		foreach ($data['PRODUCTS'] as $productData)
 		{
-			$productDto = new DocumentProductRecord($productData);
+			$productDto = DocumentProductRecord::make($productData);
 			$productId = (int)$productDto->productId;
 			$barcode = (string)$productDto->barcode;
 

@@ -2,37 +2,34 @@
  * @module im/messenger/controller/dialog-creator/dialog-info
  */
 jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, exports, module) => {
-
-	include("media");
-	include("InAppNotifier");
+	include('media');
+	include('InAppNotifier');
 
 	const { Loc } = require('loc');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { getFile } = require('files/entry');
-	const { FileConverter } = require('files/converter')
+	const { FileConverter } = require('files/converter');
 	const { DialogInfoView } = require('im/messenger/controller/dialog-creator/dialog-info/view');
 	const AppTheme = require('apptheme');
 
-
 	class DialogInfo
 	{
-		static open({ userList, dialogDTO}, parentLayout = null)
+		static open({ userList, dialogDTO }, parentLayout = null)
 		{
 			const widget = new DialogInfo(userList, dialogDTO, parentLayout);
 			widget.show();
 		}
-
 
 		constructor(userList, dialogDTO, parentLayout)
 		{
 			this.dialogDTO = dialogDTO;
 			this.layout = parentLayout;
 			this.view = new DialogInfoView({
-				dialogDTO: dialogDTO,
+				dialogDTO,
 				onAvatarSetClick: () => {
 					this.showImagePicker();
-				}
+				},
 			});
 		}
 
@@ -40,12 +37,11 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 		{
 			const config = {
 				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_DIALOG_INFO_TITLE'),
-				onReady: layoutWidget =>
-				{
+				onReady: (layoutWidget) => {
 					this.layout = layoutWidget;
 					layoutWidget.showComponent(this.view);
 				},
-				onError: error => reject(error),
+				onError: (error) => reject(error),
 			};
 
 			if (this.layout !== null)
@@ -53,7 +49,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 				this.layout.openWidget(
 					'layout',
 					config,
-				).then(layoutWidget => {
+				).then((layoutWidget) => {
 					this.configureWidget(layoutWidget);
 				});
 
@@ -63,17 +59,16 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 			PageManager.openWidget(
 				'layout',
 				config,
-			).then(layoutWidget => {
+			).then((layoutWidget) => {
 				this.configureWidget(layoutWidget);
 			});
 		}
-
 
 		configureWidget(layoutWidget)
 		{
 			layoutWidget.setRightButtons([
 				{
-					id: "create",
+					id: 'create',
 					name: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_BUTTON_CREATE'),
 					callback: () => {
 						this.createChat();
@@ -82,8 +77,6 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 				},
 			]);
 		}
-
-
 
 		showImagePicker()
 		{
@@ -98,7 +91,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 				},
 			];
 
-			dialogs.showImagePicker({
+			dialogs.showImagePicker(
+				{
 					settings: {
 						resize: {
 							targetWidth: -1,
@@ -108,14 +102,14 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 							mediaType: 0,
 							allowsEdit: true,
 							saveToPhotoAlbum: true,
-							cameraDirection: 0
+							cameraDirection: 0,
 						},
 						editingMediaFiles: false,
 						maxAttachedFilesCount: 1,
-						attachButton: { items }
-					}
+						attachButton: { items },
+					},
 				},
-				data => this.editorFile(data)
+				(data) => this.editorFile(data),
 			);
 		}
 
@@ -123,45 +117,43 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 		{
 			const url = data[0].url;
 			media.showImageEditor(url)
-				.then(targetFilePath => this.addFile(targetFilePath))
-				.catch(error => console.error(error))
+				.then((targetFilePath) => this.addFile(targetFilePath))
+				.catch((error) => console.error(error))
 			;
 		}
 
-
 		addFile(filePath)
 		{
+			const converter = new FileConverter();
 
-			const converter = new FileConverter()
-
-			converter.resize("avatarResize", {
+			converter.resize('avatarResize', {
 				url: filePath,
 				width: 1000,
 				height: 1000,
-			}).then(path => {
+			}).then((path) => {
 				getFile(path)
-					.then(file => {
+					.then((file) => {
 						file.readMode = 'readAsDataURL';
 						file.readNext()
-							.then(fileData => {
+							.then((fileData) => {
 								if (fileData.content)
 								{
-									let {content} = fileData;
-									this.dialogDTO.setAvatar(content.substr(content.indexOf("base64,") + 7));
+									const { content } = fileData;
+									this.dialogDTO.setAvatar(content.slice(content.indexOf('base64,') + 7));
 
 									this.dialogDTO.setAvatarPreview(filePath);
 									this.view.setAvatar(filePath);
 								}
 							})
-							.catch(e => console.error(e));
+							.catch((e) => console.error(e));
 					})
-					.catch(e => console.error(e));
+					.catch((e) => console.error(e));
 			});
 		}
 
 		createChat()
 		{
-			let users = [];
+			const users = [];
 			if (this.dialogDTO.getRecipientList())
 			{
 				this.dialogDTO.getRecipientList().forEach((recipient) => {
@@ -169,41 +161,40 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 				});
 			}
 
-			let config = {
-				'TYPE': this.dialogDTO.getType(),
-				'TITLE': this.dialogDTO.getTitle(),
+			const config = {
+				TYPE: this.dialogDTO.getType(),
+				TITLE: this.dialogDTO.getTitle(),
 			};
 			if (users.length > 0)
 			{
 				config.USERS = users;
 			}
+
 			if (this.dialogDTO.getAvatar())
 			{
 				config.AVATAR = this.dialogDTO.getAvatar();
 			}
 
 			BX.rest.callMethod('im.chat.add', config)
-				.then((result) =>
-				{
-					let chatId = parseInt(result.data());
+				.then((result) => {
+					const chatId = parseInt(result.data());
 					if (chatId > 0)
 					{
-						this.openDialog('chat' + chatId);
+						this.openDialog(`chat${chatId}`);
 
 						this.layout.close();
 					}
 				})
-				.catch((result) =>
-				{
-					let error = result.error();
+				.catch((result) => {
+					const error = result.error();
 					if (error.ex.error === 'NO_INTERNET_CONNECTION')
 					{
-						console.error("ChatCreate.event.onChatCreate - error: connection error", error.ex);
+						console.error('ChatCreate.event.onChatCreate - error: connection error', error.ex);
 						this.alert(Loc.getMessage('IM_CREATE_CONNECTION_ERROR'));
 					}
 					else
 					{
-						console.error("ChatCreate.event.onChatCreate - error: we have some problems on server\n", result.answer);
+						console.error('ChatCreate.event.onChatCreate - error: we have some problems on server\n', result.answer);
 						this.alert(Loc.getMessage('IMMOBILE_DIALOG_CREATOR_API_ERROR'));
 					}
 				});
@@ -214,26 +205,30 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 		alert(message)
 		{
 			InAppNotifier.showNotification({
-				backgroundColor: "#E6000000",
-				message: message,
+				backgroundColor: '#E6000000',
+				message,
 			});
 		}
 
 		openDialog(dialogId)
 		{
-			BX.rest.callMethod('im.dialog.get', {DIALOG_ID: dialogId})
-				.then(result => {
+			BX.rest.callMethod('im.dialog.get', { DIALOG_ID: dialogId })
+				.then((result) => {
 					const chatData = result.data();
-					MessengerEmitter.emit(EventType.messenger.openDialog, {
-						dialogId: dialogId,
-						dialogTitleParams: {
-							name: chatData.name,
-							description: this.dialogDTO.getType() === 'CHAT' ? Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_NEW') : Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHANNEL_NEW'),
-							avatar: chatData.avatar,
-							color: chatData.color,
-						}
-					});
-				})
+					MessengerEmitter.emit(
+						EventType.messenger.openDialog,
+						{
+							dialogId,
+							dialogTitleParams: {
+								name: chatData.name,
+								description: this.dialogDTO.getType() === 'CHAT' ? Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_NEW') : Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHANNEL_NEW'),
+								avatar: chatData.avatar,
+								color: chatData.color,
+							},
+						},
+						ComponentCode.imMessenger,
+					);
+				});
 		}
 	}
 

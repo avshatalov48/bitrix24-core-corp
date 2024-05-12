@@ -36,6 +36,7 @@ jn.define('im/messenger/lib/element/dialog/message/file', (require, exports, mod
 				size: '',
 				iconDownloadSvg: '',
 				iconSvg: '',
+				originalName: '',
 			};
 
 			this.setMessage(modelMessage.text);
@@ -68,6 +69,7 @@ jn.define('im/messenger/lib/element/dialog/message/file', (require, exports, mod
 			const fileName = getShortFileName(file.name, 20);
 			this.fileName = fileName;
 			this.file.name = fileName;
+			this.file.originalName = file.name;
 		}
 
 		setFileSize(file)

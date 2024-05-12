@@ -170,10 +170,6 @@ class CIntranetStructureListComponent extends CBitrixComponent
 		{
 			$arParams["PATH_TO_CONPANY_DEPARTMENT"] = "/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#";
 		}
-		if (IsModuleInstalled("video") && !array_key_exists("PATH_TO_VIDEO_CALL", $arParams))
-		{
-			$arParams["PATH_TO_VIDEO_CALL"] = "/company/personal/video/#USER_ID#/";
-		}
 		if (!$this->getUser()->CanDoOperation("edit_all_users") && isset($arParams["SHOW_USER"]) && $arParams["SHOW_USER"] != "fired")
 		{
 			$arParams["SHOW_USER"] = "active";

@@ -359,23 +359,8 @@ foreach($items as $item)
 					<?$selectorID = CUtil::JSEscape($name);?>
 					<?$originUrl = CUtil::JSEscape($originUrl);?>
 					<?if($isPermitted):?>
-					<?if($entityTypeID === CCrmOwnerType::Lead):?>
-					BX.CrmLeadConversionSchemeSelector.create(
-						"<?=$selectorID?>",
-						{
-							typeId: <?=$typeID?>,
-							entityId: <?=$entityID?>,
-							scheme: "<?=$schemeName?>",
-							containerId: "<?=$labelID?>",
-							labelId: "<?=$labelID?>",
-							buttonId: "<?=$buttonID?>",
-							originUrl: "<?=$originUrl?>",
-							enableHint: <?=CUtil::PhpToJSObject($enableHint)?>,
-							hintMessages: <?=CUtil::PhpToJSObject($hint)?>
-						}
-					);
-					<?elseif($entityTypeID === CCrmOwnerType::Deal):?>
-					<?php //everything now is initialized in crm.deal.details ?>
+					<?if($entityTypeID === CCrmOwnerType::Lead || $entityTypeID === CCrmOwnerType::Deal):?>
+					<?php //everything now is initialized in crm.lead.details/crm.deal.details ?>
 					<?elseif($entityTypeID === CCrmOwnerType::Quote):?>
 					BX.CrmQuoteConversionSchemeSelector.create(
 						"<?=$selectorID?>",
@@ -432,6 +417,16 @@ foreach($items as $item)
 				}
 			);
 		</script><?
+	}
+	elseif ($type === 'bizproc-starter-button' && isset($item['DATA']['availabilityLock']))
+	{
+		?>
+		<button
+			class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes crm-bizproc-starter-icon"
+			title="<?=GetMessage('CRM_TOOLBAR_BIZPROC_STARTER_LABEL')?>"
+			onclick="<?= ($item['DATA']['availabilityLock']) ?>"
+		></button>
+		<?php
 	}
 	elseif($type == 'bizproc-starter-button')
 	{

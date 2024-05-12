@@ -85,6 +85,19 @@ class Lead extends Entity
 		return implode("\n", [$parentFieldsRestrictions, $leadFieldsRestrictions]);
 	}
 
+	public function getFieldsRestrictions(): array
+	{
+		$parentFieldsRestrictions = parent::getFieldsRestrictions();
+
+		$leadFieldsRestrictions = $this->leadFieldRestrictionManager->getFilterFields(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
+
+		return [...$parentFieldsRestrictions, ...$leadFieldsRestrictions];
+	}
+
 	public function getItemsSelectPreset(): array
 	{
 		return [

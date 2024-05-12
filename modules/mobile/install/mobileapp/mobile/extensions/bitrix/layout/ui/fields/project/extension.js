@@ -59,9 +59,18 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 					style: this.styles.emptyEntity,
 					numberOfLines: 1,
 					ellipsize: 'end',
-					text: BX.message('FIELDS_PROJECT_EMPTY'),
+					text: this.getEmptyText(),
 				}),
 			);
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getDefaultReadOnlyEmptyValue()
+		{
+			return BX.message('FIELDS_PROJECT_EMPTY');
 		}
 
 		renderEntity(project = {}, showPadding = false)
@@ -78,7 +87,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 				},
 				Image({
 					style: this.styles.projectImage,
-					uri: this.getImageUrl(project.imageUrl || DEFAULT_AVATAR),
+					uri: this.getImageUrl(project.imageUrl || this.getDefaultAvatar()),
 					onClick,
 				}),
 				View(
@@ -91,6 +100,15 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 					}),
 				),
 			);
+		}
+
+		/**
+		 * @public
+		 * @return {string}
+		 */
+		getDefaultAvatar()
+		{
+			return DEFAULT_AVATAR;
 		}
 
 		getImageUrl(imageUrl)
@@ -122,20 +140,11 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 		async handleAdditionalFocusActions()
 		{
 			const projectsDisabled = await checkDisabledToolById('projects');
-
-			if (projectsDisabled)
-			{
-				InfoHelper.openByCode('limit_projects_off');
-				this.removeFocus();
-
-				return;
-			}
-
 			const scrumDisabled = await checkDisabledToolById('scrum');
 
-			if (scrumDisabled)
+			if (projectsDisabled && scrumDisabled)
 			{
-				InfoHelper.openByCode('limit_tasks_scrum_off');
+				InfoHelper.openByCode('limit_projects_off');
 				this.removeFocus();
 
 				return;
@@ -215,10 +224,30 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 				},
 			};
 		}
+
+		getDefaultLeftIcon()
+		{
+			return 'folder4';
+		}
+
+		getAddButtonText()
+		{
+			return BX.message('FIELDS_PROJECT_ADD_BUTTON_TEXT');
+		}
 	}
+
+	ProjectField.propTypes = {
+		...EntitySelectorFieldClass.propTypes,
+	};
+
+	ProjectField.defaultProps = {
+		...EntitySelectorFieldClass.defaultProps,
+		showEditIcon: false,
+	};
 
 	module.exports = {
 		ProjectType: 'project',
+		ProjectFieldClass: ProjectField,
 		ProjectField: (props) => new ProjectField(props),
 	};
 });

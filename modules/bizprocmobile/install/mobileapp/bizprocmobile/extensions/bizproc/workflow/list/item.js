@@ -4,6 +4,10 @@
 jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Base } = require('layout/ui/simple-list/items/base');
+
+	const { shortTime, dayMonth, longDate } = require('utils/date/formats');
+	const { FriendlyDate } = require('layout/ui/friendly-date');
+
 	const { WorkflowFaces } = require('bizproc/workflow/faces');
 	const { TaskButtons } = require('bizproc/task/buttons');
 
@@ -83,6 +87,48 @@ jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 		 */
 		renderHeader()
 		{
+			return this.renderItemName();
+		}
+
+		/**
+		 * Implement this method in child class if you need to change item body layout
+		 *
+		 * @private
+		 * @returns View
+		 */
+		renderBody()
+		{
+			const { data } = this.props.item;
+			const hasTasks = data.tasks.length > 0;
+
+			return View(
+				{},
+				this.renderTypeName(),
+				this.renderTime(),
+				this.renderWorkflowFaces(data.id, data.faces),
+				!hasTasks && this.renderStatus(),
+				hasTasks && this.renderTaskButtons(),
+			);
+		}
+
+		renderItemName()
+		{
+			const { data } = this.props.item;
+
+			return View(
+				{},
+				Text({
+					testId: `${this.testId}_ITEM_NAME`,
+					text: jnComponent.convertHtmlEntities(data.itemName),
+					style: this.styles.itemName,
+					numberOfLines: 2,
+					ellipsize: 'end',
+				}),
+			);
+		}
+
+		renderTypeName()
+		{
 			const { data } = this.props.item;
 
 			return View(
@@ -100,65 +146,34 @@ jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 			);
 		}
 
-		/**
-		 * Implement this method in child class if you need to change item body layout
-		 *
-		 * @private
-		 * @returns View
-		 */
-		renderBody()
+		renderTime()
 		{
 			const { data } = this.props.item;
-			const hasTasks = data.tasks.length > 0;
 
-			return View(
-				{},
-				this.renderItemName(),
-				this.renderWorkflowFaces(data.id, data.faces),
-				!hasTasks && this.renderStatus(),
-				hasTasks && this.renderTaskButtons(),
-			);
-		}
+			if (!data.itemTime)
+			{
+				return null;
+			}
 
-		renderItemName()
-		{
-			const { data } = this.props.item;
-			const task = data.tasks[0];
+			return new FriendlyDate({
+				timestamp: data.itemTime,
+				timeSeparator: ' ',
+				defaultFormat: (moment) => {
+					const day = moment.format(moment.inThisYear ? dayMonth() : longDate());
+					const time = moment.format(shortTime);
 
-			return View(
-				{
-					onClick: () => {
-						if (!task)
-						{
-							// eslint-disable-next-line no-undef
-							InAppNotifier.showNotification({
-								backgroundColor: AppTheme.colors.baseBlackFixed,
-								message: Loc.getMessage('BPMOBILE_WORKFLOW_LIST_TASK_DETAIL_DEVELOPING'),
-								code: 'bp-workflow-item-detail-developing',
-								time: 3,
-							});
-
-							return;
-						}
-
-						void requireLazy('bizproc:task/details').then(({ TaskDetails }) => {
-							void TaskDetails.open(
-								this.props.layout,
-								{
-									taskId: task.id,
-									title: data.typeName,
-								},
-							);
-						});
-					},
+					return `${day} ${time}`;
 				},
-				Text({
-					testId: `${this.testId}_ITEM_NAME`,
-					text: data.itemName,
-					style: this.styles.itemName,
-					numberOfLines: 2,
-				}),
-			);
+				showTime: true,
+				useTimeAgo: false,
+				style: {
+					fontWeight: '400',
+					fontSize: 13,
+					color: AppTheme.colors.base4,
+					marginRight: 60,
+					marginLeft: 13,
+				},
+			});
 		}
 
 		renderWorkflowFaces(workflowId, faces)
@@ -254,36 +269,40 @@ jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 	};
 	const styles = {
 		wrapper: {
-			backgroundColor: AppTheme.colors.bgSecondary,
+			backgroundColor: AppTheme.colors.bgPrimary,
 			paddingTop: 12,
 		},
 		item: {
 			position: 'relative',
-			backgroundColor: AppTheme.colors.base8,
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderRadius: 12,
-			paddingHorizontal: 24,
+			paddingHorizontal: 12,
 		},
 		itemContent: {
-			// paddingBottom: 17,
+			paddingTop: 17,
+			paddingBottom: 8,
 		},
 		header: {
 			flexDirection: 'column',
+			marginRight: 60,
+			marginLeft: 13,
 		},
 		title: {
 			color: AppTheme.colors.base4,
-			fontWeight: '500',
+			fontWeight: '400',
 			fontSize: 12,
-			height: 19,
-			marginRight: 40,
+			height: 18,
+			marginRight: 48,
+			marginBottom: 8,
 		},
 		itemName: {
-			marginTop: 4,
-			fontWeight: '500',
-			fontSize: 16,
+			fontWeight: '600',
+			fontSize: 17,
 			color: AppTheme.colors.base1,
-			marginRight: 40,
-			marginBottom: 12,
-			lineHeightMultiple: 1.1,
+			marginLeft: 13,
+			marginRight: 60,
+			marginBottom: 6,
+			lineHeightMultiple: 1.15,
 		},
 		workflowFaces: {
 			marginVertical: 8,
@@ -294,8 +313,8 @@ jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 		},
 		menuContainer: {
 			position: 'absolute',
-			top: 17,
-			right: 0,
+			top: 19.5,
+			right: 14.5,
 			width: 24,
 			height: 24,
 			justifyContent: 'center',
@@ -303,10 +322,10 @@ jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 		},
 		tasksCounter: {
 			position: 'absolute',
-			top: 60,
-			right: 2,
-			width: 20,
-			height: 20,
+			top: 69,
+			right: 17,
+			width: 18,
+			height: 18,
 			borderRadius: 9,
 			backgroundColor: AppTheme.colors.accentMainAlert,
 			textAlign: 'center',
@@ -315,11 +334,14 @@ jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 			fontWeight: '500',
 		},
 		taskButtons: {
-			paddingTop: 7,
-			paddingBottom: 8,
+			marginHorizontal: 13,
+			paddingTop: 17,
+			paddingBottom: 14,
 		},
 		statusWrap: {
-			paddingTop: 12,
+			marginHorizontal: 13,
+			paddingTop: 17,
+			paddingBottom: 9,
 		},
 		statusTitle: {
 			fontSize: 11,
@@ -329,7 +351,7 @@ jn.define('bizproc/workflow/list/item', (require, exports, module) => {
 		},
 		statusText: {
 			fontSize: 14,
-			height: 17,
+			height: 19,
 			fontWeight: '400',
 			color: AppTheme.colors.base1,
 			marginBottom: 8,

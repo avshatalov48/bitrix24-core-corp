@@ -7,7 +7,7 @@ jn.define('tokens/src/indent', (require, exports, module) => {
 		XL4: 'XL4',
 		XL3: 'XL3',
 		XL2: 'XL2',
-		XL: 'XS',
+		XL: 'XL',
 		L: 'L',
 		M: 'M',
 		S: 'S',

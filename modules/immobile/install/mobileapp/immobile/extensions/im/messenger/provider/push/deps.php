@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/object',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/emitter',
 		'im:messenger/const',

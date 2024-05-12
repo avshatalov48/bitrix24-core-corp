@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const { Alert } = require('alert');
+	const { AnalyticsEvent } = require('analytics');
 	const AppTheme = require('apptheme');
 	const { magnifier } = require('assets/common');
 	const { EventEmitter } = require('event-emitter');
@@ -57,6 +58,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 			this.isCreateContact = false;
 			this.uid = Random.getString();
+			this.analytics = BX.componentParameters.get('analytics', null);
 
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
@@ -376,12 +378,12 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			this.openClientSelector(type);
 		}
 
-		handleClientSelection({ fieldName, entityTypeName })
+		handleClientSelection({ fieldName, entityTypeName, analytics })
 		{
 			const hasField = this.getCompound().some(({ name }) => fieldName === name);
 			if (hasField)
 			{
-				this.openClientSelector(entityTypeName);
+				this.openClientSelector(entityTypeName, analytics);
 			}
 		}
 
@@ -439,7 +441,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			};
 		}
 
-		async handleOnOpenBackDrop(params, method)
+		async handleOnOpenBackDrop(params, method, analytics = null)
 		{
 			const type = params.type;
 			this.isCreateContact = method === CREATE;
@@ -467,8 +469,9 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 			const openerConfig = BX.prop.getObject(this.getConfig(), 'entityDetailOpener', {});
 
-			EntityDetailOpener.open(
-				{
+			const analyticsToSend = analytics || this.analytics;
+			EntityDetailOpener.open({
+				payload: {
 					entityTypeId: Type.resolveIdByName(type),
 					entityId: id || entityId,
 					categoryId: this.getCategoryId(type),
@@ -479,12 +482,16 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 					tabsExternalData,
 					owner: BX.prop.getObject(this.getConfig(), 'owner', {}),
 				},
-				mergeImmutable(
+				widgetParams: mergeImmutable(
 					{ titleParams: { text: title } },
 					BX.prop.getObject(openerConfig, 'widgetParams', {}),
 				),
-				this.getParentWidget(),
-			);
+				parentWidget: this.getParentWidget(),
+				analytics: analyticsToSend && new AnalyticsEvent(analyticsToSend)
+					.setSubSection('element_card')
+					.setEvent('entity_add_open')
+					.setType(type),
+			});
 		}
 
 		handleMultiFieldChange({ entityTypeId, entityId })
@@ -665,11 +672,18 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 						marginBottom: 2,
 					},
 				},
-				onClick: () => this.openClientSelector(selectorType),
+				onClick: () => {
+					this.openClientSelector(
+						selectorType,
+						new AnalyticsEvent(this.analytics || {})
+							.setSubSection('element_card')
+							.setElement('client_field'),
+					);
+				},
 			});
 		}
 
-		openClientSelector(selectorType)
+		openClientSelector(selectorType, analytics)
 		{
 			const { [selectorType]: prevEntityList } = this.getValue();
 
@@ -684,14 +698,20 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				allowMultipleSelection: this.isMultipleSelector(selectorType),
 				events: {
 					onCreate: (createParams) => {
-						this.handleOnOpenBackDrop(
-							{
-								...createParams,
-								type: selectorType,
-								entityId: null,
-							},
-							CREATE,
-						);
+						const itemsLength = createParams?.items?.length ?? 0;
+						if (itemsLength > 0)
+						{
+							this.handleOnOpenBackDrop(
+								{
+									...createParams.items[0],
+									queryText: createParams.queryText,
+									type: selectorType,
+									entityId: null,
+								},
+								CREATE,
+								analytics,
+							);
+						}
 					},
 					onClose: (currentEntities) => {
 						this.currentEntities = currentEntities;

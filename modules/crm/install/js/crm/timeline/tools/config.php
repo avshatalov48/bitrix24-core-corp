@@ -8,8 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/tools.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'main.date',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

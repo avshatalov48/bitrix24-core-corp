@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_buttons,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,ui_iconSet_social,ui_alerts,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_section,ui_formElements_view,ui_switcher,main_popup,ui_entitySelector,ui_dialogs_messagebox,ui_formElements_field,main_core,main_core_events) {
+(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_buttons,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,ui_iconSet_social,ui_alerts,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_section,ui_formElements_view,ui_switcher,ui_entitySelector,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -236,16 +237,382 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(AnalyticSettingsTurnState, "ON", 'turn_on');
 	babelHelpers.defineProperty(AnalyticSettingsTurnState, "OFF", 'turn_off');
 
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	var _templateObject;
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _checker = /*#__PURE__*/new WeakMap();
+	var _content = /*#__PURE__*/new WeakMap();
+	var SiteTitle24Field = /*#__PURE__*/function (_BaseSettingsElement) {
+	  babelHelpers.inherits(SiteTitle24Field, _BaseSettingsElement);
+	  function SiteTitle24Field(params) {
+	    var _params$title;
+	    var _this;
+	    babelHelpers.classCallCheck(this, SiteTitle24Field);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SiteTitle24Field).call(this));
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _checker, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _content, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _this.setEventNamespace('BX.Intranet.Settings');
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _checker, new ui_formElements_view.Checker({
+	      id: 'siteLogo24',
+	      inputName: 'logo24',
+	      title: (_params$title = params.title) !== null && _params$title !== void 0 ? _params$title : main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_LOGO24'),
+	      size: 'extra-small',
+	      // hintOn: '',
+	      // hintOff: '',
+	      isEnable: params.isEnable,
+	      checked: params.checked !== '',
+	      value: 'Y',
+	      bannerCode: 'limit_admin_logo24',
+	      hideSeparator: true
+	    }));
+	    return _this;
+	  }
+	  babelHelpers.createClass(SiteTitle24Field, [{
+	    key: "getFieldView",
+	    value: function getFieldView() {
+	      return babelHelpers.classPrivateFieldGet(this, _checker);
+	    }
+	  }, {
+	    key: "render",
+	    value: function render() {
+	      if (babelHelpers.classPrivateFieldGet(this, _content)) {
+	        return babelHelpers.classPrivateFieldGet(this, _content);
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _content, main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-section__field-selector --align-center\">\n\t\t\t\t<div class=\"ui-section__hint\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _checker).render()));
+	      return babelHelpers.classPrivateFieldGet(this, _content);
+	    }
+	  }]);
+	  return SiteTitle24Field;
+	}(ui_formElements_field.BaseSettingsElement);
+
+	var _templateObject$1;
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _content$1 = /*#__PURE__*/new WeakMap();
+	var _contentLogo = /*#__PURE__*/new WeakMap();
+	var _title = /*#__PURE__*/new WeakMap();
+	var _logo = /*#__PURE__*/new WeakMap();
+	var _inputMonitoringIntervalId = /*#__PURE__*/new WeakMap();
+	var _inputMonitoringCountdown = /*#__PURE__*/new WeakMap();
+	var _inputMonitoringPrevState = /*#__PURE__*/new WeakMap();
+	var _initTitle = /*#__PURE__*/new WeakSet();
+	var _initLogo = /*#__PURE__*/new WeakSet();
+	var SiteTitleField = /*#__PURE__*/function (_BaseSettingsElement) {
+	  babelHelpers.inherits(SiteTitleField, _BaseSettingsElement);
+	  function SiteTitleField(params) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, SiteTitleField);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SiteTitleField).call(this, params));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _initLogo);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _initTitle);
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _content$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _contentLogo, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _title, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _logo, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _inputMonitoringIntervalId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _inputMonitoringCountdown, {
+	      writable: true,
+	      value: 10
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _inputMonitoringPrevState, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _this.setParentElement(params.parent);
+	    _this.setEventNamespace('BX.Intranet.Settings');
+	    var _options = params.siteTitleOptions;
+	    _this.options = {
+	      title: _options.title,
+	      canUserEditTitle: _options.canUserEditTitle,
+	      logo24: _options.logo24,
+	      canUserEditLogo24: _options.canUserEditLogo24
+	    };
+	    var _labels = params.siteTitleLabels;
+	    _this.labels = {
+	      title: _labels.title,
+	      logo24: _labels.logo24
+	    };
+	    _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _initTitle, _initTitle2).call(babelHelpers.assertThisInitialized(_this), _options, _labels);
+	    _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _initLogo, _initLogo2).call(babelHelpers.assertThisInitialized(_this), _options, _labels);
+	    return _this;
+	  }
+	  babelHelpers.createClass(SiteTitleField, [{
+	    key: "getFieldView",
+	    value: function getFieldView() {
+	      return babelHelpers.classPrivateFieldGet(this, _title);
+	    }
+	  }, {
+	    key: "cancel",
+	    value: function cancel() {}
+	  }, {
+	    key: "startInputMonitoring",
+	    value: function startInputMonitoring() {
+	      if (babelHelpers.classPrivateFieldGet(this, _inputMonitoringIntervalId) > 0) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _inputMonitoringIntervalId, setInterval(this.monitorInput.bind(this), 500));
+	    }
+	  }, {
+	    key: "stopInputMonitoring",
+	    value: function stopInputMonitoring() {
+	      if (babelHelpers.classPrivateFieldGet(this, _inputMonitoringIntervalId) > 0) {
+	        clearInterval(babelHelpers.classPrivateFieldGet(this, _inputMonitoringIntervalId));
+	        babelHelpers.classPrivateFieldSet(this, _inputMonitoringIntervalId, null);
+	      }
+	    }
+	  }, {
+	    key: "monitorInput",
+	    value: function monitorInput() {
+	      var _this$inputMonitoring;
+	      var value = babelHelpers.classPrivateFieldGet(this, _title).getInputNode().value;
+	      if (babelHelpers.classPrivateFieldGet(this, _inputMonitoringPrevState) !== value) {
+	        babelHelpers.classPrivateFieldSet(this, _inputMonitoringCountdown, 10);
+	        babelHelpers.classPrivateFieldSet(this, _inputMonitoringPrevState, value);
+	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, this.getEventNamespace() + ':Portal:Change', new main_core_events.BaseEvent({
+	          data: {
+	            title: value
+	          }
+	        }));
+	      } else if (babelHelpers.classPrivateFieldSet(this, _inputMonitoringCountdown, (_this$inputMonitoring = babelHelpers.classPrivateFieldGet(this, _inputMonitoringCountdown), --_this$inputMonitoring)) <= 0) {
+	        this.stopInputMonitoring();
+	      }
+	    }
+	  }, {
+	    key: "render",
+	    value: function render() {
+	      var _this2 = this;
+	      if (babelHelpers.classPrivateFieldGet(this, _content$1)) {
+	        return babelHelpers.classPrivateFieldGet(this, _content$1);
+	      }
+	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'focus', this.startInputMonitoring.bind(this));
+	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'keydown', this.startInputMonitoring.bind(this));
+	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'click', this.startInputMonitoring.bind(this));
+	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'blur', this.stopInputMonitoring.bind(this));
+	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'blur', this.stopInputMonitoring.bind(this));
+	      babelHelpers.classPrivateFieldGet(this, _logo).getFieldView().subscribe('change', function (event) {
+	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, _this2.getEventNamespace() + ':Portal:Change', new main_core_events.BaseEvent({
+	          data: {
+	            logo24: event.getData() === true ? '24' : ''
+	          }
+	        }));
+	      });
+	      babelHelpers.classPrivateFieldSet(this, _content$1, main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div id=\"", "\" class=\"ui-section__field-selector --no-border --no-margin --align-center\">\n\t\t\t<div class=\"ui-section__field-container\">\n\t\t\t\t<div class=\"ui-section__field-label_box\">\n\t\t\t\t\t<label class=\"ui-section__field-label\" for=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</label> \n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-section__field-inner\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _title).getId(), babelHelpers.classPrivateFieldGet(this, _title).getName(), babelHelpers.classPrivateFieldGet(this, _title).getLabel(), babelHelpers.classPrivateFieldGet(this, _title).getInputNode()));
+	      return babelHelpers.classPrivateFieldGet(this, _content$1);
+	    }
+	  }, {
+	    key: "getLogo24Field",
+	    value: function getLogo24Field() {
+	      return babelHelpers.classPrivateFieldGet(this, _logo);
+	    }
+	  }]);
+	  return SiteTitleField;
+	}(ui_formElements_field.BaseSettingsElement);
+	function _initTitle2(options, labels) {
+	  var _labels$title;
+	  babelHelpers.classPrivateFieldSet(this, _title, new ui_formElements_view.TextInput({
+	    value: options.title,
+	    placeholder: options.title,
+	    label: (_labels$title = labels.title) !== null && _labels$title !== void 0 ? _labels$title : main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE_INPUT_LABEL'),
+	    id: 'siteTitle',
+	    inputName: 'title',
+	    isEnable: true
+	    // bannerCode: '123',
+	    // helpDeskCode: '234',
+	    // helpMessageProvider: () => {}
+	  }));
+
+	  babelHelpers.classPrivateFieldGet(this, _title).setEventNamespace(this.getEventNamespace());
+	}
+	function _initLogo2(options, labels) {
+	  babelHelpers.classPrivateFieldSet(this, _logo, new SiteTitle24Field({
+	    title: labels.logo24,
+	    isEnable: options.canUserEditLogo24,
+	    checked: options.logo24
+	  }));
+	}
+
+	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _settings = /*#__PURE__*/new WeakMap();
+	var _currentPage = /*#__PURE__*/new WeakMap();
+	var _prevPage = /*#__PURE__*/new WeakMap();
+	var Navigation = /*#__PURE__*/function () {
+	  function Navigation(settings) {
+	    var _this = this;
+	    babelHelpers.classCallCheck(this, Navigation);
+	    _classPrivateFieldInitSpec$3(this, _settings, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$3(this, _currentPage, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$3(this, _prevPage, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _settings, settings);
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.SettingsNavigation:onMove', function (event) {
+	      var _this$getCurrentPage;
+	      var _event$data = event.data,
+	        page = _event$data.page,
+	        fieldName = _event$data.fieldName;
+	      if (((_this$getCurrentPage = _this.getCurrentPage()) === null || _this$getCurrentPage === void 0 ? void 0 : _this$getCurrentPage.getType()) === page) {
+	        _this.moveTo(_this.getCurrentPage(), fieldName);
+	        return;
+	      }
+	      var pageObj = _this.getPageByType(page);
+	      if (!(pageObj !== null && pageObj !== void 0 && pageObj.hasData())) {
+	        main_core_events.EventEmitter.subscribeOnce('BX.Intranet.Settings:onPageComplete', function (event) {
+	          if (event.data.page.hasContent()) {
+	            _this.moveTo(event.data.page, fieldName);
+	          }
+	        });
+	      }
+	      main_core_events.EventEmitter.subscribeOnce('BX.Intranet.Settings:onAfterShowPage', function (event) {
+	        if (event.data.page.hasContent()) {
+	          _this.moveTo(event.data.page, fieldName);
+	        }
+	      });
+	      babelHelpers.classPrivateFieldGet(_this, _settings).show(page);
+	    });
+	  }
+	  babelHelpers.createClass(Navigation, [{
+	    key: "getPageByType",
+	    value: function getPageByType(type) {
+	      return this.getPages().find(function (page) {
+	        return page.getType() === type;
+	      });
+	    }
+	  }, {
+	    key: "getCurrentPage",
+	    value: function getCurrentPage() {
+	      return babelHelpers.classPrivateFieldGet(this, _currentPage);
+	    }
+	  }, {
+	    key: "getPrevPage",
+	    value: function getPrevPage() {
+	      return babelHelpers.classPrivateFieldGet(this, _prevPage);
+	    }
+	  }, {
+	    key: "changePage",
+	    value: function changePage(page) {
+	      if (!(page instanceof ui_formElements_field.BaseSettingsPage)) {
+	        console.log('Not found "' + type + '" page');
+	        return;
+	      }
+	      if (page === babelHelpers.classPrivateFieldGet(this, _currentPage)) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _prevPage, babelHelpers.classPrivateFieldGet(this, _currentPage));
+	      babelHelpers.classPrivateFieldSet(this, _currentPage, page);
+	    }
+	  }, {
+	    key: "getPages",
+	    value: function getPages() {
+	      return babelHelpers.classPrivateFieldGet(this, _settings).getChildrenElements();
+	    }
+	  }, {
+	    key: "updateAddressBar",
+	    value: function updateAddressBar() {
+	      var _this$getCurrentPage2;
+	      var url = new URL(window.location.href);
+	      url.searchParams.set('page', (_this$getCurrentPage2 = this.getCurrentPage()) === null || _this$getCurrentPage2 === void 0 ? void 0 : _this$getCurrentPage2.getType());
+	      url.searchParams["delete"]('IFRAME');
+	      url.searchParams["delete"]('IFRAME_TYPE');
+	      top.window.history.replaceState(null, '', url.toString());
+	    }
+	  }, {
+	    key: "findByFieldName",
+	    value: function findByFieldName(rootNode, fieldName) {
+	      var _node$shift;
+	      var node = ui_formElements_field.RecursiveFilteringVisitor.startFrom(rootNode, function (node) {
+	        if (node instanceof ui_formElements_field.SettingsSection && node.getSectionView().getId() === fieldName) {
+	          return true;
+	        }
+	        if (node instanceof ui_formElements_field.TabField && node.getFieldView().getId() === fieldName) {
+	          return true;
+	        }
+	        return (node instanceof ui_formElements_field.SettingsField || node instanceof SiteTitleField || node instanceof SiteTitle24Field) && (node.getFieldView().getName() === fieldName || node.getFieldView().getId() === fieldName);
+	      });
+	      return (_node$shift = node.shift()) !== null && _node$shift !== void 0 ? _node$shift : null;
+	    }
+	  }, {
+	    key: "scrollToNode",
+	    value: function scrollToNode(node) {
+	      var element = node.render();
+	      var headerOffset = 45;
+	      var elementPosition = element.getBoundingClientRect().top;
+	      var offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+	      scrollTo({
+	        top: offsetPosition,
+	        behavior: "smooth"
+	      });
+	    }
+	  }, {
+	    key: "moveTo",
+	    value: function moveTo(element, fieldName) {
+	      var fieldNode = this.findByFieldName(element, fieldName);
+	      if (main_core.Type.isNil(fieldNode)) {
+	        return;
+	      }
+	      var isColored = false;
+	      ui_formElements_field.AscendingOpeningVisitor.startFrom(fieldNode, function (element) {
+	        if (element instanceof ui_formElements_field.SettingsRow) {
+	          element.getRowView().show();
+	        } else if (element instanceof ui_formElements_field.SettingsSection) {
+	          element.getSectionView().toggle(true, false);
+	        } else if (element instanceof ui_formElements_field.TabField) {
+	          var tabs = element.getParentElement();
+	          if (tabs instanceof ui_formElements_field.TabsField) {
+	            tabs.activateTab(element, false);
+	          }
+	        }
+	        if (!isColored) {
+	          isColored = element.highlight();
+	        }
+	      });
+	      this.scrollToNode(fieldNode);
+	    }
+	  }]);
+	  return Navigation;
+	}();
+
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _inputForSaveSortTools = /*#__PURE__*/new WeakMap();
 	var _toolsWrapperRow = /*#__PURE__*/new WeakMap();
 	var _draggable = /*#__PURE__*/new WeakMap();
 	var _mainSection = /*#__PURE__*/new WeakMap();
 	var _settingsSection = /*#__PURE__*/new WeakMap();
 	var _renderToolsSelectors = /*#__PURE__*/new WeakSet();
+	var _getSubToolHelpMessage = /*#__PURE__*/new WeakSet();
 	var _getToolsSelectorsItems = /*#__PURE__*/new WeakSet();
 	var _getMainSection = /*#__PURE__*/new WeakSet();
 	var _getSettingsSection = /*#__PURE__*/new WeakSet();
@@ -259,31 +626,32 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, ToolsPage);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToolsPage).call(this));
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getWarningMessage);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getToolsWrapperRow);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getDraggable);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getInputForSaveSortTools);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getSettingsSection);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getMainSection);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getToolsSelectorsItems);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _renderToolsSelectors);
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _inputForSaveSortTools, {
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getWarningMessage);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getToolsWrapperRow);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getDraggable);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getInputForSaveSortTools);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getSettingsSection);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getMainSection);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getToolsSelectorsItems);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getSubToolHelpMessage);
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _renderToolsSelectors);
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _inputForSaveSortTools, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _toolsWrapperRow, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _toolsWrapperRow, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _draggable, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _draggable, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _mainSection, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _mainSection, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _settingsSection, {
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _settingsSection, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -304,12 +672,12 @@ this.BX = this.BX || {};
 	      });
 	      new ui_formElements_field.SettingsRow({
 	        row: description,
-	        parent: _classPrivateMethodGet(this, _getSettingsSection, _getSettingsSection2).call(this)
+	        parent: _classPrivateMethodGet$1(this, _getSettingsSection, _getSettingsSection2).call(this)
 	      });
 	      if (this.hasValue('tools')) {
-	        _classPrivateMethodGet(this, _renderToolsSelectors, _renderToolsSelectors2).call(this);
+	        _classPrivateMethodGet$1(this, _renderToolsSelectors, _renderToolsSelectors2).call(this);
 	      }
-	      _classPrivateMethodGet(this, _getSettingsSection, _getSettingsSection2).call(this).renderTo(contentNode);
+	      _classPrivateMethodGet$1(this, _getSettingsSection, _getSettingsSection2).call(this).renderTo(contentNode);
 	    }
 	  }, {
 	    key: "getDescription",
@@ -337,20 +705,21 @@ this.BX = this.BX || {};
 	    var subgroups = tool.subgroups;
 	    var toolSelectorItems = [];
 	    if (Object.keys(subgroups).length > 0) {
-	      toolSelectorItems = _classPrivateMethodGet(_this2, _getToolsSelectorsItems, _getToolsSelectorsItems2).call(_this2, subgroups, tool);
+	      toolSelectorItems = _classPrivateMethodGet$1(_this2, _getToolsSelectorsItems, _getToolsSelectorsItems2).call(_this2, subgroups, tool);
 	    }
 	    var toolSelector = new ui_switcherNested.SwitcherNested({
 	      id: tool.code,
 	      title: tool.name,
-	      link: tool['settings-path'],
-	      infoHelperCode: tool['infohelper-slider'],
+	      link: _this2.getPermission().canEdit() ? tool['settings-path'] : null,
+	      infoHelperCode: _this2.getPermission().canEdit() ? tool['infohelper-slider'] : null,
 	      linkTitle: (_tool$settingsTitle = tool['settings-title']) !== null && _tool$settingsTitle !== void 0 ? _tool$settingsTitle : main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TOOLS_LINK_SETTINGS'),
 	      isChecked: tool.enabled,
 	      mainInputName: tool.code,
 	      isOpen: false,
 	      items: toolSelectorItems,
+	      isDisabled: !_this2.getPermission().canEdit(),
 	      isDefault: tool["default"],
-	      helpMessage: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {
+	      helpMessage: !_this2.getPermission().canEdit() ? main_core.Loc.getMessage('INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG') : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {
 	        '#TOOL#': tool.name
 	      })
 	    });
@@ -359,13 +728,29 @@ this.BX = this.BX || {};
 	    });
 	    main_core.Dom.style(toolSelectorSection.getSectionView().render(), 'margin-bottom', '8px');
 	    main_core.Dom.attr(toolSelectorSection.getSectionView().render(), 'data-menu-id', tool.menuId);
-	    _classPrivateMethodGet(_this2, _getToolsWrapperRow, _getToolsWrapperRow2).call(_this2).append(toolSelectorSection.getSectionView().render());
+	    _classPrivateMethodGet$1(_this2, _getToolsWrapperRow, _getToolsWrapperRow2).call(_this2).append(toolSelectorSection.getSectionView().render());
 	    new ui_formElements_field.SettingsRow({
-	      row: _classPrivateMethodGet(_this2, _getToolsWrapperRow, _getToolsWrapperRow2).call(_this2),
-	      parent: _classPrivateMethodGet(_this2, _getSettingsSection, _getSettingsSection2).call(_this2),
+	      row: _classPrivateMethodGet$1(_this2, _getToolsWrapperRow, _getToolsWrapperRow2).call(_this2),
+	      parent: _classPrivateMethodGet$1(_this2, _getSettingsSection, _getSettingsSection2).call(_this2),
 	      child: toolSelectorSection
 	    });
 	  });
+	}
+	function _getSubToolHelpMessage2(tool, parentToolName) {
+	  if (!this.getPermission().canEdit()) {
+	    return main_core.Loc.getMessage('INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG');
+	  }
+	  if (tool.disabled) {
+	    return main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {
+	      '#TOOL#': tool.name
+	    });
+	  }
+	  if (tool["default"]) {
+	    return main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_MAIN_TOOL', {
+	      '#TOOL#': parentToolName !== null && parentToolName !== void 0 ? parentToolName : ''
+	    });
+	  }
+	  return '';
 	}
 	function _getToolsSelectorsItems2(subgroups, tool) {
 	  var _this3 = this;
@@ -381,15 +766,12 @@ this.BX = this.BX || {};
 	      id: subgroupConfig.code,
 	      inputName: subgroupConfig.code,
 	      isChecked: subgroupConfig.enabled,
-	      settingsPath: subgroupConfig['settings_path'],
+	      settingsPath: _this3.getPermission().canEdit() ? subgroupConfig['settings_path'] : null,
 	      settingsTitle: (_subgroupConfig$setti = subgroupConfig['settings_title']) !== null && _subgroupConfig$setti !== void 0 ? _subgroupConfig$setti : main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TOOLS_LINK_SETTINGS'),
-	      infoHelperCode: subgroupConfig['infohelper-slider'],
+	      infoHelperCode: _this3.getPermission().canEdit() ? subgroupConfig['infohelper-slider'] : null,
+	      isDisabled: !_this3.getPermission().canEdit(),
 	      isDefault: (_ref = (_subgroupConfig$defau = subgroupConfig["default"]) !== null && _subgroupConfig$defau !== void 0 ? _subgroupConfig$defau : subgroupConfig.disabled) !== null && _ref !== void 0 ? _ref : false,
-	      helpMessage: subgroupConfig.disabled ? main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {
-	        '#TOOL#': subgroupConfig.name
-	      }) : subgroupConfig["default"] ? main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_MAIN_TOOL', {
-	        '#TOOL#': tool.name
-	      }) : ''
+	      helpMessage: _classPrivateMethodGet$1(_this3, _getSubToolHelpMessage, _getSubToolHelpMessage2).call(_this3, subgroupConfig, tool.name)
 	    });
 	    if (subgroupConfig.disabled) {
 	      main_core.Dom.style(toolSelectorItem.getSwitcher().getNode(), {
@@ -404,7 +786,7 @@ this.BX = this.BX || {};
 	    if (subgroupConfig.code === 'tool_subgroup_team_work_instant_messenger') {
 	      main_core.Event.bind(toolSelectorItem.getSwitcher().getNode(), 'click', function () {
 	        if (!toolSelectorItem.getSwitcher().isChecked()) {
-	          _classPrivateMethodGet(_this3, _getWarningMessage, _getWarningMessage2).call(_this3, subgroupConfig.code, toolSelectorItem.getSwitcher().getNode(), main_core.Loc.getMessage('INTRANET_SETTINGS_WARNING_TOOL_INSTANT_MESSENGER')).show();
+	          _classPrivateMethodGet$1(_this3, _getWarningMessage, _getWarningMessage2).call(_this3, subgroupConfig.code, toolSelectorItem.getSwitcher().getNode(), main_core.Loc.getMessage('INTRANET_SETTINGS_WARNING_TOOL_INSTANT_MESSENGER')).show();
 	        }
 	      });
 	    }
@@ -416,12 +798,7 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldGet(this, _mainSection)) {
 	    return babelHelpers.classPrivateFieldGet(this, _mainSection);
 	  }
-	  babelHelpers.classPrivateFieldSet(this, _mainSection, new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_TOOLS_SHOW'),
-	    titleIconClasses: 'ui-icon-set --service',
-	    isOpen: true,
-	    canCollapse: false
-	  }));
+	  babelHelpers.classPrivateFieldSet(this, _mainSection, new ui_section.Section(this.getValue('sectionTools')));
 	  return babelHelpers.classPrivateFieldGet(this, _mainSection);
 	}
 	function _getSettingsSection2() {
@@ -429,7 +806,7 @@ this.BX = this.BX || {};
 	    return babelHelpers.classPrivateFieldGet(this, _settingsSection);
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _settingsSection, new ui_formElements_field.SettingsSection({
-	    section: _classPrivateMethodGet(this, _getMainSection, _getMainSection2).call(this),
+	    section: _classPrivateMethodGet$1(this, _getMainSection, _getMainSection2).call(this),
 	    parent: this
 	  }));
 	  return babelHelpers.classPrivateFieldGet(this, _settingsSection);
@@ -458,9 +835,9 @@ this.BX = this.BX || {};
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _buildProfileSection = /*#__PURE__*/new WeakSet();
 	var _buildInviteSection = /*#__PURE__*/new WeakSet();
 	var EmployeePage = /*#__PURE__*/function (_BaseSettingsPage) {
@@ -469,8 +846,8 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, EmployeePage);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(EmployeePage).call(this));
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _buildInviteSection);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _buildProfileSection);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _buildInviteSection);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _buildProfileSection);
 	    _this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_EMPLOYEE');
 	    _this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_EMPLOYEE_BOX');
 	    return _this;
@@ -492,27 +869,28 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "appendSections",
 	    value: function appendSections(contentNode) {
-	      var profileSection = _classPrivateMethodGet$1(this, _buildProfileSection, _buildProfileSection2).call(this);
-	      profileSection.renderTo(contentNode);
-	      var inviteSection = _classPrivateMethodGet$1(this, _buildInviteSection, _buildInviteSection2).call(this);
-	      inviteSection.renderTo(contentNode);
+	      var profileSection = _classPrivateMethodGet$2(this, _buildProfileSection, _buildProfileSection2).call(this);
+	      profileSection === null || profileSection === void 0 ? void 0 : profileSection.renderTo(contentNode);
+	      var inviteSection = _classPrivateMethodGet$2(this, _buildInviteSection, _buildInviteSection2).call(this);
+	      inviteSection === null || inviteSection === void 0 ? void 0 : inviteSection.renderTo(contentNode);
 	    }
 	  }]);
 	  return EmployeePage;
 	}(ui_formElements_field.BaseSettingsPage);
 	function _buildProfileSection2() {
-	  var profileSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_PROFILE'),
-	    titleIconClasses: 'ui-icon-set --person'
-	  });
+	  if (!this.hasValue('SECTION_PROFILE')) {
+	    return;
+	  }
+	  var profileSection = new ui_section.Section(this.getValue('SECTION_PROFILE'));
 	  var sectionSettings = new ui_formElements_field.SettingsSection({
 	    section: profileSection,
 	    parent: this
 	  });
-	  if (this.hasValue('NAME_FORMATS')) {
+	  if (this.hasValue('fieldFormatName')) {
+	    var _this$getValue$label;
 	    var hasSelectValue = false;
-	    var currentValue = this.getValue('NAME_FORMATS').current;
-	    var _iterator = _createForOfIteratorHelper(this.getValue('NAME_FORMATS').values),
+	    var currentValue = this.getValue('fieldFormatName').current;
+	    var _iterator = _createForOfIteratorHelper(this.getValue('fieldFormatName').values),
 	      _step;
 	    try {
 	      for (_iterator.s(); !(_step = _iterator.n()).done;) {
@@ -526,17 +904,17 @@ this.BX = this.BX || {};
 	    } finally {
 	      _iterator.f();
 	    }
-	    this.getValue('NAME_FORMATS').values.push({
+	    this.getValue('fieldFormatName').values.push({
 	      value: 'other',
 	      name: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_OPTION_OTHER'),
 	      selected: !hasSelectValue
 	    });
 	    var nameFormatField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_NAME_FORMAT'),
-	      name: this.getValue('NAME_FORMATS').name + '_selector',
-	      items: this.getValue('NAME_FORMATS').values,
-	      hints: this.getValue('NAME_FORMATS').hints,
-	      current: this.getValue('NAME_FORMATS').current
+	      label: (_this$getValue$label = this.getValue('fieldFormatName').label) !== null && _this$getValue$label !== void 0 ? _this$getValue$label : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_NAME_FORMAT'),
+	      name: this.getValue('fieldFormatName').name + '_selector',
+	      items: this.getValue('fieldFormatName').values,
+	      hints: this.getValue('fieldFormatName').hints,
+	      current: this.getValue('fieldFormatName').current
 	    });
 	    var settingsField = new ui_formElements_field.SettingsField({
 	      fieldView: nameFormatField
@@ -546,7 +924,7 @@ this.BX = this.BX || {};
 	      parent: sectionSettings
 	    });
 	    var customFormatNameField = new ui_formElements_view.TextInput({
-	      inputName: this.getValue('NAME_FORMATS').name,
+	      inputName: this.getValue('fieldFormatName').name,
 	      label: '',
 	      value: currentValue
 	    });
@@ -573,26 +951,12 @@ this.BX = this.BX || {};
 	      }
 	    });
 	  }
-	  if (this.hasValue('PHONE_NUMBER_DEFAULT_COUNTRY')) {
-	    var formatNumberField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COUNTRY_PHONE_NUMBER'),
-	      hintTitle: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_NUMBER_FORMAT'),
-	      name: this.getValue('PHONE_NUMBER_DEFAULT_COUNTRY').name,
-	      items: this.getValue('PHONE_NUMBER_DEFAULT_COUNTRY').values,
-	      hints: this.getValue('PHONE_NUMBER_DEFAULT_COUNTRY').hints,
-	      current: this.getValue('PHONE_NUMBER_DEFAULT_COUNTRY').current
-	    });
+	  if (this.hasValue('fieldFormatPhoneNumber')) {
+	    var formatNumberField = new ui_formElements_view.Selector(this.getValue('fieldFormatPhoneNumber'));
 	    EmployeePage.addToSectionHelper(formatNumberField, sectionSettings);
 	  }
-	  if (this.hasValue('LOCATION_ADDRESS_FORMAT_LIST')) {
-	    var addressFormatField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ADDRESS_FORMAT'),
-	      hintTitle: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_ADDRESS_FORMAT'),
-	      name: this.getValue('LOCATION_ADDRESS_FORMAT_LIST').name,
-	      items: this.getValue('LOCATION_ADDRESS_FORMAT_LIST').values,
-	      hints: this.getValue('LOCATION_ADDRESS_FORMAT_LIST').hints,
-	      current: this.getValue('LOCATION_ADDRESS_FORMAT_LIST').current
-	    });
+	  if (this.hasValue('fieldFormatAddress')) {
+	    var addressFormatField = new ui_formElements_view.Selector(this.getValue('fieldFormatAddress'));
 	    var addressFormatRow = new ui_section.Row({
 	      separator: this.hasValue('show_year_for_female') ? 'bottom' : null,
 	      className: '--block'
@@ -600,106 +964,51 @@ this.BX = this.BX || {};
 	    EmployeePage.addToSectionHelper(addressFormatField, sectionSettings, addressFormatRow);
 	  }
 	  if (this.hasValue('show_year_for_female')) {
-	    var showBirthYearField = new ui_formElements_view.InlineChecker({
-	      inputName: 'show_year_for_female',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_BIRTH_YEAR'),
-	      hintTitle: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_BIRTH_YEAR'),
-	      hintOn: this.getValue('show_year_for_female').hintOn,
-	      hintOff: this.getValue('show_year_for_female').hintOff,
-	      checked: this.getValue('show_year_for_female').current === 'Y'
-	    });
+	    var showBirthYearField = new ui_formElements_view.InlineChecker(this.getValue('show_year_for_female'));
 	    EmployeePage.addToSectionHelper(showBirthYearField, sectionSettings);
 	  }
 	  return sectionSettings;
 	}
 	function _buildInviteSection2() {
 	  var _this2 = this;
-	  var inviteSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_INVITE'),
-	    titleIconClasses: 'ui-icon-set --person-plus',
-	    isOpen: false
-	  });
+	  if (!this.hasValue('SECTION_INVITE')) {
+	    return;
+	  }
+	  var inviteSection = new ui_section.Section(this.getValue('SECTION_INVITE'));
 	  var sectionSettings = new ui_formElements_field.SettingsSection({
 	    section: inviteSection,
 	    parent: this
 	  });
 	  if (this.hasValue('allow_register')) {
-	    var fastReqField = new ui_formElements_view.Checker({
-	      inputName: 'allow_register',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_FAST_REG'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON'),
-	      checked: this.getValue('allow_register') === 'Y',
-	      helpDesk: 'redirect=detail&code=17726876'
-	    });
-	    var fastReqRow = new ui_section.Row({
-	      separator: 'bottom'
-	    });
+	    var fastReqField = new ui_formElements_view.Checker(this.getValue('allow_register'));
 	    main_core_events.EventEmitter.subscribe(fastReqField.switcher, 'toggled', function () {
 	      var _this2$getAnalytic;
 	      (_this2$getAnalytic = _this2.getAnalytic()) === null || _this2$getAnalytic === void 0 ? void 0 : _this2$getAnalytic.addEventConfigEmployee(AnalyticSettingsEvent.CHANGE_QUICK_REG, fastReqField.isChecked());
 	    });
-	    EmployeePage.addToSectionHelper(fastReqField, sectionSettings, fastReqRow);
+	    EmployeePage.addToSectionHelper(fastReqField, sectionSettings);
 	  }
 	  if (this.hasValue('allow_invite_users')) {
-	    var inviteToUserField = new ui_formElements_view.Checker({
-	      inputName: 'allow_invite_users',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_USERS_TO_INVITE'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_USERS_TO_INVITE_ON'),
-	      checked: this.getValue('allow_invite_users') === 'Y'
-	    });
-	    var inviteToUserRow = new ui_section.Row({
-	      separator: 'bottom'
-	    });
+	    var inviteToUserField = new ui_formElements_view.Checker(this.getValue('allow_invite_users'));
 	    main_core_events.EventEmitter.subscribe(inviteToUserField.switcher, 'toggled', function () {
 	      var _this2$getAnalytic2;
 	      (_this2$getAnalytic2 = _this2.getAnalytic()) === null || _this2$getAnalytic2 === void 0 ? void 0 : _this2$getAnalytic2.addEventConfigEmployee(AnalyticSettingsEvent.CHANGE_REG_ALL, inviteToUserField.isChecked());
 	    });
-	    EmployeePage.addToSectionHelper(inviteToUserField, sectionSettings, inviteToUserRow);
+	    EmployeePage.addToSectionHelper(inviteToUserField, sectionSettings);
 	  }
 	  if (this.hasValue('show_fired_employees')) {
-	    var showQuitField = new ui_formElements_view.Checker({
-	      inputName: 'show_fired_employees',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_QUIT_EMPLOYEE'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_QUIT_EMPLOYEE_ON'),
-	      checked: this.getValue('show_fired_employees') === 'Y'
-	    });
-	    var showQuitRow = new ui_section.Row({
-	      separator: 'bottom'
-	    });
-	    EmployeePage.addToSectionHelper(showQuitField, sectionSettings, showQuitRow);
+	    var showQuitField = new ui_formElements_view.Checker(this.getValue('show_fired_employees'));
+	    EmployeePage.addToSectionHelper(showQuitField, sectionSettings);
 	  }
 	  if (this.hasValue('general_chat_message_join')) {
-	    var newUserField = new ui_formElements_view.Checker({
-	      inputName: 'general_chat_message_join',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_ON'),
-	      checked: this.getValue('general_chat_message_join') === 'Y'
-	    });
-	    var newUserRow = new ui_section.Row({
-	      separator: 'bottom'
-	    });
-	    EmployeePage.addToSectionHelper(newUserField, sectionSettings, newUserRow);
+	    var newUserField = new ui_formElements_view.Checker(this.getValue('general_chat_message_join'));
+	    EmployeePage.addToSectionHelper(newUserField, sectionSettings);
 	  }
 	  if (this.hasValue('allow_new_user_lf')) {
-	    var newUserLfField = new ui_formElements_view.Checker({
-	      inputName: 'allow_new_user_lf',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE_LF'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_LF_ON'),
-	      checked: this.getValue('allow_new_user_lf') === 'Y'
-	    });
-	    var newUserLfRow = new ui_section.Row({
-	      separator: 'bottom'
-	    });
-	    EmployeePage.addToSectionHelper(newUserLfField, sectionSettings, newUserLfRow);
+	    var newUserLfField = new ui_formElements_view.Checker(this.getValue('allow_new_user_lf'));
+	    EmployeePage.addToSectionHelper(newUserLfField, sectionSettings);
 	  }
 	  if (this.hasValue('feature_extranet')) {
-	    var extranetField = new ui_formElements_view.Checker({
-	      inputName: 'feature_extranet',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_EXTRANET'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON'),
-	      checked: this.getValue('feature_extranet') === 'Y',
-	      helpDesk: 'redirect=detail&code=17983050'
-	    });
+	    var extranetField = new ui_formElements_view.Checker(this.getValue('feature_extranet'));
 	    main_core_events.EventEmitter.subscribe(extranetField.switcher, 'toggled', function () {
 	      var _this2$getAnalytic3;
 	      (_this2$getAnalytic3 = _this2.getAnalytic()) === null || _this2$getAnalytic3 === void 0 ? void 0 : _this2$getAnalytic3.addEventConfigEmployee(AnalyticSettingsEvent.CHANGE_EXTRANET_INVITE, extranetField.isChecked());
@@ -709,23 +1018,23 @@ this.BX = this.BX || {};
 	  return sectionSettings;
 	}
 
-	var _templateObject$1;
+	var _templateObject$3;
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _buttonBarElement = /*#__PURE__*/new WeakMap();
 	var _buttons = /*#__PURE__*/new WeakMap();
 	var ButtonBar = /*#__PURE__*/function () {
 	  function ButtonBar() {
 	    var buttons = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 	    babelHelpers.classCallCheck(this, ButtonBar);
-	    _classPrivateFieldInitSpec$2(this, _buttonBarElement, {
+	    _classPrivateFieldInitSpec$5(this, _buttonBarElement, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$2(this, _buttons, {
+	    _classPrivateFieldInitSpec$5(this, _buttons, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -737,7 +1046,7 @@ this.BX = this.BX || {};
 	      if (babelHelpers.classPrivateFieldGet(this, _buttonBarElement)) {
 	        return babelHelpers.classPrivateFieldGet(this, _buttonBarElement);
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _buttonBarElement, main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet-settings__button_bar\"></div>"]))));
+	      babelHelpers.classPrivateFieldSet(this, _buttonBarElement, main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet-settings__button_bar\"></div>"]))));
 	      var _iterator = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _buttons)),
 	        _step;
 	      try {
@@ -767,13 +1076,13 @@ this.BX = this.BX || {};
 	  return ButtonBar;
 	}();
 
-	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _button = /*#__PURE__*/new WeakMap();
 	var LandingButton = /*#__PURE__*/function () {
 	  function LandingButton() {
 	    babelHelpers.classCallCheck(this, LandingButton);
-	    _classPrivateFieldInitSpec$3(this, _button, {
+	    _classPrivateFieldInitSpec$6(this, _button, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -815,7 +1124,7 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, EditState);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(EditState).call(this));
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _landing, {
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _landing, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -848,11 +1157,11 @@ this.BX = this.BX || {};
 	    var _this3;
 	    babelHelpers.classCallCheck(this, ShowState);
 	    _this3 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ShowState).call(this));
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this3), _landing2, {
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this3), _landing2, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this3), _menuRenderer, {
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this3), _menuRenderer, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -880,11 +1189,11 @@ this.BX = this.BX || {};
 	    var _this4;
 	    babelHelpers.classCallCheck(this, CreateState);
 	    _this4 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CreateState).call(this));
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this4), _requestBuilder, {
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this4), _requestBuilder, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this4), _menuRenderer2, {
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this4), _menuRenderer2, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -924,24 +1233,24 @@ this.BX = this.BX || {};
 	  return CreateState;
 	}(LandingButtonState);
 
-	var _templateObject$2, _templateObject2;
-	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject$4, _templateObject2;
+	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _landing$1 = /*#__PURE__*/new WeakMap();
 	var _copyBtn = /*#__PURE__*/new WeakMap();
 	var _landingCardElement = /*#__PURE__*/new WeakMap();
 	var LandingCard = /*#__PURE__*/function () {
 	  function LandingCard(landingOptions) {
 	    babelHelpers.classCallCheck(this, LandingCard);
-	    _classPrivateFieldInitSpec$4(this, _landing$1, {
+	    _classPrivateFieldInitSpec$7(this, _landing$1, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _copyBtn, {
+	    _classPrivateFieldInitSpec$7(this, _copyBtn, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _landingCardElement, {
+	    _classPrivateFieldInitSpec$7(this, _landingCardElement, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -950,7 +1259,7 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(LandingCard, [{
 	    key: "qrRender",
 	    value: function qrRender() {
-	      var qrContainer = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet-settings__qr_image-container\"></div>"])));
+	      var qrContainer = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet-settings__qr_image-container\"></div>"])));
 	      new QRCode(qrContainer, {
 	        text: babelHelpers.classPrivateFieldGet(this, _landing$1).public_url,
 	        width: 106,
@@ -1004,10 +1313,10 @@ this.BX = this.BX || {};
 	  return LandingCard;
 	}();
 
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _options = /*#__PURE__*/new WeakMap();
 	var _menuRenderer$1 = /*#__PURE__*/new WeakMap();
 	var _defaultMenuRenderer = /*#__PURE__*/new WeakSet();
@@ -1015,19 +1324,19 @@ this.BX = this.BX || {};
 	var LandingButtonFactory = /*#__PURE__*/function () {
 	  function LandingButtonFactory(options, _landingData) {
 	    babelHelpers.classCallCheck(this, LandingButtonFactory);
-	    _classPrivateMethodInitSpec$2(this, _getRequestCreateLanding);
-	    _classPrivateMethodInitSpec$2(this, _defaultMenuRenderer);
-	    _classPrivateFieldInitSpec$5(this, _options, {
+	    _classPrivateMethodInitSpec$3(this, _getRequestCreateLanding);
+	    _classPrivateMethodInitSpec$3(this, _defaultMenuRenderer);
+	    _classPrivateFieldInitSpec$8(this, _options, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$5(this, _menuRenderer$1, {
+	    _classPrivateFieldInitSpec$8(this, _menuRenderer$1, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _options, options);
 	    this.landingData = _landingData;
-	    babelHelpers.classPrivateFieldSet(this, _menuRenderer$1, _classPrivateMethodGet$2(this, _defaultMenuRenderer, _defaultMenuRenderer2));
+	    babelHelpers.classPrivateFieldSet(this, _menuRenderer$1, _classPrivateMethodGet$3(this, _defaultMenuRenderer, _defaultMenuRenderer2));
 	  }
 	  babelHelpers.createClass(LandingButtonFactory, [{
 	    key: "setMenuRenderer",
@@ -1046,7 +1355,7 @@ this.BX = this.BX || {};
 	        state = new ShowState(babelHelpers.classPrivateFieldGet(this, _options), babelHelpers.classPrivateFieldGet(this, _menuRenderer$1).bind(this));
 	      } else {
 	        state = new CreateState(function () {
-	          return _classPrivateMethodGet$2(_this, _getRequestCreateLanding, _getRequestCreateLanding2).call(_this);
+	          return _classPrivateMethodGet$3(_this, _getRequestCreateLanding, _getRequestCreateLanding2).call(_this);
 	        }, babelHelpers.classPrivateFieldGet(this, _menuRenderer$1).bind(this));
 	      }
 	      btn.setState(state);
@@ -1078,14 +1387,14 @@ this.BX = this.BX || {};
 	  });
 	}
 
-	var _templateObject$3, _templateObject2$1, _templateObject3;
+	var _templateObject$5, _templateObject2$1, _templateObject3;
 	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$7(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _options$1 = /*#__PURE__*/new WeakMap();
 	var _cardElement = /*#__PURE__*/new WeakMap();
 	var _requisiteFieldsElement = /*#__PURE__*/new WeakMap();
@@ -1094,20 +1403,20 @@ this.BX = this.BX || {};
 	var Card = /*#__PURE__*/function () {
 	  function Card(options) {
 	    babelHelpers.classCallCheck(this, Card);
-	    _classPrivateMethodInitSpec$3(this, _buildField);
-	    _classPrivateFieldInitSpec$6(this, _options$1, {
+	    _classPrivateMethodInitSpec$4(this, _buildField);
+	    _classPrivateFieldInitSpec$9(this, _options$1, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$6(this, _cardElement, {
+	    _classPrivateFieldInitSpec$9(this, _cardElement, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$6(this, _requisiteFieldsElement, {
+	    _classPrivateFieldInitSpec$9(this, _requisiteFieldsElement, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$6(this, _buttonBar, {
+	    _classPrivateFieldInitSpec$9(this, _buttonBar, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1119,7 +1428,7 @@ this.BX = this.BX || {};
 	      if (babelHelpers.classPrivateFieldGet(this, _cardElement)) {
 	        return babelHelpers.classPrivateFieldGet(this, _cardElement);
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _cardElement, main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-settings__req_background\">\n\t\t\t<div class=\"intranet-settings__req-card_wrapper\">\n\t\t\t\t<div class=\"intranet-settings__header\">\n\t\t\t\t\t<div class=\"intranet-settings__title\"> <span class=\"ui-section__title-icon ui-icon-set --city\"></span> <span>", "</span></div>\n\t\t\t\t\t<div class=\"intranet-settings__contact_bar\"> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _options$1).company.TITLE, _classPrivateMethodGet$3(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).phone) ? babelHelpers.classPrivateFieldGet(this, _options$1).phone : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_PHONE')), _classPrivateMethodGet$3(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).email) ? babelHelpers.classPrivateFieldGet(this, _options$1).email : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_EMAIL')), _classPrivateMethodGet$3(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).site) ? babelHelpers.classPrivateFieldGet(this, _options$1).site : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_SITE')), this.requisiteFieldsRender(), this.getButtonsBar().render()));
+	      babelHelpers.classPrivateFieldSet(this, _cardElement, main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-settings__req_background\">\n\t\t\t<div class=\"intranet-settings__req-card_wrapper\">\n\t\t\t\t<div class=\"intranet-settings__header\">\n\t\t\t\t\t<div class=\"intranet-settings__title\"> <span class=\"ui-section__title-icon ui-icon-set --city\"></span> <span>", "</span></div>\n\t\t\t\t\t<div class=\"intranet-settings__contact_bar\"> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _options$1).company.TITLE, _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).phone) ? babelHelpers.classPrivateFieldGet(this, _options$1).phone : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_PHONE')), _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).email) ? babelHelpers.classPrivateFieldGet(this, _options$1).email : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_EMAIL')), _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).site) ? babelHelpers.classPrivateFieldGet(this, _options$1).site : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_SITE')), this.requisiteFieldsRender(), this.getButtonsBar().render()));
 	      return babelHelpers.classPrivateFieldGet(this, _cardElement);
 	    }
 	  }, {
@@ -1144,7 +1453,7 @@ this.BX = this.BX || {};
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var field = _step.value;
-	          var renderField = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings__req-table_row\">\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">", "</div>\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), field.TITLE, main_core.Type.isStringFilled(field.VALUE) ? _classPrivateMethodGet$3(this, _buildField, _buildField2).call(this, field.VALUE) : _classPrivateMethodGet$3(this, _buildField, _buildField2).call(this, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB')));
+	          var renderField = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings__req-table_row\">\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">", "</div>\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), field.TITLE, main_core.Type.isStringFilled(field.VALUE) ? _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, field.VALUE) : _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB')));
 	          main_core.Dom.append(renderField, babelHelpers.classPrivateFieldGet(this, _requisiteFieldsElement));
 	        }
 	      } catch (err) {
@@ -1180,7 +1489,7 @@ this.BX = this.BX || {};
 	  });
 	}
 
-	var _templateObject$4, _templateObject2$2;
+	var _templateObject$6, _templateObject2$2;
 	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -1209,11 +1518,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "appendSections",
 	    value: function appendSections(contentNode) {
-	      var reqSection = new ui_section.Section({
-	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_REQUISITE'),
-	        titleIconClasses: 'ui-icon-set --suitcase',
-	        isOpen: true,
-	        canCollapse: false
+	      if (!this.hasValue('sectionRequisite')) {
+	        return;
+	      }
+	      var reqSection = new ui_section.Section(this.getValue('sectionRequisite'));
+	      var sectionField = new ui_formElements_field.SettingsSection({
+	        parent: this,
+	        section: reqSection
 	      });
 	      var description = new BX.UI.Alert({
 	        text: "\n\t\t\t\t".concat(main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_REQUISITE_DESCRIPTION'), "\n\t\t\t\t<a class=\"ui-section__link\" onclick=\"top.BX.Helper.show('redirect=detail&code=18213326')\">\n\t\t\t\t\t").concat(main_core.Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE'), "\n\t\t\t\t</a>\n\t\t\t"),
@@ -1274,19 +1585,24 @@ this.BX = this.BX || {};
 	          _iterator.f();
 	        }
 	      }
-	      reqSection.append(this.addCompanyLinkRender());
-	      reqSection.renderTo(contentNode);
+	      new ui_formElements_field.SettingsRow({
+	        row: new ui_section.Row({
+	          content: this.addCompanyLinkRender()
+	        }),
+	        parent: sectionField
+	      });
+	      sectionField.renderTo(contentNode);
 	    }
 	  }, {
 	    key: "addCompanyLinkRender",
 	    value: function addCompanyLinkRender() {
 	      var _this2 = this;
-	      var link = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"ui-section__link\" \n\t\t\t\t\thref=\"/crm/company/details/0/?mycompany=y\" target=\"_blank\">\n\t\t\t\t", "\n\t\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_ADD_COMPANY'));
+	      var link = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"ui-section__link\" \n\t\t\t\t\thref=\"/crm/company/details/0/?mycompany=y\" target=\"_blank\">\n\t\t\t\t", "\n\t\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_ADD_COMPANY'));
 	      main_core.Event.bind(link, 'click', function (event) {
 	        var _this2$getAnalytic;
 	        (_this2$getAnalytic = _this2.getAnalytic()) === null || _this2$getAnalytic === void 0 ? void 0 : _this2$getAnalytic.addEventConfigRequisite(AnalyticSettingsEvent.OPEN_ADD_COMPANY);
 	      });
-	      return main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-section__mt-16 ui-section__link_box\">", "</div>"])), link);
+	      return main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-section__link_box\">", "</div>"])), link);
 	    }
 	  }, {
 	    key: "cardRender",
@@ -1334,10 +1650,10 @@ this.BX = this.BX || {};
 	  return RequisitePage;
 	}(ui_formElements_field.BaseSettingsPage);
 
-	var _templateObject$5, _templateObject2$3, _templateObject3$1, _templateObject4;
-	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _templateObject$7, _templateObject2$3, _templateObject3$1, _templateObject4;
+	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _buildNewsFeedSection = /*#__PURE__*/new WeakSet();
 	var _buildChatSection = /*#__PURE__*/new WeakSet();
 	var _buildDiskSection = /*#__PURE__*/new WeakSet();
@@ -1347,9 +1663,9 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, CommunicationPage);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CommunicationPage).call(this));
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _buildDiskSection);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _buildChatSection);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _buildNewsFeedSection);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _buildDiskSection);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _buildChatSection);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _buildNewsFeedSection);
 	    _this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_COMMUNICATION');
 	    _this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_COMMUNICATION');
 	    return _this;
@@ -1362,34 +1678,35 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "appendSections",
 	    value: function appendSections(contentNode) {
-	      var profileSection = _classPrivateMethodGet$4(this, _buildNewsFeedSection, _buildNewsFeedSection2).call(this);
+	      var profileSection = _classPrivateMethodGet$5(this, _buildNewsFeedSection, _buildNewsFeedSection2).call(this);
 	      profileSection.renderTo(contentNode);
-	      var chatSection = _classPrivateMethodGet$4(this, _buildChatSection, _buildChatSection2).call(this);
+	      var chatSection = _classPrivateMethodGet$5(this, _buildChatSection, _buildChatSection2).call(this);
 	      chatSection.renderTo(contentNode);
-	      var diskSection = _classPrivateMethodGet$4(this, _buildDiskSection, _buildDiskSection2).call(this);
+	      var diskSection = _classPrivateMethodGet$5(this, _buildDiskSection, _buildDiskSection2).call(this);
 	      diskSection.renderTo(contentNode);
 	    }
 	  }]);
 	  return CommunicationPage;
 	}(ui_formElements_field.BaseSettingsPage);
 	function _buildNewsFeedSection2() {
-	  var newsFeedSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_NEWS_FEED'),
-	    titleIconClasses: 'ui-icon-set --feed-bold'
-	  });
+	  if (!this.hasValue('sectionFeed')) {
+	    return;
+	  }
+	  var newsFeedSection = new ui_section.Section(this.getValue('sectionFeed'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: newsFeedSection,
 	    parent: this
 	  });
 	  if (this.hasValue('allow_livefeed_toall')) {
-	    var allowPostFeedField = new ui_formElements_view.Checker({
-	      inputName: 'allow_livefeed_toall',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_POST_FEED_ON'),
-	      checked: this.getValue('allow_livefeed_toall') === 'Y',
-	      hideSeparator: true
+	    var allowPostFeedField = new ui_formElements_view.Checker(this.getValue('allow_livefeed_toall'));
+	    allowPostFeedField.hideSeparator = true;
+	    var settingsField = new ui_formElements_field.SettingsField({
+	      fieldView: allowPostFeedField
 	    });
-	    CommunicationPage.addToSectionHelper(allowPostFeedField, settingsSection);
+	    var settingsRow = new ui_formElements_field.SettingsRow({
+	      parent: settingsSection,
+	      child: settingsField
+	    });
 	    var userSelectorField = new ui_formElements_view.UserSelector({
 	      inputName: 'livefeed_toall_rights[]',
 	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS'),
@@ -1421,13 +1738,18 @@ this.BX = this.BX || {};
 	        };
 	      }
 	    });
-	    var userSelectorRow = new ui_section.Row({
-	      content: userSelectorField.render(),
-	      isHidden: !allowPostFeedField.isChecked(),
-	      className: 'ui-section__subrow',
-	      separator: 'bottom'
+	    settingsField = new ui_formElements_field.SettingsField({
+	      fieldView: userSelectorField
 	    });
-	    CommunicationPage.addToSectionHelper(userSelectorField, settingsSection, userSelectorRow);
+	    var userSelectorRow = new ui_section.Row({
+	      isHidden: !allowPostFeedField.isChecked(),
+	      className: 'ui-section__subrow'
+	    });
+	    new ui_formElements_field.SettingsRow({
+	      row: userSelectorRow,
+	      parent: settingsRow,
+	      child: settingsField
+	    });
 	    main_core_events.EventEmitter.subscribe(allowPostFeedField.switcher, 'toggled', function () {
 	      if (allowPostFeedField.isChecked()) {
 	        userSelectorRow.show();
@@ -1437,23 +1759,16 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  if (this.hasValue('default_livefeed_toall')) {
-	    var allowPostToAllField = new ui_formElements_view.Checker({
-	      inputName: 'default_livefeed_toall',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_PUBLISH_TO_ALL_DEFAULT_ON'),
-	      checked: this.getValue('default_livefeed_toall') === 'Y'
-	      // helpDesk: '1',
-	    });
-
+	    var allowPostToAllField = new ui_formElements_view.Checker(this.getValue('default_livefeed_toall'));
 	    CommunicationPage.addToSectionHelper(allowPostToAllField, settingsSection);
 	  }
 	  if (this.hasValue('ratingTextLikeY')) {
-	    var _this$getValue, _this$getValue2;
+	    var _this$getValue, _this$getValue$label, _this$getValue2;
 	    var likeBtnNameField = new ui_formElements_view.TextInputInline({
 	      inputName: (_this$getValue = this.getValue('ratingTextLikeY')) === null || _this$getValue === void 0 ? void 0 : _this$getValue.name,
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
+	      label: (_this$getValue$label = this.getValue('ratingTextLikeY').label) !== null && _this$getValue$label !== void 0 ? _this$getValue$label : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
 	      hintTitle: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_LIKE'),
-	      value: (_this$getValue2 = this.getValue('ratingTextLikeY')) === null || _this$getValue2 === void 0 ? void 0 : _this$getValue2.value,
+	      value: (_this$getValue2 = this.getValue('ratingTextLikeY')) === null || _this$getValue2 === void 0 ? void 0 : _this$getValue2.current,
 	      valueColor: this.hasValue('ratingTextLikeY'),
 	      hintDesc: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_DESC_LIKE')
 	    });
@@ -1462,24 +1777,17 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 	function _buildChatSection2() {
-	  var chatSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHATS'),
-	    titleIconClasses: 'ui-icon-set --chats-1',
-	    isOpen: false
-	  });
+	  if (!this.hasValue('sectionChats')) {
+	    return;
+	  }
+	  var chatSection = new ui_section.Section(this.getValue('sectionChats'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: chatSection,
 	    parent: this
 	  });
 	  if (this.hasValue('general_chat_can_post')) {
 	    var _this$getValue3;
-	    var canPostGeneralChatField = new ui_formElements_view.Checker({
-	      inputName: 'allow_post_general_chat',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_POST_GEN_CHAT_ON'),
-	      checked: this.getValue('allow_post_general_chat') === 'Y',
-	      helpDesk: 'redirect=detail&code=18213254'
-	    });
+	    var canPostGeneralChatField = new ui_formElements_view.Checker(this.getValue('allow_post_general_chat'));
 	    var settingsField = new ui_formElements_field.SettingsField({
 	      fieldView: canPostGeneralChatField
 	    });
@@ -1487,32 +1795,15 @@ this.BX = this.BX || {};
 	      parent: settingsSection,
 	      child: settingsField
 	    });
-	    var canPostGeneralChatListField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT_LIST'),
-	      name: this.getValue('general_chat_can_post').name,
-	      items: this.getValue('general_chat_can_post').values,
-	      current: this.getValue('general_chat_can_post').current
-	    });
+	    var canPostGeneralChatListField = new ui_formElements_view.Selector(this.getValue('general_chat_can_post'));
 	    settingsField = new ui_formElements_field.SettingsField({
 	      fieldView: canPostGeneralChatListField
 	    });
 	    var canPostGeneralChatListRow = new ui_section.Row({
 	      isHidden: !canPostGeneralChatField.isChecked(),
-	      className: 'ui-section__subrow'
+	      className: 'ui-section__subrow --no-border'
 	    });
-	    var canPostGeneralChatListSettingsRow = new ui_formElements_field.SettingsRow({
-	      row: canPostGeneralChatListRow,
-	      parent: settingsRow,
-	      child: settingsField
-	    });
-	    var subRowForGeneralChatList = new ui_section.Row({
-	      content: canPostGeneralChatListField.render()
-	    });
-	    new ui_formElements_field.SettingsRow({
-	      row: subRowForGeneralChatList,
-	      parent: canPostGeneralChatListSettingsRow,
-	      child: settingsField
-	    });
+	    CommunicationPage.addToSectionHelper(canPostGeneralChatListField, settingsRow, canPostGeneralChatListRow);
 	    var managerSelectorField = new ui_formElements_view.UserSelector({
 	      inputName: 'imchat_toall_rights[]',
 	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS'),
@@ -1544,23 +1835,30 @@ this.BX = this.BX || {};
 	        };
 	      }
 	    });
-	    settingsField = new ui_formElements_field.SettingsField({
-	      fieldView: managerSelectorField
-	    });
 	    var managerSelectorRow = new ui_section.Row({
 	      content: managerSelectorField.render(),
+	      isHidden: this.getValue('general_chat_can_post').current !== 'MANAGER',
+	      className: 'ui-section__subrow --no-border'
+	    });
+	    CommunicationPage.addToSectionHelper(managerSelectorField, settingsRow, managerSelectorRow);
+	    var separatorRow = new ui_section.SeparatorRow({
 	      isHidden: this.getValue('general_chat_can_post').current !== 'MANAGER'
 	    });
 	    new ui_formElements_field.SettingsRow({
-	      row: managerSelectorRow,
-	      parent: canPostGeneralChatListSettingsRow,
-	      child: settingsField
+	      row: separatorRow,
+	      parent: settingsRow
 	    });
 	    main_core_events.EventEmitter.subscribe(canPostGeneralChatField.switcher, 'toggled', function () {
 	      if (canPostGeneralChatField.isChecked()) {
 	        canPostGeneralChatListRow.show();
+	        if (canPostGeneralChatListField.getInputNode().value === 'MANAGER') {
+	          managerSelectorRow.show();
+	        }
+	        separatorRow.show();
 	      } else {
 	        canPostGeneralChatListRow.hide();
+	        managerSelectorRow.hide();
+	        separatorRow.hide();
 	      }
 	    });
 	    canPostGeneralChatListField.getInputNode().addEventListener('change', function (event) {
@@ -1572,72 +1870,48 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  if (this.hasValue('general_chat_message_leave')) {
-	    var leaveMessageField = new ui_formElements_view.Checker({
-	      inputName: 'general_chat_message_leave',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE'),
-	      checked: this.getValue('general_chat_message_leave') === 'Y'
-	    });
+	    var leaveMessageField = new ui_formElements_view.Checker(this.getValue('general_chat_message_leave'));
 	    CommunicationPage.addToSectionHelper(leaveMessageField, settingsSection);
 	  }
 	  if (this.hasValue('general_chat_message_admin_rights')) {
-	    var adminMessageField = new ui_formElements_view.Checker({
-	      inputName: 'general_chat_message_admin_rights',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE'),
-	      checked: this.getValue('general_chat_message_admin_rights') === 'Y'
-	    });
+	    var adminMessageField = new ui_formElements_view.Checker(this.getValue('general_chat_message_admin_rights'));
 	    CommunicationPage.addToSectionHelper(adminMessageField, settingsSection);
 	  }
 	  if (this.hasValue('url_preview_enable')) {
-	    var allowUrlPreviewField = new ui_formElements_view.Checker({
-	      inputName: 'url_preview_enable',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_URL_PREVIEW'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_URL_PREVIEW_ON'),
-	      checked: this.getValue('url_preview_enable') === 'Y'
-	    });
+	    var allowUrlPreviewField = new ui_formElements_view.Checker(this.getValue('url_preview_enable'));
 	    CommunicationPage.addToSectionHelper(allowUrlPreviewField, settingsSection);
 	  }
 	  if (this.hasValue('create_overdue_chats')) {
-	    var overdueChatsField = new ui_formElements_view.Checker({
-	      inputName: 'create_overdue_chats',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_OVERDUE_CHATS_ON'),
-	      checked: this.getValue('create_overdue_chats') === 'Y',
-	      helpDesk: 'redirect=detail&code=18213270'
-	    });
+	    var overdueChatsField = new ui_formElements_view.Checker(this.getValue('create_overdue_chats'));
 	    CommunicationPage.addToSectionHelper(overdueChatsField, settingsSection);
 	  }
 	  return settingsSection;
 	}
 	function _buildDiskSection2() {
 	  var _this2 = this;
-	  var diskSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_DISK'),
-	    titleIconClasses: 'ui-icon-set --disk',
-	    isOpen: false
-	  });
+	  if (!this.hasValue('sectionDisk')) {
+	    return;
+	  }
+	  var diskSection = new ui_section.Section(this.getValue('sectionDisk'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: diskSection,
 	    parent: this
 	  });
 	  if (this.hasValue('DISK_VIEWER_SERVICE')) {
-	    var fileViewerField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER'),
-	      name: this.getValue('DISK_VIEWER_SERVICE').name,
-	      items: this.getValue('DISK_VIEWER_SERVICE').values,
-	      current: this.getValue('DISK_VIEWER_SERVICE').current
-	    });
+	    var fileViewerField = new ui_formElements_view.Selector(this.getValue('DISK_VIEWER_SERVICE'));
 	    CommunicationPage.addToSectionHelper(fileViewerField, settingsSection);
 	  }
 	  if (this.hasValue('DISK_LIMIT_PER_FILE')) {
-	    var messageNode = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE'));
+	    var _this$getValue$label2;
+	    var messageNode = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE'));
 	    var fileLimitField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT'),
+	      label: (_this$getValue$label2 = this.getValue('DISK_LIMIT_PER_FILE').label) !== null && _this$getValue$label2 !== void 0 ? _this$getValue$label2 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT'),
 	      hintTitle: this.getValue('DISK_LIMIT_PER_FILE').hintTitle,
 	      name: this.getValue('DISK_LIMIT_PER_FILE').name,
 	      items: this.getValue('DISK_LIMIT_PER_FILE').values,
 	      hints: this.getValue('DISK_LIMIT_PER_FILE').hints,
 	      current: this.getValue('DISK_LIMIT_PER_FILE').current,
-	      isEnable: this.getValue('DISK_LIMIT_PER_FILE').is_enable,
+	      isEnable: this.getValue('DISK_LIMIT_PER_FILE').isEnable,
 	      bannerCode: 'limit_max_entries_in_document_history',
 	      helpDesk: 'redirect=detail&code=18869612',
 	      helpMessageProvider: this.helpMessageProviderFactory(messageNode)
@@ -1646,7 +1920,7 @@ this.BX = this.BX || {};
 	      separator: 'bottom',
 	      className: '--block'
 	    });
-	    if (!this.getValue('DISK_LIMIT_PER_FILE').is_enable) {
+	    if (!this.getValue('DISK_LIMIT_PER_FILE').isEnable) {
 	      main_core.Event.bind(fileLimitField.getInputNode(), 'click', function () {
 	        var _this2$getAnalytic;
 	        (_this2$getAnalytic = _this2.getAnalytic()) === null || _this2$getAnalytic === void 0 ? void 0 : _this2$getAnalytic.addEventOpenHint(_this2.getValue('DISK_LIMIT_PER_FILE').name);
@@ -1658,38 +1932,36 @@ this.BX = this.BX || {};
 	    }
 	    CommunicationPage.addToSectionHelper(fileLimitField, settingsSection, fileLimitRow);
 	  }
+	  new ui_formElements_field.SettingsRow({
+	    row: new ui_section.SeparatorRow(),
+	    parent: settingsSection
+	  });
 	  if (this.hasValue('disk_allow_edit_object_in_uf')) {
-	    var allowEditDocField = new ui_formElements_view.Checker({
-	      inputName: 'disk_allow_edit_object_in_uf',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_EDIT_DOC_ON'),
-	      checked: this.getValue('disk_allow_edit_object_in_uf') === 'Y'
+	    var allowEditDocField = new ui_formElements_view.Checker(this.getValue('disk_allow_edit_object_in_uf'));
+	    var allowEditDocRow = new ui_section.Row({
+	      separator: 'top',
+	      className: '--block'
 	    });
-	    CommunicationPage.addToSectionHelper(allowEditDocField, settingsSection);
+	    CommunicationPage.addToSectionHelper(allowEditDocField, settingsSection, allowEditDocRow);
 	  }
 	  if (this.hasValue('disk_allow_autoconnect_shared_objects')) {
-	    var connectDiskField = new ui_formElements_view.Checker({
-	      inputName: 'disk_allow_autoconnect_shared_objects',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_CONNECT_DISK_ON'),
-	      checked: this.getValue('disk_allow_autoconnect_shared_objects') === 'Y',
-	      helpDesk: 'redirect=detail&code=18213280'
-	    });
+	    var connectDiskField = new ui_formElements_view.Checker(this.getValue('disk_allow_autoconnect_shared_objects'));
 	    CommunicationPage.addToSectionHelper(connectDiskField, settingsSection);
 	  }
 	  if (this.hasValue('disk_allow_use_external_link')) {
+	    var _this$getValue$label3;
 	    var _messageNode = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE'));
 	    var publicLinkField = new ui_formElements_view.Checker({
-	      inputName: 'disk_allow_use_external_link',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_PUBLIC_LINK_ON'),
-	      checked: this.getValue('disk_allow_use_external_link').value === 'Y',
-	      isEnable: this.getValue('disk_allow_use_external_link').is_enable,
+	      inputName: this.getValue('disk_allow_use_external_link').inputName,
+	      title: (_this$getValue$label3 = this.getValue('disk_allow_use_external_link').label) !== null && _this$getValue$label3 !== void 0 ? _this$getValue$label3 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK'),
+	      hintOn: this.getValue('disk_allow_use_external_link').hintOn,
+	      checked: this.getValue('disk_allow_use_external_link').checked,
+	      isEnable: this.getValue('disk_allow_use_external_link').isEnable,
 	      bannerCode: 'limit_admin_share_link',
-	      helpDesk: 'redirect=detail&code=5390599',
+	      helpDesk: this.getValue('disk_allow_use_external_link').helpDesk,
 	      helpMessageProvider: this.helpMessageProviderFactory(_messageNode)
 	    });
-	    if (!this.getValue('disk_allow_use_external_link').is_enable) {
+	    if (!this.getValue('disk_allow_use_external_link').isEnable) {
 	      main_core_events.EventEmitter.subscribe(publicLinkField.switcher, 'toggled', function () {
 	        var _this2$getAnalytic3;
 	        (_this2$getAnalytic3 = _this2.getAnalytic()) === null || _this2$getAnalytic3 === void 0 ? void 0 : _this2$getAnalytic3.addEventOpenHint('disk_allow_use_external_link');
@@ -1702,18 +1974,19 @@ this.BX = this.BX || {};
 	    CommunicationPage.addToSectionHelper(publicLinkField, settingsSection);
 	  }
 	  if (this.hasValue('disk_object_lock_enabled')) {
+	    var _this$getValue$label4;
 	    var _messageNode2 = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE'));
 	    var enableBlockDocField = new ui_formElements_view.Checker({
-	      inputName: 'disk_object_lock_enabled',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_BLOCK_DOC_ON'),
-	      checked: this.getValue('disk_object_lock_enabled').value === 'Y',
-	      isEnable: this.getValue('disk_object_lock_enabled').is_enable,
+	      inputName: this.getValue('disk_object_lock_enabled').inputName,
+	      title: (_this$getValue$label4 = this.getValue('disk_object_lock_enabled').label) !== null && _this$getValue$label4 !== void 0 ? _this$getValue$label4 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC'),
+	      hintOn: this.getValue('disk_object_lock_enabled').hintOn,
+	      checked: this.getValue('disk_object_lock_enabled').checked,
+	      isEnable: this.getValue('disk_object_lock_enabled').isEnable,
 	      bannerCode: 'limit_document_lock',
 	      helpMessageProvider: this.helpMessageProviderFactory(_messageNode2),
-	      helpDesk: 'redirect=detail&code=2301293'
+	      helpDesk: this.getValue('disk_object_lock_enabled').helpDesk
 	    });
-	    if (!this.getValue('disk_object_lock_enabled').is_enable) {
+	    if (!this.getValue('disk_object_lock_enabled').isEnable) {
 	      main_core_events.EventEmitter.subscribe(enableBlockDocField.switcher, 'toggled', function () {
 	        var _this2$getAnalytic5;
 	        (_this2$getAnalytic5 = _this2.getAnalytic()) === null || _this2$getAnalytic5 === void 0 ? void 0 : _this2$getAnalytic5.addEventOpenHint('disk_object_lock_enabled');
@@ -1726,20 +1999,21 @@ this.BX = this.BX || {};
 	    CommunicationPage.addToSectionHelper(enableBlockDocField, settingsSection);
 	  }
 	  if (this.hasValue('disk_allow_use_extended_fulltext')) {
+	    var _this$getValue$label5;
 	    var _messageNode3 = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_ENT', {
 	      '#TARIFF#': 'ent250'
 	    }));
 	    var enableFindField = new ui_formElements_view.Checker({
-	      inputName: 'disk_allow_use_extended_fulltext',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_SEARCH_DOC_ON'),
-	      checked: this.getValue('disk_allow_use_extended_fulltext').value === 'Y',
-	      isEnable: this.getValue('disk_allow_use_extended_fulltext').is_enable,
+	      inputName: this.getValue('disk_allow_use_extended_fulltext').inputName,
+	      title: (_this$getValue$label5 = this.getValue('disk_allow_use_extended_fulltext').label) !== null && _this$getValue$label5 !== void 0 ? _this$getValue$label5 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC'),
+	      hintOn: this.getValue('disk_allow_use_extended_fulltext').hintOn,
+	      checked: this.getValue('disk_allow_use_extended_fulltext').checked,
+	      isEnable: this.getValue('disk_allow_use_extended_fulltext').isEnable,
 	      bannerCode: 'limit_in_text_search',
-	      helpDesk: 'redirect=detail&code=18213348',
+	      helpDesk: this.getValue('disk_allow_use_extended_fulltext').helpDesk,
 	      helpMessageProvider: this.helpMessageProviderFactory(_messageNode3)
 	    });
-	    if (!this.getValue('disk_allow_use_extended_fulltext').is_enable) {
+	    if (!this.getValue('disk_allow_use_extended_fulltext').isEnable) {
 	      main_core_events.EventEmitter.subscribe(enableFindField.switcher, 'toggled', function () {
 	        var _this2$getAnalytic7;
 	        (_this2$getAnalytic7 = _this2.getAnalytic()) === null || _this2$getAnalytic7 === void 0 ? void 0 : _this2$getAnalytic7.addEventOpenHint('disk_allow_use_extended_fulltext');
@@ -1754,164 +2028,10 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 
-	var _templateObject$6;
-	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _content = /*#__PURE__*/new WeakMap();
-	var _title = /*#__PURE__*/new WeakMap();
-	var _logo = /*#__PURE__*/new WeakMap();
-	var _inputMonitoringIntervalId = /*#__PURE__*/new WeakMap();
-	var _inputMonitoringCountdown = /*#__PURE__*/new WeakMap();
-	var _inputMonitoringPrevState = /*#__PURE__*/new WeakMap();
-	var _initTitle = /*#__PURE__*/new WeakSet();
-	var _initLogo = /*#__PURE__*/new WeakSet();
-	var SiteTitleField = /*#__PURE__*/function (_BaseSettingsElement) {
-	  babelHelpers.inherits(SiteTitleField, _BaseSettingsElement);
-	  function SiteTitleField(params) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, SiteTitleField);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SiteTitleField).call(this, params));
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _initLogo);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _initTitle);
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _content, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _title, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _logo, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _inputMonitoringIntervalId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _inputMonitoringCountdown, {
-	      writable: true,
-	      value: 10
-	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _inputMonitoringPrevState, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _this.setParentElement(params.parent);
-	    _this.setEventNamespace('BX.Intranet.Settings');
-	    var _options = params.siteTitleOptions;
-	    _this.options = {
-	      title: _options.title,
-	      canUserEditTitle: _options.canUserEditTitle,
-	      logo24: _options.logo24,
-	      canUserEditLogo24: _options.canUserEditLogo24
-	    };
-	    _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _initTitle, _initTitle2).call(babelHelpers.assertThisInitialized(_this), _options);
-	    _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _initLogo, _initLogo2).call(babelHelpers.assertThisInitialized(_this), _options);
-	    return _this;
-	  }
-	  babelHelpers.createClass(SiteTitleField, [{
-	    key: "getFieldView",
-	    value: function getFieldView() {
-	      return babelHelpers.classPrivateFieldGet(this, _title);
-	    }
-	  }, {
-	    key: "cancel",
-	    value: function cancel() {}
-	  }, {
-	    key: "startInputMonitoring",
-	    value: function startInputMonitoring() {
-	      if (babelHelpers.classPrivateFieldGet(this, _inputMonitoringIntervalId) > 0) {
-	        return;
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _inputMonitoringIntervalId, setInterval(this.monitorInput.bind(this), 500));
-	    }
-	  }, {
-	    key: "stopInputMonitoring",
-	    value: function stopInputMonitoring() {
-	      if (babelHelpers.classPrivateFieldGet(this, _inputMonitoringIntervalId) > 0) {
-	        clearInterval(babelHelpers.classPrivateFieldGet(this, _inputMonitoringIntervalId));
-	        babelHelpers.classPrivateFieldSet(this, _inputMonitoringIntervalId, null);
-	      }
-	    }
-	  }, {
-	    key: "monitorInput",
-	    value: function monitorInput() {
-	      var _this$inputMonitoring;
-	      var value = babelHelpers.classPrivateFieldGet(this, _title).getInputNode().value;
-	      if (babelHelpers.classPrivateFieldGet(this, _inputMonitoringPrevState) !== value) {
-	        babelHelpers.classPrivateFieldSet(this, _inputMonitoringCountdown, 10);
-	        babelHelpers.classPrivateFieldSet(this, _inputMonitoringPrevState, value);
-	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, this.getEventNamespace() + ':Portal:Change', new main_core_events.BaseEvent({
-	          data: {
-	            title: value
-	          }
-	        }));
-	      } else if (babelHelpers.classPrivateFieldSet(this, _inputMonitoringCountdown, (_this$inputMonitoring = babelHelpers.classPrivateFieldGet(this, _inputMonitoringCountdown), --_this$inputMonitoring)) <= 0) {
-	        this.stopInputMonitoring();
-	      }
-	    }
-	  }, {
-	    key: "render",
-	    value: function render() {
-	      var _this2 = this;
-	      if (babelHelpers.classPrivateFieldGet(this, _content)) {
-	        return babelHelpers.classPrivateFieldGet(this, _content);
-	      }
-	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'focus', this.startInputMonitoring.bind(this));
-	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'keydown', this.startInputMonitoring.bind(this));
-	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'click', this.startInputMonitoring.bind(this));
-	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'blur', this.stopInputMonitoring.bind(this));
-	      main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), 'blur', this.stopInputMonitoring.bind(this));
-	      babelHelpers.classPrivateFieldGet(this, _logo).subscribe('change', function (event) {
-	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, _this2.getEventNamespace() + ':Portal:Change', new main_core_events.BaseEvent({
-	          data: {
-	            logo24: event.getData() === true ? '24' : ''
-	          }
-	        }));
-	      });
-	      return main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div id=\"", "\" class=\"ui-section__field-selector --no-border --no-margin --align-center\">\n\t\t\t<div class=\"ui-section__field-container\">\n\t\t\t\t<div class=\"ui-section__field-label_box\">\n\t\t\t\t\t<label class=\"ui-section__field-label\" for=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</label> \n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-section__field-inner\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"ui-section__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _title).getId(), babelHelpers.classPrivateFieldGet(this, _title).getName(), babelHelpers.classPrivateFieldGet(this, _title).getLabel(), babelHelpers.classPrivateFieldGet(this, _title).getInputNode(), babelHelpers.classPrivateFieldGet(this, _logo).render());
-	    }
-	  }]);
-	  return SiteTitleField;
-	}(ui_formElements_field.BaseSettingsElement);
-	function _initTitle2(options) {
-	  babelHelpers.classPrivateFieldSet(this, _title, new ui_formElements_view.TextInput({
-	    value: options.title,
-	    placeholder: options.title,
-	    label: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE_INPUT_LABEL'),
-	    id: 'siteTitle',
-	    inputName: 'title',
-	    isEnable: true
-	    // bannerCode: '123',
-	    // helpDeskCode: '234',
-	    // helpMessageProvider: () => {}
-	  }));
-
-	  babelHelpers.classPrivateFieldGet(this, _title).setEventNamespace(this.getEventNamespace());
-	}
-	function _initLogo2(options) {
-	  babelHelpers.classPrivateFieldSet(this, _logo, new ui_formElements_view.Checker({
-	    id: 'siteLogo24',
-	    inputName: 'logo24',
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_LOGO24'),
-	    size: 'extra-small',
-	    // hintOn: '',
-	    // hintOff: '',
-	    isEnable: options.canUserEditLogo24,
-	    checked: options.logo24 !== '',
-	    value: 'Y',
-	    bannerCode: 'limit_admin_logo24'
-	  }));
-	  babelHelpers.classPrivateFieldGet(this, _logo).setEventNamespace(this.getEventNamespace());
-	}
-
-	var _templateObject$7, _templateObject2$4, _templateObject3$2;
-	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var _content$1 = /*#__PURE__*/new WeakMap();
+	var _templateObject$8, _templateObject2$4, _templateObject3$2;
+	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _content$2 = /*#__PURE__*/new WeakMap();
 	var _title$1 = /*#__PURE__*/new WeakMap();
 	var SiteDomainField = /*#__PURE__*/function (_SettingsField) {
 	  babelHelpers.inherits(SiteDomainField, _SettingsField);
@@ -1928,11 +2048,11 @@ this.BX = this.BX || {};
 	      isEnable: true
 	    });
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SiteDomainField).call(this, params));
-	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _content$1, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _content$2, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _title$1, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _title$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1978,21 +2098,21 @@ this.BX = this.BX || {};
 	    key: "render",
 	    value: function render() {
 	      var _this2 = this;
-	      if (babelHelpers.classPrivateFieldGet(this, _content$1)) {
-	        return babelHelpers.classPrivateFieldGet(this, _content$1);
+	      if (babelHelpers.classPrivateFieldGet(this, _content$2)) {
+	        return babelHelpers.classPrivateFieldGet(this, _content$2);
 	      }
 	      if (this.options.isRenameable !== true) {
-	        var copyButton = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["<div class=\"settings-tools-description-link\">", "</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_COPY'));
+	        var copyButton = main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["<div class=\"settings-tools-description-link\">", "</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_COPY'));
 	        BX.clipboard.bindCopyClick(copyButton, {
 	          text: function text() {
 	            return _this2.options.hostname;
 	          }
 	        });
-	        babelHelpers.classPrivateFieldSet(this, _content$1, main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<div class=\"ui-section__field-label_box\">\n\t\t\t\t\t\t<div class=\"ui-section__field-label\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"intranet-settings__domain_box\">\n\t\t\t\t\t\t<div class=\"intranet-settings__domain_name\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME4'), main_core.Text.encode(this.options.hostname), copyButton));
+	        babelHelpers.classPrivateFieldSet(this, _content$2, main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<div class=\"ui-section__field-label_box\">\n\t\t\t\t\t\t<div class=\"ui-section__field-label\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"intranet-settings__domain_box\">\n\t\t\t\t\t\t<div class=\"intranet-settings__domain_name\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME4'), main_core.Text.encode(this.options.hostname), copyButton));
 	      } else {
-	        babelHelpers.classPrivateFieldSet(this, _content$1, main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["<div id=\"", "\" class=\"ui-section__field-selector --no-border\">\n\t\t\t\t<div class=\"ui-section__field-container\">\n\t\t\t\t\t<div class=\"ui-section__field-label_box\">\n\t\t\t\t\t\t<label class=\"ui-section__field-label\" for=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</label> \n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-section__field-inner\">\n\t\t\t\t\t\t<div class=\"intarnet-settings__domain_inline-field\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intarnet-settings__domain_name\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"])), this.getFieldView().getId(), this.getFieldView().getName(), this.getFieldView().getLabel(), this.getFieldView().getInputNode(), main_core.Text.encode(this.options.mainDomainName), this.getFieldView().renderErrors()));
+	        babelHelpers.classPrivateFieldSet(this, _content$2, main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["<div id=\"", "\" class=\"ui-section__field-selector --no-border\">\n\t\t\t\t<div class=\"ui-section__field-container\">\n\t\t\t\t\t<div class=\"ui-section__field-label_box\">\n\t\t\t\t\t\t<label class=\"ui-section__field-label\" for=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</label> \n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-section__field-inner\">\n\t\t\t\t\t\t<div class=\"intarnet-settings__domain_inline-field\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intarnet-settings__domain_name\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"])), this.getFieldView().getId(), this.getFieldView().getName(), this.getFieldView().getLabel(), this.getFieldView().getInputNode(), main_core.Text.encode(this.options.mainDomainName), this.getFieldView().renderErrors()));
 	      }
-	      return babelHelpers.classPrivateFieldGet(this, _content$1);
+	      return babelHelpers.classPrivateFieldGet(this, _content$2);
 	    }
 	  }]);
 	  return SiteDomainField;
@@ -2056,10 +2176,10 @@ this.BX = this.BX || {};
 	  }
 	}
 
-	var _templateObject$8, _templateObject2$5, _templateObject3$3;
-	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject$9, _templateObject2$5, _templateObject3$3;
+	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _themePicker = /*#__PURE__*/new WeakMap();
 	var _initThemePicker = /*#__PURE__*/new WeakSet();
@@ -2074,7 +2194,7 @@ this.BX = this.BX || {};
 	      bannerCode: 'limit_office_background_to_all'
 	    }));
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _initThemePicker);
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _themePicker, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _themePicker, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2124,7 +2244,7 @@ this.BX = this.BX || {};
 	    value: function renderContentField() {
 	      var _this2 = this;
 	      document.querySelector('.ui-side-panel-content').style.overflow = 'hidden';
-	      var container = main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-theme-settings\">\n\t\t\t<div class=\"ui-section__row theme-dialog-preview\">\n\t\t\t\t<section data-role=\"preview\" style=\"background-color: #0a51ae;\" class=\"intranet-settings__main-widget_section --preview\">\n\t\t\t\t\t<div class=\"intranet-settings__main-widget__bang\"></div>\n\t\t\t\t\t<aside class=\"intranet-settings__main-widget__aside\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item --active\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t</aside>\n\t\t\t\t\t<main class=\"intranet-settings__main-widget_main\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header --with-logo\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header_left\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo\" data-role=\"logo\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_name\" data-role=\"title\">Bitrix</div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo24\" data-role=\"logo24\">24</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header_right\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_box\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inline --space-between\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --sm\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --square\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inner\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</main>\n\t\t\t\t\t<aside class=\"intranet-settings__main-widget__aside --right-side\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item --active\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t</aside>\n\t\t\t\t</section>\n\t\t\t</div>\n\t\t\t<div class=\"ui-section__row theme-dialog-content\" data-role=\"theme-container\"></div>\n\t\t\t<input type=\"hidden\" name=\"themeId\" value=\"\" disabled>\n\t\t</div>\n\t\t"])));
+	      var container = main_core.Tag.render(_templateObject$9 || (_templateObject$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-theme-settings ui-section__row\">\n\t\t\t<div class=\"ui-section__row theme-dialog-preview\">\n\t\t\t\t<section data-role=\"preview\" style=\"background-color: #0a51ae;\" class=\"intranet-settings__main-widget_section --preview\">\n\t\t\t\t\t<div class=\"intranet-settings__main-widget__bang\"></div>\n\t\t\t\t\t<aside class=\"intranet-settings__main-widget__aside\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item --active\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t</aside>\n\t\t\t\t\t<main class=\"intranet-settings__main-widget_main\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header --with-logo\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header_left\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo\" data-role=\"logo\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_name\" data-role=\"title\">Bitrix</div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo24\" data-role=\"logo24\">24</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header_right\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_box\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inline --space-between\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --sm\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --square\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inner\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</main>\n\t\t\t\t\t<aside class=\"intranet-settings__main-widget__aside --right-side\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item --active\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t</aside>\n\t\t\t\t</section>\n\t\t\t</div>\n\t\t\t<div class=\"ui-section__row theme-dialog-content\" data-role=\"theme-container\"></div>\n\t\t\t<input type=\"hidden\" name=\"themeId\" value=\"\" disabled>\n\t\t</div>\n\t\t"])));
 	      var uploadBtn = main_core.Tag.render(_templateObject2$5 || (_templateObject2$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__theme-btn_box\">\n\t\t\t\t<div class=\"intranet-settings__theme-btn\" onclick=\"", "\">", "</div>\n\t\t\t</div>\n\t\t"])), this.handleNewThemeButtonClick.bind(this), main_core.Loc.getMessage('INTRANET_SETTINGS_THEME_UPLOAD_BTN'));
 	      var themeContainer = container.querySelector('div[data-role="theme-container"]');
 	      Array.from(babelHelpers.classPrivateFieldGet(this, _themePicker).getThemes()).forEach(function (theme) {
@@ -2208,7 +2328,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, SiteThemePickerField);
 	    params.fieldView = new ThemePickerElement(params.themePickerSettings);
 	    _this3 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SiteThemePickerField).call(this, params));
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this3), _fieldView, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this3), _fieldView, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2224,10 +2344,10 @@ this.BX = this.BX || {};
 	  return SiteThemePickerField;
 	}(ui_formElements_field.SettingsField);
 
-	var _templateObject$9, _templateObject2$6;
-	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject$a, _templateObject2$6, _templateObject3$4;
+	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$e(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$c(obj, privateMap, value) { _checkPrivateRedeclaration$e(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$e(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var HiddenInput = /*#__PURE__*/function (_TextInput) {
 	  babelHelpers.inherits(HiddenInput, _TextInput);
@@ -2254,12 +2374,16 @@ this.BX = this.BX || {};
 	  }]);
 	  return HiddenInput;
 	}(ui_formElements_view.TextInput);
-	var _content$2 = /*#__PURE__*/new WeakMap();
+	var _content$3 = /*#__PURE__*/new WeakMap();
 	var _uploader = /*#__PURE__*/new WeakMap();
 	var _siteLogo = /*#__PURE__*/new WeakMap();
 	var _hiddenContainer = /*#__PURE__*/new WeakMap();
 	var _hiddenRemoveInput = /*#__PURE__*/new WeakMap();
+	var _loader = /*#__PURE__*/new WeakMap();
 	var _getFileContainer = /*#__PURE__*/new WeakSet();
+	var _renderAfterLoad = /*#__PURE__*/new WeakSet();
+	var _showLoader = /*#__PURE__*/new WeakSet();
+	var _removeLoader = /*#__PURE__*/new WeakSet();
 	var SiteLogoField = /*#__PURE__*/function (_SettingsField) {
 	  babelHelpers.inherits(SiteLogoField, _SettingsField);
 	  function SiteLogoField(params) {
@@ -2269,28 +2393,36 @@ this.BX = this.BX || {};
 	      isEnable: params.canUserEditLogo
 	    });
 	    _this2 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SiteLogoField).call(this, params));
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this2), _removeLoader);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this2), _showLoader);
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this2), _renderAfterLoad);
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this2), _getFileContainer);
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this2), _content$2, {
+	    _classPrivateFieldInitSpec$c(babelHelpers.assertThisInitialized(_this2), _content$3, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this2), _uploader, {
+	    _classPrivateFieldInitSpec$c(babelHelpers.assertThisInitialized(_this2), _uploader, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this2), _siteLogo, {
+	    _classPrivateFieldInitSpec$c(babelHelpers.assertThisInitialized(_this2), _siteLogo, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this2), _hiddenContainer, {
+	    _classPrivateFieldInitSpec$c(babelHelpers.assertThisInitialized(_this2), _hiddenContainer, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this2), _hiddenRemoveInput, {
+	    _classPrivateFieldInitSpec$c(babelHelpers.assertThisInitialized(_this2), _hiddenRemoveInput, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$c(babelHelpers.assertThisInitialized(_this2), _loader, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this2), _siteLogo, params.siteLogoOptions);
+	    _this2.siteLogoLabel = params.siteLogoLabel;
 	    _this2.setEventNamespace('BX.Intranet.Settings');
 	    return _this2;
 	  }
@@ -2412,13 +2544,18 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      if (babelHelpers.classPrivateFieldGet(this, _content$2)) {
-	        return babelHelpers.classPrivateFieldGet(this, _content$2);
+	      var _this4 = this;
+	      if (babelHelpers.classPrivateFieldGet(this, _content$3)) {
+	        return babelHelpers.classPrivateFieldGet(this, _content$3);
 	      }
-	      var uploaderContent = main_core.Tag.render(_templateObject$9 || (_templateObject$9 = babelHelpers.taggedTemplateLiteral(["<div>Logo is there</div>"])));
-	      babelHelpers.classPrivateFieldSet(this, _content$2, main_core.Tag.render(_templateObject2$6 || (_templateObject2$6 = babelHelpers.taggedTemplateLiteral(["<div>\n\t\t\t\t<div class=\"ui-section__field-label\">", "</div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"ui-section__field-label\">", "</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE1'), uploaderContent, main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE2'), this.getFieldView().getInputNode(), _classPrivateMethodGet$7(this, _getFileContainer, _getFileContainer2).call(this), this.getFieldView().renderErrors()));
-	      babelHelpers.classPrivateFieldGet(this, _uploader).renderTo(uploaderContent);
-	      return babelHelpers.classPrivateFieldGet(this, _content$2);
+	      babelHelpers.classPrivateFieldSet(this, _content$3, main_core.Tag.render(_templateObject$a || (_templateObject$a = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
+	      _classPrivateMethodGet$7(this, _showLoader, _showLoader2).call(this);
+	      main_core.Runtime.loadExtension('ui.uploader.stack-widget').then(function (exports) {
+	        _this4.initUploader(exports);
+	        _classPrivateMethodGet$7(_this4, _renderAfterLoad, _renderAfterLoad2).call(_this4);
+	        _classPrivateMethodGet$7(_this4, _removeLoader, _removeLoader2).call(_this4);
+	      });
+	      return babelHelpers.classPrivateFieldGet(this, _content$3);
 	    }
 	  }]);
 	  return SiteLogoField;
@@ -2429,10 +2566,33 @@ this.BX = this.BX || {};
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _hiddenContainer);
 	}
+	function _renderAfterLoad2() {
+	  var _this$siteLogoLabel;
+	  var uploaderContent = main_core.Tag.render(_templateObject2$6 || (_templateObject2$6 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
+	  var content = main_core.Tag.render(_templateObject3$4 || (_templateObject3$4 = babelHelpers.taggedTemplateLiteral(["<div>\n\t\t\t\t<div class=\"ui-section__field-label\">", "</div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"ui-section__field-label\">", "</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"])), (_this$siteLogoLabel = this.siteLogoLabel) !== null && _this$siteLogoLabel !== void 0 ? _this$siteLogoLabel : main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE1'), uploaderContent, main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE2'), this.getFieldView().getInputNode(), _classPrivateMethodGet$7(this, _getFileContainer, _getFileContainer2).call(this), this.getFieldView().renderErrors());
+	  babelHelpers.classPrivateFieldGet(this, _uploader).renderTo(uploaderContent);
+	  main_core.Dom.replace(babelHelpers.classPrivateFieldGet(this, _content$3), content);
+	}
+	function _showLoader2() {
+	  babelHelpers.classPrivateFieldSet(this, _loader, new main_loader.Loader({
+	    target: babelHelpers.classPrivateFieldGet(this, _content$3),
+	    color: 'rgba(82, 92, 105, 0.9)',
+	    mode: 'inline'
+	  }));
+	  babelHelpers.classPrivateFieldGet(this, _loader).show().then(function () {
+	    console.log('The loader is shown');
+	  });
+	}
+	function _removeLoader2() {
+	  if (babelHelpers.classPrivateFieldGet(this, _loader)) {
+	    babelHelpers.classPrivateFieldGet(this, _loader).destroy();
+	    babelHelpers.classPrivateFieldSet(this, _loader, null);
+	  }
+	}
 
-	var _templateObject$a;
-	function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject$b;
+	function _classPrivateFieldInitSpec$d(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _container = /*#__PURE__*/new WeakMap();
 	var SiteTitlePreviewWidget = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SiteTitlePreviewWidget, _EventEmitter);
@@ -2440,7 +2600,7 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, SiteTitlePreviewWidget);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SiteTitlePreviewWidget).call(this));
-	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _container, {
+	    _classPrivateFieldInitSpec$d(babelHelpers.assertThisInitialized(_this), _container, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2467,7 +2627,7 @@ this.BX = this.BX || {};
 	    key: "render",
 	    value: function render() {
 	      if (!babelHelpers.classPrivateFieldGet(this, _container)) {
-	        babelHelpers.classPrivateFieldSet(this, _container, main_core.Tag.render(_templateObject$a || (_templateObject$a = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<section class=\"intranet-settings__main-widget_section\">\n\t\t\t\t<div class=\"intranet-settings__main-widget__bang\"></div>\n\t\t\t\t\t<div class=\"intranet-settings__main-widget_bg\"></div>\n\t\t\t\t\t<div class=\"intranet-settings__main-widget_pos-box\">\n\t\t\t\t\t\t<aside class=\"intranet-settings__main-widget__aside\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item --active\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t</aside>\n\t\t\t\t\t\t<main class=\"intranet-settings__main-widget_main\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header\"> \n\t\t\t\t\t\t<!-- statement class. depends of content --with-logo -->\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo\" data-role=\"logo\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_name\" data-role=\"title\">Bitrix</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo24\" data-role=\"logo24\">24</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_box\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inline\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --sm\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inner\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</main>\n\t\t\t\t\t</div>\t\t\t\t\n\t\t\t</section>"]))));
+	        babelHelpers.classPrivateFieldSet(this, _container, main_core.Tag.render(_templateObject$b || (_templateObject$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<section class=\"intranet-settings__main-widget_section\">\n\t\t\t\t<div class=\"intranet-settings__main-widget__bang\"></div>\n\t\t\t\t\t<div class=\"intranet-settings__main-widget_bg\"></div>\n\t\t\t\t\t<div class=\"intranet-settings__main-widget_pos-box\">\n\t\t\t\t\t\t<aside class=\"intranet-settings__main-widget__aside\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item --active\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget__aside_item\"></div>\n\t\t\t\t\t\t</aside>\n\t\t\t\t\t\t<main class=\"intranet-settings__main-widget_main\">\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_header\"> \n\t\t\t\t\t\t<!-- statement class. depends of content --with-logo -->\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo\" data-role=\"logo\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_name\" data-role=\"title\">Bitrix</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_logo24\" data-role=\"logo24\">24</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_box\">\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inline\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --sm\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_inner\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__main-widget_lane_item --bg-30\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</main>\n\t\t\t\t\t</div>\t\t\t\t\n\t\t\t</section>"]))));
 	      }
 	      return babelHelpers.classPrivateFieldGet(this, _container);
 	    }
@@ -2475,16 +2635,19 @@ this.BX = this.BX || {};
 	  return SiteTitlePreviewWidget;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$b, _templateObject2$7, _templateObject3$4, _templateObject4$1;
-	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$e(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$e(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject2$7, _templateObject3$5;
+	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$g(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$g(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _headerWidgetRenderAlternative = /*#__PURE__*/new WeakSet();
+	var _getOwnDomainTabBody = /*#__PURE__*/new WeakSet();
 	var PortalPage = /*#__PURE__*/function (_BaseSettingsPage) {
 	  babelHelpers.inherits(PortalPage, _BaseSettingsPage);
 	  function PortalPage() {
 	    var _this;
 	    babelHelpers.classCallCheck(this, PortalPage);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PortalPage).call(this));
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _getOwnDomainTabBody);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _headerWidgetRenderAlternative);
 	    _this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_PORTAL');
 	    _this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_PORTAL');
@@ -2518,21 +2681,17 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getSections",
 	    value: function getSections() {
-	      return [this.buildSiteTitleSection(this.getValue('portalSettings'), this.getValue('portalThemeSettings')), this.getValue('portalDomainSettings') ? this.buildDomainSection(this.getValue('portalDomainSettings')) : null, this.buildThemeSection(this.getValue('portalThemeSettings'), this.getValue('portalSettings'))].filter(function (section) {
+	      return [this.buildSiteTitleSection(this.getValue('portalSettings'), this.getValue('portalThemeSettings'), this.getValue('portalSettingsLabels')), this.getValue('portalDomainSettings') ? this.buildDomainSection(this.getValue('portalDomainSettings')) : null, this.buildThemeSection(this.getValue('portalThemeSettings'), this.getValue('portalSettings'))].filter(function (section) {
 	        return section instanceof ui_formElements_field.SettingsSection;
 	      });
 	    }
 	  }, {
 	    key: "buildSiteTitleSection",
-	    value: function buildSiteTitleSection(portalSettings, portalThemeSettings) {
-	      var _this2 = this;
-	      var sectionView = new ui_section.Section({
-	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE'),
-	        titleIconClasses: 'ui-icon-set --pencil-draw',
-	        isOpen: true,
-	        // isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
-	        bannerCode: 'ip_access_rights_lock'
-	      });
+	    value: function buildSiteTitleSection(portalSettings, portalThemeSettings, portalSettingsLabels) {
+	      if (!this.hasValue('sectionCompanyTitle')) {
+	        return;
+	      }
+	      var sectionView = new ui_section.Section(this.getValue('sectionCompanyTitle'));
 	      var sectionField = new ui_formElements_field.SettingsSection({
 	        parent: this,
 	        section: sectionView
@@ -2548,68 +2707,81 @@ this.BX = this.BX || {};
 	      }).render());
 
 	      //region 2. Tabs
-	      var previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
-	      var tabsField = new ui_formElements_field.TabsField({
+	      var siteLogoRow = new ui_formElements_field.SettingsRow({
+	        row: new ui_section.Row({
+	          className: 'intranet-settings__grid_box'
+	        }),
 	        parent: sectionField
 	      });
-	      var siteNameRow = new ui_section.Row({});
+	      var previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
+	      var tabsRow = new ui_formElements_field.SettingsRow({
+	        row: new ui_section.Row({
+	          className: 'intranet-settings__site-logo_subrow --no-padding --bottom-separator --block'
+	        }),
+	        parent: siteLogoRow
+	      });
+	      var tabsField = new ui_formElements_field.TabsField({
+	        parent: tabsRow
+	      });
 	      // 2.1 Tab Site name
 	      var siteTitleTab = new ui_formElements_field.TabField({
 	        parent: tabsField,
-	        tabsOptions: {
-	          head: {
-	            title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE')
-	          },
-	          body: function body() {
-	            var siteTitleField = new SiteTitleField({
-	              parent: siteTitleTab,
-	              siteTitleOptions: portalSettings,
-	              helpMessages: {
-	                site: _this2.helpMessageProviderFactory()
-	              }
-	            });
-	            return siteTitleField.render();
-	          }
+	        tabsOptions: this.getValue('tabCompanyTitle')
+	      });
+	      var siteTitleRow = new ui_section.Row({});
+	      var siteTitleField = new SiteTitleField({
+	        parent: siteTitleRow,
+	        siteTitleOptions: portalSettings,
+	        siteTitleLabels: portalSettingsLabels,
+	        helpMessages: {
+	          site: this.helpMessageProviderFactory()
 	        }
+	      });
+	      new ui_formElements_field.SettingsRow({
+	        row: siteTitleRow,
+	        parent: siteTitleTab,
+	        child: siteTitleField
+	      });
+	      new ui_formElements_field.SettingsRow({
+	        parent: siteTitleTab,
+	        child: siteTitleField.getLogo24Field()
 	      });
 	      var siteLogoTab = new ui_formElements_field.TabField({
 	        parent: tabsField,
-	        tabsOptions: {
-	          restricted: this.getValue('portalSettings').canUserEditLogo === false,
-	          bannerCode: 'limit_admin_logo',
-	          head: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO'),
-	          body: new Promise(function (resolve, reject) {
-	            main_core.Runtime.loadExtension('ui.uploader.stack-widget').then(function (exports) {
-	              var siteLogoField = new SiteLogoField({
-	                parent: siteTitleTab,
-	                siteLogoOptions: _this2.getValue('portalSettings').logo,
-	                canUserEditLogo: _this2.getValue('portalSettings').canUserEditLogo
-	              });
-	              siteLogoField.initUploader(exports);
-	              resolve(siteLogoField.render());
-	            });
-	          })
-	        }
+	        tabsOptions: this.getValue('tabCompanyLogo')
+	      });
+	      var siteLogoField = new SiteLogoField({
+	        siteLogoLabel: this.getValue('portalSettingsLabels').logo,
+	        siteLogoOptions: this.getValue('portalSettings').logo,
+	        canUserEditLogo: this.getValue('portalSettings').canUserEditLogo
+	      });
+	      new ui_formElements_field.SettingsRow({
+	        parent: siteLogoTab,
+	        child: siteLogoField
 	      });
 	      tabsField.activateTab(siteTitleTab);
 	      // 2.2 Widget
-	      sectionView.append(siteNameRow.render());
-	      siteNameRow.append(main_core.Tag.render(_templateObject$b || (_templateObject$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__grid_box\">\n\t\t\t\t<input type=\"hidden\" name=\"justToBeThere\" value=\"ofCourse\" />\n\t\t\t\t<div data-role=\"title-container\" class=\"intranet-settings__grid_item\"></div>\n\t\t\t\t<div class=\"intranet-settings__grid_item\">", "</div>\n\t\t\t</div>"])), previewWidget.render()));
-	      setTimeout(function () {
-	        siteNameRow.render().querySelector('div[data-role="title-container"]').appendChild(tabsField.render());
-	      }, 0);
-	      // 2.3 site_name
 
 	      new ui_formElements_field.SettingsRow({
 	        row: new ui_section.Row({
-	          separator: 'top',
-	          className: '--block'
+	          content: previewWidget.render(),
+	          className: 'intranet-settings__site-logo_subrow --no-padding'
 	        }),
+	        parent: siteLogoRow
+	      });
+
+	      // 2.3 site_name
+
+	      new ui_formElements_field.SettingsRow({
+	        row: new ui_section.SeparatorRow(),
+	        parent: sectionField
+	      });
+	      new ui_formElements_field.SettingsRow({
 	        parent: sectionField,
 	        child: new ui_formElements_field.SettingsField({
 	          fieldView: new ui_formElements_view.TextInput({
 	            inputName: 'name',
-	            label: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_NAME'),
+	            label: this.getValue('portalSettingsLabels').name,
 	            value: this.getValue('portalSettings').name,
 	            placeholder: window.document.location.hostname,
 	            inputDefaultWidth: true
@@ -2623,12 +2795,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "buildDomainSection",
 	    value: function buildDomainSection(domainSettings) {
-	      var _this3 = this;
-	      var sectionView = new ui_section.Section({
-	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_DOMAIN'),
-	        titleIconClasses: 'ui-icon-set --globe',
-	        isOpen: false
-	      });
+	      var _this2 = this;
+	      if (!this.hasValue('sectionSiteDomain')) {
+	        return;
+	      }
+	      var sectionView = new ui_section.Section(this.getValue('sectionSiteDomain'));
 	      var sectionField = new ui_formElements_field.SettingsSection({
 	        parent: this,
 	        section: sectionView
@@ -2642,62 +2813,48 @@ this.BX = this.BX || {};
 	          color: ui_alerts.AlertColor.PRIMARY
 	        }).getContainer()
 	      }).render());
+	      var tabsRow = new ui_formElements_field.SettingsRow({
+	        parent: sectionField
+	      });
 
 	      //region 2. Tabs
 	      var tabsField = new ui_formElements_field.TabsField({
-	        parent: sectionField
+	        parent: tabsRow
 	      });
 	      // 2.1 Tab Site name
 	      var firstTab = new ui_formElements_field.TabField({
 	        parent: tabsField,
-	        tabsOptions: {
-	          head: {
-	            title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME1')
-	          },
-	          body: function body() {
-	            var siteDomainField = new SiteDomainField({
-	              parent: firstTab,
-	              siteDomainOptions: domainSettings,
-	              helpMessages: {
-	                site: _this3.helpMessageProviderFactory()
-	              }
-	            });
-	            main_core.Event.bind(siteDomainField.getFieldView().getInputNode(), 'keydown', function () {
-	              var _this3$getAnalytic;
-	              (_this3$getAnalytic = _this3.getAnalytic()) === null || _this3$getAnalytic === void 0 ? void 0 : _this3$getAnalytic.addEventConfigPortal(AnalyticSettingsEvent.CHANGE_PORTAL_SITE);
-	            });
-	            return siteDomainField.render();
-	          }
+	        tabsOptions: this.getValue('tabDomainPrefix')
+	      });
+	      var siteDomainField = new SiteDomainField({
+	        siteDomainOptions: domainSettings,
+	        helpMessages: {
+	          site: this.helpMessageProviderFactory()
 	        }
 	      });
-	      new ui_formElements_field.TabField({
+	      main_core.Event.bind(siteDomainField.getFieldView().getInputNode(), 'keydown', function () {
+	        var _this2$getAnalytic;
+	        (_this2$getAnalytic = _this2.getAnalytic()) === null || _this2$getAnalytic === void 0 ? void 0 : _this2$getAnalytic.addEventConfigPortal(AnalyticSettingsEvent.CHANGE_PORTAL_SITE);
+	      });
+	      var firstTabRow = new ui_section.Row({
+	        content: siteDomainField.render()
+	      });
+	      new ui_formElements_field.SettingsRow({
+	        row: firstTabRow,
+	        parent: firstTab,
+	        child: siteDomainField
+	      });
+	      var secondTab = new ui_formElements_field.TabField({
 	        parent: tabsField,
-	        tabsOptions: {
-	          restricted: domainSettings.isCustomizable === false,
-	          bannerCode: 'limit_office_own_domain',
-	          head: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME2'),
-	          body: function body() {
-	            var copyButton = main_core.Tag.render(_templateObject2$7 || (_templateObject2$7 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-icon-set --copy-plates intranet-settings__domain__list_btn\"></div>"])));
-	            BX.clipboard.bindCopyClick(copyButton, {
-	              text: function text() {
-	                return main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS').replaceAll('<br>', "\n");
-	              }
-	            });
-	            var res = main_core.Tag.render(_templateObject3$4 || (_templateObject3$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet-settings__domain__list_box\">\n\t\t\t\t\t\t<ul class=\"intranet-settings__domain__list\">\n\t\t\t\t\t\t\t<li class=\"intranet-settings__domain__list_item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__domain_box\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"intranet-settings__domain__list_item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"intranet-settings__domain__list_item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<a target=\"_blank\" href=\"/settings/support.php\" class=\"settings-tools-description-link\">", "</a>\n\t\t\t\t\t</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP1'), main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS'), copyButton, main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP2'), main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP3'), main_core.Loc.getMessage('INTRANET_SETTINGS_WRITE_TO_SUPPORT'));
-	            if (domainSettings.isCustomizable !== true) {
-	              main_core.Event.bind(res.querySelector('a.settings-tools-description-link'), 'click', function (event) {
-	                BX.UI.InfoHelper.show('limit_office_own_domain');
-	                event.preventDefault();
-	                return false;
-	              });
-	            }
-	            return res;
-	          }
-	        }
+	        tabsOptions: this.getValue('tabDomain')
 	      });
-	      var justRow = new ui_section.Row({});
-	      sectionView.append(justRow.render());
-	      justRow.append(main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__grid_box --single-item\">\n\t\t\t\t<div class=\"intranet-settings__grid_item\">", "</div>\n\t\t\t</div>"])), tabsField.render()));
+	      var descriptionRow = new ui_section.Row({
+	        content: _classPrivateMethodGet$8(this, _getOwnDomainTabBody, _getOwnDomainTabBody2).call(this, domainSettings)
+	      });
+	      new ui_formElements_field.SettingsRow({
+	        row: descriptionRow,
+	        parent: secondTab
+	      });
 	      tabsField.activateTab(firstTab);
 	      //endregion
 
@@ -2706,13 +2863,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "buildThemeSection",
 	    value: function buildThemeSection(themePickerSettings, portalSettings) {
-	      var sectionView = new ui_section.Section({
-	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_PORTAL_THEME'),
-	        titleIconClasses: 'ui-icon-set --picture',
-	        isOpen: false,
-	        isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
-	        bannerCode: 'ip_access_rights_lock'
-	      });
+	      if (!this.hasValue('sectionSiteTheme')) {
+	        return;
+	      }
+	      var sectionView = new ui_section.Section(this.getValue('sectionSiteTheme'));
 	      var sectionField = new ui_formElements_field.SettingsSection({
 	        section: sectionView,
 	        parent: this
@@ -2742,12 +2896,29 @@ this.BX = this.BX || {};
 	  }]);
 	  return PortalPage;
 	}(ui_formElements_field.BaseSettingsPage);
+	function _getOwnDomainTabBody2(domainSettings) {
+	  var copyButton = main_core.Tag.render(_templateObject2$7 || (_templateObject2$7 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-icon-set --copy-plates intranet-settings__domain__list_btn\"></div>"])));
+	  BX.clipboard.bindCopyClick(copyButton, {
+	    text: function text() {
+	      return main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS').replaceAll('<br>', "\n");
+	    }
+	  });
+	  var res = main_core.Tag.render(_templateObject3$5 || (_templateObject3$5 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet-settings__domain__list_box\">\n\t\t\t\t\t\t<ul class=\"intranet-settings__domain__list\">\n\t\t\t\t\t\t\t<li class=\"intranet-settings__domain__list_item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"intranet-settings__domain_box\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"intranet-settings__domain__list_item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"intranet-settings__domain__list_item\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<a target=\"_blank\" href=\"/settings/support.php\" class=\"settings-tools-description-link\">", "</a>\n\t\t\t\t\t</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP1'), main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS'), copyButton, main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP2'), main_core.Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP3'), main_core.Loc.getMessage('INTRANET_SETTINGS_WRITE_TO_SUPPORT'));
+	  if (domainSettings.isCustomizable !== true) {
+	    main_core.Event.bind(res.querySelector('a.settings-tools-description-link'), 'click', function (event) {
+	      BX.UI.InfoHelper.show('limit_office_own_domain');
+	      event.preventDefault();
+	      return false;
+	    });
+	  }
+	  return res;
+	}
 
-	var _templateObject$c;
-	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$f(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$c(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _templateObject$d, _templateObject2$8;
+	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$h(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$e(obj, privateMap, value) { _checkPrivateRedeclaration$h(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$h(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _header = /*#__PURE__*/new WeakMap();
 	var _buildDateTimeSection = /*#__PURE__*/new WeakSet();
 	var _buildMailsSection = /*#__PURE__*/new WeakSet();
@@ -2767,7 +2938,7 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _buildCRMMapsSection);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _buildMailsSection);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _buildDateTimeSection);
-	    _classPrivateFieldInitSpec$c(babelHelpers.assertThisInitialized(_this), _header, {
+	    _classPrivateFieldInitSpec$e(babelHelpers.assertThisInitialized(_this), _header, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -2782,71 +2953,55 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "headerWidgetRender",
 	    value: function headerWidgetRender() {
-	      var _this$getValue, _this$getValue2;
 	      var timeFormat = '';
 	      if (this.getValue('isFormat24Hour') === 'Y') {
 	        timeFormat = this.getValue('format24HourTime');
 	      } else {
 	        timeFormat = this.getValue('format12HourTime');
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _header, main_core.Tag.render(_templateObject$c || (_templateObject$c = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-settings__date-widget_box\">\n\t\t\t<span class=\"ui-icon-set --earth-language\"></span>\n\t\t\t<div class=\"intranet-settings__date-widget_content\">\n\t\t\t\t<div class=\"intranet-settings__date-widget_inner\">\n\t\t\t\t\t<span data-role=\"time\" class=\"intranet-settings__date-widget_title\">", "</span>\n\t\t\t\t\t<span class=\"intranet-settings__date-widget_subtitle\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div data-role=\"date\" class=\"intranet-settings__date-widget_subtitle\">", "</div>\n\t\t\t</div>\n\t\t</div>"])), timeFormat, (_this$getValue = this.getValue('culture')) === null || _this$getValue === void 0 ? void 0 : _this$getValue.offsetUTC, (_this$getValue2 = this.getValue('culture')) === null || _this$getValue2 === void 0 ? void 0 : _this$getValue2.currentDate));
+	      babelHelpers.classPrivateFieldSet(this, _header, main_core.Tag.render(_templateObject$d || (_templateObject$d = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-settings__date-widget_box\">\n\t\t\t<span class=\"ui-icon-set --earth-language\"></span>\n\t\t\t<div class=\"intranet-settings__date-widget_content\">\n\t\t\t\t<div class=\"intranet-settings__date-widget_inner\">\n\t\t\t\t\t<span data-role=\"time\" class=\"intranet-settings__date-widget_title\">", "</span>\n\t\t\t\t\t<span class=\"intranet-settings__date-widget_subtitle\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div data-role=\"date\" class=\"intranet-settings__date-widget_subtitle\">", "</div>\n\t\t\t</div>\n\t\t</div>"])), timeFormat, this.getValue('offsetUTC'), this.getValue('currentDate')));
 	      return babelHelpers.classPrivateFieldGet(this, _header);
 	    }
 	  }, {
 	    key: "appendSections",
 	    value: function appendSections(contentNode) {
-	      var dateTimeSection = _classPrivateMethodGet$8(this, _buildDateTimeSection, _buildDateTimeSection2).call(this);
-	      dateTimeSection.renderTo(contentNode);
-	      var mailsSection = _classPrivateMethodGet$8(this, _buildMailsSection, _buildMailsSection2).call(this);
-	      mailsSection.renderTo(contentNode);
+	      var dateTimeSection = _classPrivateMethodGet$9(this, _buildDateTimeSection, _buildDateTimeSection2).call(this);
+	      dateTimeSection === null || dateTimeSection === void 0 ? void 0 : dateTimeSection.renderTo(contentNode);
+	      var mailsSection = _classPrivateMethodGet$9(this, _buildMailsSection, _buildMailsSection2).call(this);
+	      mailsSection === null || mailsSection === void 0 ? void 0 : mailsSection.renderTo(contentNode);
 	      if (this.hasValue('mapsProviderCRM') && this.getValue('mapsProviderCRM')) {
-	        var mapsSection = _classPrivateMethodGet$8(this, _buildCRMMapsSection, _buildCRMMapsSection2).call(this);
-	        mapsSection.renderTo(contentNode);
+	        var mapsSection = _classPrivateMethodGet$9(this, _buildCRMMapsSection, _buildCRMMapsSection2).call(this);
+	        mapsSection === null || mapsSection === void 0 ? void 0 : mapsSection.renderTo(contentNode);
 	      }
-	      var cardsProductPropertiesSection = _classPrivateMethodGet$8(this, _buildCardsProductPropertiesSection, _buildCardsProductPropertiesSection2).call(this);
-	      cardsProductPropertiesSection.renderTo(contentNode);
-	      var additionalSettingsSection = _classPrivateMethodGet$8(this, _buildAdditionalSettingsSection, _buildAdditionalSettingsSection2).call(this);
-	      additionalSettingsSection.renderTo(contentNode);
+	      var cardsProductPropertiesSection = _classPrivateMethodGet$9(this, _buildCardsProductPropertiesSection, _buildCardsProductPropertiesSection2).call(this);
+	      cardsProductPropertiesSection === null || cardsProductPropertiesSection === void 0 ? void 0 : cardsProductPropertiesSection.renderTo(contentNode);
+	      var additionalSettingsSection = _classPrivateMethodGet$9(this, _buildAdditionalSettingsSection, _buildAdditionalSettingsSection2).call(this);
+	      additionalSettingsSection === null || additionalSettingsSection === void 0 ? void 0 : additionalSettingsSection.renderTo(contentNode);
 	    }
 	  }]);
 	  return ConfigurationPage;
 	}(ui_formElements_field.BaseSettingsPage);
 	function _buildDateTimeSection2() {
 	  var _this2 = this;
-	  var dateTimeSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DATETIME'),
-	    titleIconClasses: 'ui-icon-set --clock-2'
-	  });
+	  if (!this.hasValue('sectionDateFormat')) {
+	    return;
+	  }
+	  var dateTimeSection = new ui_section.Section(this.getValue('sectionDateFormat'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: dateTimeSection,
 	    parent: this
 	  });
 	  if (this.hasValue('culture')) {
-	    var regionField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATETIME_REGION_FORMAT'),
-	      hintTitle: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_DATE_FORMAT'),
-	      name: this.getValue('culture').name,
-	      items: this.getValue('culture').values,
-	      hints: this.getValue('culture').hints,
-	      current: this.getValue('culture').current
-	    });
+	    var regionField = new ui_formElements_view.Selector(this.getValue('culture'));
 	    ConfigurationPage.addToSectionHelper(regionField, settingsSection, new ui_section.Row({
 	      className: '--intranet-settings__mb-20'
 	    }));
 	    main_core.Event.bind(regionField.getInputNode(), 'change', function (event) {
-	      var newData = _this2.getValue('culture').longDates[event.target.value];
-	      babelHelpers.classPrivateFieldGet(_this2, _header).querySelector('[data-role="date"]').innerHTML = newData;
+	      babelHelpers.classPrivateFieldGet(_this2, _header).querySelector('[data-role="date"]').innerHTML = _this2.getValue('longDates')[event.target.value];
 	    });
 	  }
 	  if (this.hasValue('isFormat24Hour')) {
-	    var format24Time = new ui_formElements_view.InlineChecker({
-	      inputName: 'isFormat24Hour',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24'),
-	      hintTitle: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24'),
-	      hintOn: this.getValue('format24HourTime'),
-	      hintOff: this.getValue('format12HourTime'),
-	      checked: this.getValue('isFormat24Hour') === 'Y'
-	    });
+	    var format24Time = new ui_formElements_view.InlineChecker(this.getValue('isFormat24Hour'));
 	    ConfigurationPage.addToSectionHelper(format24Time, settingsSection);
 	    main_core_events.EventEmitter.subscribe(format24Time, 'change', function (event) {
 	      babelHelpers.classPrivateFieldGet(_this2, _header).querySelector('[data-role="time"]').innerHTML = format24Time.isChecked() ? _this2.getValue('format24HourTime') : _this2.getValue('format12HourTime');
@@ -2855,69 +3010,59 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 	function _buildMailsSection2() {
-	  var mailsSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAILS'),
-	    titleIconClasses: 'ui-icon-set --mail',
-	    isOpen: false
-	  });
+	  if (!this.hasValue('sectionLetters')) {
+	    return;
+	  }
+	  var mailsSection = new ui_section.Section(this.getValue('sectionLetters'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: mailsSection,
 	    parent: this
 	  });
 	  if (this.hasValue('trackOutMailsRead')) {
-	    var trackOutLettersRead = new ui_formElements_view.Checker({
-	      inputName: 'trackOutMailsRead',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_ON'),
-	      checked: this.getValue('trackOutMailsRead') === 'Y'
-	    });
+	    var trackOutLettersRead = new ui_formElements_view.Checker(this.getValue('trackOutMailsRead'));
 	    var showQuitRow = new ui_section.Row({});
 	    ConfigurationPage.addToSectionHelper(trackOutLettersRead, settingsSection, showQuitRow);
 	  }
 	  if (this.hasValue('trackOutMailsClick')) {
-	    var trackOutMailsClick = new ui_formElements_view.Checker({
-	      inputName: 'trackOutMailsClick',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_CLICK_ON'),
-	      checked: this.getValue('trackOutMailsClick') === 'Y',
-	      helpDesk: 'redirect=detail&code=18213310'
-	    });
+	    var trackOutMailsClick = new ui_formElements_view.Checker(this.getValue('trackOutMailsClick'));
 	    var _showQuitRow = new ui_section.Row({});
 	    ConfigurationPage.addToSectionHelper(trackOutMailsClick, settingsSection, _showQuitRow);
 	  }
 	  if (this.hasValue('defaultEmailFrom')) {
-	    var defaultEmailFrom = new ui_formElements_view.TextInput({
-	      inputName: 'defaultEmailFrom',
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL'),
-	      value: this.getValue('defaultEmailFrom'),
-	      placeholder: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL'),
-	      hintTitle: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_DEFAULT_EMAIL')
-	    });
+	    var defaultEmailFrom = new ui_formElements_view.TextInput(this.getValue('defaultEmailFrom'));
 	    var _showQuitRow2 = new ui_section.Row({});
 	    ConfigurationPage.addToSectionHelper(defaultEmailFrom, settingsSection, _showQuitRow2);
 	  }
 	  return settingsSection;
 	}
 	function _buildCRMMapsSection2() {
-	  var mapsSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS'),
-	    titleIconClasses: 'ui-icon-set --crm-map',
-	    isOpen: false
-	  });
+	  var _this$getValue$label;
+	  if (!this.hasValue('sectionMapsInCrm')) {
+	    return;
+	  }
+	  var mapsSection = new ui_section.Section(this.getValue('sectionMapsInCrm'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: mapsSection,
 	    parent: this
 	  });
 	  var cardsProvider = new ui_formElements_view.Selector({
-	    label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+	    label: (_this$getValue$label = this.getValue('mapsProviderCRM').label) !== null && _this$getValue$label !== void 0 ? _this$getValue$label : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
 	    name: this.getValue('mapsProviderCRM').name,
 	    items: this.getValue('mapsProviderCRM').values,
 	    current: this.getValue('mapsProviderCRM').current
 	  });
 	  var cardsProviderRow = new ui_section.Row({
+	    separator: 'bottom',
 	    className: '--block'
 	  });
 	  ConfigurationPage.addToSectionHelper(cardsProvider, settingsSection, cardsProviderRow);
+	  var separatorRow = new ui_section.SeparatorRow({
+	    isHidden: this.getValue('mapsProviderCRM').current === 'OSM'
+	  });
+	  new ui_formElements_field.SettingsRow({
+	    row: separatorRow,
+	    parent: settingsSection
+	  });
 	  var description = new BX.UI.Alert({
 	    text: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_CRM_MAPS_DESCRIPTION', {
 	      '#GOOGLE_API_URL#': this.getValue('googleApiUrl')
@@ -2961,6 +3106,11 @@ this.BX = this.BX || {};
 	    className: '--block'
 	  });
 	  ConfigurationPage.addToSectionHelper(mapApiKeyBackend, settingsSection, googleKeyBackendRow);
+	  var separatorRow1 = new ui_section.SeparatorRow({});
+	  new ui_formElements_field.SettingsRow({
+	    row: separatorRow1,
+	    parent: settingsSection
+	  });
 	  var showPhotoPlacesMaps = new ui_formElements_view.Checker({
 	    inputName: 'SHOW_PHOTOS_ON_MAP',
 	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_PHOTO_PLACES_MAPS'),
@@ -2969,6 +3119,8 @@ this.BX = this.BX || {};
 	    checked: this.getValue('SHOW_PHOTOS_ON_MAP').value === '1'
 	  });
 	  var showPhotoPlacesMapsRow = new ui_section.Row({
+	    separator: 'top',
+	    className: '--block',
 	    content: showPhotoPlacesMaps.render(),
 	    isHidden: this.getValue('mapsProviderCRM').current === 'OSM'
 	  });
@@ -2987,12 +3139,14 @@ this.BX = this.BX || {};
 	  ConfigurationPage.addToSectionHelper(useGeocodingService, settingsSection, useGeocodingServiceRow);
 	  cardsProvider.getInputNode().addEventListener('change', function (event) {
 	    if (event.target.value === 'OSM') {
+	      separatorRow.hide();
 	      descriptionRow.hide();
 	      googleKeyFrontendRow.hide();
 	      googleKeyBackendRow.hide();
 	      useGeocodingServiceRow.hide();
 	      showPhotoPlacesMapsRow.hide();
 	    } else {
+	      separatorRow.show();
 	      descriptionRow.show();
 	      googleKeyFrontendRow.show();
 	      googleKeyBackendRow.show();
@@ -3003,18 +3157,18 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 	function _buildCardsProductPropertiesSection2() {
-	  var productPropertiesSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_PRODUCT'),
-	    titleIconClasses: 'ui-icon-set --location-2',
-	    isOpen: false
-	  });
+	  if (!this.hasValue('sectionMapsInProduct')) {
+	    return;
+	  }
+	  var productPropertiesSection = new ui_section.Section(this.getValue('sectionMapsInProduct'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: productPropertiesSection,
 	    parent: this
 	  });
 	  if (this.hasValue('cardsProviderProductProperties')) {
+	    var _this$getValue$label2;
 	    var cardsProviderProductProperties = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+	      label: (_this$getValue$label2 = this.getValue('cardsProviderProductProperties').label) !== null && _this$getValue$label2 !== void 0 ? _this$getValue$label2 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
 	      name: this.getValue('cardsProviderProductProperties').name,
 	      items: this.getValue('cardsProviderProductProperties').values,
 	      current: this.getValue('cardsProviderProductProperties').current
@@ -3023,6 +3177,10 @@ this.BX = this.BX || {};
 	      separator: 'bottom'
 	    });
 	    ConfigurationPage.addToSectionHelper(cardsProviderProductProperties, settingsSection, cardsProviderProductPropertiesRow);
+	    new ui_formElements_field.SettingsRow({
+	      row: new ui_section.SeparatorRow(),
+	      parent: settingsSection
+	    });
 	    var descriptionYandex = new BX.UI.Alert({
 	      text: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_CRM_MAPS_YANDEX_DESCRIPTION', {
 	        '#YANDEX_API_URL#': this.getValue('yandexApiUrl')
@@ -3047,6 +3205,8 @@ this.BX = this.BX || {};
 	      placeholder: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TEXT_KEY_PLACEHOLDER')
 	    });
 	    var yandexKeyProductPropertiesRow = new ui_section.Row({
+	      separator: 'bottom',
+	      className: '--block',
 	      content: yandexKeyProductProperties.render(),
 	      isHidden: this.getValue('cardsProviderProductProperties').current !== 'yandex'
 	    });
@@ -3097,22 +3257,16 @@ this.BX = this.BX || {};
 	}
 	function _buildAdditionalSettingsSection2() {
 	  var _this3 = this;
-	  var additionalSettingsSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL_SETTINGS'),
-	    titleIconClasses: 'ui-icon-set --apps',
-	    isOpen: false
-	  });
+	  if (!this.hasValue('sectionOther')) {
+	    return;
+	  }
+	  var additionalSettingsSection = new ui_section.Section(this.getValue('sectionOther'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: additionalSettingsSection,
 	    parent: this
 	  });
 	  if (this.hasValue('allowUserInstallApplication')) {
-	    var allInstallMarketApplication = new ui_formElements_view.Checker({
-	      inputName: 'allowUserInstallApplication',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON'),
-	      checked: this.getValue('allowUserInstallApplication') === 'Y'
-	    });
+	    var allInstallMarketApplication = new ui_formElements_view.Checker(this.getValue('allowUserInstallApplication'));
 	    var allInstallMarketApplicationRow = new ui_section.Row({});
 	    main_core_events.EventEmitter.subscribe(allInstallMarketApplication.switcher, 'toggled', function () {
 	      var _this3$getAnalytic;
@@ -3121,13 +3275,16 @@ this.BX = this.BX || {};
 	    ConfigurationPage.addToSectionHelper(allInstallMarketApplication, settingsSection, allInstallMarketApplicationRow);
 	  }
 	  if (this.hasValue('allCanBuyTariff')) {
+	    var _this$getValue$title;
+	    var messageNode = main_core.Tag.render(_templateObject2$8 || (_templateObject2$8 = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE'));
 	    var allCanBuyTariff = new ui_formElements_view.Checker({
-	      inputName: 'allCanBuyTariff',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON'),
-	      checked: this.getValue('allCanBuyTariff').value === 'Y',
+	      inputName: this.getValue('allCanBuyTariff').inputName,
+	      title: (_this$getValue$title = this.getValue('allCanBuyTariff').title) !== null && _this$getValue$title !== void 0 ? _this$getValue$title : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
+	      hintOn: this.getValue('allCanBuyTariff').hintOn,
+	      checked: this.getValue('allCanBuyTariff').checked,
 	      isEnable: this.getValue('allCanBuyTariff').isEnable,
-	      bannerCode: 'limit_why_pay_tariff_everyone'
+	      bannerCode: 'limit_why_pay_tariff_everyone',
+	      helpMessageProvider: this.helpMessageProviderFactory(messageNode)
 	    });
 	    var allCanBuyTariffRow = new ui_section.Row({});
 	    main_core_events.EventEmitter.subscribe(allCanBuyTariff.switcher, 'toggled', function () {
@@ -3137,43 +3294,34 @@ this.BX = this.BX || {};
 	    ConfigurationPage.addToSectionHelper(allCanBuyTariff, settingsSection, allCanBuyTariffRow);
 	  }
 	  if (this.hasValue('allowMeasureStressLevel')) {
-	    var allowMeasureStressLevel = new ui_formElements_view.Checker({
-	      inputName: 'allowMeasureStressLevel',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON'),
-	      checked: this.getValue('allowMeasureStressLevel') === 'Y',
-	      helpDesk: 'redirect=detail&code=17697808'
-	    });
+	    var allowMeasureStressLevel = new ui_formElements_view.Checker(this.getValue('allowMeasureStressLevel'));
 	    var allowMeasureStressLevelRow = new ui_section.Row({});
 	    ConfigurationPage.addToSectionHelper(allowMeasureStressLevel, settingsSection, allowMeasureStressLevelRow);
 	  }
 	  if (this.hasValue('collectGeoData')) {
-	    var collectGeoData = new ui_formElements_view.Checker({
-	      inputName: 'collectGeoData',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON'),
-	      checked: this.getValue('collectGeoData') === 'Y',
-	      helpDesk: 'redirect=detail&code=18213320'
-	    });
-	    var collectGeoDataRow = new ui_section.Row({});
+	    var collectGeoData = new ui_formElements_view.Checker(this.getValue('collectGeoData'));
 	    main_core_events.EventEmitter.subscribe(collectGeoData.switcher, 'toggled', function () {
-	      _classPrivateMethodGet$8(_this3, _geoDataSwitch, _geoDataSwitch2).call(_this3, collectGeoData);
+	      _classPrivateMethodGet$9(_this3, _geoDataSwitch, _geoDataSwitch2).call(_this3, collectGeoData);
 	    });
-	    ConfigurationPage.addToSectionHelper(collectGeoData, settingsSection, collectGeoDataRow);
+	    ConfigurationPage.addToSectionHelper(collectGeoData, settingsSection);
 	  }
-	  if (this.hasValue('showSettingsAllUsers')) {
-	    var showSettingsAllUsers = new ui_formElements_view.Checker({
-	      inputName: 'showSettingsAllUsers',
-	      title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_SETTINGS_ALL_USER'),
-	      hintOn: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_SETTINGS_ALL_USER_CLICK_ON'),
-	      checked: this.getValue('showSettingsAllUsers') === 'Y'
-	    });
-	    var showSettingsAllUsersRow = new ui_section.Row({
-	      content: showSettingsAllUsers.render(),
-	      isHidden: true
-	    });
-	    ConfigurationPage.addToSectionHelper(showSettingsAllUsers, settingsSection, showSettingsAllUsersRow);
-	  }
+
+	  // This is hidden
+	  // if (this.hasValue('showSettingsAllUsers'))
+	  // {
+	  // 	let showSettingsAllUsers = new Checker({
+	  // 		inputName: 'showSettingsAllUsers',
+	  // 		title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_SETTINGS_ALL_USER'),
+	  // 		hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_SETTINGS_ALL_USER_CLICK_ON'),
+	  // 		checked: this.getValue('showSettingsAllUsers') === 'Y'
+	  // 	});
+	  // 	let showSettingsAllUsersRow = new Row({
+	  // 		content: showSettingsAllUsers.render(),
+	  // 		isHidden: true
+	  // 	});
+	  // 	ConfigurationPage.addToSectionHelper(showSettingsAllUsers, settingsSection, showSettingsAllUsersRow);
+	  // }
+
 	  return settingsSection;
 	}
 	function _geoDataSwitch2(element) {
@@ -3196,10 +3344,11 @@ this.BX = this.BX || {};
 	  }
 	}
 
-	var _templateObject$d, _templateObject2$8, _templateObject3$5, _templateObject4$2, _templateObject5$1;
-	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$g(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$g(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _templateObject$e, _templateObject2$9, _templateObject3$6;
+	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$i(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$i(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _buildScheduleTab = /*#__PURE__*/new WeakSet();
 	var _buildScheduleSection = /*#__PURE__*/new WeakSet();
 	var _buildHolidaysSection = /*#__PURE__*/new WeakSet();
 	var _forDepartmentsRender = /*#__PURE__*/new WeakSet();
@@ -3212,6 +3361,7 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _forDepartmentsRender);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _buildHolidaysSection);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _buildScheduleSection);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _buildScheduleTab);
 	    _this.titlePage = main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_PAGE_SCHEDULE');
 	    _this.descriptionPage = main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_PAGE_SCHEDULE');
 	    return _this;
@@ -3224,103 +3374,125 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "appendSections",
 	    value: function appendSections(contentNode) {
-	      var scheduleSection = _classPrivateMethodGet$9(this, _buildScheduleSection, _buildScheduleSection2).call(this);
+	      var scheduleSection = _classPrivateMethodGet$a(this, _buildScheduleSection, _buildScheduleSection2).call(this);
 	      scheduleSection.renderTo(contentNode);
-	      var holidaysSection = _classPrivateMethodGet$9(this, _buildHolidaysSection, _buildHolidaysSection2).call(this);
+	      var holidaysSection = _classPrivateMethodGet$a(this, _buildHolidaysSection, _buildHolidaysSection2).call(this);
 	      holidaysSection.renderTo(contentNode);
 	    }
 	  }]);
 	  return SchedulePage;
 	}(ui_formElements_field.BaseSettingsPage);
-	function _buildScheduleSection2() {
-	  var _this2 = this;
-	  var scheduleSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SCHEDULE'),
-	    titleIconClasses: 'ui-icon-set --calendar-1'
+	function _buildScheduleTab2(parent) {
+	  var workTimeRow = new ui_section.Row({
+	    className: 'intranet-settings__work-time_container --no-padding'
 	  });
+	  var settingsRow = new ui_formElements_field.SettingsRow({
+	    row: workTimeRow,
+	    parent: parent
+	  });
+	  if (this.hasValue('WORK_TIME_START')) {
+	    var workTimeStartField = new ui_formElements_view.Selector(this.getValue('WORK_TIME_START'));
+	    new ui_formElements_field.SettingsRow({
+	      child: new ui_formElements_field.SettingsField({
+	        fieldView: workTimeStartField
+	      }),
+	      parent: settingsRow,
+	      row: new ui_section.Row({
+	        className: 'intranet-settings__work-time_row'
+	      })
+	    });
+	  }
+	  new ui_formElements_field.SettingsRow({
+	    row: new ui_section.Row({
+	      className: 'ui-section__field-inline-separator'
+	    }),
+	    parent: settingsRow
+	  });
+	  if (this.hasValue('WORK_TIME_END')) {
+	    var workTimeEndField = new ui_formElements_view.Selector(this.getValue('WORK_TIME_END'));
+	    new ui_formElements_field.SettingsRow({
+	      child: new ui_formElements_field.SettingsField({
+	        fieldView: workTimeEndField
+	      }),
+	      parent: settingsRow,
+	      row: new ui_section.Row({
+	        className: 'intranet-settings__work-time_row'
+	      })
+	    });
+	  }
+	  var containerTab = main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["<div><div>"])));
+	  main_core.Dom.append(workTimeRow.render(), containerTab);
+	  if (this.hasValue('WEEK_DAYS')) {
+	    var _this$getValue$label;
+	    var itemPickerField = new ui_formElements_view.ItemPicker({
+	      inputName: this.getValue('WEEK_DAYS').inputName,
+	      isMulti: true,
+	      label: (_this$getValue$label = this.getValue('WEEK_DAYS').label) !== null && _this$getValue$label !== void 0 ? _this$getValue$label : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WEEKEND'),
+	      items: this.getValue('WEEK_DAYS').values,
+	      current: this.getValue('WEEK_DAYS').multiValue
+	    });
+	    var settingsField = new ui_formElements_field.SettingsField({
+	      fieldView: itemPickerField
+	    });
+	    var itemPickerRow = new ui_section.Row({
+	      content: itemPickerField.render()
+	    });
+	    new ui_formElements_field.SettingsRow({
+	      row: itemPickerRow,
+	      child: settingsField,
+	      parent: parent
+	    });
+	    main_core.Dom.append(itemPickerRow.render(), containerTab);
+	  }
+	  if (this.hasValue('WEEK_START')) {
+	    var weekStartField = new ui_formElements_view.ItemPicker(this.getValue('WEEK_START'));
+	    var _settingsField = new ui_formElements_field.SettingsField({
+	      fieldView: weekStartField
+	    });
+	    main_core.Dom.addClass(weekStartField.render(), '--row-frame_gray');
+	    var weekStartRow = new ui_section.Row({
+	      content: weekStartField.render()
+	    });
+	    new ui_formElements_field.SettingsRow({
+	      row: weekStartRow,
+	      child: _settingsField,
+	      parent: parent
+	    });
+	    main_core.Dom.append(weekStartRow.render(), containerTab);
+	  }
+	  return containerTab;
+	}
+	function _buildScheduleSection2() {
+	  if (!this.hasValue('sectionSchedule')) {
+	    return;
+	  }
+	  var scheduleSection = new ui_section.Section(this.getValue('sectionSchedule'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    parent: this,
 	    section: scheduleSection
 	  });
-
-	  //region tab section
-	  var settingsRow = new ui_formElements_field.SettingsRow({
+	  var tabsRow = new ui_formElements_field.SettingsRow({
 	    parent: settingsSection
 	  });
 	  var tabsField = new ui_formElements_field.TabsField({
-	    parent: settingsRow
+	    parent: tabsRow
 	  });
 	  var forCompanyTab = new ui_formElements_field.TabField({
 	    parent: tabsField,
-	    tabsOptions: {
-	      head: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_COMPANY'),
-	      body: function body() {
-	        return new Promise(function (resolve) {
-	          var workTimeRow = new ui_section.Row({});
-	          var workTimeContainerNode = main_core.Tag.render(_templateObject$d || (_templateObject$d = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet-settings__work-time_container\"><div>"])));
-	          if (_this2.hasValue('WORK_TIME_START')) {
-	            var workTimeStartField = new ui_formElements_view.Selector({
-	              label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WORK_TIME_START'),
-	              name: _this2.getValue('WORK_TIME_START').name,
-	              items: _this2.getValue('WORK_TIME_START').values,
-	              current: _this2.getValue('WORK_TIME_START').current
-	            });
-	            main_core.Dom.append(workTimeStartField.render(), workTimeContainerNode);
-	          }
-	          main_core.Dom.append(main_core.Tag.render(_templateObject2$8 || (_templateObject2$8 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-section__field-inline-separator\"></div>"]))), workTimeContainerNode);
-	          if (_this2.hasValue('WORK_TIME_END')) {
-	            var workTimeEndField = new ui_formElements_view.Selector({
-	              label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WORK_TIME_END'),
-	              name: _this2.getValue('WORK_TIME_END').name,
-	              items: _this2.getValue('WORK_TIME_END').values,
-	              current: _this2.getValue('WORK_TIME_END').current
-	            });
-	            main_core.Dom.append(workTimeEndField.render(), workTimeContainerNode);
-	          }
-	          workTimeRow.append(workTimeContainerNode);
-	          var containerTab = main_core.Tag.render(_templateObject3$5 || (_templateObject3$5 = babelHelpers.taggedTemplateLiteral(["<div><div>"])));
-	          main_core.Dom.append(workTimeRow.render(), containerTab);
-	          if (_this2.hasValue('WEEK_DAYS')) {
-	            var itemPickerField = new ui_formElements_view.ItemPicker({
-	              inputName: _this2.getValue('WEEK_DAYS').name,
-	              isMulti: true,
-	              label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WEEKEND'),
-	              items: _this2.getValue('WEEK_DAYS').values,
-	              current: _this2.getValue('WEEK_DAYS').current
-	            });
-	            var itemPickerRow = new ui_section.Row({
-	              content: itemPickerField.render()
-	            });
-	            main_core.Dom.append(itemPickerRow.render(), containerTab);
-	          }
-	          if (_this2.hasValue('WEEK_START')) {
-	            var weekStartField = new ui_formElements_view.ItemPicker({
-	              inputName: _this2.getValue('WEEK_START').name,
-	              label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WEEK_START'),
-	              items: _this2.getValue('WEEK_START').values,
-	              current: _this2.getValue('WEEK_START').current
-	            });
-	            var weekStartRow = new ui_section.Row({
-	              content: weekStartField.render(),
-	              className: '--row-frame_gray'
-	            });
-	            _this2.fields[_this2.getValue('WEEK_START').name] = weekStartField;
-	            main_core.Dom.append(weekStartRow.render(), containerTab);
-	          }
-	          resolve(containerTab);
-	        });
-	      }
-	    }
+	    tabsOptions: this.getValue('tabForCompany')
 	  });
+	  _classPrivateMethodGet$a(this, _buildScheduleTab, _buildScheduleTab2).call(this, forCompanyTab);
 	  if (this.getValue('TIMEMAN').enabled) {
-	    new ui_formElements_field.TabField({
+	    var forDepartmentTab = new ui_formElements_field.TabField({
 	      parent: tabsField,
-	      tabsOptions: {
-	        restricted: this.getValue('TIMEMAN').restricted,
-	        bannerCode: 'limit_office_shift_scheduling',
-	        head: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_DEPARTMENT'),
-	        body: _classPrivateMethodGet$9(this, _forDepartmentsRender, _forDepartmentsRender2).call(this)
-	      }
+	      tabsOptions: this.getValue('tabForDepartment')
+	    });
+	    var forDepartmentRow = new ui_section.Row({
+	      content: _classPrivateMethodGet$a(this, _forDepartmentsRender, _forDepartmentsRender2).call(this)
+	    });
+	    new ui_formElements_field.SettingsRow({
+	      row: forDepartmentRow,
+	      parent: forDepartmentTab
 	    });
 	  }
 	  tabsField.activateTab(forCompanyTab);
@@ -3329,18 +3501,17 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 	function _buildHolidaysSection2() {
-	  var _this$getValue$match$, _this$getValue, _this$getValue$match;
-	  var holidaysSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_HOLIDAYS'),
-	    titleIconClasses: 'ui-icon-set --flag-2',
-	    isOpen: false
-	  });
+	  var _this$getValue$value$, _this$getValue, _this$getValue$value, _this$getValue$value$2;
+	  if (!this.hasValue('sectionHoliday')) {
+	    return;
+	  }
+	  var holidaysSection = new ui_section.Section(this.getValue('sectionHoliday'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    parent: this,
 	    section: holidaysSection
 	  });
-	  var countDays = (_this$getValue$match$ = (_this$getValue = this.getValue('year_holidays')) === null || _this$getValue === void 0 ? void 0 : (_this$getValue$match = _this$getValue.match(/\d{1,2}.\d{1,2}/gm)) === null || _this$getValue$match === void 0 ? void 0 : _this$getValue$match.length) !== null && _this$getValue$match$ !== void 0 ? _this$getValue$match$ : 0;
-	  var countDaysNode = main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-section__field-label --mb-13\">", "</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_INFO', {
+	  var countDays = (_this$getValue$value$ = (_this$getValue = this.getValue('year_holidays')) === null || _this$getValue === void 0 ? void 0 : (_this$getValue$value = _this$getValue.value) === null || _this$getValue$value === void 0 ? void 0 : (_this$getValue$value$2 = _this$getValue$value.match(/\d{1,2}.\d{1,2}/gm)) === null || _this$getValue$value$2 === void 0 ? void 0 : _this$getValue$value$2.length) !== null && _this$getValue$value$ !== void 0 ? _this$getValue$value$ : 0;
+	  var countDaysNode = main_core.Tag.render(_templateObject2$9 || (_templateObject2$9 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-section__field-label\">", "</div>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_INFO', {
 	    '#COUNT_DAYS#': countDays
 	  }));
 	  var holidaysRow = new ui_section.Row({
@@ -3348,11 +3519,7 @@ this.BX = this.BX || {};
 	  });
 	  holidaysSection.append(holidaysRow.render());
 	  if (this.hasValue('year_holidays')) {
-	    var holidaysField = new ui_formElements_view.TextInput({
-	      inputName: 'year_holidays',
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_HOLIDAYS'),
-	      value: this.getValue('year_holidays')
-	    });
+	    var holidaysField = new ui_formElements_view.TextInput(this.getValue('year_holidays'));
 	    SchedulePage.addToSectionHelper(holidaysField, settingsSection);
 	    main_core.Event.bind(holidaysField.getInputNode(), 'keyup', function () {
 	      var _holidaysField$getInp, _holidaysField$getInp2, _holidaysField$getInp3;
@@ -3365,13 +3532,13 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 	function _forDepartmentsRender2() {
-	  return main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__tab-info_container\">\n\t\t\t\t<div class=\"intranet-settings__tab-info_text\">", "</div>\n\t\t\t\t<a href=\"/timeman/schedules/\" class=\"ui-section__link\" target=\"_blank\">", "</a>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_FOR_DEPARTMENTS'), main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_FOR_DEPARTMENTS_CONFIG'));
+	  return main_core.Tag.render(_templateObject3$6 || (_templateObject3$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__tab-info_container\">\n\t\t\t\t<div class=\"intranet-settings__tab-info_text\">", "</div>\n\t\t\t\t<a href=\"/timeman/schedules/\" class=\"ui-section__link\" target=\"_blank\">", "</a>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_FOR_DEPARTMENTS'), main_core.Loc.getMessage('INTRANET_SETTINGS_DESCRIPTION_FOR_DEPARTMENTS_CONFIG'));
 	}
 
-	var _templateObject$e;
-	function _classPrivateMethodInitSpec$b(obj, privateSet) { _checkPrivateRedeclaration$h(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$h(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _templateObject$f;
+	function _classPrivateMethodInitSpec$b(obj, privateSet) { _checkPrivateRedeclaration$j(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$j(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$b(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _buildGdprSection = /*#__PURE__*/new WeakSet();
 	var GdprPage = /*#__PURE__*/function (_BaseSettingsPage) {
 	  babelHelpers.inherits(GdprPage, _BaseSettingsPage);
@@ -3392,15 +3559,15 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "appendSections",
 	    value: function appendSections(contentNode) {
-	      var gdprSection = _classPrivateMethodGet$a(this, _buildGdprSection, _buildGdprSection2).call(this);
-	      gdprSection.renderTo(contentNode);
+	      var gdprSection = _classPrivateMethodGet$b(this, _buildGdprSection, _buildGdprSection2).call(this);
+	      gdprSection === null || gdprSection === void 0 ? void 0 : gdprSection.renderTo(contentNode);
 	    }
 	  }, {
 	    key: "addApplicationsRender",
 	    value: function addApplicationsRender() {
 	      if (this.hasValue('marketDirectory')) {
 	        var marketDirectory = this.getValue('marketDirectory');
-	        return main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-text-right\">\n\t\t\t\t\t<a class=\"ui-section__link\" href=\"", "detail/integrations24.gdprstaff/\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t\t<a class=\"ui-section__link\" style=\"margin-left: 12px;\" href=\"", "detail/integrations24.gdpr/\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t"])), marketDirectory, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_GDPR_APPLICATION_EMPLOYEE'), marketDirectory, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_GDPR_APPLICATION_CRM'));
+	        return main_core.Tag.render(_templateObject$f || (_templateObject$f = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-text-right\">\n\t\t\t\t\t<a class=\"ui-section__link\" href=\"", "detail/integrations24.gdprstaff/\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t\t<a class=\"ui-section__link\" style=\"margin-left: 12px;\" href=\"", "detail/integrations24.gdpr/\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t"])), marketDirectory, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_GDPR_APPLICATION_EMPLOYEE'), marketDirectory, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_GDPR_APPLICATION_CRM'));
 	      }
 	      return null;
 	    }
@@ -3408,11 +3575,10 @@ this.BX = this.BX || {};
 	  return GdprPage;
 	}(ui_formElements_field.BaseSettingsPage);
 	function _buildGdprSection2() {
-	  var gdprSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_GDPR'),
-	    titleIconClasses: 'ui-icon-set --document',
-	    canCollapse: false
-	  });
+	  if (!this.hasValue('sectionGdpr')) {
+	    return;
+	  }
+	  var gdprSection = new ui_section.Section(this.getValue('sectionGdpr'));
 	  var sectionSettings = new ui_formElements_field.SettingsSection({
 	    section: gdprSection,
 	    parent: this
@@ -3432,10 +3598,11 @@ this.BX = this.BX || {};
 	    parent: sectionSettings
 	  });
 	  if (this.hasValue('companyTitle')) {
+	    var _this$getValue$label;
 	    var titleField = new ui_formElements_view.TextInput({
 	      inputName: 'companyTitle',
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
-	      value: this.getValue('companyTitle'),
+	      label: (_this$getValue$label = this.getValue('companyTitle').label) !== null && _this$getValue$label !== void 0 ? _this$getValue$label : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
+	      value: this.getValue('companyTitle').value,
 	      placeholder: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_COMPANY_TITLE')
 	    });
 	    var settingsField = new ui_formElements_field.SettingsField({
@@ -3447,10 +3614,11 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  if (this.hasValue('contactName')) {
+	    var _this$getValue$label2;
 	    var contactNameField = new ui_formElements_view.TextInput({
 	      inputName: 'contactName',
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CONTACT_NAME'),
-	      value: this.getValue('contactName'),
+	      label: (_this$getValue$label2 = this.getValue('contactName').label) !== null && _this$getValue$label2 !== void 0 ? _this$getValue$label2 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CONTACT_NAME'),
+	      value: this.getValue('contactName').value,
 	      placeholder: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_CONTACT_NAME')
 	    });
 	    var _settingsField = new ui_formElements_field.SettingsField({
@@ -3462,10 +3630,11 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  if (this.hasValue('notificationEmail')) {
+	    var _this$getValue$label3;
 	    var emailField = new ui_formElements_view.TextInput({
 	      inputName: 'notificationEmail',
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL'),
-	      value: this.getValue('notificationEmail'),
+	      label: (_this$getValue$label3 = this.getValue('notificationEmail').label) !== null && _this$getValue$label3 !== void 0 ? _this$getValue$label3 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL'),
+	      value: this.getValue('notificationEmail').value,
 	      placeholder: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL')
 	    });
 	    var _settingsField2 = new ui_formElements_field.SettingsField({
@@ -3477,10 +3646,11 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  if (this.hasValue('date')) {
+	    var _this$getValue$label4;
 	    var dateField = new ui_formElements_view.TextInput({
 	      inputName: 'date',
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATE'),
-	      value: this.getValue('date')
+	      label: (_this$getValue$label4 = this.getValue('date').label) !== null && _this$getValue$label4 !== void 0 ? _this$getValue$label4 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATE'),
+	      value: this.getValue('date').value
 	    });
 	    main_core.Dom.adjust(dateField.render(), {
 	      events: {
@@ -3512,14 +3682,14 @@ this.BX = this.BX || {};
 	  return sectionSettings;
 	}
 
-	var _templateObject$f, _templateObject2$9, _templateObject3$6, _templateObject4$3, _templateObject5$2, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
+	var _templateObject$g, _templateObject2$a, _templateObject3$7, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
 	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
 	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$i(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$d(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$i(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$b(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$k(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$f(obj, privateMap, value) { _checkPrivateRedeclaration$k(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$k(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _otpChecker = /*#__PURE__*/new WeakMap();
 	var _otpSelector = /*#__PURE__*/new WeakMap();
 	var _otpPopup = /*#__PURE__*/new WeakMap();
@@ -3561,15 +3731,15 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _getOTPPopup);
 	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _getOTPChecker);
 	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _buildOTPSection);
-	    _classPrivateFieldInitSpec$d(babelHelpers.assertThisInitialized(_this), _otpChecker, {
+	    _classPrivateFieldInitSpec$f(babelHelpers.assertThisInitialized(_this), _otpChecker, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$d(babelHelpers.assertThisInitialized(_this), _otpSelector, {
+	    _classPrivateFieldInitSpec$f(babelHelpers.assertThisInitialized(_this), _otpSelector, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$d(babelHelpers.assertThisInitialized(_this), _otpPopup, {
+	    _classPrivateFieldInitSpec$f(babelHelpers.assertThisInitialized(_this), _otpPopup, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -3585,20 +3755,23 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "appendSections",
 	    value: function appendSections(contentNode) {
+	      var _classPrivateMethodGe2, _classPrivateMethodGe3;
 	      var isBitrix24 = this.hasValue('IS_BITRIX_24') && this.getValue('IS_BITRIX_24');
 	      if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED')) {
-	        _classPrivateMethodGet$b(this, _buildOTPSection, _buildOTPSection2).call(this).renderTo(contentNode);
+	        var _classPrivateMethodGe;
+	        (_classPrivateMethodGe = _classPrivateMethodGet$c(this, _buildOTPSection, _buildOTPSection2).call(this)) === null || _classPrivateMethodGe === void 0 ? void 0 : _classPrivateMethodGe.renderTo(contentNode);
 	      }
 
 	      // if (isBitrix24)
 	      // {
 	      // 	this.#buildPasswordRecoverySection().renderTo(contentNode);
 	      // }
-	      _classPrivateMethodGet$b(this, _buildDevicesHistorySection, _buildDevicesHistorySection2).call(this).renderTo(contentNode);
-	      _classPrivateMethodGet$b(this, _buildEventLogSection, _buildEventLogSection2).call(this).renderTo(contentNode);
+	      (_classPrivateMethodGe2 = _classPrivateMethodGet$c(this, _buildDevicesHistorySection, _buildDevicesHistorySection2).call(this)) === null || _classPrivateMethodGe2 === void 0 ? void 0 : _classPrivateMethodGe2.renderTo(contentNode);
+	      (_classPrivateMethodGe3 = _classPrivateMethodGet$c(this, _buildEventLogSection, _buildEventLogSection2).call(this)) === null || _classPrivateMethodGe3 === void 0 ? void 0 : _classPrivateMethodGe3.renderTo(contentNode);
 	      if (isBitrix24) {
-	        _classPrivateMethodGet$b(this, _buildAccessIPSection, _buildAccessIPSection2).call(this).renderTo(contentNode);
-	        _classPrivateMethodGet$b(this, _buildBlackListSection, _buildBlackListSection2).call(this).renderTo(contentNode);
+	        var _classPrivateMethodGe4, _classPrivateMethodGe5;
+	        (_classPrivateMethodGe4 = _classPrivateMethodGet$c(this, _buildAccessIPSection, _buildAccessIPSection2).call(this)) === null || _classPrivateMethodGe4 === void 0 ? void 0 : _classPrivateMethodGe4.renderTo(contentNode);
+	        (_classPrivateMethodGe5 = _classPrivateMethodGet$c(this, _buildBlackListSection, _buildBlackListSection2).call(this)) === null || _classPrivateMethodGe5 === void 0 ? void 0 : _classPrivateMethodGe5.renderTo(contentNode);
 	      }
 	    }
 	  }]);
@@ -3606,16 +3779,16 @@ this.BX = this.BX || {};
 	}(ui_formElements_field.BaseSettingsPage);
 	function _buildOTPSection2() {
 	  var _this2 = this;
-	  var otpSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_OTP'),
-	    titleIconClasses: 'ui-icon-set --shield'
-	  });
+	  if (!this.hasValue('sectionOtp')) {
+	    return;
+	  }
+	  var otpSection = new ui_section.Section(this.getValue('sectionOtp'));
 	  var section = new ui_formElements_field.SettingsSection({
 	    section: otpSection,
 	    parent: this
 	  });
 	  var descriptionRow = new ui_section.Row({
-	    content: _classPrivateMethodGet$b(this, _getOTPDescription, _getOTPDescription2).call(this).getContainer()
+	    content: _classPrivateMethodGet$c(this, _getOTPDescription, _getOTPDescription2).call(this).getContainer()
 	  });
 	  new ui_formElements_field.SettingsRow({
 	    row: descriptionRow,
@@ -3623,21 +3796,23 @@ this.BX = this.BX || {};
 	  });
 	  if (this.hasValue('SECURITY_OTP') && this.hasValue('SEND_OTP_PUSH')) {
 	    var securityOtpCheckerRow = new ui_section.Row({
-	      content: _classPrivateMethodGet$b(this, _getOTPChecker, _getOTPChecker2).call(this).render()
+	      content: _classPrivateMethodGet$c(this, _getOTPChecker, _getOTPChecker2).call(this).render(),
+	      separator: _classPrivateMethodGet$c(this, _getOTPChecker, _getOTPChecker2).call(this).isChecked() ? '' : 'bottom',
+	      className: _classPrivateMethodGet$c(this, _getOTPChecker, _getOTPChecker2).call(this).isChecked() ? '' : '--block'
 	    });
 	    new ui_formElements_field.SettingsRow({
 	      row: securityOtpCheckerRow,
 	      parent: section
 	    });
 	    var securityOtpPeriodSelectorRow = new ui_section.Row({
-	      content: _classPrivateMethodGet$b(this, _getOTPPeriodSelector, _getOTPPeriodSelector2).call(this).render(),
-	      isHidden: !_classPrivateMethodGet$b(this, _getOTPChecker, _getOTPChecker2).call(this).isChecked()
+	      content: _classPrivateMethodGet$c(this, _getOTPPeriodSelector, _getOTPPeriodSelector2).call(this).render(),
+	      isHidden: !_classPrivateMethodGet$c(this, _getOTPChecker, _getOTPChecker2).call(this).isChecked()
 	    });
 	    new ui_formElements_field.SettingsRow({
 	      row: securityOtpPeriodSelectorRow,
 	      parent: section
 	    });
-	    var switcherWrapper = main_core.Tag.render(_templateObject$f || (_templateObject$f = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"settings-switcher-wrapper\">\n\t\t\t\t\t<div class=\"settings-security-message-switcher\"/>\n\t\t\t\t</div>\n\t\t\t"])));
+	    var switcherWrapper = main_core.Tag.render(_templateObject$g || (_templateObject$g = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"settings-switcher-wrapper\">\n\t\t\t\t\t<div class=\"settings-security-message-switcher\"/>\n\t\t\t\t</div>\n\t\t\t"])));
 	    new ui_formElements_view.SingleChecker({
 	      switcher: new ui_switcher.Switcher({
 	        node: switcherWrapper.querySelector('.settings-security-message-switcher'),
@@ -3648,28 +3823,30 @@ this.BX = this.BX || {};
 	    });
 	    var securityOtpMessageChatCheckerRow = new ui_section.Row({
 	      content: switcherWrapper,
-	      isHidden: !_classPrivateMethodGet$b(this, _getOTPChecker, _getOTPChecker2).call(this).isChecked()
+	      isHidden: !_classPrivateMethodGet$c(this, _getOTPChecker, _getOTPChecker2).call(this).isChecked()
 	    });
-	    switcherWrapper.append(main_core.Tag.render(_templateObject2$9 || (_templateObject2$9 = babelHelpers.taggedTemplateLiteral(["<span class=\"settings-switcher-title\">", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT')));
+	    switcherWrapper.append(main_core.Tag.render(_templateObject2$a || (_templateObject2$a = babelHelpers.taggedTemplateLiteral(["<span class=\"settings-switcher-title\">", "</span>"])), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT')));
 	    new ui_formElements_field.SettingsRow({
 	      row: securityOtpMessageChatCheckerRow,
 	      parent: section
 	    });
-	    main_core_events.EventEmitter.subscribe(_classPrivateMethodGet$b(this, _getOTPChecker, _getOTPChecker2).call(this).switcher, 'toggled', function () {
-	      if (_this2.getValue('SECURITY_IS_USER_OTP_ACTIVE') !== true && _classPrivateMethodGet$b(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).isChecked()) {
-	        _classPrivateMethodGet$b(_this2, _getOTPPopup, _getOTPPopup2).call(_this2).show();
-	        _classPrivateMethodGet$b(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).cancel();
-	        _classPrivateMethodGet$b(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).switcher.check(false);
+	    main_core_events.EventEmitter.subscribe(_classPrivateMethodGet$c(this, _getOTPChecker, _getOTPChecker2).call(this).switcher, 'toggled', function () {
+	      if (_this2.getValue('SECURITY_IS_USER_OTP_ACTIVE') !== true && _classPrivateMethodGet$c(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).isChecked()) {
+	        _classPrivateMethodGet$c(_this2, _getOTPPopup, _getOTPPopup2).call(_this2).show();
+	        _classPrivateMethodGet$c(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).cancel();
+	        _classPrivateMethodGet$c(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).switcher.check(false);
 	        return;
 	      }
 	      if (_this2.hasValue('SECURITY_OTP_ENABLED') && _this2.getValue('SECURITY_OTP_ENABLED')) {
 	        var _this2$getAnalytic;
-	        (_this2$getAnalytic = _this2.getAnalytic()) === null || _this2$getAnalytic === void 0 ? void 0 : _this2$getAnalytic.addEventToggle2fa(_classPrivateMethodGet$b(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).isChecked());
+	        (_this2$getAnalytic = _this2.getAnalytic()) === null || _this2$getAnalytic === void 0 ? void 0 : _this2$getAnalytic.addEventToggle2fa(_classPrivateMethodGet$c(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).isChecked());
 	      }
-	      if (_classPrivateMethodGet$b(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).isChecked()) {
+	      if (_classPrivateMethodGet$c(_this2, _getOTPChecker, _getOTPChecker2).call(_this2).isChecked()) {
+	        main_core.Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 	        securityOtpPeriodSelectorRow.show();
 	        securityOtpMessageChatCheckerRow.show();
 	      } else {
+	        main_core.Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 	        securityOtpPeriodSelectorRow.hide();
 	        securityOtpMessageChatCheckerRow.hide();
 	      }
@@ -3681,15 +3858,17 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldGet(this, _otpChecker) instanceof ui_formElements_view.Checker) {
 	    return babelHelpers.classPrivateFieldGet(this, _otpChecker);
 	  }
-	  babelHelpers.classPrivateFieldSet(this, _otpChecker, new ui_formElements_view.Checker({
-	    inputName: 'SECURITY_OTP',
-	    checked: this.getValue('SECURITY_OTP'),
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP'),
-	    isEnable: true,
-	    hideSeparator: true,
-	    alignCenter: true,
-	    noMarginBottom: true
-	  }));
+	  if (this.hasValue('fieldSecurityOtp')) {
+	    babelHelpers.classPrivateFieldSet(this, _otpChecker, new ui_formElements_view.Checker({
+	      inputName: this.getValue('fieldSecurityOtp').inputName,
+	      checked: this.getValue('fieldSecurityOtp').checked,
+	      title: this.getValue('fieldSecurityOtp').title,
+	      isEnable: this.getValue('fieldSecurityOtp').isEnable,
+	      hideSeparator: true,
+	      alignCenter: true,
+	      noMarginBottom: true
+	    }));
+	  }
 	  babelHelpers.classPrivateFieldGet(this, _otpChecker).renderLockElement = function () {
 	    return null;
 	  };
@@ -3700,18 +3879,18 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldGet(this, _otpPopup) instanceof main_popup.Popup) {
 	    return babelHelpers.classPrivateFieldGet(this, _otpPopup);
 	  }
-	  var popupDescription = main_core.Tag.render(_templateObject3$6 || (_templateObject3$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__security_popup_info\">\n\t\t\t\t", "\n\t\t\t</div>\t\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE'));
+	  var popupDescription = main_core.Tag.render(_templateObject3$7 || (_templateObject3$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__security_popup_info\">\n\t\t\t\t", "\n\t\t\t</div>\t\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE'));
 	  var popupButton = new BX.UI.Button({
 	    text: main_core.Loc.getMessage('INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON'),
 	    color: BX.UI.Button.Color.PRIMARY,
 	    events: {
 	      click: function click() {
-	        _classPrivateMethodGet$b(_this3, _getOTPPopup, _getOTPPopup2).call(_this3).close();
+	        _classPrivateMethodGet$c(_this3, _getOTPPopup, _getOTPPopup2).call(_this3).close();
 	        BX.SidePanel.Instance.open(_this3.getValue('SECURITY_OTP_PATH'));
 	      }
 	    }
 	  });
-	  var popupContent = main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__security_popup_container\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"ui-btn-container ui-btn-container-center\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\t\t\t\n\t\t\t</div>\n\t\t"])), popupDescription, popupButton.getContainer());
+	  var popupContent = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"intranet-settings__security_popup_container\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"ui-btn-container ui-btn-container-center\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\t\t\t\n\t\t\t</div>\n\t\t"])), popupDescription, popupButton.getContainer());
 	  babelHelpers.classPrivateFieldSet(this, _otpPopup, new main_popup.Popup({
 	    bindElement: babelHelpers.classPrivateFieldGet(this, _otpChecker).getInputNode(),
 	    content: popupContent,
@@ -3740,7 +3919,7 @@ this.BX = this.BX || {};
 	}
 	function _getOTPDescription2() {
 	  return new BX.UI.Alert({
-	    text: _classPrivateMethodGet$b(this, _getOTPDescriptionText, _getOTPDescriptionText2).call(this),
+	    text: _classPrivateMethodGet$c(this, _getOTPDescriptionText, _getOTPDescriptionText2).call(this),
 	    inline: true,
 	    size: BX.UI.Alert.Size.SMALL,
 	    color: BX.UI.Alert.Color.PRIMARY,
@@ -3752,19 +3931,16 @@ this.BX = this.BX || {};
 	}
 	function _buildAccessIPSection2() {
 	  var _this4 = this;
-	  var accessIpSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP'),
-	    titleIconClasses: 'ui-icon-set --attention-i-circle',
-	    isOpen: false,
-	    isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
-	    bannerCode: 'limit_admin_ip'
-	  });
+	  if (!this.hasValue('sectionAccessIp')) {
+	    return;
+	  }
+	  var accessIpSection = new ui_section.Section(this.getValue('sectionAccessIp'));
 	  var section = new ui_formElements_field.SettingsSection({
 	    section: accessIpSection,
 	    parent: this
 	  });
 	  var descriptionRow = new ui_section.Row({
-	    content: _classPrivateMethodGet$b(this, _getIpAccessDescription, _getIpAccessDescription2).call(this).getContainer()
+	    content: _classPrivateMethodGet$c(this, _getIpAccessDescription, _getIpAccessDescription2).call(this).getContainer()
 	  });
 	  new ui_formElements_field.SettingsRow({
 	    row: descriptionRow,
@@ -3780,11 +3956,11 @@ this.BX = this.BX || {};
 	        fieldsCount++;
 	        new ui_formElements_field.SettingsRow({
 	          parent: section,
-	          child: _classPrivateMethodGet$b(this, _getUserSelectorRow, _getUserSelectorRow2).call(this, ipUsersList)
+	          child: _classPrivateMethodGet$c(this, _getUserSelectorRow, _getUserSelectorRow2).call(this, ipUsersList)
 	        });
 	        new ui_formElements_field.SettingsRow({
 	          parent: section,
-	          child: _classPrivateMethodGet$b(this, _getAccessIpRow, _getAccessIpRow2).call(this, ipUsersList)
+	          child: _classPrivateMethodGet$c(this, _getAccessIpRow, _getAccessIpRow2).call(this, ipUsersList)
 	        });
 	      }
 	    } catch (err) {
@@ -3797,29 +3973,29 @@ this.BX = this.BX || {};
 	    fieldsCount++;
 	    new ui_formElements_field.SettingsRow({
 	      parent: section,
-	      child: _classPrivateMethodGet$b(this, _getEmptyUserSelectorRow, _getEmptyUserSelectorRow2).call(this, fieldsCount)
+	      child: _classPrivateMethodGet$c(this, _getEmptyUserSelectorRow, _getEmptyUserSelectorRow2).call(this, fieldsCount)
 	    });
 	    new ui_formElements_field.SettingsRow({
 	      parent: section,
-	      child: _classPrivateMethodGet$b(this, _getEmptyAccessIpRow, _getEmptyAccessIpRow2).call(this, fieldsCount)
+	      child: _classPrivateMethodGet$c(this, _getEmptyAccessIpRow, _getEmptyAccessIpRow2).call(this, fieldsCount)
 	    });
 	  }
 	  var onclickAddField = function onclickAddField() {
 	    if (_this4.getValue('IP_ACCESS_RIGHTS_ENABLED')) {
 	      fieldsCount++;
 	      var emptyUserSelectorRow = new ui_section.Row({
-	        content: _classPrivateMethodGet$b(_this4, _getEmptyUserSelectorRow, _getEmptyUserSelectorRow2).call(_this4, fieldsCount).render()
+	        content: _classPrivateMethodGet$c(_this4, _getEmptyUserSelectorRow, _getEmptyUserSelectorRow2).call(_this4, fieldsCount).render()
 	      });
 	      main_core.Dom.insertBefore(emptyUserSelectorRow.render(), additionalUsersAccessIpButton.parentElement);
 	      var emptyAccessIpRow = new ui_section.Row({
-	        content: _classPrivateMethodGet$b(_this4, _getEmptyAccessIpRow, _getEmptyAccessIpRow2).call(_this4, fieldsCount).render()
+	        content: _classPrivateMethodGet$c(_this4, _getEmptyAccessIpRow, _getEmptyAccessIpRow2).call(_this4, fieldsCount).render()
 	      });
 	      main_core.Dom.insertBefore(emptyAccessIpRow.render(), additionalUsersAccessIpButton.parentElement);
 	    } else {
 	      BX.UI.InfoHelper.show('limit_admin_ip');
 	    }
 	  };
-	  var additionalUsersAccessIpButton = main_core.Tag.render(_templateObject5$2 || (_templateObject5$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-text-right ui-section__mt-16\">\n\t\t\t\t<a class=\"ui-section__link\" href=\"javascript:void(0)\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), onclickAddField, main_core.Loc.getMessage('INTRANET_SETTINGS_ADDITIONAL_USER_ACCESS_IP'));
+	  var additionalUsersAccessIpButton = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-text-right\">\n\t\t\t\t<a class=\"ui-section__link\" href=\"javascript:void(0)\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), onclickAddField, main_core.Loc.getMessage('INTRANET_SETTINGS_ADDITIONAL_USER_ACCESS_IP'));
 	  new ui_formElements_field.SettingsRow({
 	    row: new ui_section.Row({
 	      content: additionalUsersAccessIpButton
@@ -3847,10 +4023,11 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _getEmptyAccessIpRow2(fieldNumber) {
+	  var _this$getValue;
 	  var inputName = "SECURITY_IP_ACCESS_".concat(fieldNumber, "_IP");
 	  var accessIp = new ui_formElements_view.TextInput({
 	    inputName: inputName,
-	    label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP'),
+	    label: (_this$getValue = this.getValue('IP_ACCESS_RIGHTS_ENABLED_LABEL')) !== null && _this$getValue !== void 0 ? _this$getValue : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP'),
 	    isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
 	    helpMessageProvider: this.helpMessageProviderFactory(main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_PRO'))
 	  });
@@ -3859,9 +4036,10 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _getUserSelectorRow2(ipUsersList) {
+	  var _this$getValue2;
 	  var userSelector = new ui_formElements_view.UserSelector({
 	    inputName: "SECURITY_IP_ACCESS_".concat(ipUsersList.fieldNumber, "_USERS[]"),
-	    label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
+	    label: (_this$getValue2 = this.getValue('IP_ACCESS_RIGHTS_ENABLED_LABEL')) !== null && _this$getValue2 !== void 0 ? _this$getValue2 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
 	    values: Object.values(ipUsersList.users),
 	    enableDepartments: true,
 	    encodeValue: function encodeValue(value) {
@@ -3918,13 +4096,10 @@ this.BX = this.BX || {};
 	}
 	function _buildDevicesHistorySection2() {
 	  var _this5 = this;
-	  var devicesHistorySection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY'),
-	    titleIconClasses: 'ui-icon-set --clock-with-arrow',
-	    isOpen: !this.hasValue('SECURITY_OTP_ENABLED') || !this.getValue('SECURITY_OTP_ENABLED'),
-	    isEnable: this.getValue('DEVICE_HISTORY_SETTINGS').is_enable,
-	    bannerCode: 'limit_office_login_history'
-	  });
+	  if (!this.hasValue('sectionHistory')) {
+	    return;
+	  }
+	  var devicesHistorySection = new ui_section.Section(this.getValue('sectionHistory'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: devicesHistorySection,
 	    parent: this
@@ -3948,15 +4123,15 @@ this.BX = this.BX || {};
 	      '#TARIFF#': 'ent250'
 	    }));
 	    var cleanupDaysField = new ui_formElements_view.Selector({
-	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS'),
+	      label: this.getValue('DEVICE_HISTORY_SETTINGS').label,
 	      name: this.getValue('DEVICE_HISTORY_SETTINGS').name,
 	      items: this.getValue('DEVICE_HISTORY_SETTINGS').values,
 	      current: this.getValue('DEVICE_HISTORY_SETTINGS').current,
-	      isEnable: this.getValue('DEVICE_HISTORY_SETTINGS').is_enable,
+	      isEnable: this.getValue('DEVICE_HISTORY_SETTINGS').isEnable,
 	      bannerCode: 'limit_office_login_history',
 	      helpMessageProvider: this.helpMessageProviderFactory(messageNode)
 	    });
-	    if (!this.getValue('DEVICE_HISTORY_SETTINGS').is_enable) {
+	    if (!this.getValue('DEVICE_HISTORY_SETTINGS').isEnable) {
 	      main_core.Event.bind(cleanupDaysField.getInputNode(), 'click', function () {
 	        var _this5$getAnalytic;
 	        (_this5$getAnalytic = _this5.getAnalytic()) === null || _this5$getAnalytic === void 0 ? void 0 : _this5$getAnalytic.addEventOpenHint(_this5.getValue('DEVICE_HISTORY_SETTINGS').name);
@@ -3968,7 +4143,7 @@ this.BX = this.BX || {};
 	    }
 	    SecurityPage.addToSectionHelper(cleanupDaysField, settingsSection);
 	  }
-	  var goToUserListButton = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-text-right ui-section__mt-16\">\n\t\t\t\t<a class=\"ui-section__link\" href=\"/company/\" target=\"_blank\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_USER_LIST_LINK'));
+	  var goToUserListButton = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-text-right\">\n\t\t\t\t<a class=\"ui-section__link\" href=\"/company/\" target=\"_blank\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_USER_LIST_LINK'));
 	  new ui_formElements_field.SettingsRow({
 	    row: new ui_section.Row({
 	      content: goToUserListButton
@@ -3978,13 +4153,10 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 	function _buildEventLogSection2() {
-	  var eventLogSection = new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG'),
-	    titleIconClasses: 'ui-icon-set --list',
-	    isOpen: false,
-	    isEnable: this.hasValue('EVENT_LOG'),
-	    bannerCode: 'limit_office_login_log'
-	  });
+	  if (!this.hasValue('sectionEventLog')) {
+	    return;
+	  }
+	  var eventLogSection = new ui_section.Section(this.getValue('sectionEventLog'));
 	  var settingsSection = new ui_formElements_field.SettingsSection({
 	    section: eventLogSection,
 	    parent: this
@@ -4003,7 +4175,7 @@ this.BX = this.BX || {};
 	    row: descriptionRow,
 	    parent: settingsSection
 	  });
-	  var goToUserListButton = this.hasValue('EVENT_LOG') ? main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-text-right ui-section__mt-16\">\n\t\t\t\t\t<a class=\"ui-section__link\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t"])), this.getValue('EVENT_LOG'), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK')) : main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-text-right ui-section__mt-16\">\n\t\t\t\t\t<a class=\"ui-section__link\" href=\"javascript:void(0)\" onclick=\"BX.UI.InfoHelper.show('limit_office_login_log')\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK'));
+	  var goToUserListButton = this.hasValue('EVENT_LOG') ? main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-text-right\">\n\t\t\t\t\t<a class=\"ui-section__link\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t"])), this.getValue('EVENT_LOG'), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK')) : main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-text-right\">\n\t\t\t\t\t<a class=\"ui-section__link\" href=\"javascript:void(0)\" onclick=\"BX.UI.InfoHelper.show('limit_office_login_log')\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK'));
 	  new ui_formElements_field.SettingsRow({
 	    row: new ui_section.Row({
 	      content: goToUserListButton
@@ -4013,19 +4185,18 @@ this.BX = this.BX || {};
 	  return settingsSection;
 	}
 	function _buildBlackListSection2() {
-	  return new ui_section.Section({
-	    title: main_core.Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST'),
-	    titleIconClasses: 'ui-icon-set --cross-50',
-	    isOpen: false,
-	    canCollapse: false,
-	    singleLink: {
-	      href: '/settings/configs/mail_blacklist.php'
-	    }
-	  });
+	  if (!this.hasValue('sectionBlackList')) {
+	    return;
+	  }
+	  var params = this.getValue('sectionBlackList');
+	  params['singleLink'] = {
+	    href: '/settings/configs/mail_blacklist.php'
+	  };
+	  return new ui_section.Section(params);
 	}
 
-	function _classPrivateFieldInitSpec$e(obj, privateMap, value) { _checkPrivateRedeclaration$j(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$j(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$g(obj, privateMap, value) { _checkPrivateRedeclaration$l(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _type = /*#__PURE__*/new WeakMap();
 	var _extensions = /*#__PURE__*/new WeakMap();
 	var ExternalTemporaryPage = /*#__PURE__*/function (_BaseSettingsPage) {
@@ -4034,11 +4205,11 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, ExternalTemporaryPage);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ExternalTemporaryPage).call(this));
-	    _classPrivateFieldInitSpec$e(babelHelpers.assertThisInitialized(_this), _type, {
+	    _classPrivateFieldInitSpec$g(babelHelpers.assertThisInitialized(_this), _type, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$e(babelHelpers.assertThisInitialized(_this), _extensions, {
+	    _classPrivateFieldInitSpec$g(babelHelpers.assertThisInitialized(_this), _extensions, {
 	      writable: true,
 	      value: []
 	    });
@@ -4098,51 +4269,19 @@ this.BX = this.BX || {};
 	  return ExternalTemporaryPage;
 	}(ui_formElements_field.BaseSettingsPage);
 
-	function _classPrivateFieldInitSpec$f(obj, privateMap, value) { _checkPrivateRedeclaration$k(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$k(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$h(obj, privateMap, value) { _checkPrivateRedeclaration$m(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$m(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _pages = /*#__PURE__*/new WeakMap();
 	var PageManager = /*#__PURE__*/function () {
 	  function PageManager(pages) {
 	    babelHelpers.classCallCheck(this, PageManager);
-	    _classPrivateFieldInitSpec$f(this, _pages, {
+	    _classPrivateFieldInitSpec$h(this, _pages, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _pages, pages);
 	  }
 	  babelHelpers.createClass(PageManager, [{
-	    key: "fetchUnfetchedPages",
-	    value: function fetchUnfetchedPages() {
-	      var pages = [];
-	      babelHelpers.classPrivateFieldGet(this, _pages).forEach(function (page) {
-	        if (!page.hasData()) {
-	          pages.push(page);
-	        }
-	      });
-	      if (pages.length <= 0) {
-	        return Promise.resolve();
-	      }
-	      return new Promise(function (resolve, reject) {
-	        main_core.ajax.runComponentAction('bitrix:intranet.settings', 'getSome', {
-	          mode: 'class',
-	          data: {
-	            types: pages.map(function (page) {
-	              return page.getType();
-	            })
-	          }
-	        }).then(function (response) {
-	          var _response$data;
-	          var data = (_response$data = response.data) !== null && _response$data !== void 0 ? _response$data : {};
-	          pages.forEach(function (page) {
-	            if (data[page.getType()]) {
-	              page.setData(data[page.getType()]);
-	            }
-	          });
-	          resolve();
-	        }, reject);
-	      });
-	    }
-	  }, {
 	    key: "fetchPage",
 	    value: function fetchPage(page) {
 	      var _this = this;
@@ -4187,181 +4326,705 @@ this.BX = this.BX || {};
 	  return PageManager;
 	}();
 
-	function _classPrivateMethodInitSpec$d(obj, privateSet) { _checkPrivateRedeclaration$l(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$g(obj, privateMap, value) { _checkPrivateRedeclaration$l(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _node = /*#__PURE__*/new WeakMap();
-	var _fastSearchValue = /*#__PURE__*/new WeakMap();
-	var _fastSearchDelay = /*#__PURE__*/new WeakMap();
-	var _searchValue = /*#__PURE__*/new WeakMap();
-	var _onInput = /*#__PURE__*/new WeakSet();
-	var _fastCheck = /*#__PURE__*/new WeakSet();
-	var _search = /*#__PURE__*/new WeakSet();
-	var Searcher = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(Searcher, _EventEmitter);
-	  function Searcher(params) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, Searcher);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Searcher).call(this, params));
-	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _search);
-	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _fastCheck);
-	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _onInput);
-	    _classPrivateFieldInitSpec$g(babelHelpers.assertThisInitialized(_this), _node, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$g(babelHelpers.assertThisInitialized(_this), _fastSearchValue, {
-	      writable: true,
-	      value: ''
-	    });
-	    _classPrivateFieldInitSpec$g(babelHelpers.assertThisInitialized(_this), _fastSearchDelay, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$g(babelHelpers.assertThisInitialized(_this), _searchValue, {
-	      writable: true,
-	      value: ''
-	    });
-	    _this.setEventNamespace('BX.Intranet.Settings:Searcher');
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _node, params.node);
-	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _node), 'input', main_core.Runtime.debounce(_classPrivateMethodGet$c(babelHelpers.assertThisInitialized(_this), _onInput, _onInput2), babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _fastSearchDelay), babelHelpers.assertThisInitialized(_this)));
-	    if (document.activeElement === babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _node)) {
-	      _classPrivateMethodGet$c(babelHelpers.assertThisInitialized(_this), _fastCheck, _fastCheck2).call(babelHelpers.assertThisInitialized(_this));
+	var DataSource = /*#__PURE__*/function () {
+	  function DataSource() {
+	    babelHelpers.classCallCheck(this, DataSource);
+	  }
+	  babelHelpers.createClass(DataSource, [{
+	    key: "fetch",
+	    value: function fetch(query) {
+	      return new Promise();
 	    }
-	    return _this;
+	  }]);
+	  return DataSource;
+	}();
+
+	function _classPrivateFieldInitSpec$i(obj, privateMap, value) { _checkPrivateRedeclaration$n(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$n(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _query = /*#__PURE__*/new WeakMap();
+	var _minSymbol = /*#__PURE__*/new WeakMap();
+	var _dataSource = /*#__PURE__*/new WeakMap();
+	var _result = /*#__PURE__*/new WeakMap();
+	var _state = /*#__PURE__*/new WeakMap();
+	var Searcher = /*#__PURE__*/function () {
+	  // ready | wait;
+
+	  function Searcher(dataSource) {
+	    var minSymbol = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 3;
+	    babelHelpers.classCallCheck(this, Searcher);
+	    _classPrivateFieldInitSpec$i(this, _query, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$i(this, _minSymbol, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$i(this, _dataSource, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$i(this, _result, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$i(this, _state, {
+	      writable: true,
+	      value: void 0
+	    });
+	    if (!(dataSource instanceof DataSource)) {
+	      throw new Error('Unexpected type, expect: DataSource');
+	    }
+	    babelHelpers.classPrivateFieldSet(this, _dataSource, dataSource);
+	    babelHelpers.classPrivateFieldSet(this, _minSymbol, minSymbol);
+	    babelHelpers.classPrivateFieldSet(this, _result, []);
+	    babelHelpers.classPrivateFieldSet(this, _state, 'ready');
 	  }
 	  babelHelpers.createClass(Searcher, [{
-	    key: "getValue",
-	    value: function getValue() {
-	      return babelHelpers.classPrivateFieldGet(this, _node).value;
+	    key: "find",
+	    value: function find(query) {
+	      if (query.length < babelHelpers.classPrivateFieldGet(this, _minSymbol)) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _query, query);
+	      this.changeState(Searcher.STATE_WAIT);
+	      babelHelpers.classPrivateFieldGet(this, _dataSource).fetch(babelHelpers.classPrivateFieldGet(this, _query)).then(this.resolve.bind(this), this.reject.bind(this));
+	    }
+	  }, {
+	    key: "changeState",
+	    value: function changeState(state) {
+	      if (babelHelpers.classPrivateFieldGet(this, _state) === state) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _state, state);
+	      main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:searchChangeState', {
+	        state: babelHelpers.classPrivateFieldGet(this, _state)
+	      });
+	    }
+	  }, {
+	    key: "getMinSymbol",
+	    value: function getMinSymbol() {
+	      return babelHelpers.classPrivateFieldGet(this, _minSymbol);
+	    }
+	  }, {
+	    key: "resolve",
+	    value: function resolve(response) {
+	      babelHelpers.classPrivateFieldSet(this, _result, response.data);
+	      this.changeState(babelHelpers.classPrivateFieldGet(this, _result).length > 0 ? Searcher.STATE_READY : Searcher.STATE_NOT_FOUND);
+	    }
+	  }, {
+	    key: "reject",
+	    value: function reject(response) {
+	      babelHelpers.classPrivateFieldSet(this, _result, []);
+	      this.changeState(Searcher.STATE_READY);
+	    }
+	  }, {
+	    key: "getResult",
+	    value: function getResult() {
+	      return babelHelpers.classPrivateFieldGet(this, _result);
+	    }
+	  }, {
+	    key: "getOthers",
+	    value: function getOthers() {
+	      return [{
+	        link: '/stream/',
+	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_TOOL_TEAMWORK')
+	      }, {
+	        link: '/tasks/config/permissions/',
+	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_TOOL_TASKS')
+	      }, {
+	        link: '/crm/configs/',
+	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_TOOL_CRM')
+	      }, {
+	        link: '/shop/documents/?inventoryManagementSource=inventory',
+	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_TOOL_WAREHOUSE')
+	      }, {
+	        link: '/sites/',
+	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_TOOL_SITES')
+	      }, {
+	        link: '/company/vis_structure.php',
+	        title: main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_TOOL_COMPANY')
+	      }];
 	    }
 	  }]);
 	  return Searcher;
-	}(main_core_events.EventEmitter);
-	function _onInput2() {
-	  _classPrivateMethodGet$c(this, _fastCheck, _fastCheck2).call(this);
-	}
-	function _fastCheck2() {
-	  var currentValue = String(babelHelpers.classPrivateFieldGet(this, _node).value).trim();
-	  if (babelHelpers.classPrivateFieldGet(this, _fastSearchValue) !== currentValue) {
-	    var previousValue = babelHelpers.classPrivateFieldGet(this, _fastSearchValue);
-	    var eventName;
-	    if (currentValue.length > 1) {
-	      babelHelpers.classPrivateFieldSet(this, _fastSearchValue, currentValue);
-	      eventName = 'fastSearch';
-	    } else {
-	      babelHelpers.classPrivateFieldSet(this, _fastSearchValue, '');
-	      eventName = 'clearSearch';
+	}();
+	babelHelpers.defineProperty(Searcher, "STATE_READY", 'ready');
+	babelHelpers.defineProperty(Searcher, "STATE_WAIT", 'wait');
+	babelHelpers.defineProperty(Searcher, "STATE_NOT_FOUND", 'not_found');
+
+	var _templateObject$h, _templateObject2$b, _templateObject3$8, _templateObject4$2, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15;
+	function _classPrivateFieldInitSpec$j(obj, privateMap, value) { _checkPrivateRedeclaration$o(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$o(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _searcher = /*#__PURE__*/new WeakMap();
+	var _inputNode = /*#__PURE__*/new WeakMap();
+	var _iconContainer = /*#__PURE__*/new WeakMap();
+	var _popup = /*#__PURE__*/new WeakMap();
+	var _timeoutId = /*#__PURE__*/new WeakMap();
+	var _timeout = /*#__PURE__*/new WeakMap();
+	var _nav = /*#__PURE__*/new WeakMap();
+	var Renderer = /*#__PURE__*/function () {
+	  function Renderer(options) {
+	    var _this = this;
+	    babelHelpers.classCallCheck(this, Renderer);
+	    _classPrivateFieldInitSpec$j(this, _searcher, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$j(this, _inputNode, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$j(this, _iconContainer, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$j(this, _popup, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$j(this, _timeoutId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$j(this, _timeout, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$j(this, _nav, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _searcher, options.searcher);
+	    babelHelpers.classPrivateFieldSet(this, _inputNode, options.inputNode);
+	    babelHelpers.classPrivateFieldSet(this, _iconContainer, options.iconContainer);
+	    babelHelpers.classPrivateFieldSet(this, _timeout, options.timeout);
+	    babelHelpers.classPrivateFieldSet(this, _nav, new SearchNavigation());
+	    babelHelpers.classPrivateFieldSet(this, _popup, new main_popup.Popup('settings-search-popup', babelHelpers.classPrivateFieldGet(this, _inputNode), {
+	      closeByEsc: true,
+	      angle: false,
+	      overlay: false,
+	      width: 332,
+	      //470,//this.#inputNode.offsetWidth,
+	      offsetTop: 4,
+	      background: '#fff',
+	      contentBackground: '#fff',
+	      contentPadding: 0,
+	      autoHide: true,
+	      borderRadius: 6,
+	      autoHideHandler: function autoHideHandler(event) {
+	        return event.target !== babelHelpers.classPrivateFieldGet(_this, _inputNode);
+	      }
+	    }));
+	    babelHelpers.classPrivateFieldGet(this, _popup).setContent(this.renderContent());
+	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'focus', function () {
+	      if (!babelHelpers.classPrivateFieldGet(_this, _popup).isShown()) {
+	        babelHelpers.classPrivateFieldGet(_this, _popup).show();
+	      }
+	    });
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Settings:searchChangeState', function (event) {
+	      var state = event.data.state;
+	      babelHelpers.classPrivateFieldGet(_this, _nav).clean();
+	      babelHelpers.classPrivateFieldGet(_this, _popup).setContent(_this.renderContent(state));
+	    });
+	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _iconContainer).querySelector('#intranet-settings-icon-delete'), 'click', function () {
+	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(_this, _iconContainer), 'main-ui-show');
+	      babelHelpers.classPrivateFieldGet(_this, _inputNode).value = '';
+	    });
+	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _inputNode), 'keyup', function (event) {
+	      if (event.keyCode === 37 || event.keyCode === 39) {
+	        return;
+	      }
+	      if (event.keyCode === 13)
+	        //enter
+	        {
+	          babelHelpers.classPrivateFieldGet(_this, _nav).current().dispatchEvent(new MouseEvent('click'));
+	          babelHelpers.classPrivateFieldGet(_this, _nav).unHighlightAll();
+	          return;
+	        }
+	      if (event.keyCode === 38)
+	        //up
+	        {
+	          babelHelpers.classPrivateFieldGet(_this, _nav).prev().highlight();
+	          if (!main_core.Type.isNil(babelHelpers.classPrivateFieldGet(_this, _nav).current())) {
+	            _this.updateScroll(babelHelpers.classPrivateFieldGet(_this, _nav).current());
+	          }
+	          return;
+	        }
+	      if (event.keyCode === 40)
+	        //down
+	        {
+	          babelHelpers.classPrivateFieldGet(_this, _nav).next().highlight();
+	          if (!main_core.Type.isNil(babelHelpers.classPrivateFieldGet(_this, _nav).current())) {
+	            _this.updateScroll(babelHelpers.classPrivateFieldGet(_this, _nav).current());
+	          }
+	          return;
+	        }
+	      if (_this.getQuery().length > 0) {
+	        main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(_this, _iconContainer), 'main-ui-show');
+	      } else {
+	        main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(_this, _iconContainer), 'main-ui-show');
+	      }
+	      if (!babelHelpers.classPrivateFieldGet(_this, _popup).isShown() && _this.getQuery().length > 0) {
+	        babelHelpers.classPrivateFieldGet(_this, _popup).show();
+	      }
+	      _this.find();
+	    });
+	  }
+	  babelHelpers.createClass(Renderer, [{
+	    key: "updateScroll",
+	    value: function updateScroll(element) {
+	      var rect = element.getBoundingClientRect();
+	      var container = babelHelpers.classPrivateFieldGet(this, _popup).getContentContainer().firstElementChild;
+	      var relTop = rect.top - container.getBoundingClientRect().top;
+	      var relBot = rect.bottom - container.getBoundingClientRect().bottom;
+	      var padding = 10;
+	      if (relTop < 0 && relBot <= 0)
+	        //invisible top
+	        {
+	          container.scrollTo(0, relTop + container.scrollTop - padding);
+	        } else if (relTop >= 0 && relBot > 0)
+	        //invisible bottom
+	        {
+	          container.scrollTo(0, relBot + container.scrollTop + padding);
+	        }
 	    }
-	    this.emit(eventName, {
-	      previous: previousValue,
-	      current: babelHelpers.classPrivateFieldGet(this, _fastSearchValue)
+	  }, {
+	    key: "renderWait",
+	    value: function renderWait() {
+	      var loaderContainer = main_core.Tag.render(_templateObject$h || (_templateObject$h = babelHelpers.taggedTemplateLiteral(["<span class=\"title-search-waiter-img\"></span>"])));
+	      var loader = new main_loader.Loader({
+	        target: loaderContainer,
+	        size: 20,
+	        mode: 'inline'
+	      });
+	      loader.show();
+	      return main_core.Tag.render(_templateObject2$b || (_templateObject2$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"title-search-waiter\">\n\t\t\t\t", "\n\t\t\t\t<span class=\"title-search-waiter-text\">", "</span>\n\t\t\t</div>\n\t\t"])), loaderContainer, main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_SEARCHING'));
+	    }
+	  }, {
+	    key: "find",
+	    value: function find() {
+	      var _this2 = this;
+	      clearTimeout(babelHelpers.classPrivateFieldGet(this, _timeoutId));
+	      babelHelpers.classPrivateFieldSet(this, _timeoutId, setTimeout(function () {
+	        babelHelpers.classPrivateFieldGet(_this2, _searcher).find(_this2.getQuery());
+	      }, babelHelpers.classPrivateFieldGet(this, _timeout)));
+	    }
+	  }, {
+	    key: "getQuery",
+	    value: function getQuery() {
+	      return BX.util.trim(babelHelpers.classPrivateFieldGet(this, _inputNode).value);
+	    }
+	  }, {
+	    key: "createLinkOption",
+	    value: function createLinkOption(option) {
+	      var _this3 = this;
+	      var link = main_core.Dom.create('a', {
+	        props: {
+	          className: 'search-title-top-item-link'
+	        },
+	        events: {
+	          mouseenter: function mouseenter(event) {
+	            babelHelpers.classPrivateFieldGet(_this3, _nav).unHighlightAll();
+	            babelHelpers.classPrivateFieldGet(_this3, _nav).cursorTo(event.target);
+	            SearchNavigation.highlight(event.target);
+	          },
+	          mouseleave: function mouseleave(event) {
+	            SearchNavigation.unHighlight(event.target);
+	          }
+	        },
+	        attrs: {
+	          title: option.title,
+	          href: main_core.Type.isStringFilled(option.url) ? option.url : '#',
+	          target: '_blank'
+	        },
+	        children: [main_core.Tag.render(_templateObject3$8 || (_templateObject3$8 = babelHelpers.taggedTemplateLiteral(["<span class=\"search-title-top-item-text\"><span>", "</span></span>"])), option.title)]
+	      });
+	      babelHelpers.classPrivateFieldGet(this, _nav).add(link);
+	      return link;
+	    }
+	  }, {
+	    key: "createBtnOption",
+	    value: function createBtnOption(page, option) {
+	      var _this4 = this;
+	      var link = main_core.Dom.create('a', {
+	        props: {
+	          className: 'search-title-top-item-link'
+	        },
+	        events: {
+	          click: function click(event) {
+	            main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.SettingsNavigation:onMove', {
+	              page: page,
+	              fieldName: option.code
+	            });
+	            babelHelpers.classPrivateFieldGet(_this4, _inputNode).blur();
+	            babelHelpers.classPrivateFieldGet(_this4, _popup).close();
+	            event.preventDefault();
+	          },
+	          mouseenter: function mouseenter(event) {
+	            babelHelpers.classPrivateFieldGet(_this4, _nav).unHighlightAll();
+	            babelHelpers.classPrivateFieldGet(_this4, _nav).cursorTo(event.target);
+	            SearchNavigation.highlight(event.target);
+	          },
+	          mouseleave: function mouseleave(event) {
+	            SearchNavigation.unHighlight(event.target);
+	          }
+	        },
+	        attrs: {
+	          title: option.title,
+	          href: "#"
+	        },
+	        children: [main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"search-title-top-item-text\"><span>", "</span></span>"])), option.title)]
+	      });
+	      babelHelpers.classPrivateFieldGet(this, _nav).add(link);
+	      return main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"search-title-top-item search-title-top-item-js\">", "</div>"])), link);
+	    }
+	  }, {
+	    key: "renderOption",
+	    value: function renderOption(page, option) {
+	      var link;
+	      if (page === Renderer.EXTERNAL_LINK) {
+	        link = this.createLinkOption(option);
+	      } else {
+	        link = this.createBtnOption(page, option);
+	      }
+	      return main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"search-title-top-item search-title-top-item-js\">", "</div>"])), link);
+	    }
+	  }, {
+	    key: "renderGroup",
+	    value: function renderGroup(group) {
+	      var _this5 = this;
+	      var optionsContainer = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"search-title-top-list search-title-top-list-js\"></div>"])));
+	      group.options.forEach(function (option) {
+	        main_core.Dom.append(_this5.renderOption(group.page, option), optionsContainer);
+	      });
+	      return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"search-title-top-block search-title-top-block-sonetgroups\">\n\t\t\t\t<div class=\"search-title-top-subtitle\">\n\t\t\t\t\t<div class=\"search-title-top-subtitle-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"search-title-top-list-wrap\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), group.title, optionsContainer);
+	    }
+	  }, {
+	    key: "renderContent",
+	    value: function renderContent() {
+	      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'ready';
+	      var optionsContainer = main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"search-title-top-result\"></div>"])));
+	      switch (state) {
+	        case 'ready':
+	          main_core.Dom.append(this.renderSearchResult(babelHelpers.classPrivateFieldGet(this, _searcher).getResult()), optionsContainer);
+	          break;
+	        case 'wait':
+	          main_core.Dom.append(this.renderWait(), optionsContainer);
+	          break;
+	        case 'not_found':
+	          main_core.Dom.append(this.renderNotFound(), optionsContainer);
+	          break;
+	      }
+	      main_core.Dom.append(this.renderOthers(babelHelpers.classPrivateFieldGet(this, _searcher).getOthers()), optionsContainer);
+	      return optionsContainer;
+	    }
+	  }, {
+	    key: "renderNotFound",
+	    value: function renderNotFound() {
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"title-search-waiter\">\n\t\t\t\t<span class=\"title-search-waiter-text\">", "</span>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_SEARCH_NOT_FOUND'));
+	    }
+	  }, {
+	    key: "renderSearchResult",
+	    value: function renderSearchResult(result) {
+	      var _this6 = this;
+	      var container = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<div class=\"search-title-content-result\"></div>"])));
+	      result.forEach(function (item) {
+	        main_core.Dom.append(_this6.renderGroup(item), container);
+	      });
+	      return container;
+	    }
+	  }, {
+	    key: "renderOthers",
+	    value: function renderOthers(links) {
+	      var _this7 = this;
+	      var wraper = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["<div class=\"search-title-top-list search-title-top-list-js\"></div>"])));
+	      var other = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"search-title-top-block search-title-top-block-tools\">\n\t\t\t<div class=\"search-title-top-subtitle\">\n\t\t\t\t<div class=\"search-title-top-subtitle-text\">", "</div>\n\t\t\t</div>\n\t\t\t<div class=\"search-title-top-list-height-wrap\">\n\t\t\t\t\t<div class=\"search-title-top-list-wrap\">", "</div>\n\t\t\t\t</div>\n\t\t</div>\n\t\t"])), main_core.Loc.getMessage('INTRANET_SETTINGS_TITLE_SEARCH_IN'), wraper);
+	      links.forEach(function (link) {
+	        main_core.Dom.append(_this7.renderOtherLink(link), wraper);
+	      });
+	      return other;
+	    }
+	  }, {
+	    key: "renderOtherLink",
+	    value: function renderOtherLink(link) {
+	      var _this8 = this;
+	      var linkTag = main_core.Dom.create('a', {
+	        props: {
+	          className: 'search-title-top-item-link'
+	        },
+	        events: {
+	          mouseenter: function mouseenter(event) {
+	            babelHelpers.classPrivateFieldGet(_this8, _nav).unHighlightAll();
+	            babelHelpers.classPrivateFieldGet(_this8, _nav).cursorTo(event.target);
+	            SearchNavigation.highlight(event.target);
+	          },
+	          mouseleave: function mouseleave(event) {
+	            SearchNavigation.unHighlight(event.target);
+	          }
+	        },
+	        attrs: {
+	          title: link.title,
+	          href: link.link,
+	          target: 'blank_'
+	        },
+	        children: [main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<span class=\"search-title-top-item-text\"><span>", "</span></span>"])), link.title)]
+	      });
+	      babelHelpers.classPrivateFieldGet(this, _nav).add(linkTag);
+	      return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"search-title-top-item search-title-top-item-js\">\n\t\t\t", "\n\t\t</div>"])), linkTag);
+	    }
+	  }]);
+	  return Renderer;
+	}();
+	babelHelpers.defineProperty(Renderer, "EXTERNAL_LINK", 'EXTERNAL_LINKS');
+	var _index = /*#__PURE__*/new WeakMap();
+	var _elementList = /*#__PURE__*/new WeakMap();
+	var SearchNavigation = /*#__PURE__*/function () {
+	  function SearchNavigation() {
+	    var nodeList = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	    babelHelpers.classCallCheck(this, SearchNavigation);
+	    _classPrivateFieldInitSpec$j(this, _index, {
+	      writable: true,
+	      value: null
 	    });
-	    _classPrivateMethodGet$c(this, _search, _search2).call(this);
-	  }
-	}
-	function _search2() {
-	  if (babelHelpers.classPrivateFieldGet(this, _searchValue) !== babelHelpers.classPrivateFieldGet(this, _fastSearchValue) && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _fastSearchValue)) && babelHelpers.classPrivateFieldGet(this, _fastSearchValue).length > 1) {
-	    var previousValue = babelHelpers.classPrivateFieldGet(this, _searchValue);
-	    babelHelpers.classPrivateFieldSet(this, _searchValue, babelHelpers.classPrivateFieldGet(this, _fastSearchValue));
-	    this.emit('search', {
-	      previous: previousValue,
-	      current: babelHelpers.classPrivateFieldGet(this, _searchValue)
+	    _classPrivateFieldInitSpec$j(this, _elementList, {
+	      writable: true,
+	      value: void 0
 	    });
+	    babelHelpers.classPrivateFieldSet(this, _elementList, nodeList);
 	  }
-	}
+	  babelHelpers.createClass(SearchNavigation, [{
+	    key: "add",
+	    value: function add(element) {
+	      babelHelpers.classPrivateFieldGet(this, _elementList).push(element);
+	    }
+	  }, {
+	    key: "clean",
+	    value: function clean() {
+	      babelHelpers.classPrivateFieldSet(this, _index, null);
+	      babelHelpers.classPrivateFieldSet(this, _elementList, []);
+	    }
+	  }, {
+	    key: "next",
+	    value: function next() {
+	      if (main_core.Type.isNil(babelHelpers.classPrivateFieldGet(this, _index))) {
+	        babelHelpers.classPrivateFieldSet(this, _index, 0);
+	        return this;
+	      }
+	      if (babelHelpers.classPrivateFieldGet(this, _elementList).length - 1 > babelHelpers.classPrivateFieldGet(this, _index)) {
+	        var _this$index, _this$index2;
+	        babelHelpers.classPrivateFieldSet(this, _index, (_this$index = babelHelpers.classPrivateFieldGet(this, _index), _this$index2 = _this$index++, _this$index)), _this$index2;
+	      }
+	      return this;
+	    }
+	  }, {
+	    key: "current",
+	    value: function current() {
+	      if (main_core.Type.isNil(babelHelpers.classPrivateFieldGet(this, _index))) {
+	        return null;
+	      }
+	      return babelHelpers.classPrivateFieldGet(this, _elementList)[babelHelpers.classPrivateFieldGet(this, _index)];
+	    }
+	  }, {
+	    key: "prev",
+	    value: function prev() {
+	      if (main_core.Type.isNil(babelHelpers.classPrivateFieldGet(this, _index))) {
+	        babelHelpers.classPrivateFieldSet(this, _index, babelHelpers.classPrivateFieldGet(this, _elementList).length - 1);
+	        return this;
+	      }
+	      if (babelHelpers.classPrivateFieldGet(this, _index) > 0) {
+	        babelHelpers.classPrivateFieldSet(this, _index, babelHelpers.classPrivateFieldGet(this, _index) - 1);
+	      }
+	      return this;
+	    }
+	  }, {
+	    key: "highlight",
+	    value: function highlight() {
+	      this.unHighlightAll();
+	      if (!main_core.Dom.hasClass(this.current(), 'active')) {
+	        main_core.Dom.addClass(this.current(), 'active');
+	      }
+	      return this;
+	    }
+	  }, {
+	    key: "unHighlight",
+	    value: function unHighlight() {
+	      if (main_core.Dom.hasClass(this.current(), 'active')) {
+	        main_core.Dom.removeClass(this.current(), 'active');
+	      }
+	      return this;
+	    }
+	  }, {
+	    key: "cursorTo",
+	    value: function cursorTo(element) {
+	      var _this9 = this;
+	      babelHelpers.classPrivateFieldGet(this, _elementList).forEach(function (item, index) {
+	        if (item === element) {
+	          babelHelpers.classPrivateFieldSet(_this9, _index, index);
+	          return;
+	        }
+	      });
+	    }
+	  }, {
+	    key: "unHighlightAll",
+	    value: function unHighlightAll() {
+	      babelHelpers.classPrivateFieldGet(this, _elementList).forEach(function (item) {
+	        SearchNavigation.unHighlight(item);
+	      });
+	    }
+	  }], [{
+	    key: "highlight",
+	    value: function highlight(element) {
+	      element.classList.add('active');
+	    }
+	  }, {
+	    key: "unHighlight",
+	    value: function unHighlight(element) {
+	      element.classList.remove('active');
+	    }
+	  }]);
+	  return SearchNavigation;
+	}();
+
+	var ServerDataSource = /*#__PURE__*/function (_DataSource) {
+	  babelHelpers.inherits(ServerDataSource, _DataSource);
+	  function ServerDataSource() {
+	    babelHelpers.classCallCheck(this, ServerDataSource);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ServerDataSource).call(this));
+	  }
+	  babelHelpers.createClass(ServerDataSource, [{
+	    key: "fetch",
+	    value: function fetch(query) {
+	      return main_core.ajax.runComponentAction('bitrix:intranet.settings', 'search', {
+	        mode: 'class',
+	        data: {
+	          query: query
+	        }
+	      });
+	    }
+	  }]);
+	  return ServerDataSource;
+	}(DataSource);
+
+	function _classPrivateFieldInitSpec$k(obj, privateMap, value) { _checkPrivateRedeclaration$p(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$p(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _permission = /*#__PURE__*/new WeakMap();
+	var Permission = /*#__PURE__*/function () {
+	  function Permission() {
+	    var permission = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+	    babelHelpers.classCallCheck(this, Permission);
+	    _classPrivateFieldInitSpec$k(this, _permission, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _permission, permission);
+	  }
+	  babelHelpers.createClass(Permission, [{
+	    key: "canRead",
+	    value: function canRead() {
+	      return !!(babelHelpers.classPrivateFieldGet(this, _permission) & Permission.READ);
+	    }
+	  }, {
+	    key: "canEdit",
+	    value: function canEdit() {
+	      return !!(babelHelpers.classPrivateFieldGet(this, _permission) & Permission.EDIT);
+	    }
+	  }, {
+	    key: "getPermission",
+	    value: function getPermission() {
+	      return babelHelpers.classPrivateFieldGet(this, _permission);
+	    }
+	  }]);
+	  return Permission;
+	}();
+	babelHelpers.defineProperty(Permission, "READ", 1 << 0);
+	babelHelpers.defineProperty(Permission, "EDIT", 1 << 2);
 
 	function _createForOfIteratorHelper$5(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$5(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$5(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$5(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$5(o, minLen); }
 	function _arrayLikeToArray$5(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateMethodInitSpec$e(obj, privateSet) { _checkPrivateRedeclaration$m(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$h(obj, privateMap, value) { _checkPrivateRedeclaration$m(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$m(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodInitSpec$d(obj, privateSet) { _checkPrivateRedeclaration$q(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$l(obj, privateMap, value) { _checkPrivateRedeclaration$q(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$q(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$d(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _basePage = /*#__PURE__*/new WeakMap();
-	var _currentPage = /*#__PURE__*/new WeakMap();
 	var _menuNode = /*#__PURE__*/new WeakMap();
 	var _settingsNode = /*#__PURE__*/new WeakMap();
 	var _contentNode = /*#__PURE__*/new WeakMap();
-	var _searcher = /*#__PURE__*/new WeakMap();
 	var _pageManager = /*#__PURE__*/new WeakMap();
 	var _cancelMessageBox = /*#__PURE__*/new WeakMap();
 	var _analytic = /*#__PURE__*/new WeakMap();
+	var _navigator = /*#__PURE__*/new WeakMap();
+	var _permission$1 = /*#__PURE__*/new WeakMap();
+	var _pagesPermission = /*#__PURE__*/new WeakMap();
 	var _getPageManager = /*#__PURE__*/new WeakSet();
 	var _onEventFetchPage = /*#__PURE__*/new WeakSet();
-	var _updatePageTypeToAddressBar = /*#__PURE__*/new WeakSet();
 	var _onSliderCloseHandler = /*#__PURE__*/new WeakSet();
 	var _reload = /*#__PURE__*/new WeakSet();
 	var _onEventChangeData = /*#__PURE__*/new WeakSet();
 	var _onClickSaveBtn = /*#__PURE__*/new WeakSet();
 	var _successSaveHandler = /*#__PURE__*/new WeakSet();
 	var _failSaveHandler = /*#__PURE__*/new WeakSet();
-	var _activeMenuItem = /*#__PURE__*/new WeakSet();
 	var _prepareErrorCollection = /*#__PURE__*/new WeakSet();
 	var _onClickCancelBtn = /*#__PURE__*/new WeakSet();
 	var _hideWaitIcon = /*#__PURE__*/new WeakSet();
 	var _selectPageForError = /*#__PURE__*/new WeakSet();
-	var _onClickSearchInput = /*#__PURE__*/new WeakSet();
-	var _markFoundText = /*#__PURE__*/new WeakSet();
-	var _clearFoundText = /*#__PURE__*/new WeakSet();
 	var Settings = /*#__PURE__*/function (_BaseSettingsElement) {
 	  babelHelpers.inherits(Settings, _BaseSettingsElement);
 	  function Settings(params) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Settings);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Settings).call(this, params));
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _clearFoundText);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _markFoundText);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _onClickSearchInput);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _selectPageForError);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _hideWaitIcon);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _onClickCancelBtn);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _prepareErrorCollection);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _activeMenuItem);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _failSaveHandler);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _successSaveHandler);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _onClickSaveBtn);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _onEventChangeData);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _reload);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _onSliderCloseHandler);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _updatePageTypeToAddressBar);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _onEventFetchPage);
-	    _classPrivateMethodInitSpec$e(babelHelpers.assertThisInitialized(_this), _getPageManager);
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _basePage, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _currentPage, {
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _selectPageForError);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _hideWaitIcon);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _onClickCancelBtn);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _prepareErrorCollection);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _failSaveHandler);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _successSaveHandler);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _onClickSaveBtn);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _onEventChangeData);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _reload);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _onSliderCloseHandler);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _onEventFetchPage);
+	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _getPageManager);
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _basePage, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "isChanged", false);
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _menuNode, {
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _menuNode, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _settingsNode, {
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _settingsNode, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _contentNode, {
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _contentNode, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _searcher, {
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _pageManager, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _pageManager, {
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _cancelMessageBox, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _cancelMessageBox, {
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _analytic, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$h(babelHelpers.assertThisInitialized(_this), _analytic, {
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _navigator, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _permission$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$l(babelHelpers.assertThisInitialized(_this), _pagesPermission, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -4386,16 +5049,8 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _settingsNode, main_core.Type.isDomNode(params.settingsNode) ? params.settingsNode : null);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _contentNode, main_core.Type.isDomNode(params.contentNode) ? params.contentNode : null);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _basePage, main_core.Type.isString(params.basePage) ? params.basePage : '');
-	    if (babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _menuNode)) {
-	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _menuNode).querySelectorAll('li.ui-sidepanel-menu-item a').forEach(function (item) {
-	        item.addEventListener('click', function (event) {
-	          _this.show(item.dataset.type);
-	        });
-	      });
-	    }
-	    if (params.searchNode) {
-	      main_core.Event.bind(params.searchNode, 'focus', _classPrivateMethodGet$d(babelHelpers.assertThisInitialized(_this), _onClickSearchInput, _onClickSearchInput2).bind(babelHelpers.assertThisInitialized(_this), params.searchNode));
-	    }
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _permission$1, params.permission instanceof Permission ? params.permission : new Permission());
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _pagesPermission, params.pagesPermission);
 	    if (babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _settingsNode)) {
 	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _settingsNode).querySelector('.ui-button-panel input[name="cancel"]').addEventListener('click', _classPrivateMethodGet$d(babelHelpers.assertThisInitialized(_this), _onClickCancelBtn, _onClickCancelBtn2));
 	    }
@@ -4411,63 +5066,86 @@ this.BX = this.BX || {};
 	      toolsMenuItem.hideSubmenu();
 	      toolsMenuItem.setDefaultToggleButtonName();
 	    }
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _navigator, new Navigation(babelHelpers.assertThisInitialized(_this)));
+	    if (babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _menuNode)) {
+	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _menuNode).querySelectorAll('li.ui-sidepanel-menu-item a.ui-sidepanel-menu-link').forEach(function (item) {
+	        var helpPopup = new ui_section.HelpMessage(item.dataset.type + '_help-msg', item, main_core.Loc.getMessage('INTRANET_SETTINGS_PERMISSION_MSG'));
+	        helpPopup.getPopup().setWidth(275);
+	        var page = _this.getNavigator().getPageByType(item.dataset.type);
+	        item.addEventListener('click', function (event) {
+	          var _page$getPermission;
+	          if (page !== null && page !== void 0 && (_page$getPermission = page.getPermission()) !== null && _page$getPermission !== void 0 && _page$getPermission.canRead()) {
+	            _this.show(item.dataset.type);
+	          } else {
+	            helpPopup.show();
+	          }
+	        });
+	      });
+	    }
 	    return _this;
 	  }
 	  babelHelpers.createClass(Settings, [{
 	    key: "registerPage",
 	    value: function registerPage(page) {
+	      var _babelHelpers$classPr;
 	      page.setParentElement(this);
+	      page.setPermission(new Permission((_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _pagesPermission)[page.getType()]) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null));
 	      page.subscribe('change', _classPrivateMethodGet$d(this, _onEventChangeData, _onEventChangeData2).bind(this)).subscribe('fetch', _classPrivateMethodGet$d(this, _onEventFetchPage, _onEventFetchPage2).bind(this));
 	      page.setAnalytic(babelHelpers.classPrivateFieldGet(this, _analytic));
 	      return page;
 	    }
 	  }, {
-	    key: "getPageByType",
-	    value: function getPageByType(type) {
-	      return this.getChildrenElements().find(function (page) {
-	        return page.getType() === type;
-	      });
+	    key: "getCurrentPage",
+	    value: function getCurrentPage() {
+	      return this.getNavigator().getCurrentPage();
+	    }
+	  }, {
+	    key: "getNavigator",
+	    value: function getNavigator() {
+	      return babelHelpers.classPrivateFieldGet(this, _navigator);
 	    }
 	  }, {
 	    key: "show",
-	    value: function show(type) {
-	      var _babelHelpers$classPr;
+	    value: function show(type, option) {
+	      var _this$getNavigator$ge,
+	        _this2 = this;
 	      if (!main_core.Type.isDomNode(babelHelpers.classPrivateFieldGet(this, _contentNode))) {
 	        console.log('Not found settings container');
 	        return;
 	      }
-	      var nextPage = this.getPageByType(type);
-	      if (!(nextPage instanceof ui_formElements_field.BaseSettingsPage)) {
-	        console.log('Not found "' + type + '" page');
+	      if (!babelHelpers.classPrivateFieldGet(this, _permission$1).canRead()) {
 	        return;
 	      }
-	      if (nextPage === babelHelpers.classPrivateFieldGet(this, _currentPage)) {
+	      var nextPage = this.getNavigator().getPageByType(type);
+	      if (this.getCurrentPage() === nextPage) {
 	        return;
 	      }
-	      main_core.Dom.hide((_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _currentPage)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.getPage());
-	      if (main_core.Type.isNil(nextPage.getPage().parentNode)) {
-	        main_core.Dom.append(nextPage.getPage(), babelHelpers.classPrivateFieldGet(this, _contentNode));
+	      this.getNavigator().changePage(nextPage);
+	      main_core.Dom.hide((_this$getNavigator$ge = this.getNavigator().getPrevPage()) === null || _this$getNavigator$ge === void 0 ? void 0 : _this$getNavigator$ge.getPage());
+	      if (main_core.Type.isNil(this.getNavigator().getCurrentPage().getPage().parentNode)) {
+	        main_core.Dom.append(this.getNavigator().getCurrentPage().getPage(), babelHelpers.classPrivateFieldGet(this, _contentNode));
 	      } else {
-	        main_core.Dom.show(nextPage.getPage());
+	        main_core.Dom.show(this.getNavigator().getCurrentPage().getPage());
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _currentPage, nextPage);
+	      this.activateMenuItem(type);
 	      babelHelpers.classPrivateFieldGet(this, _analytic).addEventChangePage(type);
-	      _classPrivateMethodGet$d(this, _updatePageTypeToAddressBar, _updatePageTypeToAddressBar2).call(this);
+	      this.getNavigator().updateAddressBar();
 	      main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onAfterShowPage', {
 	        source: this,
 	        page: nextPage
 	      });
+	      if (main_core.Type.isString(option) && option !== '') {
+	        main_core_events.EventEmitter.subscribeOnce(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onPageComplete', function () {
+	          console.log(option);
+	          _this2.getNavigator().moveTo(nextPage, option);
+	        });
+	      }
 	    }
 	  }, {
-	    key: "openFoundSections",
-	    value: function openFoundSections(pages) {
-	      pages.forEach(function (baseSettingsElement) {
-	        ui_formElements_field.RecursiveFilteringVisitor.startFrom(baseSettingsElement, function (element) {
-	          return element.render().querySelector('mark') instanceof HTMLElement;
-	        }).forEach(function (element) {
-	          return ui_formElements_field.AscendingOpeningVisitor.startFrom(element);
-	        });
-	      });
+	    key: "activateMenuItem",
+	    value: function activateMenuItem(type) {
+	      var menuItem = BX.UI.DropdownMenuItem.getItemByNode(babelHelpers.classPrivateFieldGet(this, _menuNode).querySelector("a.ui-sidepanel-menu-link[data-type=\"".concat(type, "\"]")));
+	      menuItem && menuItem.setActiveHandler();
 	    }
 	  }]);
 	  return Settings;
@@ -4481,17 +5159,9 @@ this.BX = this.BX || {};
 	function _onEventFetchPage2(event) {
 	  return _classPrivateMethodGet$d(this, _getPageManager, _getPageManager2).call(this).fetchPage(event.getTarget());
 	}
-	function _updatePageTypeToAddressBar2() {
-	  var _babelHelpers$classPr2;
-	  var url = new URL(window.location.href);
-	  url.searchParams.set('page', (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _currentPage)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.getType());
-	  url.searchParams["delete"]('IFRAME');
-	  url.searchParams["delete"]('IFRAME_TYPE');
-	  top.window.history.replaceState(null, '', url.toString());
-	}
 	function _onSliderCloseHandler2(event) {
 	  var _panelEvent$slider$ge,
-	    _this2 = this;
+	    _this3 = this;
 	  var _event$getCompatData = event.getCompatData(),
 	    _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
 	    panelEvent = _event$getCompatData2[0];
@@ -4511,14 +5181,14 @@ this.BX = this.BX || {};
 	          click: function click() {
 	            main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onCancel', {});
 	            panelEvent.slider.getData().set('ignoreChanges', true);
-	            _this2.isChanged = false;
+	            _this3.isChanged = false;
 	            BX.UI.ButtonPanel.hide();
-	            babelHelpers.classPrivateFieldGet(_this2, _cancelMessageBox).close();
-	            babelHelpers.classPrivateFieldSet(_this2, _cancelMessageBox, null);
+	            babelHelpers.classPrivateFieldGet(_this3, _cancelMessageBox).close();
+	            babelHelpers.classPrivateFieldSet(_this3, _cancelMessageBox, null);
 	            panelEvent.slider.close();
 	            panelEvent.slider.destroy();
-	            if (babelHelpers.classPrivateFieldGet(_this2, _basePage).includes('/configs/')) {
-	              _classPrivateMethodGet$d(_this2, _reload, _reload2).call(_this2, '/index.php');
+	            if (babelHelpers.classPrivateFieldGet(_this3, _basePage).includes('/configs/')) {
+	              _classPrivateMethodGet$d(_this3, _reload, _reload2).call(_this3, '/index.php');
 	            }
 	          }
 	        }
@@ -4526,8 +5196,8 @@ this.BX = this.BX || {};
 	        text: main_core.Loc.getMessage('INTRANET_SETTINGS_CONFIRM_ACTION_CANCEL'),
 	        events: {
 	          click: function click() {
-	            babelHelpers.classPrivateFieldGet(_this2, _cancelMessageBox).close();
-	            babelHelpers.classPrivateFieldSet(_this2, _cancelMessageBox, null);
+	            babelHelpers.classPrivateFieldGet(_this3, _cancelMessageBox).close();
+	            babelHelpers.classPrivateFieldSet(_this3, _cancelMessageBox, null);
 	          }
 	        }
 	      })]
@@ -4551,6 +5221,9 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _onEventChangeData2(event) {
+	  if (!babelHelpers.classPrivateFieldGet(this, _permission$1).canEdit()) {
+	    return;
+	  }
 	  this.isChanged = true;
 	  BX.UI.ButtonPanel.show();
 	}
@@ -4579,13 +5252,7 @@ this.BX = this.BX || {};
 	    errors: errorCollection
 	  });
 	  var pageType = _classPrivateMethodGet$d(this, _selectPageForError, _selectPageForError2).call(this, errorCollection);
-	  _classPrivateMethodGet$d(this, _activeMenuItem, _activeMenuItem2).call(this, pageType);
-	}
-	function _activeMenuItem2(type) {
-	  var itemNode = document.querySelector('li a[data-type="' + type + '"]');
-	  if (itemNode) {
-	    itemNode.dispatchEvent(new window.Event('click'));
-	  }
+	  this.show(pageType);
 	}
 	function _prepareErrorCollection2(rawErrors) {
 	  var errorCollection = {};
@@ -4628,104 +5295,6 @@ this.BX = this.BX || {};
 	    return pageType;
 	  }
 	}
-	function _onClickSearchInput2(node, event) {
-	  var _this3 = this;
-	  main_core.Event.unbindAll(node);
-	  if (!babelHelpers.classPrivateFieldGet(this, _searcher)) {
-	    babelHelpers.classPrivateFieldSet(this, _searcher, new Searcher({
-	      node: node
-	    }));
-	    this.openFoundSections = main_core.Runtime.debounce(this.openFoundSections, 1000, this);
-	    _classPrivateMethodGet$d(this, _getPageManager, _getPageManager2).call(this).fetchUnfetchedPages().then(function () {
-	      babelHelpers.classPrivateFieldGet(_this3, _searcher).subscribe('fastSearch', _classPrivateMethodGet$d(_this3, _markFoundText, _markFoundText2).bind(_this3));
-	      babelHelpers.classPrivateFieldGet(_this3, _searcher).subscribe('clearSearch', _classPrivateMethodGet$d(_this3, _clearFoundText, _clearFoundText2).bind(_this3));
-	      if (babelHelpers.classPrivateFieldGet(_this3, _searcher).getValue().length > 0) {
-	        _classPrivateMethodGet$d(_this3, _markFoundText, _markFoundText2).call(_this3, new main_core_events.BaseEvent({
-	          data: {
-	            current: babelHelpers.classPrivateFieldGet(_this3, _searcher).getValue()
-	          }
-	        }));
-	      }
-	    }, function () {})["finally"](function () {});
-	  }
-	}
-	function _markFoundText2(event) {
-	  var _this4 = this;
-	  var searchText = event.getData().current.toLowerCase();
-	  var foundPages = this.getChildrenElements().filter(function (page) {
-	    var menuNode = babelHelpers.classPrivateFieldGet(_this4, _menuNode).querySelector('li.ui-sidepanel-menu-item a[data-type="' + page.getType() + '"]').closest('li.ui-sidepanel-menu-item');
-	    removeMarkTag(page.getPage());
-	    if (page.getPage().innerText.toLowerCase().indexOf(searchText) >= 0) {
-	      main_core.Dom.addClass(menuNode, '--found');
-	      addMarkTag(page.getPage(), searchText);
-	      return true;
-	    }
-	    main_core.Dom.removeClass(menuNode, '--found');
-	    return false;
-	  });
-	  if (foundPages.length > 0) {
-	    this.openFoundSections(foundPages);
-	  }
-	}
-	function _clearFoundText2(event) {
-	  var _this5 = this;
-	  this.getChildrenElements().forEach(function (page) {
-	    var menuNode = babelHelpers.classPrivateFieldGet(_this5, _menuNode).querySelector('li.ui-sidepanel-menu-item a[data-type="' + page.getType() + '"]').closest('li.ui-sidepanel-menu-item');
-	    removeMarkTag(page.getPage());
-	    main_core.Dom.removeClass(menuNode, '--found');
-	  });
-	}
-	function revertMarkTag(properlyMark) {
-	  if (properlyMark.sourceNode) {
-	    properlyMark.beforeMark && properlyMark.beforeMark.parentNode ? properlyMark.beforeMark.parentNode.removeChild(properlyMark.beforeMark) : '';
-	    properlyMark.afterMark && properlyMark.afterMark.parentNode ? properlyMark.afterMark.parentNode.removeChild(properlyMark.afterMark) : '';
-	    properlyMark.parentNode.replaceChild(properlyMark.sourceNode, properlyMark);
-	    delete properlyMark.beforeMark;
-	    delete properlyMark.afterMark;
-	    delete properlyMark.sourceNode;
-	  }
-	}
-	function removeMarkTag(node) {
-	  node.querySelectorAll('mark').forEach(function (markNode) {
-	    revertMarkTag(markNode);
-	  });
-	}
-	function addMarkTag(node, searchText) {
-	  if (!(node instanceof HTMLElement)) {
-	    if (node instanceof Text) {
-	      var startIndex = node.data.toLowerCase().indexOf(searchText);
-	      if (startIndex >= 0) {
-	        var value = node.data;
-	        var nextSibling = node.nextSibling;
-	        var finishIndex = startIndex + searchText.length;
-	        var parentNode = node.parentNode;
-	        parentNode.removeChild(node);
-	        var properlyMark = document.createElement('MARK');
-	        properlyMark.innerText = value.substring(startIndex, finishIndex);
-	        properlyMark.sourceNode = node;
-	        properlyMark.beforeMark = null;
-	        properlyMark.afterMark = null;
-	        if (startIndex > 0) {
-	          var beforeMark = new window.Text(value.substring(0, startIndex));
-	          nextSibling ? parentNode.insertBefore(beforeMark, nextSibling) : parentNode.appendChild(beforeMark);
-	          properlyMark.beforeMark = beforeMark;
-	        }
-	        nextSibling ? parentNode.insertBefore(properlyMark, nextSibling) : parentNode.appendChild(properlyMark);
-	        if (finishIndex < value.length) {
-	          var afterMark = new window.Text(value.substring(finishIndex, value.length));
-	          nextSibling ? parentNode.insertBefore(afterMark, nextSibling) : parentNode.appendChild(afterMark);
-	          properlyMark.afterMark = afterMark;
-	        }
-	      }
-	    }
-	    return;
-	  }
-	  node.childNodes.forEach(function (child) {
-	    if (child instanceof HTMLElement && child.innerText.toLowerCase().indexOf(searchText) >= 0 || child.data && child.data.toLowerCase().indexOf(searchText) >= 0) {
-	      addMarkTag(child, searchText);
-	    }
-	  });
-	}
 
 	exports.Settings = Settings;
 	exports.ToolsPage = ToolsPage;
@@ -4737,6 +5306,10 @@ this.BX = this.BX || {};
 	exports.SchedulePage = SchedulePage;
 	exports.GdprPage = GdprPage;
 	exports.SecurityPage = SecurityPage;
+	exports.Renderer = Renderer;
+	exports.Searcher = Searcher;
+	exports.ServerDataSource = ServerDataSource;
+	exports.Permission = Permission;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX.UI,BX,BX.UI.Uploader,BX.UI,BX,BX.UI,BX,BX,BX,BX.UI,BX.UI.FormElements,BX.UI,BX.Main,BX.UI.EntitySelector,BX.UI.Dialogs,BX.UI.FormElements,BX,BX.Event));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX.UI,BX,BX.UI.Uploader,BX.UI,BX,BX.UI,BX,BX,BX,BX.UI,BX.UI.FormElements,BX.UI,BX.UI.EntitySelector,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
 //# sourceMappingURL=script.js.map

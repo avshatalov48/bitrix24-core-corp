@@ -1,5 +1,5 @@
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { Runtime } from 'main.core';
+import { Runtime, Text } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Action } from '../../action';
 
@@ -78,7 +78,7 @@ export default {
 		browserToUserOffset(): number {
 			const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
 
-			return userToUTCOffset + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
+			return userToUTCOffset + Text.toInteger((new Date()).getTimezoneOffset() * 60);
 		},
 	},
 	watch: {

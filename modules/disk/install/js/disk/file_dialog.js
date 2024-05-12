@@ -1,3 +1,4 @@
+
 (function() {
 var BX = window.BX;
 if(BX.DiskFileDialog)
@@ -757,6 +758,11 @@ BX.DiskFileDialog.getTabsHtml = function(name)
 			for (var j = 0; j < type.items.length; j++)
 			{
 				var item = BX.DiskFileDialog.obTypeItems[name][type.items[j]];
+				// hide gdrive from list
+				if (item.id === 'gdrive')
+				{
+					continue;
+				}
 				var active = BX.DiskFileDialog.obCurrentTab[name].id == item.id? ' bx-file-dialog-tab-item-active': '';
 				groupHtml += '<div class="bx-file-dialog-tab-item">'+
 							'<a href="#" class="bx-file-dialog-tab-item-link'+active+'" data-id="'+item.id+'" data-type="'+item.type+'" onclick="return BX.DiskFileDialog.selectTab(this, \''+item.id+'\', \''+name+'\')">'+

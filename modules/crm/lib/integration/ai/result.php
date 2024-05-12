@@ -33,6 +33,7 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 	 * @param string|null $operationStatus
 	 * @param int|null $parentJobId
 	 * @param int|null $retryCount
+	 * @param bool $isManualLaunch
 	 */
 	public function __construct(
 		private int $typeId,
@@ -44,6 +45,7 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 		private ?string $operationStatus = null,
 		private ?int $parentJobId = null,
 		private ?int $retryCount = null,
+		private bool $isManualLaunch = true,
 	)
 	{
 		parent::__construct();
@@ -139,6 +141,11 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 		return self::isFinalOperationStatus($this->getOperationStatus());
 	}
 
+	public function isManualLaunch(): bool
+	{
+		return $this->isManualLaunch;
+	}
+
 	public function jsonSerialize(): array
 	{
 		return [
@@ -153,6 +160,7 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 			'retryCount' => $this->retryCount,
 			'isSuccess' => $this->isSuccess(),
 			'errors' => $this->getErrors(),
+			'isManualLaunch' => $this->isManualLaunch,
 		];
 	}
 

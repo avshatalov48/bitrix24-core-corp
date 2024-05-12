@@ -56,8 +56,7 @@ class MarketAppInstaller
 
 		if (isset($installResult['errorDescription']))
 		{
-			$result->addError(new Error("installApplication: $code {$installResult['errorDescription']}"));
-			MarketDashboardLogger::logErrors($result->getErrors());
+			$result->addError(new Error($installResult['errorDescription']));
 
 			return $result;
 		}
@@ -66,11 +65,6 @@ class MarketAppInstaller
 		if (!$importResult->isSuccess())
 		{
 			$result->addErrors($importResult->getErrors());
-		}
-
-		if (!$result->isSuccess())
-		{
-			MarketDashboardLogger::logErrors($result->getErrors());
 		}
 
 		return $result;

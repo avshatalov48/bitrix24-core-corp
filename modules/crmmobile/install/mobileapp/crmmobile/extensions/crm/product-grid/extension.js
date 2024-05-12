@@ -6,7 +6,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 	const { getEntityMessage } = require('crm/loc');
 	const { get, clone } = require('utils/object');
 	const { ProductGrid } = require('layout/ui/product-grid');
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const { ProductSelector } = require('layout/ui/product-grid/services/product-selector');
 	const { BarcodeScanner } = require('layout/ui/product-grid/services/barcode-scanner');
 	const { CurrencyConverter } = require('crm/product-grid/services/currency-converter');
@@ -203,20 +203,11 @@ jn.define('crm/product-grid', (require, exports, module) => {
 
 		removeItem(productRow)
 		{
-			Alert.confirm(
-				'',
-				Loc.getMessage('PRODUCT_GRID_REMOVE_PRODUCT_ROW'),
-				[
-					{
-						type: 'cancel',
-					},
-					{
-						text: Loc.getMessage('PRODUCT_GRID_REMOVE_CONFIRM_OK'),
-						type: 'destructive',
-						onPress: () => this.onRemoveItemConfirm(productRow),
-					},
-				],
-			);
+			confirmDestructiveAction({
+				title: '',
+				description: Loc.getMessage('PRODUCT_GRID_REMOVE_PRODUCT_ROW'),
+				onDestruct: () => this.onRemoveItemConfirm(productRow),
+			});
 		}
 
 		onRemoveItemConfirm(productRow)

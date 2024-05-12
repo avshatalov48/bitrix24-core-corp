@@ -12,5 +12,6 @@ return [
 		'selector/widget/factory',
 		'crm:tunnel-list/item/robot',
 		'crm:category-list/actions',
+		'loc',
 	],
 ];

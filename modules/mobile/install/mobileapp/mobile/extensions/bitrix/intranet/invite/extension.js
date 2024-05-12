@@ -1,414 +1,363 @@
-'use strict';
+/**
+ * @module intranet/invite
+ */
+jn.define('intranet/invite', (require, exports, module) => {
+	const { Type } = require('type');
+	const { Notify } = require('notify');
+	const { Alert } = require('alert');
+	const { IntranetInviteAnalytics } = require('intranet/invite/src/analytics');
 
-if (typeof IntranetInvite !== 'undefined' && typeof IntranetInvite.cleaner !== 'undefined')
-{
-	IntranetInvite.cleaner();
-}
-
-var IntranetInvite = {
-	event: {},
-};
-
-IntranetInvite.init = function() {
-	this.canInvite = false;
-	this.registerUrl = '';
-	this.rootStructureSectionId = 1;
-	this.adminConfirm = false;
-
-	if (this.isRecentComponent())
+	/**
+	 * @class IntranetInvite
+	 */
+	class IntranetInvite
 	{
-		this.setRegisterUrl(BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''));
-	}
-	else
-	{
-		this.initRegisterUrl();
-	}
-
-	BX.addCustomEvent('onSendInvite', this.onSendInvite.bind(this));
-};
-
-IntranetInvite.isRecentComponent = function() {
-	if (BX.componentParameters.get('COMPONENT_CODE') === 'im.messenger')
-	{
-		return true;
-	}
-
-	if (BX.componentParameters.get('COMPONENT_CODE') === 'im.recent')
-	{
-		return true;
-	}
-
-	if (BX.componentParameters.get('COMPONENT_CODE') === 'im.openlines.recent')
-	{
-		return true;
-	}
-
-	return false;
-};
-
-IntranetInvite.setCanInvite = function(value) {
-	this.canInvite = Boolean(value);
-};
-
-IntranetInvite.getCanInvite = function() {
-	return Boolean(this.canInvite);
-};
-
-IntranetInvite.setRegisterUrl = function(value) {
-	if (Utils.isNotEmptyString(value))
-	{
-		this.registerUrl = value;
-	}
-};
-
-IntranetInvite.getRegisterUrl = function() {
-	return this.registerUrl;
-};
-
-IntranetInvite.setAdminConfirm = function(value) {
-	this.adminConfirm = value;
-};
-
-IntranetInvite.getAdminConfirm = function() {
-	return this.adminConfirm;
-};
-
-IntranetInvite.getData = function(params) {
-	BX.ajax.runAction('intranet.invite.getData', {
-		data: {},
-	}).then((response) => {
-		if (response.status === 'success'
-			&& Utils.isNotEmptyObject(params)
-			&& Utils.isFunction(params.callback)
-		)
+		constructor(props)
 		{
-			params.callback(response.data);
+			this.inviteWidget = props.inviteWidget;
+			this.originator = props.originator;
+			this.disableAdminConfirm = props.disableAdminConfirm;
+			this.registerUrl = props.registerUrl;
+			this.adminConfirm = props.adminConfirm;
+			this.onInviteSendedHandler = props.onInviteSendedHandler;
+			this.rootStructureSectionId = props.rootStructureSectionId;
+			this.analytics = props.analytics;
+			this.onViewHiddenWithoutInvitingHandler = props.onViewHiddenWithoutInvitingHandler;
+			this.invitedUsers = [];
+			this.subscribeOnEvents();
 		}
-	}).catch(console.error);
-};
 
-IntranetInvite.initRegisterUrl = function(params) {
-	BX.ajax.runAction('intranet.invite.getRegisterUrl', {
-		data: {},
-	}).then((response) => {
-		if (response.status === 'success')
+		subscribeOnEvents()
 		{
-			this.setRegisterUrl(response.data.result);
-			if (
-				Utils.isNotEmptyObject(params)
-				&& Utils.isFunction(params.callback)
-			)
+			this.inviteWidget.on('onSendInvite', this.onSendInvite.bind(this));
+			this.inviteWidget.on('onUpdateLink', this.onUpdateLink.bind(this));
+			this.inviteWidget.on('onAdminConfirm', this.onAdminConfirm.bind(this));
+			this.inviteWidget.on('onShareLink', this.onShareLink.bind(this));
+			this.inviteWidget.on('onAllowContactListAccess', this.onAllowContactListAccess.bind(this));
+			this.inviteWidget.on('onCopyLink', this.onCopyLink.bind(this));
+			this.inviteWidget.on('onHelpInvite', this.onHelpInvite.bind(this));
+			this.inviteWidget.on('onHelpLink', this.onHelpLink.bind(this));
+			this.inviteWidget.on('onViewHidden', this.onViewHidden.bind(this));
+		}
+
+		onViewHidden()
+		{
+			if (this.onViewHiddenWithoutInvitingHandler && this.invitedUsers.length === 0)
 			{
-				params.callback(response.data.result);
+				this.onViewHiddenWithoutInvitingHandler();
 			}
 		}
-	}).catch(console.error);
-};
 
-IntranetInvite.openRegisterSlider = function(params) {
-	const settings = {
-		objectName: 'inviteComponent',
-		link: (Utils.isNotEmptyObject(params) && Utils.isNotEmptyString(params.registerUrl) ? params.registerUrl : ''),
-		adminConfirm: (Utils.isNotEmptyObject(params) ? Boolean(params.adminConfirm) : false),
-		disableAdminConfirm: (Utils.isNotEmptyObject(params) ? Boolean(params.disableAdminConfirm) : false),
-		rootStructureSectionId: (Utils.isNotEmptyObject(params) ? parseInt(params.rootStructureSectionId) : 0),
-	};
-
-	this.setAdminConfirm(settings.adminConfirm);
-	this.setRegisterUrl(settings.link);
-
-	this.rootStructureSectionId = settings.rootStructureSectionId;
-
-	if (
-		Utils.isNotEmptyObject(params)
-		&& Utils.isNotEmptyString(params.sharingMessage)
-	)
-	{
-		settings.sharingMessage = params.sharingMessage;
-	}
-
-	const componentConfig = {
-		scriptPath: availableComponents['intranet.invite'].publicUrl,
-		params: {
-			ORIGINATOR: (Utils.isNotEmptyObject(params) && Utils.isNotEmptyString(params.originator) ? params.originator : ''),
-			DISABLE_ADMIN_CONFIRM: settings.disableAdminConfirm,
-		},
-		componentCode: 'invite',
-		rootWidget: {
-			name: 'invite',
-			settings,
-		},
-	};
-
-	if (params.parentLayout)
-	{
-		PageManager.openComponent(
-			'JSStackComponent',
-			componentConfig,
-			params.parentLayout,
-		);
-
-		return;
-	}
-
-	PageManager.openComponent(
-		'JSStackComponent',
-		componentConfig,
-	);
-};
-
-IntranetInvite.onSendInvite = function(params) {
-	if (typeof analytics !== 'undefined')
-	{
-		analytics.send('invite');
-	}
-
-	if (
-		!Utils.isNotEmptyObject(params)
-		|| !Array.isArray(params.recipients)
-	)
-	{
-		return;
-	}
-
-	const phoneList = params.recipients.map((item) => {
-		return item.phone;
-	});
-
-	const countryCodeList = params.recipients.map((item) => {
-		return item.countryCode;
-	});
-
-	if (phoneList.length <= 0)
-	{
-		return;
-	}
-
-	Notify.showIndicatorLoading();
-
-	BX.ajax.runAction('intranet.invite.register', {
-		data: {
-			fields: {
-				PHONE: phoneList,
-				PHONE_COUNTRY: countryCodeList,
-				DEPARTMENT_ID: this.rootStructureSectionId,
-				CONTEXT: 'mobile',
-			},
-		},
-	}).then((response) => {
-		const errors = response.errors;
-		if (errors && errors.length > 0)
+		onCopyLink()
 		{
-			Notify.showIndicatorError({
-				type: 'error',
-				hideAfter: 10000,
-				onTap: Notify.hideCurrentIndicator,
-				text: this.getAjaxErrorText(errors),
+			this.analytics.sendCopyLinkEvent();
+		}
+
+		onAllowContactListAccess()
+		{
+			this.analytics.sendAllowContactsEvent();
+		}
+
+		getInvitePreparedParams(params)
+		{
+			const preparedParams = {
+				validParams: true,
+			};
+			if (
+				!Type.isObject(params)
+				|| !Array.isArray(params.recipients)
+			)
+			{
+				preparedParams.validParams = false;
+				preparedParams.error = new Error('invalid params');
+
+				return preparedParams;
+			}
+
+			preparedParams.countryCodeList = [];
+			preparedParams.phoneList = [];
+			params.recipients.forEach((item, index) => {
+				preparedParams.countryCodeList.push(item.countryCode);
+				preparedParams.phoneList.push(item.phone);
+			});
+
+			if (preparedParams.phoneList.length <= 0)
+			{
+				preparedParams.validParams = false;
+				preparedParams.error = new Error('phoneList is empty');
+
+				return preparedParams;
+			}
+
+			return preparedParams;
+		}
+
+		sendInvite(params)
+		{
+			return new Promise((resolve, reject) => {
+				const {
+					validParams,
+					phoneList,
+					countryCodeList,
+					error,
+				} = this.getInvitePreparedParams(params);
+
+				if (!validParams)
+				{
+					reject(error);
+
+					return;
+				}
+
+				const multipleInvitation = phoneList.length > 1;
+				this.analytics.sendSelectFromContactListEvent(multipleInvitation);
+
+				Notify.showIndicatorLoading();
+				BX.ajax.runAction('intranet.invite.register', {
+					data: {
+						fields: {
+							PHONE: phoneList,
+							PHONE_COUNTRY: countryCodeList,
+							DEPARTMENT_ID: this.rootStructureSectionId,
+							CONTEXT: 'mobile',
+						},
+					},
+				}).then((response) => {
+					const recipientIds = response?.data?.userIdList;
+					const errors = response.errors;
+					if (errors && errors.length > 0)
+					{
+						this.analytics.sendInvitationFailedEvent(multipleInvitation, recipientIds);
+						Notify.hideCurrentIndicator();
+						Alert.alert('', IntranetInvite.getAjaxErrorText(errors));
+						reject(response);
+					}
+					else
+					{
+						this.analytics.sendInvitationSuccessEvent(recipientIds);
+						Notify.showIndicatorSuccess({ hideAfter: 2000 });
+						resolve(response);
+					}
+				}).catch((response) => {
+					const recipientIds = response?.data?.userIdList;
+					this.analytics.sendInvitationFailedEvent(multipleInvitation, recipientIds);
+					Notify.hideCurrentIndicator();
+					const errors = response.errors;
+					if (errors && errors.length > 0)
+					{
+						Alert.alert('', IntranetInvite.getAjaxErrorText(errors));
+					}
+					reject(response);
+				});
 			});
 		}
-		else
-		{
-			Notify.showIndicatorSuccess({ hideAfter: 2000 });
+
+		onSendInvite(params) {
+			if (
+				!Type.isObject(params)
+				|| !Array.isArray(params.recipients)
+			)
+			{
+				return;
+			}
+
+			this.sendInvite(params).then((response) => {
+				if (params.recipients.length === response.data.userIdList.length
+				&& params.recipients.length === response.data.convertedPhoneNumbers.length)
+				{
+					this.invitedUsers = params.recipients.map((recipient, index) => ({
+						...recipient,
+						id: response.data.userIdList[index],
+						phone: response.data.convertedPhoneNumbers[index],
+					}));
+					this.inviteWidget.close(() => {
+						if (this.onInviteSendedHandler)
+						{
+							this.onInviteSendedHandler(this.invitedUsers);
+						}
+					});
+				}
+				else
+				{
+					console.error('Incorrect data in server response');
+				}
+			})
+				.catch(console.error);
 		}
-	}).catch((response) => {
-		const errors = response.errors;
-		if (errors && errors.length > 0)
+
+		onShareLink()
 		{
-			Notify.showIndicatorError({
-				hideAfter: 2000,
-				text: this.getAjaxErrorText(errors),
+			this.analytics.sendShareLinkEvent(this.adminConfirm);
+			BX.ajax.runAction('intranet.invite.copyRegisterUrl', {
+				data: {},
+			})
+				.then((response) => {})
+				.catch(console.error);
+		}
+
+		onHelpInvite()
+		{
+			Application.openHelpArticle('mh_invite_user', 'invite_user');
+		}
+
+		onHelpLink()
+		{
+			Application.openHelpArticle('mh_invite_user', 'copy_link');
+		}
+
+		onUpdateLink()
+		{
+			BX.ajax.runAction('intranet.invite.setRegisterSettings', {
+				data: {
+					params: {
+						SECRET: Utils.getRandom(8),
+					},
+				},
+			}).then((response) => {
+				const errors = response.data.errors;
+				if (errors && errors.length > 0)
+				{
+					Notify.showIndicatorError({
+						hideAfter: 10000,
+						onTap: Notify.hideCurrentIndicator,
+						text: IntranetInvite.getAjaxErrorText(errors),
+					});
+				}
+				else
+				{
+					this.initRegisterUrl({
+						callback: function(value) {
+							this.updateLink(value);
+						}.bind(this.inviteWidget),
+					});
+				}
+			}).catch((response) => {
+				const errors = response.errors;
+				if (errors && errors.length > 0)
+				{
+					Notify.showIndicatorError({
+						hideAfter: 2000,
+						text: IntranetInvite.getAjaxErrorText(errors),
+					});
+				}
 			});
 		}
-		else
+
+		onAdminConfirm(value)
 		{
-			Notify.hideCurrentIndicator();
+			if (this.disableAdminConfirm)
+			{
+				this.inviteWidget.setAdminConfirm(!value);
+				this.setAdminConfirm(!value);
+
+				return;
+			}
+			this.setAdminConfirm(value);
+
+			BX.ajax.runAction('intranet.invite.setRegisterSettings', {
+				data: {
+					params: {
+						CONFIRM: (value ? 'Y' : 'N'),
+					},
+				},
+			}).then((response) => {
+				const errors = response.data.errors;
+
+				if (
+					(errors && errors.length > 0)
+					|| response.data.result !== 'success'
+				)
+				{
+					this.inviteWidget.setAdminConfirm(!value);
+					this.setAdminConfirm(!value);
+				}
+				else
+				{
+					// because object property doesn't set when chaning flag in the form
+					this.inviteWidget.setAdminConfirm(value);
+				}
+
+				if (errors && errors.length > 0)
+				{
+					Notify.showIndicatorError({
+						hideAfter: 10000,
+						onTap: Notify.hideCurrentIndicator,
+						text: IntranetInvite.getAjaxErrorText(errors),
+					});
+				}
+			}).catch((response) => {
+				this.inviteWidget.setAdminConfirm(!value);
+				this.setAdminConfirm(!value);
+
+				const errors = response.errors;
+				if (errors && errors.length > 0)
+				{
+					Notify.showIndicatorError({
+						hideAfter: 2000,
+						text: IntranetInvite.getAjaxErrorText(errors),
+					});
+				}
+			});
 		}
-	});
-};
 
-IntranetInvite.cleaner = function() {
-	return true;
-};
-
-IntranetInvite.getAjaxErrorText = function(errors) {
-	return errors.map((errorMessage) => {
-		if (errorMessage.message)
+		static getAjaxErrorText(errors)
 		{
-			return errorMessage.message.replace('<br/>:', '\n').replace('<br/>', '\n');
+			return errors.map((errorMessage) => {
+				if (errorMessage.message)
+				{
+					return errorMessage.message.replace('<br/>:', '\n').replace('<br/>', '\n');
+				}
+
+				return errorMessage.replace('<br/>:', '\n').replace('<br/>', '\n');
+			}).filter((errorMessage) => {
+				return errorMessage.length > 0;
+			}).join('\n');
 		}
 
-		return errorMessage.replace('<br/>:', '\n').replace('<br/>', '\n');
-	}).filter((errorMessage) => {
-		return errorMessage.length > 0;
-	}).join('\n');
-};
-
-if (!IntranetInvite.isRecentComponent())
-{
-	IntranetInvite.init();
-}
-
-IntranetInvite.event.init = function(params) {
-	this.inviteComponent = params.inviteComponent;
-	this.originator = params.originator;
-	this.disableAdminConfirm = Boolean(params.disableAdminConfirm);
-
-	this.inviteComponent.setListener(this.router.bind(this));
-
-	this.handlersList = {
-		onSendInvite: this.onSendInvite,
-		onUpdateLink: this.onUpdateLink,
-		onAdminConfirm: this.onAdminConfirm,
-		onShareLink: this.onShareLink,
-		onHelpInvite: this.onHelpInvite,
-		onHelpLink: this.onHelpLink,
-	};
-
-	const inviteCallback = function(data) {
-		if (typeof data.adminConfirm !== 'undefined')
+		initRegisterUrl(params)
 		{
-			IntranetInvite.setAdminConfirm(data.adminConfirm);
-			this.setAdminConfirm(data.adminConfirm);
+			BX.ajax.runAction('intranet.invite.getRegisterUrl', {
+				data: {},
+			}).then((response) => {
+				if (response.status === 'success')
+				{
+					this.setRegisterUrl(response.data.result);
+					if (Type.isObject(params) && Type.isFunction(params.callback))
+					{
+						params.callback(response.data.result);
+					}
+				}
+			}).catch(console.error);
 		}
 
-		if (typeof data.registerUrl !== 'undefined')
+		setRegisterUrl(value)
 		{
-			IntranetInvite.setRegisterUrl(data.registerUrl);
-			this.updateLink(data.registerUrl);
+			if (Type.isStringFilled(value))
+			{
+				this.registerUrl = value;
+			}
 		}
-	}.bind(this.inviteComponent);
 
-	IntranetInvite.getData({ callback: inviteCallback });
-};
+		setAdminConfirm(value)
+		{
+			if (Type.isBoolean(value))
+			{
+				this.adminConfirm = value;
+			}
+		}
 
-IntranetInvite.event.router = function(eventName, eventResult) {
-	if (this.handlersList[eventName])
-	{
-		this.handlersList[eventName].apply(this, [eventResult]);
+		router(eventName, eventResult)
+		{
+			if (this.handlersList[eventName])
+			{
+				this.handlersList[eventName].apply(this, [eventResult]);
+			}
+			else if (this.debug)
+			{
+				console.info(`IntranetInviteInterface.event.router: skipped event - ${eventName} ${JSON.stringify(eventResult)}`);
+			}
+		}
 	}
-	else if (this.debug)
-	{
-		console.info(`IntranetInviteInterface.event.router: skipped event - ${eventName} ${JSON.stringify(eventResult)}`);
-	}
-};
 
-IntranetInvite.event.onSendInvite = function(params) {
-	if (
-		!Utils.isNotEmptyObject(params)
-		|| !Array.isArray(params.recipients)
-	)
-	{
-		return;
-	}
-
-	this.inviteComponent.close(() => {
-		if (Utils.isNotEmptyString(this.originator))
-		{
-			BX.postComponentEvent('onSendInvite', [
-				params,
-			], this.originator);
-		}
-	});
-};
-
-IntranetInvite.event.onUpdateLink = function() {
-	BX.ajax.runAction('intranet.invite.setRegisterSettings', {
-		data: {
-			params: {
-				SECRET: Utils.getRandom(8),
-			},
-		},
-	}).then((response) => {
-		const errors = response.data.errors;
-		if (errors && errors.length > 0)
-		{
-			Notify.showIndicatorError({
-				hideAfter: 10000,
-				onTap: Notify.hideCurrentIndicator,
-				text: this.getAjaxErrorText(errors),
-			});
-		}
-		else
-		{
-			IntranetInvite.initRegisterUrl({
-				callback: function(value) {
-					this.updateLink(value);
-				}.bind(this.inviteComponent),
-			});
-		}
-	}).catch((response) => {
-		const errors = response.errors;
-		if (errors && errors.length > 0)
-		{
-			Notify.showIndicatorError({
-				hideAfter: 2000,
-				text: this.getAjaxErrorText(errors),
-			});
-		}
-	});
-};
-
-IntranetInvite.event.onAdminConfirm = function(value) {
-	if (this.disableAdminConfirm)
-	{
-		this.inviteComponent.setAdminConfirm(!value);
-
-		return;
-	}
-
-	BX.ajax.runAction('intranet.invite.setRegisterSettings', {
-		data: {
-			params: {
-				CONFIRM: (value ? 'Y' : 'N'),
-			},
-		},
-	}).then((response) => {
-		const errors = response.data.errors;
-
-		if (
-			(errors && errors.length > 0)
-			|| response.data.result != 'success'
-		)
-		{
-			this.inviteComponent.setAdminConfirm(!value);
-		}
-		else
-		{
-			this.inviteComponent.setAdminConfirm(value); // because object property doesn't set when chaning flag in the form
-		}
-
-		if (errors && errors.length > 0)
-		{
-			Notify.showIndicatorError({
-				hideAfter: 10000,
-				onTap: Notify.hideCurrentIndicator,
-				text: this.getAjaxErrorText(errors),
-			});
-		}
-	}).catch((response) => {
-		this.inviteComponent.setAdminConfirm(!value);
-
-		const errors = response.errors;
-		if (errors && errors.length > 0)
-		{
-			Notify.showIndicatorError({
-				hideAfter: 2000,
-				text: this.getAjaxErrorText(errors),
-			});
-		}
-	});
-};
-
-IntranetInvite.event.onShareLink = function(params) {
-	BX.ajax.runAction('intranet.invite.copyRegisterUrl', {
-		data: {},
-	}).then((response) => {}).catch(console.error);
-};
-
-IntranetInvite.event.onHelpInvite = function(params) {
-	Application.openHelpArticle('mh_invite_user', 'invite_user');
-};
-
-IntranetInvite.event.onHelpLink = function(params) {
-	Application.openHelpArticle('mh_invite_user', 'copy_link');
-};
+	module.exports = { IntranetInvite, IntranetInviteAnalytics };
+});

@@ -1,7 +1,9 @@
-import { Event, Text } from 'main.core';
+import { Event, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MenuManager } from 'main.popup';
+import { type MenuItemOptions, MenuManager } from 'main.popup';
 import { Converter } from './converter';
+import { EntitySelector } from './entity-selector';
+import type { Scheme } from './scheme';
 import { SchemeItem } from './scheme-item';
 
 /**
@@ -17,6 +19,7 @@ export class SchemeSelector
 	#converter: Converter;
 	#menuId: string;
 	#isAutoConversionEnabled: boolean;
+	#analytics: {c_element?: string} = {};
 
 	constructor(
 		converter: Converter,
@@ -25,15 +28,23 @@ export class SchemeSelector
 			containerId: string,
 			buttonId: string,
 			labelId: string,
-		}
-	) {
+			analytics?: {
+				c_element: string,
+			}
+		},
+	)
+	{
 		this.#converter = converter;
 		this.#entityId = Number(params.entityId);
 		this.#container = document.getElementById(params.containerId);
 		this.#menuButton = document.getElementById(params.buttonId);
 		this.#label = document.getElementById(params.labelId);
-		this.#menuId = 'crm_conversion_scheme_selector_' + this.#entityId + '_' + Text.getRandom();
+		this.#menuId = `crm_conversion_scheme_selector_${this.#entityId}_${Text.getRandom()}`;
 		this.#isAutoConversionEnabled = false;
+		if (Type.isStringFilled(params.analytics.c_element))
+		{
+			this.#analytics.c_element = params.analytics.c_element;
+		}
 
 		if (!this.#entityId || !this.#container || !this.#menuButton || !this.#label || !this.#converter)
 		{
@@ -45,10 +56,27 @@ export class SchemeSelector
 			this.#bindEvents();
 		}
 
-		EventEmitter.makeObservable(this, 'BX.Crm.Conversion');
+		EventEmitter.makeObservable(this, 'BX.Crm.Conversion.SchemeSelector');
 	}
 
-	enableAutoConversion()
+	destroy(): void
+	{
+		this.#closeMenu();
+
+		this.#unbindEvents();
+
+		this.unsubscribeAll();
+	}
+
+	/**
+	 * Alias for 'destroy'
+	 */
+	release(): void
+	{
+		this.destroy();
+	}
+
+	enableAutoConversion(): void
 	{
 		this.#isAutoConversionEnabled = true;
 	}
@@ -60,30 +88,38 @@ export class SchemeSelector
 
 	#initUI()
 	{
-		const currentSchemeItem: SchemeItem|null = this.#converter.getConfig().getScheme().getCurrentItem();
+		const currentSchemeItem: SchemeItem | null = this.#converter.getConfig().getScheme().getCurrentItem();
 		if (currentSchemeItem)
 		{
 			this.#label.innerText = currentSchemeItem.getPhrase();
 		}
 	}
 
-	#bindEvents()
+	#bindEvents(): void
 	{
-		Event.bind(this.#container, "click", this.#handleContainerClick.bind(this));
-		Event.bind(this.#menuButton, "click", this.#handleMenuButtonClick.bind(this));
+		Event.bind(this.#container, 'click', this.#handleContainerClick.bind(this));
+		Event.bind(this.#menuButton, 'click', this.#handleMenuButtonClick.bind(this));
+	}
+
+	#unbindEvents(): void
+	{
+		Event.unbind(this.#container, 'click', this.#handleContainerClick.bind(this));
+		Event.unbind(this.#menuButton, 'click', this.#handleMenuButtonClick.bind(this));
 	}
 
 	#handleContainerClick()
 	{
 		const event = new BaseEvent({
 			data: {
-				isCanceled: false
+				isCanceled: false,
 			},
 		});
-		this.emit('SchemeSelector:onContainerClick', event);
+		this.emit('onContainerClick', event);
 		this.#converter.getConfig().updateFromSchemeItem();
 		if (this.#isAutoConversionEnabled && !event.getData().isCanceled)
 		{
+			this.#converter.setAnalyticsElement(this.#analytics.c_element);
+
 			this.#converter.convert(this.#entityId);
 		}
 	}
@@ -95,6 +131,7 @@ export class SchemeSelector
 
 	#showMenu()
 	{
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 		const anchorPos = BX.pos(this.#container);
 
 		MenuManager.show({
@@ -103,8 +140,8 @@ export class SchemeSelector
 			items: this.#getMenuItems(),
 			closeByEsc: true,
 			cacheable: false,
-			offsetLeft: -anchorPos['width'],
-		})
+			offsetLeft: -anchorPos.width,
+		});
 	}
 
 	#closeMenu()
@@ -112,20 +149,63 @@ export class SchemeSelector
 		MenuManager.destroy(this.#menuId);
 	}
 
-	#getMenuItems()
+	#getMenuItems(): MenuItemOptions[]
 	{
-		const items = [];
+		const scheme = this.#converter.getConfig().getScheme();
 
-		this.#converter.getConfig().getScheme().getItems().forEach((item: SchemeItem) => {
+		const items = [];
+		for (const item of scheme.getItems())
+		{
 			items.push({
 				text: Text.encode(item.getPhrase()),
 				onclick: () => {
 					this.#handleItemClick(item);
-				}
-			})
-		});
+				},
+			});
+		}
+
+		const entitySelector = this.#prepareEntitySelector(scheme);
+		if (entitySelector)
+		{
+			items.push({
+				text: this.#converter.getMessagePublic('openEntitySelector'),
+				onclick: () => {
+					this.#closeMenu();
+
+					void entitySelector.show();
+				},
+			});
+		}
 
 		return items;
+	}
+
+	#prepareEntitySelector(scheme: Scheme): ?EntitySelector
+	{
+		if (this.#converter.getEntityTypeId() !== BX.CrmEntityType.enumeration.lead)
+		{
+			return null;
+		}
+
+		const allEntityTypeIdsInScheme = scheme.getAllEntityTypeIds();
+
+		const dstEntityTypeIds = [];
+		if (allEntityTypeIdsInScheme.includes(BX.CrmEntityType.enumeration.contact))
+		{
+			dstEntityTypeIds.push(BX.CrmEntityType.enumeration.contact);
+		}
+
+		if (allEntityTypeIdsInScheme.includes(BX.CrmEntityType.enumeration.company))
+		{
+			dstEntityTypeIds.push(BX.CrmEntityType.enumeration.company);
+		}
+
+		if (!Type.isArrayFilled(dstEntityTypeIds))
+		{
+			return null;
+		}
+
+		return new EntitySelector(this.#converter, this.#entityId, dstEntityTypeIds);
 	}
 
 	#handleItemClick(item: SchemeItem)
@@ -136,12 +216,14 @@ export class SchemeSelector
 
 		const event = new BaseEvent({
 			data: {
-				isCanceled: false
+				isCanceled: false,
 			},
 		});
-		this.emit('SchemeSelector:onSchemeSelected', event);
+		this.emit('onSchemeSelected', event);
 		if (this.#isAutoConversionEnabled && !event.getData().isCanceled)
 		{
+			this.#converter.setAnalyticsElement(this.#analytics.c_element);
+
 			this.#converter.convert(this.#entityId);
 		}
 	}

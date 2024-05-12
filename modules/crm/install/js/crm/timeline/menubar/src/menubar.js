@@ -1,14 +1,15 @@
 /** @memberof BX.Crm.Timeline.MenuBar */
 
-import Factory from "./factory";
-import Item from "./item";
-import {Dom} from "main.core";
-import Context from "./context";
+import { Dom } from 'main.core';
+import Context from './context';
+import Factory from './factory';
+import Item from './item';
 
 declare type MenuBarParams = {
 	containerId: String,
 	entityTypeId: Number,
 	entityId: Number,
+	entityCategoryId: ?Number,
 	isReadonly: Boolean,
 	menuId: String,
 	items: MenuBarItemParams[],
@@ -23,6 +24,7 @@ export class MenuBar
 {
 	#entityTypeId: Number = null;
 	#entityId: Number = null;
+	#entityCategoryId: Number = null;
 	#isReadonly: Boolean = false;
 	#container: HTMLElement = null;
 	#items = {};
@@ -33,6 +35,7 @@ export class MenuBar
 	{
 		this.#entityTypeId = params.entityTypeId;
 		this.#entityId = params.entityId;
+		this.#entityCategoryId = params.entityCategoryId;
 		this.#isReadonly = params.isReadonly;
 
 		this.#container = document.getElementById(params.containerId);
@@ -42,6 +45,7 @@ export class MenuBar
 		const context = new Context({
 			entityTypeId: this.#entityTypeId,
 			entityId: this.#entityId,
+			entityCategoryId: this.#entityCategoryId,
 			isReadonly: this.#isReadonly,
 			menuBarContainer: this.#container,
 		});

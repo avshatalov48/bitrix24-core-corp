@@ -16,8 +16,14 @@ final class Sharing extends Dto
 	/** @var string|null */
 	public $shortUrl;
 
+	/** @var UserInfo */
+	public $userInfo;
+
 	/** @var Settings */
 	public $settings;
+
+	/** @var SharingOptions */
+	public $options;
 
 	public function getCasts(): array
 	{
@@ -25,7 +31,9 @@ final class Sharing extends Dto
 			'isEnabled' => Type::bool(),
 			'isRestriction' => Type::bool(),
 			'shortUrl' => Type::string(),
+			'userInfo' => Type::object(UserInfo::class),
 			'settings' => Type::object(Settings::class),
+			'options' => Type::object(SharingOptions::class)
 		];
 	}
 }

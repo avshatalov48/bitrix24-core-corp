@@ -365,7 +365,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<UsersSetStateData, UsersSetStateActions>} payload
 			 */
 			setState: (state, payload) => {
 				logger.log('usersModel: setState mutation', payload);
@@ -379,7 +379,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<UsersSetData, UsersSetActions>} payload
 			 */
 			set: (state, payload) => {
 				logger.log('usersModel: set mutation', payload);
@@ -395,7 +395,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<UsersDeleteData, UsersDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
 				logger.log('usersModel: delete mutation', payload);

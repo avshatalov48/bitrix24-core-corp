@@ -22,6 +22,7 @@ use Bitrix\BizprocMobile\EntityEditor\Fields\TextField;
 use Bitrix\BizprocMobile\EntityEditor\Fields\UrlField;
 use Bitrix\BizprocMobile\EntityEditor\Fields\UserField;
 use Bitrix\Main\Loader;
+use Bitrix\Main\SystemException;
 
 Loader::requireModule('ui');
 
@@ -115,11 +116,10 @@ final class Converter
 
 	private function getField(array $property, $id): ?BaseField
 	{
-		$documentService = \CBPRuntime::getRuntime()->getDocumentService();
-		$documentType = $this->documentType;
-		if ($documentType === null && $this->documentId !== null)
+		$documentType = $this->getDocumentType();
+		if (!$documentType)
 		{
-			$documentType = $documentService->getDocumentType($this->documentId);
+			return null;
 		}
 
 		$value = $this->getValue($property, $id);
@@ -196,6 +196,26 @@ final class Converter
 		return null;
 	}
 
+	private function getDocumentType(): ?array
+	{
+		if ($this->documentType === null && $this->documentId !== null)
+		{
+			$documentService = \CBPRuntime::getRuntime()->getDocumentService();
+			try
+			{
+				$documentType = $documentService->getDocumentType($this->documentId);
+				if (is_array($documentType))
+				{
+					$this->setDocumentType($documentType);
+				}
+			}
+			catch (\Exception $exception)
+			{}
+		}
+
+		return $this->documentType;
+	}
+
 	private function getValue(array $property, string $id)
 	{
 		$value = $property['Default'] ?? null;
@@ -225,11 +245,20 @@ final class Converter
 			{
 				$value = $field->convertValueToWeb();
 
-				if ($property['Type'] === 'user' && $this->context === self::CONTEXT_TASK)
+				if ($field->getType() === 'user')
 				{
-					$errors = [];
-					$value = \CBPHelper::usersStringToArray($value, $field->getDocumentType(), $errors);
+					/** @var UserField $field*/
+					if (
+						$this->context === self::CONTEXT_TASK
+						&& ($property['Type'] === 'user' || !$field->isEmployeeCompatibleMode())
+					)
+					{
+						$errors = [];
+						$value = \CBPHelper::usersStringToArray($value, $field->getDocumentType(), $errors);
+					}
 				}
+
+				/** @var BaseField $field */
 
 				if (in_array($property['Type'], ['file', 'S:DiskFile'], true))
 				{

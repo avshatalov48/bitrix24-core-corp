@@ -9,14 +9,21 @@ class Logger
 {
 	/**
 	 * @param Error[] $errors
+	 * @param Array<string, string|array> $additionalFields
 	 * @return void
 	 */
-	final public static function logErrors(array $errors): void
+	final public static function logErrors(array $errors, array $additionalFields = []): void
 	{
 		$result = [];
+
 		foreach ($errors as $error)
 		{
 			$result['errors'][] = $error->getMessage();
+		}
+
+		if (!empty($additionalFields))
+		{
+			$result += $additionalFields;
 		}
 
 		\CEventLog::Add([

@@ -62,6 +62,13 @@ jn.define('notify-manager', (require, exports, module) => {
 		static showLoadingIndicator(dismissKeyboard = true)
 		{
 			return new Promise((resolve) => {
+				if (loadingIndicatorIsShown)
+				{
+					resolve(true);
+
+					return;
+				}
+				loadingIndicatorIsShown = true;
 				const showIndicator = () => {
 					if (loadingTimeout !== null)
 					{
@@ -69,14 +76,9 @@ jn.define('notify-manager', (require, exports, module) => {
 						loadingTimeout = null;
 					}
 
-					if (!loadingIndicatorIsShown)
-					{
-						Notify.showIndicatorLoading().then(() => {
-							resolve(true);
-						});
-					}
-
-					loadingIndicatorIsShown = true;
+					Notify.showIndicatorLoading().then(() => {
+						resolve(true);
+					});
 				};
 
 				if (dismissKeyboard)

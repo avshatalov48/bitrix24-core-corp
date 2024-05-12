@@ -4,8 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Crm\Conversion\LeadConversionScheme;
+use Bitrix\Main\Localization\Loc;
+
 \Bitrix\Main\UI\Extension::load("ui.forms");
 
 ?>
@@ -81,9 +81,9 @@ use \Bitrix\Crm\Conversion\LeadConversionScheme;
 <div id="crm_kanban_lead_win" class="crm-kanban-column-popup" data-title="<?= htmlspecialcharsbx(Loc::getMessage('CRM_KANBAN_POPUP_LEAD'));?>">
 	<div class="crm-kanban-popup-wrapper">
 		<div class="crm-kanban-popup-convert-list">
-			<?foreach (LeadConversionScheme::getJavaScriptDescriptions(true) as $code => $value):?>
-			<div class="kanban-converttype" data-type="<?= mb_strtolower($code);?>" onclick="BX.Crm.KanbanComponent.leadConvert('<?= \CUtil::JSEscape($code);?>');"><?= htmlspecialcharsbx($value);?></div>
-			<?endforeach;?>
+			<?php foreach (\Bitrix\Crm\Conversion\ConversionManager::getConfig(\CCrmOwnerType::Lead)->getScheme()->getItems() as $item): ?>
+			<div class="kanban-converttype" data-type="<?= htmlspecialcharsbx(mb_strtolower($item->getName())) ?>" onclick="BX.Crm.KanbanComponent.leadConvert('<?= \CUtil::JSEscape($item->getId());?>');"><?= htmlspecialcharsbx($item->getPhrase());?></div>
+			<?php endforeach; ?>
 			<div class="kanban-converttype" data-type="select" onclick="BX.Crm.KanbanComponent.leadConvert('SELECT');"><?= Loc::getMessage('CRM_KANBAN_POPUP_LEAD_SELECT');?></div>
 		</div>
 	</div>

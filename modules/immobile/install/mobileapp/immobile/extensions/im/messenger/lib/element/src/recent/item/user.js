@@ -8,7 +8,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class UserItem
@@ -104,7 +104,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 		createColor()
 		{
 			const item = this.getModelItem();
-			const user = core.getStore().getters['usersModel/getById'](item.id);
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](item.id);
 			if (user)
 			{
 				this.color = user.color;
@@ -118,8 +118,8 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 			super.createDateStyle();
 
 			const item = this.getModelItem();
-			const user = core.getStore().getters['usersModel/getById'](item.id);
-			if (user && user.id === core.getUserId())
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](item.id);
+			if (user && user.id === serviceLocator.get('core').getUserId())
 			{
 				this.styles.date.image.name = 'message_delivered';
 			}
@@ -143,21 +143,21 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 		{
 			const item = this.getModelItem();
 
-			return core.getStore().getters['recentModel/needsBirthdayPlaceholder'](item.id);
+			return serviceLocator.get('core').getStore().getters['recentModel/needsBirthdayPlaceholder'](item.id);
 		}
 
 		checkNeedsBirthdayIcon()
 		{
 			const item = this.getModelItem();
 
-			return core.getStore().getters['recentModel/needsBirthdayIcon'](item.id);
+			return serviceLocator.get('core').getStore().getters['recentModel/needsBirthdayIcon'](item.id);
 		}
 
 		checkNeedsVacationIcon()
 		{
 			const item = this.getModelItem();
 
-			return core.getStore().getters['recentModel/needsVacationIcon'](item.id);
+			return serviceLocator.get('core').getStore().getters['recentModel/needsVacationIcon'](item.id);
 		}
 	}
 

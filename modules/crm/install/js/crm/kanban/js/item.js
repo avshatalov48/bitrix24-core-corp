@@ -342,7 +342,7 @@ BX.CRM.Kanban.Item.prototype = {
 		const utcTimestamp = timestampInUserTimezone - BX.Main.Timezone.Offset.USER_TO_SERVER;
 
 		const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
-		const userToBrowserOffset = userToUTCOffset + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
+		const userToBrowserOffset = userToUTCOffset + BX.Text.toInteger((new Date()).getTimezoneOffset() * 60);
 
 		const timestampThatWillCreateCorrectTimeWhenPassedToDateObject = utcTimestamp + userToBrowserOffset;
 

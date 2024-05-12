@@ -36,23 +36,13 @@ if (
 }
 else
 {
-	if (LANGUAGE_ID == "de" || LANGUAGE_ID == "la")
-	{
-		$lang = LANGUAGE_ID;
-	}
-	else
-	{
-		$lang = LangSubst(LANGUAGE_ID);
-	}
 	?>
-	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT")?></p>
-	<div style="text-align: center;"><img src="images/<?=$lang?>/absence.png"/></div>
-	<p><?=GetMessage("ABSENCE_TARIFF_RESTRICTION_TITLE")?></p>
-	<br/>
-	<?php if (\Bitrix\Main\Loader::includeModule('bitrix24')): ?>
-		<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("absence")?></div>
-	<?php endif;?>
-	<?
+	<script>
+		BX.ready(() => {
+			BX.UI.InfoHelper.show("limit_absence_management");
+		});
+	</script>
+	<?php
 }
 ?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

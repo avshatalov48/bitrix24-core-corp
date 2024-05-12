@@ -6,12 +6,13 @@ use Bitrix\Crm\Activity\IncomingChannel;
 use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Integration\AI\AIManager;
-use Bitrix\Crm\Integration\AI\Analytics;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
 use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\JobRepository;
 use Bitrix\Crm\Integration\AI\Result;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\CallParsingEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
@@ -71,6 +72,9 @@ final class Orchestrator
 				$previousJobResult->getUserId(),
 				$previousJobResult->getJobId(),
 			);
+
+			$summarizeCall->setIsManualLaunch($previousJobResult->isManualLaunch());
+
 			$summarizeCall->launch();
 		}
 
@@ -100,6 +104,9 @@ final class Orchestrator
 					$previousJobResult->getUserId(),
 					$previousJobResult->getJobId(),
 				);
+
+				$fillItemFields->setIsManualLaunch($previousJobResult->isManualLaunch());
+
 				$fillItemFields->launch();
 			}
 		}
@@ -161,9 +168,10 @@ final class Orchestrator
 					$activityId,
 					$userId,
 					$storageTypeId,
-					max($storageElementIds)
+					max($storageElementIds),
+					false,
 				);
-				$this->sendAnalyticsWrapper($result, $activityFields);
+				$this->sendAnalytics($result, $activityFields);
 			}
 		}
 	}
@@ -229,9 +237,10 @@ final class Orchestrator
 					$activityId,
 					$userId,
 					$storageTypeId,
-					max($storageElementIds)
+					max($storageElementIds),
+					false,
 				);
-				$this->sendAnalyticsWrapper($result, $activityFields);
+				$this->sendAnalytics($result, $activityFields);
 			}
 		}
 	}
@@ -241,27 +250,28 @@ final class Orchestrator
 		return $this->findPossibleFillFieldsTargetByBindings(\CCrmActivity::GetBindings($activityId));
 	}
 
-	private function sendAnalyticsWrapper(Result $result, array $activityFields): void
+	private function sendAnalytics(Result $result, array $activityFields): void
 	{
-		$status = Analytics::STATUS_SUCCESS;
+		$status = Dictionary::STATUS_SUCCESS;
 		if (!$result->isSuccess())
 		{
-			$status = Analytics::STATUS_ERROR_B24;
+			$status = Dictionary::STATUS_ERROR_B24;
 			$error = $result->getErrors()[0] ?? null;
 			if ($error && $error->getCode() === ErrorCode::AI_ENGINE_LIMIT_EXCEEDED)
 			{
-				$status = Analytics::STATUS_ERROR_NO_LIMITS;
+				$status = Dictionary::STATUS_ERROR_NO_LIMITS;
 			}
 		}
 
-		Analytics::getInstance()->sendAnalytics(
-			Analytics::CONTEXT_EVENT_CALL,
-			Analytics::CONTEXT_TYPE_AUTO,
-			Analytics::CONTEXT_ELEMENT_COPILOT_BTN,
-			$status,
-			(int)($activityFields['OWNER_TYPE_ID'] ?? 0),
-			(string)($activityFields['ORIGIN_ID'] ?? ''),
-		);
+		(new CallParsingEvent())
+			->setIsManualLaunch($result->isManualLaunch())
+			->setActivityOwnerTypeId((int)($activityFields['OWNER_TYPE_ID'] ?? 0))
+			->setActivityId((int)($activityFields['ID'] ?? 0))
+			->setElement(Dictionary::ELEMENT_COPILOT_BUTTON)
+			->setStatus($status)
+			->buildEvent()
+			->send()
+		;
 	}
 
 	private function findPossibleFillFieldsTargetByBindings(array $bindings): ?ItemIdentifier

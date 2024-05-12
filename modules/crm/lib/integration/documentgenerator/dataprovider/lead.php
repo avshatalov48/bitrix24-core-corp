@@ -8,7 +8,6 @@ use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\LeadTable;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\DocumentGenerator\Nameable;
 
 class Lead extends ProductsDataProvider
 {
@@ -190,9 +189,9 @@ class Lead extends ProductsDataProvider
 		}
 		$this->nameData = [
 			'TITLE' => $this->getHonorificName(),
-			'NAME' => $this->data['NAME'],
-			'SECOND_NAME' => $this->data['SECOND_NAME'],
-			'LAST_NAME' => $this->data['LAST_NAME'],
+			'NAME' => $this->data['NAME'] ?? '',
+			'SECOND_NAME' => $this->data['SECOND_NAME'] ?? '',
+			'LAST_NAME' => $this->data['LAST_NAME'] ?? '',
 		];
 		unset(
 			$this->data['NAME'],

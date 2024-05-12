@@ -95,8 +95,9 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 							forceDefaultConfig: 'Y',
 							requiredFields: this._fieldNames,
 							title: BX.prop.getString(this._settings, "title", ""),
-						}
-					}
+							ANALYTICS_CONFIG: BX.prop.getObject(this._settings, 'analyticsConfig', null),
+						},
+					},
 				})
 				.then(
 					function(response) {
@@ -147,7 +148,8 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 						ENABLE_CONFIG_SCOPE_TOGGLE: "N",
 						ENABLE_CONFIGURATION_UPDATE: "N",
 						ENABLE_FIELDS_CONTEXT_MENU: "N",
-						IS_EMBEDDED: "Y"
+						IS_EMBEDDED: "Y",
+						ANALYTICS_CONFIG: BX.prop.getObject(this._settings, 'analyticsConfig', null),
 					},
 					function(result)
 					{

@@ -3,6 +3,7 @@
 namespace Bitrix\CalendarMobile\Controller;
 
 use Bitrix\CalendarMobile\Dto;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -32,11 +33,13 @@ class Sharing extends Controller
 			}
 		}
 
-		return new Dto\Sharing([
+		return Dto\Sharing::make([
 			'isEnabled' => true,
-			'shortUrl' => \Bitrix\Calendar\Sharing\Helper::getShortUrl($sharing->getActiveLinkUrl()),
 			'isRestriction' => $this->isRestriction(),
-			'settings' => $this->getSettings($sharing->getLinkInfo()),
+			'shortUrl' => \Bitrix\Calendar\Sharing\Helper::getShortUrl($sharing->getActiveLinkUrl()),
+			'userInfo' => $sharing->getUserInfo(),
+			'settings' => $sharing->getLinkSettings(),
+			'options' => $sharing->getOptions(),
 		]);
 	}
 
@@ -60,11 +63,30 @@ class Sharing extends Controller
 			}
 		}
 
-		return new Dto\Sharing([
+		return Dto\Sharing::make([
 			'isEnabled' => false,
 			'isRestriction' => $this->isRestriction(),
 			'settings' => $this->getSettings($sharing->getLinkInfo()),
 		]);
+	}
+
+	public function disableUserLinkAction(?string $hash): bool
+	{
+		if (Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser())
+		{
+			return false;
+		}
+
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetUserId());
+		$result = $sharing->deactivateUserLink($hash);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($this->getErrors());
+
+			return false;
+		}
+
+		return true;
 	}
 
 	public function isEnabledAction(): ?Dto\Sharing
@@ -72,7 +94,7 @@ class Sharing extends Controller
 		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
 		$activeLinkShortUrl = $sharing->getActiveLinkShortUrl();
 
-		return new Dto\Sharing([
+		return Dto\Sharing::make([
 			'isEnabled' => !empty($activeLinkShortUrl),
 			'isRestriction' => $this->isRestriction(),
 			'shortUrl' => $activeLinkShortUrl,
@@ -95,7 +117,60 @@ class Sharing extends Controller
 			'shortUrl'=> $activeLinkShortUrl
 		];
 	}
-	
+
+	public function generateUserJointSharingLinkAction(array $memberIds): ?array
+	{
+		if (Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser())
+		{
+			return null;
+		}
+
+		$userId = \CCalendar::GetCurUserId();
+		$result = (new \Bitrix\Calendar\Sharing\Sharing($userId))->generateUserJointLink($memberIds);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($this->getErrors());
+
+			return null;
+		}
+
+		return $result->getData();
+	}
+
+	public function getAllUserLinkAction(): ?array
+	{
+		if (Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser())
+		{
+			return null;
+		}
+
+		$userId = \CCalendar::GetCurUserId();
+
+		return [
+			'userLinks' => (new \Bitrix\Calendar\Sharing\Sharing($userId))->getAllUserLinkInfo(),
+			'pathToUser' => Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', '-'),
+		];
+	}
+
+	public function increaseFrequentUseAction(?string $hash): bool
+	{
+		if (Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser())
+		{
+			return false;
+		}
+
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetUserId());
+		$result = $sharing->increaseFrequentUse($hash);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($this->getErrors());
+
+			return false;
+		}
+
+		return true;
+	}
+
 	public function saveLinkRuleAction(string $linkHash, array $ruleArray): array
 	{
 		$result = [];
@@ -147,12 +222,12 @@ class Sharing extends Controller
 
 		$linkInfo = $this->getLinkInfoCrm($entityId, $ownerId);
 
-		return new Dto\Sharing([
+		return Dto\Sharing::make([
 			'isEnabled' => true,
 			'shortUrl' => $linkInfo['url'],
 			'isRestriction' => false,
 			'settings' => $this->getSettings($linkInfo),
- 		]);
+		]);
 	}
 
 	private function getLinkInfoCrm(int $entityId, int $ownerId): array
@@ -202,5 +277,11 @@ class Sharing extends Controller
 		}
 
 		return $settings;
+	}
+
+	public function setSortJointLinksByFrequentUseAction(string $sortByFrequentUse): void
+	{
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetUserId());
+		$sharing->setSortJointLinksByFrequentUse($sortByFrequentUse === 'Y');
 	}
 }

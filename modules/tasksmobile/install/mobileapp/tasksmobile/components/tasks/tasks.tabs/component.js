@@ -10,12 +10,13 @@
 	{
 		/**
 		 * @param {TasksTabs} tabs
-		 * @param {Integer} userId
+		 * @param {number} userId
 		 */
 		constructor(tabs, userId)
 		{
 			this.tabs = tabs;
 			this.userId = userId;
+			this.canUpdateTasksCounterOnPull = true;
 
 			this.queue = new Set();
 			this.canExecute = true;
@@ -121,9 +122,11 @@
 					return;
 				}
 
-				TasksTabs.setDownMenuTasksCounter(data[0].view_all.total);
-
-				this.tabs.updateTasksCounter(data[0].view_all.total);
+				if (this.canUpdateTasksCounterOnPull)
+				{
+					TasksTabs.setDownMenuTasksCounter(data[0].view_all.total);
+					this.tabs.updateTasksCounter(data[0].view_all.total);
+				}
 				this.tabs.updateProjectsCounter(data.projects_major);
 				this.tabs.updateScrumCounter(data.scrum_total_comments);
 
@@ -223,6 +226,10 @@
 			BX.addCustomEvent('onAppActiveBefore', () => this.onAppActiveBefore());
 			BX.addCustomEvent('onAppActive', () => this.onAppActive());
 			BX.addCustomEvent('onAppPaused', () => this.onAppPaused());
+
+			BX.addCustomEvent('tasks.dashboard:pullSubscribed', () => {
+				this.pull.canUpdateTasksCounterOnPull = false;
+			});
 
 			BX.addCustomEvent('tasks.list:setVisualCounter', (data) => {
 				if (data.guid === this.guid || !data.guid)

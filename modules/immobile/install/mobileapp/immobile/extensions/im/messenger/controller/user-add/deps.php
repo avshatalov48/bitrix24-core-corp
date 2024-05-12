@@ -5,7 +5,7 @@ return [
 		'apptheme',
         'type',
 		'loc',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/controller/search',
 		'im:messenger/lib/element',

@@ -2,6 +2,7 @@
 
 return [
 	'extension' => [
+		'analytics',
 		'apptheme',
 		'event-emitter',
 		'utils/string',

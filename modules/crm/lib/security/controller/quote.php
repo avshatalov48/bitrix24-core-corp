@@ -66,9 +66,4 @@ class Quote extends Base
 	}
 
 	//endregion
-
-	protected static function getEnabledFlagOptionName(): string
-	{
-		return '~CRM_SECURITY_QUOTE_CONTROLLER_ENABLED';
-	}
 }

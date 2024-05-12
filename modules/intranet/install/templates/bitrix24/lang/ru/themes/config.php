@@ -139,4 +139,6 @@ $MESS["BITRIX24_THEME_VIDEO_NEPTUNE"] = "Нептун (видео)";
 $MESS["BITRIX24_THEME_VIDEO_SATURN"] = "Сатурн (видео)";
 $MESS["BITRIX24_THEME_FOGGY_HORIZON"] = "Туманный горизонт";
 $MESS["BITRIX24_THEME_MYSTERIOUS_VEGA"] = "Таинственная Вега";
+$MESS["BITRIX24_THEME_PANCAKES_CAT"] = "Коту - Масленица!";
+$MESS["BITRIX24_THEME_PANCAKES"] = "Классический блин";
 ?>

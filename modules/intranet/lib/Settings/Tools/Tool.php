@@ -98,8 +98,8 @@ abstract class Tool
 
 	public function enable(): void
 	{
-		$this->clearCache();
 		$this->setOptionEnabledState($this->getOptionCode());
+		ServiceLocator::getInstance()->get('intranet.customSection.manager')->clearLeftMenuCache();
 	}
 
 	public function disable(): void
@@ -109,14 +109,14 @@ abstract class Tool
 			return;
 		}
 
-		$this->clearCache();
 		$this->setOptionDisabledState($this->getOptionCode());
 		$this->disableAllSubgroups();
+		ServiceLocator::getInstance()->get('intranet.customSection.manager')->clearLeftMenuCache();
 	}
 
 	public function enableSubgroup(string $code): void
 	{
-		Option::set('intranet', $code, 'Y');
+		$this->setOptionEnabledState($code);
 	}
 
 	public function disableSubgroup(string $code): void
@@ -159,17 +159,12 @@ abstract class Tool
 	private function setOptionDisabledState(string $optionCode): void
 	{
 		Option::set($this->getOptionName(), $optionCode, 'N');
-		ToolsManager::getInstance()->clearDisabledMenuItemIdList();
+		ToolsManager::getInstance()->clearCache();
 	}
 
 	private function setOptionEnabledState(string $optionCode): void
 	{
 		Option::set($this->getOptionName(), $optionCode, 'Y');
-		ToolsManager::getInstance()->clearDisabledMenuItemIdList();
-	}
-
-	protected function clearCache(): void
-	{
-		ServiceLocator::getInstance()->get('intranet.customSection.manager')->clearLeftMenuCache();
+		ToolsManager::getInstance()->clearCache();
 	}
 }

@@ -6,7 +6,7 @@ $APPLICATION->SetTitle(GetMessage("CT_MAIN_REG_INIT_TITLE"));?>
 	<form method="post" action="<?echo $arResult["FORM_ACTION"]?>" name="form_auth" enctype="multipart/form-data">
 		<div class="log-popup-header"><?=$APPLICATION->GetTitle();?></div>
 		<hr class="b_line_gray">
-		<?ShowMessage($arResult["MESSAGE_TEXT"]);?>
+		<?ShowMessage($arResult["MESSAGE_TEXT"] ?? null);?>
 		<?=bitrix_sessid_post()?>
 
 		<div class="">

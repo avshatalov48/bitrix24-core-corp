@@ -2,8 +2,9 @@
  * @module im/messenger/provider/service/queue
  */
 jn.define('im/messenger/provider/service/queue', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
+	const { ErrorCode } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -27,7 +28,7 @@ jn.define('im/messenger/provider/service/queue', (require, exports, module) => {
 		constructor()
 		{
 			/** @private */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		/**
@@ -63,15 +64,14 @@ jn.define('im/messenger/provider/service/queue', (require, exports, module) => {
 			const removeRequest = [];
 			const removeTemporaryMessageIds = [];
 			const keysBatch = Object.keys(batchResponse);
-
 			requests.forEach((req) => {
 				if (req.messageId !== 0 && !Type.isUndefined(req.messageId))
 				{
-					const isHas = keysBatch.some(
+					const requestResponseKey = keysBatch.find(
 						(key) => key.includes(req.requestName) && key.includes(req.messageId),
 					);
-
-					if (isHas)
+					const requestResponse = batchResponse[requestResponseKey];
+					if (requestResponse && (requestResponse.status !== ErrorCode.NO_INTERNET_CONNECTION))
 					{
 						removeRequest.push(req);
 					}

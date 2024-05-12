@@ -1,8 +1,9 @@
+import { sendFeedback, wasFeedbackSent } from 'crm.ai.feedback';
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Loc, onCustomEvent } from 'main.core';
 import { sendData } from 'ui.analytics';
 import { UI } from 'ui.notification';
 import { copilotSliderInstance, sliderButtonsAdapter } from '../ai-form-fill-app';
-import { sendFeedback, wasFeedbackSent } from 'crm.ai.feedback';
 import { entityEditorProxy } from '../app';
 import { ControlValue } from '../services/entity-editor-proxy';
 import { EntityEditorRender } from '../services/entity-editor-render';
@@ -269,30 +270,22 @@ export default {
 		}
 
 		const getEntityInfo: EntityInfo = getters.getEntityInfo;
-		const ownerType: string = getEntityInfo.entityTypeName.toLowerCase();
-		sendFeedback(mergeUuid, ownerType, getters.crmMode, getters.callId);
+		const ownerType: string = getEntityInfo.entityTypeName;
+		sendFeedback(mergeUuid, ownerType, getters.activityId);
 		commit('setAiFeedbackWasSent', true);
 	},
 
 	sendAiCallParsingData({ getters }, element: string): void
 	{
 		const getEntityInfo: EntityInfo = getters.getEntityInfo;
-		const ownerType: string = getEntityInfo.entityTypeName.toLowerCase();
-		const crmMode: string = getters.crmMode;
-		const callId: string = getters.callId;
+		const ownerType: string = getEntityInfo.entityTypeName;
+		const activityId: number = getters.activityId;
 
-		sendData({
-			event: 'call_parsing',
-			tool: 'AI',
-			category: 'crm_operations',
-			type: 'manual',
-			c_section: 'crm',
-			c_element: element,
-			c_sub_section: ownerType,
-			p1: crmMode,
-			p2: callId,
-			status: 'success',
-		});
+		sendData(
+			Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+				.setElement(element)
+				.buildData(),
+		);
 	},
 };
 

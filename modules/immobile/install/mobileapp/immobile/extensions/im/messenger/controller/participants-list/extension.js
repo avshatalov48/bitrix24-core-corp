@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/participants-list', (require, exports, module) => {
 
 	const { Loc } = require('loc');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { ChatTitle } = require('im/messenger/lib/element');
@@ -31,7 +31,7 @@ jn.define('im/messenger/controller/participants-list', (require, exports, module
 		{
 			this.dialogId = dialogId;
 			this.parentWidget = parentWidget;
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.dialogData = ChatUtils.objectClone(this.store.getters['dialoguesModel/getById'](dialogId));
 		}
 

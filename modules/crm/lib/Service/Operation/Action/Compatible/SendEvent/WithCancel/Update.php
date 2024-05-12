@@ -24,6 +24,8 @@ class Update extends Compatible\SendEvent
 		$result = new Result();
 
 		$fields = $item->getCompatibleData();
+		$fields += self::getProvidedFields($item);
+
 		$eventResult = ExecuteModuleEventEx($event, [&$fields]);
 		if($eventResult === false)
 		{

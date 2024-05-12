@@ -3,6 +3,8 @@
  */
 jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 	const { StringFieldClass } = require('layout/ui/fields/string');
+	const { EditableTextBlock } = require('layout/ui/editable-text-block');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class TextAreaField
@@ -14,6 +16,13 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 			super(props);
 			this.state.showAll = this.getValue().length <= 180;
 			this.state.height = this.state.focus ? 20 : 1;
+
+			if (this.props.useEditableTextBlock === true)
+			{
+				this.isPossibleToFocus = () => false;
+				this.isEmptyEditable = () => false;
+				this.showTitle = () => !this.isEmpty();
+			}
 		}
 
 		componentDidMount() {
@@ -57,6 +66,40 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 
 		renderEditableContent()
 		{
+			if (this.props.useEditableTextBlock === true)
+			{
+				const styles = this.getDefaultStyles();
+
+				return new EditableTextBlock({
+					value: this.getValue(),
+					placeholder: this.getTitleText(),
+					onSave: (value) => this.props.onChange(value),
+					textProps: {
+						testId: this.isEmpty() ? `${this.testId}_NAME` : `${this.testId}_VALUE`,
+						style: {
+							color: this.isEmpty() ? this.styles.title.color : Color.base0,
+							fontSize: this.isEmpty() ? styles.emptyValue.fontSize : styles.base.fontSize,
+							fontWeight: '400',
+						},
+						bbCodeMode: true,
+					},
+					editorProps: {
+						title: this.getTitleText(),
+						placeholder: this.getPlaceholder(),
+						parentWidget: this.getParentWidget() || layout,
+					},
+					externalStyles: {
+						borderWidth: 0,
+						paddingLeft: 0,
+						paddingTop: this.isEmpty() ? 8 : 0,
+						paddingBottom: this.isEmpty() ? 8 : 0,
+						borderRadius: 0,
+						width: '100%',
+					},
+					testId: this.isEmpty() ? `${this.testId}_TITLE` : `${this.testId}_INNER_CONTENT`,
+				});
+			}
+
 			return View(
 				{
 					style: {

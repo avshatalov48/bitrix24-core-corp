@@ -1,4 +1,5 @@
 <?php
+$MESS["CALENDARMOBILE_SHARING_PANEL_JOINT_SLOTS"] = "Shared slots";
 $MESS["L_ML_BUTTON_SHARE"] = "Share slots";
 $MESS["L_ML_BUTTON_VIEW_AS_GUEST"] = "What will my contacts see?";
 $MESS["L_ML_DESCRIPTION_1"] = "Send your contacts a link to your available open slots and let them pick the slot they prefer.";

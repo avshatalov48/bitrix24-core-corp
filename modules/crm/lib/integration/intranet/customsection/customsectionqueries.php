@@ -42,7 +42,7 @@ final class CustomSectionQueries
 		foreach ($sections as $row)
 		{
 			$typeId = Integration\IntranetManager::getEntityTypeIdByPageSettings($row['SETTINGS']);
-			$row['TITLE'] = $row['S_TITLE'];
+			$row['TITLE'] = $row['S_TITLE'] ?? null;
 			$customSections[$typeId] = $row;
 		}
 

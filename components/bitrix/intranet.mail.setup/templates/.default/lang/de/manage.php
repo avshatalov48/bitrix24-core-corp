@@ -1,0 +1,35 @@
+<?
+$MESS["INTR_MAIL_MANAGE_ADD_MAILBOX"] = "Mail-Konto hinzufügen";
+$MESS["INTR_MAIL_MANAGE_DOMAIN_ADD"] = "Domain hinzufügen";
+$MESS["INTR_MAIL_MANAGE_DOMAIN_EDIT"] = "Verbindung konfigurieren";
+$MESS["INTR_MAIL_MANAGE_SEARCH_TITLE"] = "Filter";
+$MESS["INTR_MAIL_MANAGE_SEARCH_PROMPT"] = "Mail-Konten durchsuchen";
+$MESS["INTR_MAIL_MANAGE_SEARCH_BTN"] = "Finden";
+$MESS["INTR_MAIL_MANAGE_SEARCH_CANCEL"] = "Abbrechen";
+$MESS["INTR_MAIL_MANAGE_GRID_NAME"] = "Nutzer";
+$MESS["INTR_MAIL_MANAGE_GRID_EMAIL"] = "Aktuelle Adresse";
+$MESS["INTR_MAIL_MANAGE_CREATE_TITLE"] = "Mail-Konto bearbeiten";
+$MESS["INTR_MAIL_MANAGE_PASSWORD_TITLE"] = "Passwort ändern";
+$MESS["INTR_MAIL_MANAGE_DELETE_TITLE"] = "Mail-Konto löschen";
+$MESS["INTR_MAIL_MANAGE_SELECT_SUBFORM"] = "Anderes Mail-Konto auswählen";
+$MESS["INTR_MAIL_MANAGE_CREATE_SUBFORM"] = "Neues Mail-Konto erstellen";
+$MESS["INTR_MAIL_MANAGE_INP_PASSWORD"] = "Passwort definieren";
+$MESS["INTR_MAIL_MANAGE_INP_NEW_PASSWORD"] = "Neues Passwort";
+$MESS["INTR_MAIL_MANAGE_INP_PASSWORD2"] = "Passwort bestätigen";
+$MESS["INTR_MAIL_MANAGE_DELETE"] = "Löschen";
+$MESS["INTR_MAIL_MANAGE_DELETE_CONFIRM"] = "Möchten Sie das Mail-Konto wirklich löschen?<br><br>Alle Nachrichten werden zusammen mit dem Mail-Konto unwiderruflich gelöscht.";
+$MESS["INTR_MAIL_MANAGE_ERR_AJAX"] = "Fehler. Versuchen Sie bitte erneut.";
+$MESS["INTR_MAIL_MANAGE_HINT"] = "Erstellen Sie ein Mail-Konto für jeden Mitarbeiter Ihres Unternehmens. Benutzen Sie die Webschnittstelle zur Verwaltung Ihrer geschäftlichen Mail-Konten: Sie können Mail-Konten erstellen oder bereits vorhandene hinzufügen, nicht mehr benötigte Konten löschen, Passwörter ändern.";
+$MESS["INTR_MAIL_MANAGE_DELETE_WT"] = "Achtung!";
+$MESS["INTR_MAIL_MANAGE_DELETE_WARNING"] = "Das Mail-Konto und alle darin enthaltenen Nachrichten werden unwiderruflich gelöscht.";
+$MESS["INTR_MAIL_MANAGE_DOMAIN_EDIT2"] = "Einstellungen bearbeiten";
+$MESS["INTR_MAIL_MANAGE_SETUP"] = "Einstellungen";
+$MESS["INTR_MAIL_MANAGE_SETUP_BLACKLIST"] = "Adressen nicht verarbeiten";
+$MESS["INTR_MAIL_MANAGE_SETUP_BLACKLIST_MORE"] = "und";
+$MESS["INTR_MAIL_MANAGE_SETUP_BLACKLIST_ADD"] = "Mehr hinzufügen";
+$MESS["INTR_MAIL_MANAGE_SETUP_BLACKLIST_PLACEHOLDER"] = "E-Mail-Adressen, getrennt durch Komma oder Zeilenumbruch";
+$MESS["INTR_MAIL_MANAGE_SETUP_ALLOW_CRM"] = "Mitarbeitern erlauben, Mail-Konten mit CRM zu verbinden";
+$MESS["INTR_MAIL_MANAGE_SETUP_SAVE"] = "Speichern";
+$MESS["INTR_MAIL_MANAGE_SETUP_SAVE_OK"] = "Parameter wurden erfolgreich gespeichert.";
+$MESS["INTR_MAIL_MANAGE_SETUP_SAVE_ERROR"] = "Fehler beim Speichern der Einstellungen";
+?>

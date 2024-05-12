@@ -15,7 +15,7 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 			this.queueList = [];
 
 			this.inProgress = false;
-			this.listLiveRef = null;
+			this.listViewRef = null;
 		}
 
 		/**
@@ -23,7 +23,7 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		 */
 		getListViewRef()
 		{
-			return this.listLiveRef;
+			return this.listViewRef;
 		}
 
 		/**
@@ -31,7 +31,37 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		 */
 		setListViewRef(ref)
 		{
-			this.listLiveRef = ref;
+			this.listViewRef = ref;
+		}
+
+		/**
+		 * @param {string} key
+		 * @return {Object.<{section: number, index: number}>}
+		 */
+		getElementPosition(key)
+		{
+			return this.listViewRef.getElementPosition(key);
+		}
+
+		/**
+		 * @param {number} section
+		 * @param {index} index
+		 * @param {boolean} animated
+		 * @param {string} position
+		 * @return {void}
+		 */
+		scrollTo(section, index, animated = false, position = 'middle')
+		{
+			return this.listViewRef.scrollTo(section, index, animated, position);
+		}
+
+		/**
+		 * @param {boolean} animated
+		 * @return {void}
+		 */
+		scrollToBegin(animated = false)
+		{
+			return this.listViewRef.scrollToBegin(animated);
 		}
 
 		/**
@@ -44,10 +74,14 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		insertRows(items = [], sectionIndex = 0, elementIndex = 0, animation = DEFAULT_ANIMATION)
 		{
 			const preparedItems = this.prepareAddArray(items);
+			if (preparedItems.length === 0)
+			{
+				return Promise.resolve();
+			}
 
 			return this.add({
 				name: 'insertRows',
-				task: () => this.listLiveRef.insertRows(preparedItems, sectionIndex, elementIndex, animation),
+				task: () => this.listViewRef.insertRows(preparedItems, sectionIndex, elementIndex, animation),
 			}).run();
 		}
 
@@ -56,14 +90,58 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		 * @param {ListViewAnimate} animation
 		 * @return {Promise<ListViewQueueWorker>}
 		 */
-		// eslint-disable-next-line default-param-last
-		updateRows(items = [], animation = 'automatic')
+		appendRows(items = [], animation = DEFAULT_ANIMATION)
+		{
+			const preparedItems = this.prepareAddArray(items);
+			if (preparedItems.length === 0)
+			{
+				return Promise.resolve();
+			}
+
+			return this.add({
+				name: 'appendRows',
+				task: () => this.listViewRef.appendRows(preparedItems, animation),
+			}).run();
+		}
+
+		/**
+		 * @param {ListViewRow[]} items
+		 * @param {ListViewAnimate} animation
+		 * @param {boolean} shouldRender
+		 * @return {Promise<ListViewQueueWorker>}
+		 */
+		updateRows(items = [], animation = 'automatic', shouldRender = true)
 		{
 			const preparedItems = [...this.prepareAddArray(items)];
 
+			if (preparedItems.length === 0)
+			{
+				return Promise.resolve();
+			}
+
 			return this.add({
 				name: 'updateRows',
-				task: () => this.listLiveRef.updateRows(preparedItems, animation),
+				task: () => this.listViewRef.updateRows(preparedItems, animation, shouldRender),
+			}).run();
+		}
+
+		/**
+		 * @param {String} key
+		 * @param {Object} item
+		 * @param {Boolean} animation
+		 * @param {Boolean} shouldRender
+		 * @return {Promise<ListViewQueueWorker>}
+		 */
+		updateRowByKey(key = null, item = null, animation = false, shouldRender = true)
+		{
+			if (!key || !item)
+			{
+				return Promise.reject();
+			}
+
+			return this.add({
+				name: 'updateRowByKey',
+				task: () => this.listViewRef.updateRowByKey(key, item, animation, shouldRender),
 			}).run();
 		}
 
@@ -80,7 +158,24 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 			return this.add({
 				name: 'deleteRowsByKeys',
 				task: () => new Promise((resolve) => {
-					this.listLiveRef.deleteRowsByKeys(preparedKeys, animation, resolve);
+					this.listViewRef.deleteRowsByKeys(preparedKeys, animation, resolve);
+				}),
+			}).run();
+		}
+
+		/**
+		 * @public
+		 * @param {number} section
+		 * @param {number} index
+		 * @param {ListViewAnimate} animation
+		 * @return {Promise<ListViewQueueWorker>}
+		 */
+		deleteRow(section = 0, index = 0, animation = DEFAULT_ANIMATION)
+		{
+			return this.add({
+				name: 'deleteRow',
+				task: () => new Promise((resolve) => {
+					this.listViewRef.deleteRow(section, index, animation, resolve);
 				}),
 			}).run();
 		}
@@ -108,14 +203,15 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 				this.inProgress = true;
 				const executablePromise = this.queueList.shift();
 
-				executablePromise.task().then(() => {
-					this.inProgress = false;
+				return executablePromise.task()
+					.then(() => {
+						this.inProgress = false;
 
-					return this.run();
-				}).catch(() => {
-					this.inProgress = false;
-					throw new Error(`Error in queue execution ${executablePromise.name}`);
-				});
+						return this.run();
+					}).catch(() => {
+						this.inProgress = false;
+						throw new Error(`Error in queue execution ${executablePromise.name}`);
+					});
 			}
 
 			return Promise.resolve();

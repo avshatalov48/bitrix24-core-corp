@@ -266,20 +266,17 @@ class DealController extends EntityController implements Interfaces\FinalSummary
 			return;
 		}
 
-		$historyEntryID = RestorationEntry::create(
-			array(
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $ownerID,
-				'AUTHOR_ID' => self::resolveCreatorID($fields),
-				'SETTINGS' => array(),
-				'BINDINGS' => array(
-					array(
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-						'ENTITY_ID' => $ownerID
-					)
-				)
-			)
-		);
+		$historyEntryID = RestorationEntry::create([
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+			'ENTITY_ID' => $ownerID,
+			'SETTINGS' => [],
+			'BINDINGS' => [
+				[
+					'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+					'ENTITY_ID' => $ownerID,
+				]
+			],
+		]);
 
 		$enableHistoryPush = $historyEntryID > 0;
 		if($enableHistoryPush && Main\Loader::includeModule('pull'))

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_popupcomponentsmaker,main_qrcode,ui_avatarEditor,main_loader,ui_qrauthorization,main_core,main_popup,main_core_events,im_v2_lib_desktopApi) {
+(function (exports,ui_popupcomponentsmaker,main_qrcode,main_loader,ui_qrauthorization,main_core,main_popup,main_core_events,im_v2_lib_desktopApi) {
 	'use strict';
 
 	var Options = function Options() {
@@ -186,140 +186,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return ThemePicker;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$2, _templateObject2$1, _templateObject3;
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	var _templateObject$2, _templateObject2$1, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var _container$1 = /*#__PURE__*/new WeakMap();
-	var _isAvailable = /*#__PURE__*/new WeakMap();
-	var _isInstalled = /*#__PURE__*/new WeakMap();
-	var _avatarInfo = /*#__PURE__*/new WeakMap();
-	var _avatarEditor = /*#__PURE__*/new WeakMap();
-	var MaskEditor = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(MaskEditor, _EventEmitter);
-	  function MaskEditor(data) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, MaskEditor);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MaskEditor).call(this));
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _container$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _isAvailable, {
-	      writable: true,
-	      value: false
-	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _isInstalled, {
-	      writable: true,
-	      value: false
-	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _avatarInfo, {
-	      writable: true,
-	      value: {
-	        scr: null,
-	        maskId: null
-	      }
-	    });
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _avatarEditor, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _this.setEventNamespace(Options.eventNameSpace);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _isAvailable, Boolean(data));
-	    if (main_core.Type.isPlainObject(data)) {
-	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _avatarInfo).src = data.src;
-	    }
-	    _this.getContainer();
-	    if (main_core.Type.isPlainObject(data) && data.maskId) {
-	      _this.installMask(data.maskId);
-	    } else {
-	      _this.uninstallMask();
-	    }
-	    return _this;
-	  }
-	  babelHelpers.createClass(MaskEditor, [{
-	    key: "getEditor",
-	    value: function getEditor() {
-	      var _this2 = this;
-	      if (babelHelpers.classPrivateFieldGet(this, _avatarEditor)) {
-	        return babelHelpers.classPrivateFieldGet(this, _avatarEditor);
-	      }
-	      if (!babelHelpers.classPrivateFieldGet(this, _isAvailable)) {
-	        return null;
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _avatarEditor, ui_avatarEditor.Editor.getOrCreateInstanceById('intranet-user-profile-photo-file', {
-	        enableCamera: true,
-	        enableMask: true
-	      }));
-	      babelHelpers.classPrivateFieldGet(this, _avatarEditor).subscribe('onApply', function (_ref) {
-	        var maskedBlob = _ref.data.maskedBlob;
-	        if (maskedBlob) {
-	          return _this2.installMask(maskedBlob['maskId']);
-	        }
-	        _this2.uninstallMask();
-	      });
-	      babelHelpers.classPrivateFieldGet(this, _avatarEditor).subscribeOnFormIsReady('newPhoto', function (_ref2) {
-	        var form = _ref2.data.form;
-	        _this2.emit('onChangePhoto', form);
-	      });
-	      babelHelpers.classPrivateFieldGet(this, _avatarEditor).loadData(babelHelpers.classPrivateFieldGet(this, _avatarInfo));
-	      return babelHelpers.classPrivateFieldGet(this, _avatarEditor);
-	    }
-	  }, {
-	    key: "getContainer",
-	    value: function getContainer() {
-	      var _this3 = this;
-	      if (babelHelpers.classPrivateFieldGet(this, _container$1) instanceof HTMLElement) {
-	        return babelHelpers.classPrivateFieldGet(this, _container$1);
-	      }
-	      if (!babelHelpers.classPrivateFieldGet(this, _isAvailable)) {
-	        babelHelpers.classPrivateFieldSet(this, _container$1, main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --mask\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span style=\"cursor: default\" class=\"system-auth-form__icon-help\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --disabled\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-new --soon\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MASKS'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SOON')));
-	      } else {
-	        var onclick = function onclick() {
-	          _this3.emit('onOpen');
-	          _this3.getEditor().show('mask');
-	        };
-	        var button = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" onclick=\"", "\"></div>"])), onclick);
-	        babelHelpers.classPrivateFieldSet(this, _container$1, main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --changeable --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --mask\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MASKS'), button));
-	        this.subscribe('onInstall', function () {
-	          button.innerHTML = main_core.Loc.getMessage('INTRANET_USER_PROFILE_CHANGE');
-	          main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(_this3, _container$1), '--active');
-	        });
-	        this.subscribe('onUninstall', function () {
-	          button.innerHTML = main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL');
-	          main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(_this3, _container$1), '--active');
-	        });
-	      }
-	      return babelHelpers.classPrivateFieldGet(this, _container$1);
-	    }
-	  }, {
-	    key: "getPromise",
-	    value: function getPromise() {
-	      var _this4 = this;
-	      return new Promise(function (resolve) {
-	        resolve(_this4.getContainer());
-	      });
-	    }
-	  }, {
-	    key: "installMask",
-	    value: function installMask(maskId) {
-	      babelHelpers.classPrivateFieldSet(this, _isInstalled, true);
-	      babelHelpers.classPrivateFieldGet(this, _avatarInfo).maskId = maskId;
-	      this.emit('onInstall');
-	    }
-	  }, {
-	    key: "uninstallMask",
-	    value: function uninstallMask() {
-	      babelHelpers.classPrivateFieldSet(this, _isInstalled, false);
-	      babelHelpers.classPrivateFieldGet(this, _avatarInfo).maskId = null;
-	      this.emit('onUninstall');
-	    }
-	  }]);
-	  return MaskEditor;
-	}(main_core_events.EventEmitter);
-
-	var _templateObject$3, _templateObject2$2, _templateObject3$1, _templateObject4, _templateObject5, _templateObject6;
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _renderUsers = /*#__PURE__*/new WeakSet();
 	var Ustat = /*#__PURE__*/function () {
@@ -338,13 +207,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        range = _classPrivateMethodGe.range;
 	      var div;
 	      if (range > 0 && myPosition > 0) {
-	        div = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --margin-s\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__icon-help\" data-hint=\"", "\" data-hint-no-icon></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\n\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.onclickHandle, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USTAT_COMPANY_HELP_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
+	        div = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --margin-s\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__icon-help\" data-hint=\"", "\" data-hint-no-icon></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\n\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.onclickHandle, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USTAT_COMPANY_HELP_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
 	          '#POSITION#': myPosition,
 	          '#AMONG#': range
 	        }), userList);
 	      } else {
 	        var onclick = range > 0 ? this.onclickHandle : function () {};
-	        div = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --without-stat ", "\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container --flex --column\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --lighter\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY_BRIEF'));
+	        div = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --without-stat ", "\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container --flex --column\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --lighter\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY_BRIEF'));
 	      }
 	      BX.UI.Hint.init(div);
 	      return div;
@@ -364,7 +233,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        myPosition = _classPrivateMethodGe2.myPosition,
 	        userList = _classPrivateMethodGe2.userList,
 	        range = _classPrivateMethodGe2.range;
-	      var div = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --center --padding-ustat ", "\">\n\t\t\t\t<div class=\"system-auth-form__item-image\">\n\t\t\t\t\t<div class=\"system-auth-form__item-image--src --ustat\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --overflow\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --xl --without-margin\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container--inline\" data-role=\"my-position\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --without-margin --margin-right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\" data-role=\"user-list\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__icon-help --absolute-right-bottom\" data-hint=\"", "\" data-hint-no-icon></div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '--without-stat', main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
+	      var div = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --center --padding-ustat ", "\">\n\t\t\t\t<div class=\"system-auth-form__item-image\">\n\t\t\t\t\t<div class=\"system-auth-form__item-image--src --ustat\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --overflow\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --xl --without-margin\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container--inline\" data-role=\"my-position\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --without-margin --margin-right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\" data-role=\"user-list\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__icon-help --absolute-right-bottom\" data-hint=\"", "\" data-hint-no-icon></div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '--without-stat', main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
 	        '#POSITION#': myPosition,
 	        '#AMONG#': range
 	      }), userList, main_core.Loc.getMessage('INTRANET_USTAT_COMPANY_HELP_RATING'));
@@ -442,17 +311,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  };
 	}
 
-	var _templateObject$4, _templateObject2$3, _templateObject3$2, _templateObject4$1, _templateObject5$1, _templateObject6$1;
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject$3, _templateObject2$2, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1;
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _config = /*#__PURE__*/new WeakMap();
 	var _widget = /*#__PURE__*/new WeakMap();
 	var _isActive = /*#__PURE__*/new WeakSet();
-	var _isAvailable$1 = /*#__PURE__*/new WeakSet();
+	var _isAvailable = /*#__PURE__*/new WeakSet();
 	var _isConfigured = /*#__PURE__*/new WeakSet();
 	var _getMainButton = /*#__PURE__*/new WeakSet();
 	var _getBottomButton = /*#__PURE__*/new WeakSet();
@@ -466,13 +335,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _classPrivateMethodInitSpec$1(this, _getBottomButton);
 	    _classPrivateMethodInitSpec$1(this, _getMainButton);
 	    _classPrivateMethodInitSpec$1(this, _isConfigured);
-	    _classPrivateMethodInitSpec$1(this, _isAvailable$1);
+	    _classPrivateMethodInitSpec$1(this, _isAvailable);
 	    _classPrivateMethodInitSpec$1(this, _isActive);
-	    _classPrivateFieldInitSpec$2(this, _config, {
+	    _classPrivateFieldInitSpec$1(this, _config, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$2(this, _widget, {
+	    _classPrivateFieldInitSpec$1(this, _widget, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -496,12 +365,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldGet(_this, _config).url, {
 	            allowChangeHistory: false
 	          });
-	        } else if (!_classPrivateMethodGet$1(_this, _isAvailable$1, _isAvailable2).call(_this)) {
+	        } else if (!_classPrivateMethodGet$1(_this, _isAvailable, _isAvailable2).call(_this)) {
 	          babelHelpers.classPrivateFieldGet(_this, _widget).getPopup().close();
 	          BX.UI.InfoHelper.show("limit_office_login_history");
 	        }
 	      };
-	      var loginHistoryWidget = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --vertical\">\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center ", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --sm ", "\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__visited\">\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _classPrivateMethodGet$1(this, _isActive, _isActive2).call(this) ? '--border' : '', _classPrivateMethodGet$1(this, _isActive, _isActive2).call(this) ? '--history' : '--history-gray', showSliderLoginHistory, _classPrivateMethodGet$1(this, _isActive, _isActive2).call(this) ? '--link' : '', showSliderLoginHistory, main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE'), _classPrivateMethodGet$1(this, _getLockIcon, _getLockIcon2).call(this), _classPrivateMethodGet$1(this, _getMainButton, _getMainButton2).call(this), _classPrivateMethodGet$1(this, _getBottomButton, _getBottomButton2).call(this, showSliderLoginHistory));
+	      var loginHistoryWidget = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --vertical\">\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center ", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --sm ", "\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__visited\">\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), _classPrivateMethodGet$1(this, _isActive, _isActive2).call(this) ? '--border' : '', _classPrivateMethodGet$1(this, _isActive, _isActive2).call(this) ? '--history' : '--history-gray', showSliderLoginHistory, _classPrivateMethodGet$1(this, _isActive, _isActive2).call(this) ? '--link' : '', showSliderLoginHistory, main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE'), _classPrivateMethodGet$1(this, _getLockIcon, _getLockIcon2).call(this), _classPrivateMethodGet$1(this, _getMainButton, _getMainButton2).call(this), _classPrivateMethodGet$1(this, _getBottomButton, _getBottomButton2).call(this, showSliderLoginHistory));
 	      var container = loginHistoryWidget.querySelector('.system-auth-form__visited');
 	      if (_classPrivateMethodGet$1(this, _isActive, _isActive2).call(this)) {
 	        var loader = _classStaticPrivateMethodGet(UserLoginHistory, UserLoginHistory, _getLoader).call(UserLoginHistory);
@@ -518,7 +387,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          keys.forEach(function (key) {
 	            var description = _classStaticPrivateMethodGet(UserLoginHistory, UserLoginHistory, _prepareDescriptionLoginHistory).call(UserLoginHistory, devices[key]['DEVICE_PLATFORM'], devices[key]['GEOLOCATION'], devices[key]['BROWSER']);
 	            var time = _classStaticPrivateMethodGet(UserLoginHistory, UserLoginHistory, _prepareDateTimeForLoginHistory).call(UserLoginHistory, devices[key]['LOGIN_DATE']);
-	            var device = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"system-auth-form__visited-item\">\n\t\t\t\t\t\t\t<div data-hint='", "' class=\"system-auth-form__visited-icon --", "\" onclick=\"", "\" data-hint-no-icon></div>\n\t\t\t\t\t\t\t<script>\n\t\t\t\t\t\t\t\tBX.ready(() => {\n\t\t\t\t\t\t\t\t\tBX.UI.Hint.init(document.querySelector(\".system-auth-form__visited-icon --", "\"));\n\t\t\t\t\t\t\t\t})\n\t\t\t\t\t\t\t</script>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-text\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-time\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_THIS_DEVICE_DESCRIPTION'), devices[key]['DEVICE_TYPE'], showSliderLoginHistory, devices[key]['DEVICE_TYPE'], showSliderLoginHistory, description, showSliderLoginHistory, time);
+	            var device = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"system-auth-form__visited-item\">\n\t\t\t\t\t\t\t<div data-hint='", "' class=\"system-auth-form__visited-icon --", "\" onclick=\"", "\" data-hint-no-icon></div>\n\t\t\t\t\t\t\t<script>\n\t\t\t\t\t\t\t\tBX.ready(() => {\n\t\t\t\t\t\t\t\t\tBX.UI.Hint.init(document.querySelector(\".system-auth-form__visited-icon --", "\"));\n\t\t\t\t\t\t\t\t})\n\t\t\t\t\t\t\t</script>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-text\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-time\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_THIS_DEVICE_DESCRIPTION'), devices[key]['DEVICE_TYPE'], showSliderLoginHistory, devices[key]['DEVICE_TYPE'], showSliderLoginHistory, description, showSliderLoginHistory, time);
 	            main_core.Dom.append(device, container);
 	          });
 	        })["catch"](function () {
@@ -549,7 +418,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    BX.Helper.show('redirect=detail&code=16615982');
 	  };
 	  if (_classPrivateMethodGet$1(this, _isActive, _isActive2).call(this)) {
-	    return main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\" onclick=\"", "\">", "</div>\n\t\t\t"], ["\n\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\" onclick=\\\"", "\\\">", "</div>\n\t\t\t"])), handlerLogoutButton, main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE'));
+	    return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\" onclick=\"", "\">", "</div>\n\t\t\t"], ["\n\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\" onclick=\\\"", "\\\">", "</div>\n\t\t\t"])), handlerLogoutButton, main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE'));
 	  } else if (!_classPrivateMethodGet$1(this, _isConfigured, _isConfigured2).call(this)) {
 	    return main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class='system-auth-form__settings' onclick=\"", "\">", "</div>\n\t\t\t"])), showConfigureSlider, main_core.Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE'));
 	  }
@@ -567,7 +436,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldGet(_this3, _widget).getPopup().close();
 	    BX.UI.InfoHelper.show("limit_office_login_history");
 	  };
-	  if (!_classPrivateMethodGet$1(this, _isAvailable$1, _isAvailable2).call(this)) {
+	  if (!_classPrivateMethodGet$1(this, _isAvailable, _isAvailable2).call(this)) {
 	    return main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item-title-logo --lock\" onclick=\"", "\">\n\t\t\t\t\t<i></i>\n\t\t\t\t</div>\n\t\t\t"])), showInfoSlider);
 	  }
 	  return null;
@@ -637,7 +506,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return ' - ' + BX.date.format(format, new Date(dateTime), new Date());
 	}
 
-	var _templateObject$5, _templateObject2$4, _templateObject3$3, _templateObject4$2, _templateObject5$2, _templateObject6$2;
+	var _templateObject$4, _templateObject2$3, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$2;
 	var Otp = /*#__PURE__*/function () {
 	  function Otp() {
 	    var isSingle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
@@ -666,13 +535,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          console.error('Otp page is not defined. Check the component params');
 	        }
 	      };
-	      var button = isInstalled ? main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
+	      var button = isInstalled ? main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
 	      var onclickHelp = function onclickHelp() {
 	        top.BX.Helper.show('redirect=detail&code=17728602');
 	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, Options.eventNameSpace + ':onOpen');
 	      };
 	      if (this.isSingle !== true) {
-	        return main_core.Tag.render(_templateObject3$3 || (_templateObject3$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --authentication\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --column --flex-start\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin --block\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --margin-top-auto --center --center-force\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE')) : '', button, isInstalled ? '' : "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">".concat(main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_TITLE'), "</div>\n\t\t\t\t\t\t</div>"));
+	        return main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --authentication\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --column --flex-start\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin --block\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --margin-top-auto --center --center-force\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE')) : '', button, isInstalled ? '' : "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">".concat(main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_TITLE'), "</div>\n\t\t\t\t\t\t</div>"));
 	      }
 	      var menuPopup = null;
 	      var popupClick = function popupClick(event) {
@@ -707,13 +576,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Otp;
 	}();
 
-	var _templateObject$6, _templateObject2$5, _templateObject3$4, _templateObject4$3, _templateObject5$3, _templateObject6$3, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15;
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject$5, _templateObject2$4, _templateObject3$3, _templateObject4$3, _templateObject5$3, _templateObject6$3, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16;
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var widgetMarker = Symbol('user.widget');
-	var _container$2 = /*#__PURE__*/new WeakMap();
+	var _container$1 = /*#__PURE__*/new WeakMap();
 	var _popup = /*#__PURE__*/new WeakMap();
 	var _profile = /*#__PURE__*/new WeakMap();
 	var _features = /*#__PURE__*/new WeakMap();
@@ -770,29 +639,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _setEventHandlers);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getPopupContainer);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getProfileContainer);
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _container$2, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _container$1, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _popup, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _popup, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _profile, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _profile, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _features, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _features, {
 	      writable: true,
 	      value: {}
 	    });
-	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _cache, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _cache, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
 	    _this.setEventNamespace(Options.eventNameSpace);
 	    _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setEventHandlers, _setEventHandlers2).call(babelHelpers.assertThisInitialized(_this));
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _container$2, container);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _container$1, container);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _profile, {
 	      ID: ID,
 	      FULL_NAME: FULL_NAME,
@@ -859,7 +728,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        minHeight: _classPrivateMethodGet$2(this, _getStressLevel, _getStressLevel2).call(this) ? '115px' : '56px'
 	      }, _classPrivateMethodGet$2(this, _getStressLevel, _getStressLevel2).call(this)] : null, _classPrivateMethodGet$2(this, _getOTPContainer, _getOTPContainer2).call(this, _classPrivateMethodGet$2(this, _getDeskTopContainer, _getDeskTopContainer2).call(this) === null) && _classPrivateMethodGet$2(this, _getDeskTopContainer, _getDeskTopContainer2).call(this) ? [{
 	        flex: 0.5,
-	        html: _classPrivateMethodGet$2(this, _getQrContainer, _getQrContainer2).call(this, 0.7)
+	        html: _classPrivateMethodGet$2(this, _getQrContainer, _getQrContainer2).call(this, 0.7),
+	        minHeight: '190px'
 	      }, [{
 	        html: _classPrivateMethodGet$2(this, _getDeskTopContainer, _getDeskTopContainer2).call(this),
 	        displayBlock: true
@@ -920,7 +790,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        };
 	      };
 	      babelHelpers.classPrivateFieldSet(this, _popup, new ui_popupcomponentsmaker.PopupComponentsMaker({
-	        target: babelHelpers.classPrivateFieldGet(this, _container$2),
+	        target: babelHelpers.classPrivateFieldGet(this, _container$1),
 	        content: content.map(prepareFunc),
 	        width: 400,
 	        offsetTop: -14
@@ -961,8 +831,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      _this3.hide();
 	      return BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldGet(_this3, _profile).URL);
 	    };
-	    var avatarNode = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(encodeURI(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO), "')\"") : '');
-	    var nameNode = main_core.Tag.render(_templateObject2$5 || (_templateObject2$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME));
+	    var avatarNode = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(encodeURI(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO), "')\"") : '');
+	    var nameNode = main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME);
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UserProfile:Avatar:changed', function (_ref2) {
 	      var _ref2$data = babelHelpers.slicedToArray(_ref2.data, 1),
 	        _ref2$data$ = _ref2$data[0],
@@ -978,13 +848,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        fullName = _ref3$data[0].fullName;
 	      babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME = fullName;
 	      nameNode.innerHTML = fullName;
-	      babelHelpers.classPrivateFieldGet(_this3, _container$2).querySelector('#user-name').innerHTML = fullName;
+	      babelHelpers.classPrivateFieldGet(_this3, _container$1).querySelector('#user-name').innerHTML = fullName;
 	    });
 	    var workPosition = main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(_this3, _profile).WORK_POSITION) ? main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this3, _profile).WORK_POSITION) : '';
 	    if (babelHelpers.classPrivateFieldGet(_this3, _profile).STATUS && main_core.Loc.hasMessage('INTRANET_USER_PROFILE_' + babelHelpers.classPrivateFieldGet(_this3, _profile).STATUS)) {
 	      workPosition = main_core.Loc.getMessage('INTRANET_USER_PROFILE_' + babelHelpers.classPrivateFieldGet(_this3, _profile).STATUS);
 	    }
-	    return main_core.Tag.render(_templateObject3$4 || (_templateObject3$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t\t<div class=\"system-auth-form__profile\">\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-avatar\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-content --margin--right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__profile-position\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-controls\">\n\t\t\t\t\t\t\t<span class=\"ui-qr-popupcomponentmaker__btn --large --border\" >\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t \t\t<!-- <span class=\"ui-qr-popupcomponentmaker__btn --large --success\">any text</span> -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), onclick, avatarNode, nameNode, workPosition, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PROFILE'));
+	    return main_core.Tag.render(_templateObject3$3 || (_templateObject3$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t\t<div class=\"system-auth-form__profile\">\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-avatar\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-content --margin--right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__profile-position\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-controls\">\n\t\t\t\t\t\t\t<span class=\"ui-qr-popupcomponentmaker__btn --large --border\" >\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t \t\t<!-- <span class=\"ui-qr-popupcomponentmaker__btn --large --success\">any text</span> -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), onclick, avatarNode, nameNode, workPosition, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PROFILE'));
 	  });
 	}
 	function _getPopupContainer2() {
@@ -1017,7 +887,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldGet(_this6, _features)['b24netPanel'] !== 'Y') {
 	      return null;
 	    }
-	    return main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"system-auth-form__item system-auth-form__scope --center --padding-sm --clickable\" href=\"https://www.bitrix24.net/\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --network\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</a>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_PROFILE_B24NET'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_GOTO'));
+	    return main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a class=\"system-auth-form__item system-auth-form__scope --center --padding-sm --clickable\" href=\"https://www.bitrix24.net/\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --network\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</a>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_PROFILE_B24NET_MSGVER_1'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_GOTO'));
 	  });
 	}
 	function _getAdminPanelContainer2() {
@@ -1035,22 +905,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _getMaskContainer2() {
-	  var _this8 = this;
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('Mask', function () {
-	    var maskEditor = new MaskEditor(babelHelpers.classPrivateFieldGet(_this8, _profile).MASK);
-	    maskEditor.subscribe('onOpen', _this8.hide);
-	    maskEditor.subscribe('onChangePhoto', function (_ref4) {
-	      var data = _ref4.data;
-	      _classPrivateMethodGet$2(_this8, _savePhoto, _savePhoto2).call(_this8, data);
-	    });
-	    _this8.emit('onChangePhoto');
-	    return maskEditor.getPromise();
+	    return main_core.Tag.render(_templateObject6$3 || (_templateObject6$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --mask\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span style=\"cursor: default\" class=\"system-auth-form__icon-help\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --disabled\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-new --soon\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MASKS'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SOON'));
 	  });
 	}
 	function _getCompanyPulse2(isNarrow) {
-	  var _this9 = this;
+	  var _this8 = this;
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getCompanyPulse', function () {
-	    if (babelHelpers.classPrivateFieldGet(_this9, _features).pulse === 'Y' && babelHelpers.classPrivateFieldGet(_this9, _profile).ID > 0 && babelHelpers.classPrivateFieldGet(_this9, _profile).ID === main_core.Loc.getMessage('USER_ID')) {
+	    if (babelHelpers.classPrivateFieldGet(_this8, _features).pulse === 'Y' && babelHelpers.classPrivateFieldGet(_this8, _profile).ID > 0 && babelHelpers.classPrivateFieldGet(_this8, _profile).ID === main_core.Loc.getMessage('USER_ID')) {
 	      return new Promise(function (resolve) {
 	        main_core.ajax.runComponentAction('bitrix:intranet.user.profile.button', 'getUserStatComponent', {
 	          mode: 'class'
@@ -1058,9 +920,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          BX.Runtime.html(null, response.data.html).then(function () {
 	            var _babelHelpers$classPr;
 	            resolve(Ustat.getPromise({
-	              userId: babelHelpers.classPrivateFieldGet(_this9, _profile).ID,
+	              userId: babelHelpers.classPrivateFieldGet(_this8, _profile).ID,
 	              isNarrow: isNarrow,
-	              data: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this9, _features)['pulseData']) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null
+	              data: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this8, _features)['pulseData']) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null
 	            }));
 	          });
 	        });
@@ -1069,74 +931,62 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return null;
 	  });
 	}
-	function _savePhoto2(dataObj) {
-	  main_core.ajax.runComponentAction(babelHelpers.classPrivateFieldGet(this, _cache).get('componentParams').componentName, 'loadPhoto', {
-	    signedParameters: babelHelpers.classPrivateFieldGet(this, _cache).get('componentParams').signedParameters,
-	    mode: 'ajax',
-	    data: dataObj
-	  }).then(function (response) {
-	    if (response.data) {
-	      (top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
-	        url: response.data,
-	        userId: babelHelpers.classPrivateFieldGet(this, _profile).ID
-	      }]);
-	    }
-	  }.bind(this), function (response) {
-	    console.log('response: ', response);
-	  }.bind(this));
-	}
 	function _getStressLevel2() {
-	  var _this10 = this;
+	  var _this9 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features)['stressLevel'] !== 'Y') {
 	    return null;
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getStressLevel', function () {
 	    var _babelHelpers$classPr2;
 	    return StressLevel.getPromise({
-	      signedParameters: babelHelpers.classPrivateFieldGet(_this10, _cache).get('componentParams').signedParameters,
-	      componentName: babelHelpers.classPrivateFieldGet(_this10, _cache).get('componentParams').componentName,
-	      userId: babelHelpers.classPrivateFieldGet(_this10, _profile).ID,
-	      data: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this10, _features)['stressLevelData']) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : null
+	      signedParameters: babelHelpers.classPrivateFieldGet(_this9, _cache).get('componentParams').signedParameters,
+	      componentName: babelHelpers.classPrivateFieldGet(_this9, _cache).get('componentParams').componentName,
+	      userId: babelHelpers.classPrivateFieldGet(_this9, _profile).ID,
+	      data: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this9, _features)['stressLevelData']) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : null
 	    });
 	  });
 	}
 	function _getQrContainer2(flex) {
-	  var _this11 = this;
+	  var _this10 = this;
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getQrContainer', function () {
-	    var isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y' || babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
-	    var onclick = function onclick() {
-	      _this11.hide();
-	      new ui_qrauthorization.QrAuthorization({
-	        title: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
-	        content: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
-	        helpLink: ''
-	      }).show();
-	    };
-	    var onclickHelp = function onclickHelp(event) {
-	      top.BX.Helper.show('redirect=detail&code=14999860');
-	      _this11.hide();
-	      event.preventDefault();
-	      event.stopPropagation();
-	      return false;
-	    };
-	    var node;
-	    if (flex !== 2 && flex !== 0) {
-	      // for a small size
-	      node = main_core.Tag.render(_templateObject6$3 || (_templateObject6$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", "  --clickable\" onclick=\"", "\" style=\"padding: 10px 14px\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center --column --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --center --margin-xl\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr\" style=\"margin-bottom: 12px\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__icon-help --absolute\" onclick=\"", "\" title=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'));
-	    } else if (flex === 0) {
-	      //full size
-	      node = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-qr-xl\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --l\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --large --border\" style=\"margin-top: auto\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --full-size\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
-	    } else {
-	      // for flex 2. It is kind of middle
-	      node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-mid-qr  --clickable\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\" title=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --size-2\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
-	    }
-	    return node;
+	    return new Promise(function (resolve, reject) {
+	      BX.loadExt(['ui.qrauthorization', 'qrcode']).then(function () {
+	        var isInstalled = babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y' || babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
+	        var onclick = function onclick() {
+	          _this10.hide();
+	          new ui_qrauthorization.QrAuthorization({
+	            title: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
+	            content: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
+	            helpLink: ''
+	          }).show();
+	        };
+	        var onclickHelp = function onclickHelp(event) {
+	          top.BX.Helper.show('redirect=detail&code=14999860');
+	          _this10.hide();
+	          event.preventDefault();
+	          event.stopPropagation();
+	          return false;
+	        };
+	        var node;
+	        if (flex !== 2 && flex !== 0) {
+	          // for a small size
+	          node = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", "  --clickable\" onclick=\"", "\" style=\"padding: 10px 14px\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center --column --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --center --margin-xl\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr\" style=\"margin-bottom: 12px\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__icon-help --absolute\" onclick=\"", "\" title=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'));
+	        } else if (flex === 0) {
+	          //full size
+	          node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-qr-xl\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --l\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --large --border\" style=\"margin-top: auto\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --full-size\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
+	        } else {
+	          // for flex 2. It is kind of middle
+	          node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-mid-qr  --clickable\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\" title=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --size-2\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
+	        }
+	        return resolve(node);
+	      })["catch"](reject);
+	    });
 	  });
 	}
 	function _getDeskTopContainer2() {
-	  var _this12 = this;
+	  var _this11 = this;
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getDeskTopContainer', function () {
-	    var isInstalled = babelHelpers.classPrivateFieldGet(_this12, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
+	    var isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
 	    var cssPostfix = '--apple';
 	    var title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_APPLE');
 	    var linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg';
@@ -1150,8 +1000,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm'
 	      }
 	    };
-	    if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Windows') {
-	      isInstalled = babelHelpers.classPrivateFieldGet(_this12, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
+	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Windows') {
+	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
 	      cssPostfix = '--windows';
 	      title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_WINDOWS');
 	      linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.exe';
@@ -1161,7 +1011,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      event.stopPropagation();
 	      return false;
 	    } : function () {
-	      _this12.hide();
+	      _this11.hide();
 	      return true;
 	    };
 	    var menuLinux = null;
@@ -1187,17 +1037,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        offsetLeft: 10,
 	        events: {
 	          onShow: function onShow() {
-	            _this12.getPopup().getPopup().setAutoHide(false);
+	            _this11.getPopup().getPopup().setAutoHide(false);
 	          },
 	          onClose: function onClose() {
-	            _this12.getPopup().getPopup().setAutoHide(true);
+	            _this11.getPopup().getPopup().setAutoHide(true);
 	          }
 	        }
 	      });
 	      menuLinux.toggle();
 	    };
-	    if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Linux') {
-	      isInstalled = babelHelpers.classPrivateFieldGet(_this12, _features)['appInstalled']['APP_LINUX_INSTALLED'] === 'Y';
+	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
+	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_LINUX_INSTALLED'] === 'Y';
 	      cssPostfix = '--linux';
 	      title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_LINUX');
 	      linkToDistributive = '';
@@ -1207,17 +1057,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return false;
 	      } : showMenuLinux;
 	    }
-	    if (babelHelpers.classPrivateFieldGet(_this12, _features)['otp'].IS_ENABLED !== 'Y') {
+	    if (babelHelpers.classPrivateFieldGet(_this11, _features)['otp'].IS_ENABLED !== 'Y') {
 	      var menuPopup = null;
 	      var menuItems = [{
 	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'),
 	        href: linkToDistributive,
 	        onclick: function onclick() {
 	          menuPopup.close();
-	          _this12.hide();
+	          _this11.hide();
 	        }
 	      }];
-	      if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Linux') {
+	      if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
 	        menuItems = [{
 	          text: typesInstallersForLinux.DEB.text,
 	          href: typesInstallersForLinux.DEB.href,
@@ -1241,43 +1091,43 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          offsetLeft: 10,
 	          events: {
 	            onShow: function onShow() {
-	              _this12.getPopup().getPopup().setAutoHide(false);
+	              _this11.getPopup().getPopup().setAutoHide(false);
 	            },
 	            onClose: function onClose() {
-	              _this12.getPopup().getPopup().setAutoHide(true);
+	              _this11.getPopup().getPopup().setAutoHide(true);
 	            }
 	          }
 	        });
 	        menuPopup.toggle();
 	      };
-	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div data-role=\"desktop-item\" class=\"system-auth-form__item system-auth-form__scope --padding-sm-all ", " --vertical --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --center --display-flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light --center --s\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --flex --center --display-flex\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div class=\"system-auth-form__config --absolute\" onclick=\"", "\"></div>"])), popupClick) : '', title, linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div data-role=\"desktop-item\" class=\"system-auth-form__item system-auth-form__scope --padding-sm-all ", " --vertical --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --center --display-flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light --center --s\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --flex --center --display-flex\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<div class=\"system-auth-form__config --absolute\" onclick=\"", "\"></div>"])), popupClick) : '', title, linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
 	    }
 	    var getLinkForHiddenState = function getLinkForHiddenState() {
-	      var link = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-title --link-dotted\">", "</a>\n\t\t\t\t"])), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'));
-	      if (babelHelpers.classPrivateFieldGet(_this12, _features).browser === 'Linux') {
+	      var link = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-title --link-dotted\">", "</a>\n\t\t\t\t"])), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'));
+	      if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
 	        link.addEventListener('click', showMenuLinux);
 	      }
 	      return link;
 	    };
-	    return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title ", "\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? ' --without-margin' : '--min-height', title, isInstalled ? getLinkForHiddenState() : '', linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
+	    return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title ", "\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? ' --without-margin' : '--min-height', title, isInstalled ? getLinkForHiddenState() : '', linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
 	  });
 	}
 	function _getOTPContainer2(single) {
-	  var _this13 = this;
+	  var _this12 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features).otp.IS_ENABLED !== 'Y') {
 	    return null;
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getOTPContainer', function () {
-	    return new Otp(single, babelHelpers.classPrivateFieldGet(_this13, _features).otp).getContainer();
+	    return new Otp(single, babelHelpers.classPrivateFieldGet(_this12, _features).otp).getContainer();
 	  });
 	}
 	function _getLoginHistoryContainer2() {
-	  var _this14 = this;
+	  var _this13 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features).loginHistory.isHide) {
 	    return null;
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getLoginHistoryContainer', function () {
-	    var history = new UserLoginHistory(babelHelpers.classPrivateFieldGet(_this14, _features).loginHistory, _this14);
+	    var history = new UserLoginHistory(babelHelpers.classPrivateFieldGet(_this13, _features).loginHistory, _this13);
 	    return {
 	      html: history.getContainer(),
 	      backgroundColor: '#fafafa'
@@ -1285,40 +1135,40 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _getBindings2() {
-	  var _this15 = this;
+	  var _this14 = this;
 	  if (!(main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _features)['bindings']) && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _features)['bindings']['text']) && main_core.Type.isArray(babelHelpers.classPrivateFieldGet(this, _features)['bindings']['items']) && babelHelpers.classPrivateFieldGet(this, _features)['bindings']['items'].length > 0)) {
 	    return null;
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getBindingsContainer', function () {
-	    var div = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --binding\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"arrow\" class=\"system-auth-form__item-icon --arrow-right\"></div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this15, _features)['bindings']['text']));
+	    var div = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --binding\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"arrow\" class=\"system-auth-form__item-icon --arrow-right\"></div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this14, _features)['bindings']['text']));
 	    div.addEventListener('click', function () {
-	      _this15.__bindingsMenu = _this15.__bindingsMenu || new main_popup.Menu({
+	      _this14.__bindingsMenu = _this14.__bindingsMenu || new main_popup.Menu({
 	        className: 'system-auth-form__popup',
 	        bindElement: div.querySelector('[data-role="arrow"]'),
-	        items: babelHelpers.classPrivateFieldGet(_this15, _features)['bindings']['items'],
+	        items: babelHelpers.classPrivateFieldGet(_this14, _features)['bindings']['items'],
 	        angle: true,
 	        cachable: false,
 	        offsetLeft: 10,
 	        events: {
 	          onShow: function onShow() {
-	            _this15.emit('bindings:open');
+	            _this14.emit('bindings:open');
 	          }
 	        }
 	      });
-	      _this15.__bindingsMenu.toggle();
+	      _this14.__bindingsMenu.toggle();
 	    });
 	    return div;
 	  });
 	}
 	function _getNotificationContainer2() {
-	  var _this16 = this;
+	  var _this15 = this;
 	  if (babelHelpers.classPrivateFieldGet(this, _features)['im'] !== 'Y') {
 	    return null;
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getNotificationContainer', function () {
-	    var div = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --notification\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_NOTIFICATION'));
+	    var div = main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --notification\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_NOTIFICATION'));
 	    div.addEventListener('click', function () {
-	      _this16.hide();
+	      _this15.hide();
 	      BXIM.openSettings({
 	        'onlyPanel': 'notify'
 	      });
@@ -1342,12 +1192,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    };
 
 	    //TODO
-	    return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --logout\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<a onclick=\"", "\" class=\"system-auth-form__item-link-all\"></a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_LOGOUT'), onclickLogout);
+	    return main_core.Tag.render(_templateObject16 || (_templateObject16 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --logout\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<a onclick=\"", "\" class=\"system-auth-form__item-link-all\"></a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_LOGOUT'), onclickLogout);
 	  });
 	}
 	babelHelpers.defineProperty(Widget, "instance", null);
 
 	exports.Widget = Widget;
 
-}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX,BX.UI.AvatarEditor,BX,BX.UI,BX,BX.Main,BX.Event,BX.Messenger.v2.Lib));
+}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX,BX,BX.UI,BX,BX.Main,BX.Event,BX.Messenger.v2.Lib));
 //# sourceMappingURL=script.js.map

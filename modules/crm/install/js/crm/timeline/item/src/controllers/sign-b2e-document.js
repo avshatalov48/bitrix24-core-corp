@@ -1,10 +1,10 @@
-import { Dom, Text, Loc, ajax } from 'main.core';
 import { Router } from 'crm.router';
-import { Base } from './base';
+import { ajax, Dom, Loc, Text } from 'main.core';
+import { Button as ButtonUI, ButtonState } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-
-import ConfigurableItem from '../configurable-item';
 import { UI } from 'ui.notification';
+import ConfigurableItem from '../configurable-item';
+import { Base } from './base';
 
 declare type Signer = {
 	title: string,
@@ -12,6 +12,15 @@ declare type Signer = {
 
 export class SignB2eDocument extends Base
 {
+	#isCancellationInProgress: false;
+	static isItemSupported(item: ConfigurableItem): boolean
+	{
+		return (
+			item.getType() === 'SignB2eDocument'
+			|| item.getType() === 'Activity:SignB2eDocument'
+		);
+	}
+
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
 		const { action, actionType, actionData, animationCallbacks } = actionParams;
@@ -22,7 +31,47 @@ export class SignB2eDocument extends Base
 		const documentId = Text.toInteger(actionData?.documentId);
 		const processUri = actionData?.processUri;
 		const documentHash = actionData?.documentHash || '';
-		if ((action === 'SignB2eDocument:ShowSigningProcess'
+
+		if (action === 'Activity:SignB2eDocument:ShowSigningCancel')
+		{
+			if (this.#isCancellationInProgress)
+			{
+				return;
+			}
+			const documentUid = actionData?.documentUid;
+			const signingCancelationDialog = new MessageBox({
+				title: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
+				message: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
+				modal: true,
+			});
+			const cancellationButton = item.getLayoutFooterButtonById(actionData.buttonId);
+			const cancellationButtonUI: ButtonUI = cancellationButton.getUiButton();
+			signingCancelationDialog.setButtons([new BX.UI.Button({
+				text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
+				color: BX.UI.Button.Color.DANGER,
+				onclick: (event) => {
+					this.#isCancellationInProgress = true;
+					cancellationButtonUI.setState(ButtonState.WAITING);
+					signingCancelationDialog.close();
+					this.#cancelSigningProcess(documentUid).then(() => {
+						Dom.hide(cancellationButton.buttonContainerRef);
+					}).catch(() => {
+						cancellationButtonUI.setState(null);
+					}).finally(() => {
+						this.#isCancellationInProgress = false;
+					});
+				},
+			}), new BX.UI.Button({
+				text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
+				color: BX.UI.Button.Color.LIGHT_BORDER,
+				onclick: () => {
+					signingCancelationDialog.close();
+				},
+			})]);
+
+			signingCancelationDialog.show();
+		}
+		else if ((action === 'SignB2eDocument:ShowSigningProcess'
 			|| action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0)
 		{
 			this.#showSigningProcess(processUri);
@@ -64,6 +113,41 @@ export class SignB2eDocument extends Base
 				},
 			});
 		}
+	}
+
+	#cancelSigningProcess(documentUid): Promise
+	{
+		return new Promise((resolve, reject) => {
+			ajax.runAction(
+				'sign.api_v1.document.signing.stop',
+				{
+					data: {
+						uid: documentUid,
+					},
+					preparePost: false,
+					headers: [{
+						name: 'Content-Type',
+						value: 'application/json',
+					}],
+				},
+			).then((response) => {
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_SUCCESS'),
+					autoHideDelay: 5000,
+				});
+				resolve(response);
+			}, (response) => {
+				response.errors.forEach((error) => {
+					UI.Notification.Center.notify({
+						content: error.message,
+						autoHideDelay: 5000,
+					});
+				});
+				reject(response.errors);
+			}).catch(() => {
+				reject();
+			});
+		});
 	}
 
 	#deleteEntry(entryId): Promise
@@ -147,13 +231,5 @@ export class SignB2eDocument extends Base
 		{
 			animationCallbacks.onStop();
 		}
-	}
-
-	static isItemSupported(item: ConfigurableItem): boolean
-	{
-		return (
-			item.getType() === 'SignB2eDocument'
-			|| item.getType() === 'Activity:SignB2eDocument'
-		);
 	}
 }

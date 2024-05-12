@@ -14,12 +14,12 @@ import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
 
 import 'ui.icon-set.social';
-import { Section, Row } from 'ui.section';
+import {Section, Row, SeparatorRow} from 'ui.section';
 import 'ui.forms';
 import { Alert, AlertColor, AlertSize } from 'ui.alerts';
 
 import type { SiteDomainType } from '../fields/site-domain-field';
-import type { SiteTitleInputType } from '../fields/site-title-field';
+import type {SiteTitleInputType, SiteTitleLabelType} from '../fields/site-title-field';
 import type { SiteThemeOptions, SiteThemePickerOptions } from '../fields/site-theme-picker-field';
 
 export class PortalPage extends BaseSettingsPage
@@ -105,7 +105,7 @@ export class PortalPage extends BaseSettingsPage
 	{
 		return [
 			this.buildSiteTitleSection(
-				this.getValue('portalSettings'), this.getValue('portalThemeSettings')
+				this.getValue('portalSettings'), this.getValue('portalThemeSettings'), this.getValue('portalSettingsLabels')
 			),
 			this.getValue('portalDomainSettings') ?
 				this.buildDomainSection(this.getValue('portalDomainSettings')) : null,
@@ -113,15 +113,13 @@ export class PortalPage extends BaseSettingsPage
 		].filter((section) => section instanceof SettingsSection);
 	}
 
-	buildSiteTitleSection(portalSettings: SiteTitleInputType, portalThemeSettings: SiteThemePickerOptions): SettingsSection
+	buildSiteTitleSection(portalSettings: SiteTitleInputType, portalThemeSettings: SiteThemePickerOptions, portalSettingsLabels: SiteTitleLabelType): SettingsSection
 	{
-		const sectionView = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE'),
-			titleIconClasses: 'ui-icon-set --pencil-draw',
-			isOpen: true,
-			// isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
-			bannerCode: 'ip_access_rights_lock',
-		});
+		if (!this.hasValue('sectionCompanyTitle'))
+		{
+			return;
+		}
+		const sectionView = new Section(this.getValue('sectionCompanyTitle'));
 
 		const sectionField = new SettingsSection({
 			parent: this,
@@ -140,81 +138,90 @@ export class PortalPage extends BaseSettingsPage
 		;
 
 		//region 2. Tabs
-		const previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
+		const siteLogoRow = new SettingsRow({
+			row: new Row({
+				className: 'intranet-settings__grid_box',
+			}),
+			parent: sectionField,
+		});
 
-		const tabsField = new TabsField({parent: sectionField});
-		const siteNameRow = new Row({});
+		const previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
+		const tabsRow = new SettingsRow({
+			row: new Row({
+				className: 'intranet-settings__site-logo_subrow --no-padding --bottom-separator --block',
+			}),
+			parent: siteLogoRow,
+		});
+
+		const tabsField = new TabsField({parent: tabsRow});
 		// 2.1 Tab Site name
 		const siteTitleTab = new TabField({
 			parent: tabsField,
-			tabsOptions: {
-				head: { title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_TITLE') },
-				body: () => {
-					const siteTitleField = new SiteTitleField({
-						parent: siteTitleTab,
-						siteTitleOptions: portalSettings,
-						helpMessages: {
-							site: this.helpMessageProviderFactory(),
-						}
-					});
-					return siteTitleField.render();
-				}
+			tabsOptions: this.getValue('tabCompanyTitle')
+		});
+
+		const siteTitleRow = new Row({});
+
+		const siteTitleField = new SiteTitleField({
+			parent: siteTitleRow,
+			siteTitleOptions: portalSettings,
+			siteTitleLabels: portalSettingsLabels,
+			helpMessages: {
+				site: this.helpMessageProviderFactory(),
 			}
+		});
+
+		new SettingsRow({
+			row: siteTitleRow,
+			parent: siteTitleTab,
+			child: siteTitleField,
+		});
+
+		new SettingsRow({
+			parent: siteTitleTab,
+			child: siteTitleField.getLogo24Field(),
 		});
 
 		const siteLogoTab = new TabField({
 			parent: tabsField,
-			tabsOptions: {
-				restricted: this.getValue('portalSettings').canUserEditLogo === false,
-				bannerCode: 'limit_admin_logo',
-				head: Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO'),
-				body: new Promise((resolve, reject) =>
-				{
-					Runtime
-						.loadExtension('ui.uploader.stack-widget')
-						.then((exports) => {
-								const siteLogoField = new SiteLogoField({
-									parent: siteTitleTab,
-									siteLogoOptions: this.getValue('portalSettings').logo,
-									canUserEditLogo: this.getValue('portalSettings').canUserEditLogo,
-								});
-								siteLogoField.initUploader(exports);
-								resolve(siteLogoField.render());
-							}
-						);
-				}),
-
-			}
+			tabsOptions: this.getValue('tabCompanyLogo')
 		});
+
+		const siteLogoField = new SiteLogoField({
+			siteLogoLabel: this.getValue('portalSettingsLabels').logo,
+			siteLogoOptions: this.getValue('portalSettings').logo,
+			canUserEditLogo: this.getValue('portalSettings').canUserEditLogo,
+		});
+
+		new SettingsRow({
+			parent: siteLogoTab,
+			child: siteLogoField,
+		});
+
 		tabsField.activateTab(siteTitleTab);
 		// 2.2 Widget
-		sectionView.append(siteNameRow.render());
-		siteNameRow.append(
-			Tag.render`
-			<div class="intranet-settings__grid_box">
-				<input type="hidden" name="justToBeThere" value="ofCourse" />
-				<div data-role="title-container" class="intranet-settings__grid_item"></div>
-				<div class="intranet-settings__grid_item">${previewWidget.render()}</div>
-			</div>`);
-		setTimeout(() => {
-			siteNameRow
-				.render()
-				.querySelector('div[data-role="title-container"]')
-				.appendChild(tabsField.render())
-			;
-		}, 0);
-		// 2.3 site_name
 
 		new SettingsRow({
 			row: new Row({
-				separator: 'top',
-				className: '--block',
+				content: previewWidget.render(),
+				className: 'intranet-settings__site-logo_subrow --no-padding',
 			}),
+			parent: siteLogoRow,
+		});
+
+		// 2.3 site_name
+
+		new SettingsRow({
+			row: new SeparatorRow(),
+			parent: sectionField,
+		});
+
+		new SettingsRow({
 			parent: sectionField,
 			child: new SettingsField({
 				fieldView: (new TextInput({
 					inputName: 'name',
-					label: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_NAME'),
+					label: this.getValue('portalSettingsLabels').name,
 					value: this.getValue('portalSettings').name,
 					placeholder: window.document.location.hostname,
 					inputDefaultWidth: true,
@@ -226,13 +233,52 @@ export class PortalPage extends BaseSettingsPage
 		return sectionField;
 	}
 
+	#getOwnDomainTabBody(domainSettings): HTMLElement
+	{
+		const copyButton = Tag.render`<div class="ui-icon-set --copy-plates intranet-settings__domain__list_btn"></div>`;
+		BX.clipboard.bindCopyClick(copyButton, {text: () => {
+				return Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS').replaceAll('<br>', "\n");
+			}});
+
+		const res = Tag.render
+			`<div class="intranet-settings__domain__list_box">
+						<ul class="intranet-settings__domain__list">
+							<li class="intranet-settings__domain__list_item">
+								${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP1')}
+								<div class="intranet-settings__domain_box">
+									${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS')}
+									${copyButton}
+								</div>
+							</li>
+							<li class="intranet-settings__domain__list_item">
+								${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP2')}
+							</li>
+							<li class="intranet-settings__domain__list_item">
+								${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP3')}
+							</li>
+						</ul>
+						<a target="_blank" href="/settings/support.php" class="settings-tools-description-link">${Loc.getMessage('INTRANET_SETTINGS_WRITE_TO_SUPPORT')}</a>
+					</div>`;
+
+		if (domainSettings.isCustomizable !== true)
+		{
+			Event.bind(res.querySelector('a.settings-tools-description-link'), 'click', (event) => {
+				BX.UI.InfoHelper.show('limit_office_own_domain');
+				event.preventDefault();
+				return false;
+			})
+		}
+		return res;
+	}
+
 	buildDomainSection(domainSettings: SiteDomainType): SettingsSection
 	{
-		const sectionView = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_DOMAIN'),
-			titleIconClasses: 'ui-icon-set --globe',
-			isOpen: false,
-		});
+		if (!this.hasValue('sectionSiteDomain'))
+		{
+			return;
+		}
+		const sectionView = new Section(this.getValue('sectionSiteDomain'));
+
 		const sectionField = new SettingsSection({
 			parent: this,
 			section: sectionView
@@ -254,84 +300,52 @@ export class PortalPage extends BaseSettingsPage
 			})).render())
 		;
 
+		const tabsRow = new SettingsRow({
+			parent: sectionField,
+		});
+
 		//region 2. Tabs
-		const tabsField = new TabsField({parent: sectionField});
+		const tabsField = new TabsField({parent: tabsRow});
 		// 2.1 Tab Site name
 		const firstTab = new TabField({
 			parent: tabsField,
-			tabsOptions: {
-				head: { title: Loc.getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME1') },
-				body: () => {
-					const siteDomainField = new SiteDomainField({
-						parent: firstTab,
-						siteDomainOptions: domainSettings,
-						helpMessages: {
-							site: this.helpMessageProviderFactory(),
-						}
-					});
-					Event.bind(siteDomainField.getFieldView().getInputNode(), 'keydown', () => {
-						this.getAnalytic()?.addEventConfigPortal(AnalyticSettingsEvent.CHANGE_PORTAL_SITE);
-					});
-
-					return siteDomainField.render();
-				}
-			}
+			tabsOptions: this.getValue('tabDomainPrefix')
 		});
 
-		new TabField({
+		const siteDomainField = new SiteDomainField({
+			siteDomainOptions: domainSettings,
+			helpMessages: {
+				site: this.helpMessageProviderFactory(),
+			}
+		});
+		Event.bind(siteDomainField.getFieldView().getInputNode(), 'keydown', () => {
+			this.getAnalytic()?.addEventConfigPortal(AnalyticSettingsEvent.CHANGE_PORTAL_SITE);
+		});
+
+		const firstTabRow = new Row({
+			content: siteDomainField.render(),
+		});
+
+		new SettingsRow({
+			row: firstTabRow,
+			parent: firstTab,
+			child: siteDomainField,
+		});
+
+		const secondTab = new TabField({
 			parent: tabsField,
-			tabsOptions: {
-				restricted: domainSettings.isCustomizable === false,
-				bannerCode: 'limit_office_own_domain',
-				head: Loc.getMessage('INTRANET_SETTINGS_SECTION_DOMAIN_NAME2'),
-				body: () => {
-					const copyButton = Tag.render`<div class="ui-icon-set --copy-plates intranet-settings__domain__list_btn"></div>`;
-					BX.clipboard.bindCopyClick(copyButton, {text: () => {
-							return Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS').replaceAll('<br>', "\n");
-						}});
-
-					const res = Tag.render
-						`<div class="intranet-settings__domain__list_box">
-						<ul class="intranet-settings__domain__list">
-							<li class="intranet-settings__domain__list_item">
-								${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP1')}
-								<div class="intranet-settings__domain_box">
-									${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS')}
-									${copyButton}
-								</div>
-							</li>
-							<li class="intranet-settings__domain__list_item">
-								${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP2')}
-							</li>
-							<li class="intranet-settings__domain__list_item">
-								${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP3')}
-							</li>
-						</ul>
-						<a target="_blank" href="/settings/support.php" class="settings-tools-description-link">${Loc.getMessage('INTRANET_SETTINGS_WRITE_TO_SUPPORT')}</a>
-					</div>`;
-
-					if (domainSettings.isCustomizable !== true)
-					{
-						Event.bind(res.querySelector('a.settings-tools-description-link'), 'click', (event) => {
-							BX.UI.InfoHelper.show('limit_office_own_domain');
-							event.preventDefault();
-							return false;
-						})
-					}
-					return res;
-				}
-			}
+			tabsOptions: this.getValue('tabDomain')
 		});
 
-		const justRow = new Row({});
-		sectionView.append(justRow.render());
+		const descriptionRow = new Row({
+			content: this.#getOwnDomainTabBody(domainSettings),
+		});
 
-		justRow.append(
-			Tag.render`
-			<div class="intranet-settings__grid_box --single-item">
-				<div class="intranet-settings__grid_item">${tabsField.render()}</div>
-			</div>`)
-		;
+		new SettingsRow({
+			row: descriptionRow,
+			parent: secondTab
+		});
+
 		tabsField.activateTab(firstTab);
 		//endregion
 
@@ -340,13 +354,11 @@ export class PortalPage extends BaseSettingsPage
 
 	buildThemeSection(themePickerSettings: SiteThemePickerOptions, portalSettings: ?SiteTitleInputType): SettingsSection
 	{
-		const sectionView = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_PORTAL_THEME'),
-			titleIconClasses: 'ui-icon-set --picture',
-			isOpen: false,
-			isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
-			bannerCode: 'ip_access_rights_lock',
-		});
+		if (!this.hasValue('sectionSiteTheme'))
+		{
+			return;
+		}
+		const sectionView = new Section(this.getValue('sectionSiteTheme'));
 
 		const sectionField = new SettingsSection({
 			section: sectionView,

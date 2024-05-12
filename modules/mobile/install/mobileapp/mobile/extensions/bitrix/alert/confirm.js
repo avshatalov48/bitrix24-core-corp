@@ -2,6 +2,7 @@
  * @module alert/confirm
  */
 jn.define('alert/confirm', (require, exports, module) => {
+	const { Loc } = require('loc');
 
 	const ButtonType = {
 		DEFAULT: 'default',
@@ -56,7 +57,7 @@ jn.define('alert/confirm', (require, exports, module) => {
 			if (buttons.length === 0)
 			{
 				buttons.push({
-					text: BX.message('ALERT_CONFIRMATION_CONFIRM'),
+					text: Loc.getMessage('ALERT_CONFIRMATION_CONFIRM'),
 					type: ButtonType.DEFAULT,
 				});
 			}
@@ -71,14 +72,13 @@ jn.define('alert/confirm', (require, exports, module) => {
 				buttons = [...others, first];
 			}
 
-			buttons = buttons.map((button) =>
+			buttons = buttons.map((button) => (
 				button.type === ButtonType.CANCEL
 					? {
 						...button,
-						text: button.text || BX.message('ALERT_CONFIRMATION_CANCEL'),
+						text: button.text || Loc.getMessage('ALERT_CONFIRMATION_CANCEL'),
 					}
-					: button,
-			);
+					: button));
 
 			return (
 				Application.getApiVersion() >= MIN_API_VERSION

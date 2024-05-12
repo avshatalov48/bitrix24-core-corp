@@ -124,6 +124,8 @@ final class Operation extends Adapter
 
 		$this->prepareFields($fields, true);
 
+		Service\Operation\Action\Compatible\SendEvent::attachProvidedFields($item, $fields);
+
 		$item->setFromCompatibleData($fields);
 
 		if (isset($compatibleOptions['IS_RESTORATION']) && $compatibleOptions['IS_RESTORATION'])
@@ -146,6 +148,8 @@ final class Operation extends Adapter
 			$result = $this->checkRequiredFields($fields, $compatibleOptions, $operation->getRequiredFields());
 			if (!$result->isSuccess())
 			{
+				Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);
+
 				return $this->returnError($result, $fields);
 			}
 		}
@@ -153,8 +157,12 @@ final class Operation extends Adapter
 		$result = $operation->launch();
 		if (!$result->isSuccess())
 		{
+			Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);
+
 			return $this->returnError($result, $fields);
 		}
+
+		Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);
 
 		$fields = $this->exposeFieldsAfterAdd($item->getCompatibleData(), $fields);
 
@@ -376,6 +384,8 @@ final class Operation extends Adapter
 
 		$this->prepareFields($fields, false);
 
+		Service\Operation\Action\Compatible\SendEvent::attachProvidedFields($item, $fields);
+
 		$item->setFromCompatibleData($fields);
 
 		$operation = $this->factory->getUpdateOperation($item);
@@ -387,6 +397,8 @@ final class Operation extends Adapter
 			$result = $this->checkRequiredFields($fields, $compatibleOptions, $operation->getRequiredFields());
 			if (!$result->isSuccess())
 			{
+				Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);
+
 				return $this->returnError($result);
 			}
 		}
@@ -394,8 +406,12 @@ final class Operation extends Adapter
 		$result = $operation->launch();
 		if (!$result->isSuccess())
 		{
+			Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);
+
 			return $this->returnError($result, $fields);
 		}
+
+		Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);
 
 		$fields = $this->exposeFieldsAfterUpdate($previousFields, $item->getCompatibleData(), $fields);
 

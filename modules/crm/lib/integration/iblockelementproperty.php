@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Integration;
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Renderer;
 use Bitrix\Main\Web\Json;
 
@@ -135,7 +135,7 @@ class IBlockElementProperty
 		$field = new Renderer($userField, [
 			'mode' => 'main.edit',
 			'bVarsFromForm' => false,
-			'form_name' => $controlSettings['FORM_NAME'],
+			'form_name' => $controlSettings['FORM_NAME'] ?? null,
 			'createNewEntity' => $createNewEntity,
 		]);
 
@@ -234,7 +234,9 @@ class IBlockElementProperty
 				}
 			}
 		}
-		switch($controlSettings['MODE'])
+
+		$mode = ($controlSettings['MODE'] ?? null);
+		switch($mode)
 		{
 			case 'CSV_EXPORT':
 				return implode(',', $listValue);
@@ -271,7 +273,7 @@ class IBlockElementProperty
 		$field = new Renderer($userField, [
 			'mode' => 'main.view',
 			'bVarsFromForm' => false,
-			'form_name' => $controlSettings['FORM_NAME'],
+			'form_name' => $controlSettings['FORM_NAME'] ?? null,
 		]);
 
 		return $field->render();

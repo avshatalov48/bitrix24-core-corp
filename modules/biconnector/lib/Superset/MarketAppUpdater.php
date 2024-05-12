@@ -164,11 +164,6 @@ class MarketAppUpdater
 			}
 		}
 
-		if (!$result->isSuccess())
-		{
-			MarketDashboardLogger::logErrors($result->getErrors());
-		}
-
 		return $result;
 	}
 }

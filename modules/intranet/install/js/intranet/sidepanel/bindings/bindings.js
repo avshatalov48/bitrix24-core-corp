@@ -134,6 +134,15 @@
 			},
 			{
 				condition: [
+					'/company/personal/user/\\d+/tasks/flow/\\?apply_filter=Y&ID_numsel=exact&ID_from=(\\d+)',
+				],
+				loader: 'default-loader',
+				options: {
+					cacheable: false,
+				},
+			},
+			{
+				condition: [
 					'/company/personal/user/(\\d+)/tasks/task/edit/0/',
 					'/workgroups/group/(\\d+)/tasks/task/edit/0/',
 					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/0/'
@@ -996,15 +1005,43 @@
 				}
 			},
 			{
+				condition: ['/settings/license_all.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1250,
+					customRightBoundary: 0,
+				},
+			},
+			{
+				condition: ['/settings/order/make.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1250,
+					customRightBoundary: 0,
+				},
+			},
+			{
 				condition: [
 					new RegExp("/settings/configs/\\?analyticContext=[a-z]+", 'i'),
 					'/settings/configs/index.php',
 					new RegExp("/settings/configs/\\?page=[a-z]+", 'i'),
+					new RegExp("/configs/\\?analyticContext=[a-z]+", 'i'),
+					'/configs/index.php',
+					new RegExp("/configs/\\?page=[a-z]+", 'i'),
 				],
 				options: {
-					loader: 'intranet:settings',
+					loader: 'intranet:slider-settings',
 					width: 1034
 				}
+			},
+			{
+				condition: ['/einvoice/install/'],
+				options: {
+					width: 575,
+					allowChangeHistory: false,
+				},
 			},
 			{
 				condition: [

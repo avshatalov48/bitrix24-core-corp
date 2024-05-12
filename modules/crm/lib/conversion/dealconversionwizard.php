@@ -51,75 +51,19 @@ class DealConversionWizard extends EntityConversionWizard
 
 			$resultData = $converter->getResultData();
 
-			if(isset($resultData[\CCrmOwnerType::InvoiceName]))
-			{
-				if ($this->isMobileContext)
-				{
-					$this->redirectUrl = "/mobile/crm/invoice/?page=view&invoice_id=".$resultData[\CCrmOwnerType::InvoiceName];
-				}
-				else
-				{
-					$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Invoice, $resultData[\CCrmOwnerType::InvoiceName], false);
-				}
-			}
-			elseif(isset($resultData[\CCrmOwnerType::QuoteName]))
-			{
-				if ($this->isMobileContext)
-				{
-					$this->redirectUrl = "/mobile/crm/quote/?page=view&quote_id=".$resultData[\CCrmOwnerType::QuoteName];
-				}
-				else
-				{
-					$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(
-						\CCrmOwnerType::Quote,
-						$resultData[\CCrmOwnerType::QuoteName],
-						false,
-						array('ENABLE_SLIDER' => $this->enableSlider)
-					);
-				}
-			}
+			$this->redirectUrl = (string)$this->getRedirectUrlByResultData($resultData);
+
 			$result = true;
 		}
 		catch(EntityConversionException $e)
 		{
 			$this->exception = $e;
-			if($e->getTargetType() === EntityConversionException::TARG_DST)
-			{
-				if ($this->isMobileContext)
-				{
-					switch($e->getDestinationEntityTypeID())
-					{
-						case (\CCrmOwnerType::Invoice):
-						{
-							$this->redirectUrl = "/mobile/crm/invoice/?page=edit&conv_deal_id=".$converter->getEntityID();
-							break;
-						}
-						case (\CCrmOwnerType::Quote):
-						{
-							$this->redirectUrl = "/mobile/crm/quote/?page=edit&conv_deal_id=".$converter->getEntityID();
-							break;
-						}
-					}
-				}
-				else
-				{
-					$config = $converter->getConfig();
-					$options = array(
-						'ENTITY_SETTINGS' => $config->getEntityInitData($e->getDestinationEntityTypeID()),
-						'ENABLE_SLIDER' => $this->enableSlider
-					);
 
-					$this->redirectUrl = \CCrmUrlUtil::AddUrlParams(
-						\CCrmOwnerType::GetEntityEditPath(
-							$e->getDestinationEntityTypeID(),
-							0,
-							false,
-							$options
-						),
-						array(static::QUERY_PARAM_SRC_ID => $converter->getEntityID())
-					);
-				}
-			}
+			$uri = $this->getRedirectUrlByConversionException($e)?->addParams([
+				static::QUERY_PARAM_SRC_ID => $converter->getEntityID()
+			]);
+
+			$this->redirectUrl = (string)$uri;
 		}
 		catch(\Exception $e)
 		{

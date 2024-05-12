@@ -86,7 +86,7 @@ final class StoreProduct extends BaseProduct
 			}
 			$storeToAmount = (float)($productStoreInfo[(int)$row['ELEMENT_ID']][(int)$row['STORE_TO']]['AMOUNT'] ?? 0);
 
-			$records[] = new DocumentProductRecord([
+			$records[] = DocumentProductRecord::make([
 				'id' => (int)$row['ID'],
 				'documentId' => (int)$row['DOC_ID'],
 				'productId' => (int)$row['ELEMENT_ID'],

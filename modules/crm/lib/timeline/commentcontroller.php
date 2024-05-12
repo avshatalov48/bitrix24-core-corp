@@ -235,6 +235,7 @@ class CommentController extends EntityController
 		}
 		
 		$parser->bMobile = (($options['MOBILE'] ?? null) === 'Y');
+		$data['TEXT'] = $parser::clearAllTags($data['COMMENT']);
 		if (self::$parser instanceof \blogTextParser)
 		{
 			$data['TEXT'] = $parser::killAllTags($data['COMMENT']);
@@ -246,7 +247,6 @@ class CommentController extends EntityController
 		}
 		elseif (self::$parser instanceof \forumTextParser)
 		{
-			$data['TEXT'] = $parser::killAllTags($data['COMMENT']);
 			$data['COMMENT'] = $parser->convert(
 				$data['COMMENT'],
 				$rules,
@@ -256,7 +256,6 @@ class CommentController extends EntityController
 		}
 		elseif (self::$parser instanceof \logTextParser)
 		{
-			$data['TEXT'] = $parser::clearAllTags($data['COMMENT']);
 			$data['COMMENT'] = $parser->convert(
 				$data['COMMENT'],
 				array(),
@@ -265,7 +264,6 @@ class CommentController extends EntityController
 		}
 		elseif (!empty(self::$parser))
 		{
-			$data['TEXT'] = $parser::clearAllTags($data['COMMENT']);
 			$data['COMMENT'] = $parser->convertText($data['COMMENT']);
 		}
 
@@ -282,11 +280,7 @@ class CommentController extends EntityController
 		{
 			return $parser::killAllTags($sourceText);
 		}
-		elseif(self::$parser instanceof \forumTextParser)
-		{
-			return $parser::killAllTags($sourceText);
-		}
-		elseif(self::$parser instanceof \logTextParser)
+		elseif(self::$parser instanceof \forumTextParser || self::$parser instanceof \logTextParser)
 		{
 			return $parser::clearAllTags($sourceText);
 		}

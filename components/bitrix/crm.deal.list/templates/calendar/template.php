@@ -20,6 +20,7 @@ use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
@@ -39,7 +40,6 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
@@ -309,24 +309,20 @@ if (isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 	}
 }
 
-?><script type="text/javascript">
-	BX.ready(
-		function()
-		{
-			BX.Crm.AnalyticTracker.config =
-				{
-					id: "deal_calendar",
-					settings: { params: <?=CUtil::PhpToJSObject($arResult['ANALYTIC_TRACKER'])?> }
-				};
-		}
-	);
-</script><?
-
 //region Filter
 //Skip rendering of grid filter for internal grid request (filter already created)
 if (!Bitrix\Main\Grid\Context::isInternalRequest()
 	&& isset($arResult['FILTER']) && isset($arResult['FILTER_PRESETS']))
 {
+	$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?' . bitrix_sessid_get();
+	$filterLazyLoadParams = [
+		'filter_id' => urlencode($arResult['GRID_ID']),
+		'category_id' => $arResult['CATEGORY_ID'],
+		'is_recurring' => $arParams['IS_RECURRING'],
+		'siteID' => SITE_ID,
+	];
+	$uri = new Uri($filterLazyLoadUrl);
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.filter',
 		($arParams['~FILTER_TEMPLATE'] ?? 'title'),
@@ -356,9 +352,14 @@ if (!Bitrix\Main\Grid\Context::isInternalRequest()
 			'ENABLE_LIVE_SEARCH' => true,
 			'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
 			'LAZY_LOAD' => [
-				'GET_LIST' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+				'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+				'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+				'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
 			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
+			'RESTRICTED_FIELDS' => $arResult['RESTRICTED_FIELDS'] ?? [],
 		],
 		$component,
 		[
@@ -454,7 +455,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid())
 			)
 		));
 		CMain::FinalActions();
-		
+
 		die();
 	}
 }

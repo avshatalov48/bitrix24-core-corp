@@ -1,8 +1,12 @@
 <?php
 $MESS["CRM_EDITOR_CANCEL"] = "Cancel";
+$MESS["CRM_EDITOR_FIELD_ALL_SECTIONS_DISABLED"] = "Select item(s) to show fields.";
 $MESS["CRM_EDITOR_FIELD_CLIENT"] = "Client";
 $MESS["CRM_EDITOR_FIELD_COMPANY"] = "Company";
+$MESS["CRM_EDITOR_FIELD_EMPTY_STATE_DESCRIPTION"] = "Please make sure you spell it correctly.";
+$MESS["CRM_EDITOR_FIELD_EMPTY_STATE_TITLE"] = "Field was not found.";
 $MESS["CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Amount and currency";
+$MESS["CRM_EDITOR_FIELD_SEARCH_PLACEHOLDER"] = "Find field";
 $MESS["CRM_EDITOR_SAVE"] = "Save";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the deal to never forget about the customer.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DYNAMIC_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action to keep up with the events.";
@@ -67,7 +71,7 @@ $MESS["CRM_KANBAN_NOTIFY_QUOTE_DELETE_MSGVER_1"] = "Estimates deleted.";
 $MESS["CRM_KANBAN_NOTIFY_QUOTE_SETASSIGNED_MSGVER_1"] = "Estimates assigned to responsible person: #assignedName#";
 $MESS["CRM_KANBAN_NOTIFY_QUOTE_STATUS_MSGVER_2"] = "Estimates moved to stage: #statusName#.";
 $MESS["CRM_KANBAN_NOTIFY_TEXT2"] = "Only your Bitrix24 administrator can create or edit a stage. Please send a notification or ask them personally to add the stages you require.";
-$MESS["CRM_KANBAN_NOTIFY_TITLE"] = "Insufficient permissions.";
+$MESS["CRM_KANBAN_NOTIFY_TITLE"] = "Insufficient permissions";
 $MESS["CRM_KANBAN_NO_EMAIL"] = "No e-mail";
 $MESS["CRM_KANBAN_NO_IM"] = "No chat communication";
 $MESS["CRM_KANBAN_NO_PHONE"] = "No phone";
@@ -93,7 +97,6 @@ $MESS["CRM_KANBAN_PANEL_TASK"] = "Create task";
 $MESS["CRM_KANBAN_PLUS_TITLE_DEAL"] = "Quick Deal";
 $MESS["CRM_KANBAN_PLUS_TITLE_DYNAMIC"] = "Quick item";
 $MESS["CRM_KANBAN_PLUS_TITLE_LEAD"] = "Quick Lead";
-$MESS["CRM_KANBAN_PLUS_TITLE_QUOTE"] = "";
 $MESS["CRM_KANBAN_PLUS_TITLE_QUOTE_MSGVER_1"] = "Quick estimate";
 $MESS["CRM_KANBAN_PLUS_TITLE_SMART_INVOICE"] = "Quick invoice";
 $MESS["CRM_KANBAN_POPUP_AT_LEAST_ONE_FIELD"] = "The form must have at least one field";
@@ -104,6 +107,8 @@ $MESS["CRM_KANBAN_QUICK_FORM_REQUIRED_FIELDS_TITLE_LEAD"] = "Fill out the requir
 $MESS["CRM_KANBAN_REPEATED_APPROACH_DEAL"] = "repeat inquiry";
 $MESS["CRM_KANBAN_REPEATED_DEAL"] = "repeat deal";
 $MESS["CRM_KANBAN_REPEATED_LEAD"] = "repeat";
+$MESS["CRM_KANBAN_REQUIRED_FIELDS_TITLE_DEAL"] = "Complete all the required fields to change deal stage";
+$MESS["CRM_KANBAN_REQUIRED_FIELDS_TITLE_LEAD"] = "Complete all the required fields to change lead status";
 $MESS["CRM_KANBAN_REST_DEMO_CRM_MIGRATION"] = "Migrate from other CRM";
 $MESS["CRM_KANBAN_REST_DEMO_FILE_EXPORT"] = "Export CRM solution presets to file";
 $MESS["CRM_KANBAN_REST_DEMO_FILE_IMPORT"] = "Import CRM solution presets from file";

@@ -40,21 +40,44 @@ else
 		$filterFlags |= Crm\Filter\CompanySettings::FLAG_ENABLE_ADDRESS;
 	}
 
+	$filterId = $_REQUEST['filter_id'] ?? 'CRM_COMPANY_LIST_V12';
+
 	$filter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
 		new \Bitrix\Crm\Filter\CompanySettings([
-			'ID' => $_REQUEST['filter_id'] ?? 'CRM_COMPANY_LIST_V12',
+			'ID' => $filterId,
 			'flags' => $filterFlags,
 			'categoryID' => $_REQUEST['category_id'] ?? 0,
+			'MYCOMPANY_MODE' => $filterId === 'CRM_MYCOMPANY_LIST_V12'
 		])
 	);
 
 	if($action === 'field')
 	{
+		/**
+		 * @deprecated
+		 */
 		$fieldID = $_REQUEST['id'] ?? '';
 		$field = $filter->getField($fieldID);
 		$result = $field
 			? Main\UI\Filter\FieldAdapter::adapt($field->toArray())
 			: ['ERROR' => Main\Localization\Loc::getMessage('CRM_FILTER_FIELD_NOT_FOUND')];
+	}
+	elseif ($action === 'fields')
+	{
+		$ids = $_REQUEST['ids'] ?? [];
+		$fieldIds = is_array($ids) ? $ids : [$ids];
+
+		$fieldsResult = (new \Bitrix\Crm\Grid\Filter($filter))->getFields($fieldIds);
+		if ($fieldsResult->isSuccess())
+		{
+			$result = $fieldsResult->getData();
+		}
+		else
+		{
+			$result = [
+				'ERROR' => implode(', ', $fieldsResult->getErrorMessages()),
+			];
+		}
 	}
 	elseif($action === 'list')
 	{

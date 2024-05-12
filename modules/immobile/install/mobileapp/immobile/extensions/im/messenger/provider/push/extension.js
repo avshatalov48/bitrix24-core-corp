@@ -4,10 +4,10 @@
 jn.define('im/messenger/provider/push', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, DialogType, ComponentCode } = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('push-handler');
 
@@ -15,7 +15,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 	{
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.manager = Application.getNotificationHistory('im_message');
 
 			this.manager.setOnChangeListener(this.handleChange.bind(this));
@@ -42,18 +42,19 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		updateList()
 		{
 			const list = this.manager.get();
-			if (!list || !list['IM_MESS'] || list['IM_MESS'].length <= 0)
+
+			if (!list || !list.IM_MESS || list.IM_MESS.length <= 0)
 			{
 				logger.info('PushHandler.updateList: list is empty');
 
 				return true;
 			}
 
-			logger.info('PushHandler.updateList: parse push messages', list['IM_MESS']);
+			logger.info('PushHandler.updateList: parse push messages', list.IM_MESS);
 
 			const isDialogOpen = this.store.getters['applicationModel/isDialogOpen'];
 
-			list['IM_MESS'].forEach((push) => {
+			list.IM_MESS.forEach((push) => {
 				if (!push.data)
 				{
 					return false;
@@ -96,7 +97,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 				if (push.senderCut)
 				{
-					event.params.message.text = event.params.message.text.substring(push.senderCut);
+					event.params.message.text = event.params.message.text.slice(Math.max(0, push.senderCut));
 				}
 
 				if (!event.params.message.textOriginal)
@@ -163,7 +164,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				const userId = parseInt(pushParams.ACTION.slice(8), 10);
 				if (userId > 0)
 				{
-					MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId });
+					MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId }, ComponentCode.imMessenger);
 				}
 
 				return true;
@@ -178,7 +179,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 						PageManager.getNavigator().makeTabActive();
 					}
 
-					BX.postComponentEvent('onTabChange', ['openlines'], 'im.navigation');
+					BX.postComponentEvent('onTabChange', ['openlines'], ComponentCode.imNavigation);
 
 					return false;
 				}
@@ -186,7 +187,18 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				const chatId = parseInt(pushParams.ACTION.slice(8), 10);
 				if (chatId > 0)
 				{
-					MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: `chat${chatId}` });
+					let componentCode = ComponentCode.imMessenger;
+					if (push.data[1] && push.data[1][13] && push.data[1][13] === DialogType.copilot)
+					{
+						componentCode = ComponentCode.imCopilotMessenger;
+						BX.postComponentEvent('onTabChange', ['copilot'], ComponentCode.imNavigation);
+					}
+					else
+					{
+						BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
+					}
+
+					MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: `chat${chatId}` }, componentCode);
 				}
 
 				return true;
@@ -194,7 +206,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 			if (pushParams.ACTION && pushParams.ACTION === 'IM_NOTIFY')
 			{
-				MessengerEmitter.emit(EventType.messenger.openNotifications);
+				MessengerEmitter.emit(EventType.messenger.openNotifications, {}, ComponentCode.imMessenger);
 			}
 
 			return true;

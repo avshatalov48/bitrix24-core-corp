@@ -13,6 +13,11 @@ $isSlider = isset($_REQUEST['IFRAME'], $_REQUEST['IFRAME_TYPE'])
 	&& $_REQUEST['IFRAME'] === 'Y'
 	&& $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER';
 
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+];
+
 if (!$isSlider)
 {
 	$APPLICATION->IncludeComponent(
@@ -40,6 +45,7 @@ if (!$isSlider)
 			'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
 			'PATH_TO_EVENT_LIST' => $arResult['PATH_TO_EVENT_LIST'] ?? '',
 			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -76,6 +82,7 @@ else
 			'ELEMENT_ID' => $arResult['VARIABLES']['quote_id'] ?? null,
 			'TYPE' => 'list',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -112,6 +119,7 @@ else
 				'PATH_TO_QUOTE_DEADLINES' => $arResult['PATH_TO_QUOTE_DEADLINES'] ?? '',
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'] ?? null,
+				'ANALYTICS' => $analytics,
 			],
 			'USE_UI_TOOLBAR' => 'Y',
 		]

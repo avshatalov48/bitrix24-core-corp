@@ -1,3 +1,6 @@
+import {PayloadData} from "./base";
+import {DialogId} from "../../types/common";
+
 export enum ChatType
 {
 	chat = 'chat',
@@ -58,3 +61,44 @@ export type RecentModelMutation =
 	| 'recentModel/add'
 	| 'recentModel/update'
 	| 'recentModel/delete'
+
+
+export type RecentSetStateActions = 'setState';
+export interface RecentSetStateData extends PayloadData
+{
+	collection: Array<RecentModelState>;
+}
+
+
+export type RecentAddActions = 'set';
+export interface RecentAddData extends PayloadData
+{
+	recentItemList: Array<{
+		fields: Partial<RecentModelState>
+	}>;
+}
+
+
+export type RecentUpdateActions =
+	'set'
+	| 'update'
+	| 'like'
+	| 'clearAllCounters'
+;
+export interface RecentUpdateData extends PayloadData
+{
+	recentItemList: Array<{
+		index: number,
+		fields: Partial<RecentModelState>,
+	}>;
+}
+
+
+export type RecentDeleteActions = 'delete';
+export interface RecentDeleteData extends PayloadData
+{
+	id: DialogId;
+	index: number;
+}
+
+

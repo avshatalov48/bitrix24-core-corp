@@ -20,6 +20,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(Options, "isExtranet", false);
 	babelHelpers.defineProperty(Options, "isAdmin", false);
 	babelHelpers.defineProperty(Options, "isCustomPresetRestricted", false);
+	babelHelpers.defineProperty(Options, "settingsPath", null);
 	babelHelpers.defineProperty(Options, "availablePresetTools", null);
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -3122,6 +3123,7 @@ this.BX = this.BX || {};
 	    Options.isAdmin = params.isAdmin;
 	    Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
 	    Options.availablePresetTools = params.availablePresetTools;
+	    Options.settingsPath = params.settingsPath;
 	    this.isCollapsedMode = params.isCollapsedMode;
 	    this.workgroupsCounterData = params.workgroupsCounterData;
 	    this.initAndBindNodes();
@@ -3582,15 +3584,17 @@ this.BX = this.BX || {};
 	            }
 	          }
 	        });
-	        menuItems.push({
-	          html: main_core.Loc.getMessage('MENU_EDIT_TOOLS'),
-	          onclick: function onclick() {
-	            BX.SidePanel.Instance.open('/settings/configs/', {
-	              allowChangeHistory: false,
-	              width: 1034
-	            });
-	          }
-	        });
+	        if (Options.settingsPath) {
+	          menuItems.push({
+	            html: main_core.Loc.getMessage('MENU_EDIT_TOOLS'),
+	            onclick: function onclick() {
+	              BX.SidePanel.Instance.open("".concat(Options.settingsPath, "?analyticContext=left_menu&page=tools"), {
+	                allowChangeHistory: false,
+	                width: 1034
+	              });
+	            }
+	          });
+	        }
 	      }
 	      return menuItems.filter(function (value) {
 	        return value !== null;

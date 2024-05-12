@@ -29,5 +29,6 @@ return [
 		'./calendar-sharing',
 		'./task',
 		'./clipboard',
+		'./visit',
 	]
 ];

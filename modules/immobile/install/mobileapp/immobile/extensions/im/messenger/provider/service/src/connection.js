@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/service/connection', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const {
 		AppStatus,
@@ -33,7 +33,7 @@ jn.define('im/messenger/provider/service/connection', (require, exports, module)
 
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.onStatusChanged = this.statusChangedHandler.bind(this);
 
 			if (isGetConnectionStatusSupported)
@@ -83,11 +83,11 @@ jn.define('im/messenger/provider/service/connection', (require, exports, module)
 			switch (status)
 			{
 				case ConnectionStatus.online:
-					core.setAppStatus(AppStatus.networkWaiting, false);
+					serviceLocator.get('core').setAppStatus(AppStatus.networkWaiting, false);
 					break;
 
 				case ConnectionStatus.offline:
-					core.setAppStatus(AppStatus.networkWaiting, true);
+					serviceLocator.get('core').setAppStatus(AppStatus.networkWaiting, true);
 					break;
 
 				default:

@@ -9,6 +9,11 @@ jn.define('calendar/ajax/sharing', (require, exports, module) => {
 		DISABLE: 'disable',
 		IS_ENABLED: 'isEnabled',
 		GET_PUBLIC_USER_LINK: 'getPublicUserLink',
+		GENERATE_USER_JOINT_SHARING_LINK: 'generateUserJointSharingLink',
+		GET_ALL_USER_LINK: 'getAllUserLink',
+		DISABLE_USER_LINK: 'disableUserLink',
+		INCREASE_FREQUENT_USE: 'increaseFrequentUse',
+		SET_SORT_JOINT_LINKS_BY_FREQUENT_USE: 'setSortJointLinksByFrequentUse',
 		SAVE_LINK_RULE: 'saveLinkRule',
 		INIT_CRM: 'initCrm',
 	};
@@ -53,6 +58,38 @@ jn.define('calendar/ajax/sharing', (require, exports, module) => {
 		getPublicUserLink()
 		{
 			return this.fetch(SharingActions.GET_PUBLIC_USER_LINK);
+		}
+
+		/**
+		 * @param data {{memberIds: number[]}}
+		 * @return {Promise<Object, void>}
+		 */
+		createJointLink(data)
+		{
+			return this.fetch(SharingActions.GENERATE_USER_JOINT_SHARING_LINK, data);
+		}
+
+		/**
+		 * @return {Promise<Object, void>}
+		 */
+		getAllUserLinks()
+		{
+			return this.fetch(SharingActions.GET_ALL_USER_LINK);
+		}
+
+		deleteUserLink(data)
+		{
+			return this.fetch(SharingActions.DISABLE_USER_LINK, data);
+		}
+
+		increaseFrequentUse(data)
+		{
+			return this.fetch(SharingActions.INCREASE_FREQUENT_USE, data);
+		}
+
+		setSortJointLinksByFrequentUse(data)
+		{
+			return this.fetch(SharingActions.SET_SORT_JOINT_LINKS_BY_FREQUENT_USE, data);
 		}
 
 		/**

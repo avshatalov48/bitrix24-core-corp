@@ -4,8 +4,8 @@ return [
 	'extensions' => [
 		'loc',
 		'alert',
+		'tokens',
 		'haptics',
-		'apptheme',
 		'assets/icons',
 		'bottom-sheet',
 		'utils/validation',

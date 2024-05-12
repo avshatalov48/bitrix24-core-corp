@@ -20,16 +20,16 @@ export class GdprPage extends BaseSettingsPage
 	appendSections(contentNode: HTMLElement)
 	{
 		let gdprSection = this.#buildGdprSection();
-		gdprSection.renderTo(contentNode);
+		gdprSection?.renderTo(contentNode);
 	}
 
 	#buildGdprSection(): SettingsSection
 	{
-		let gdprSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_GDPR'),
-			titleIconClasses: 'ui-icon-set --document',
-			canCollapse: false,
-		});
+		if (!this.hasValue('sectionGdpr'))
+		{
+			return;
+		}
+		let gdprSection = new Section(this.getValue('sectionGdpr'));
 
 		let sectionSettings = new SettingsSection({
 			section: gdprSection,
@@ -66,8 +66,8 @@ export class GdprPage extends BaseSettingsPage
 		{
 			const titleField = new TextInput({
 				inputName: 'companyTitle',
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
-				value: this.getValue('companyTitle'),
+				label: this.getValue('companyTitle').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
+				value: this.getValue('companyTitle').value,
 				placeholder: Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_COMPANY_TITLE'),
 			});
 
@@ -84,8 +84,8 @@ export class GdprPage extends BaseSettingsPage
 		{
 			const contactNameField = new TextInput({
 				inputName: 'contactName',
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CONTACT_NAME'),
-				value: this.getValue('contactName'),
+				label: this.getValue('contactName').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CONTACT_NAME'),
+				value: this.getValue('contactName').value,
 				placeholder: Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_CONTACT_NAME'),
 			});
 
@@ -102,8 +102,8 @@ export class GdprPage extends BaseSettingsPage
 		{
 			const emailField = new TextInput({
 				inputName: 'notificationEmail',
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL'),
-				value: this.getValue('notificationEmail'),
+				label: this.getValue('notificationEmail').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL'),
+				value: this.getValue('notificationEmail').value,
 				placeholder: Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL'),
 			});
 
@@ -121,8 +121,8 @@ export class GdprPage extends BaseSettingsPage
 		{
 			const dateField = new TextInput({
 				inputName: 'date',
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATE'),
-				value: this.getValue('date'),
+				label: this.getValue('date').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATE'),
+				value: this.getValue('date').value,
 			});
 
 			Dom.adjust(dateField.render(), {

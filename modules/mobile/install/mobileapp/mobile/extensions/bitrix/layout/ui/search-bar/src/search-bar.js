@@ -31,6 +31,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			super(props);
 
 			this.wrapperRef = null;
+			this.scrollRef = null;
 
 			this.state = this.getInitialState();
 
@@ -155,6 +156,16 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 
 		/**
 		 * @public
+		 */
+		refreshPresets()
+		{
+			this.fetchPresetsAndCounters(true);
+
+			this.search({ preset: this.getDefaultPreset() }, false, () => this.scrollRef?.scrollToBegin(true));
+		}
+
+		/**
+		 * @public
 		 * @return {Promise}
 		 */
 		fadeOut()
@@ -185,6 +196,15 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @return {object}
+		 */
+		getDefaultPreset()
+		{
+			return this.state.presets.find((preset) => (preset.default === true && preset.disabled !== true));
+		}
+
+		/**
+		 * @public
 		 * @return {string|null}
 		 */
 		getDefaultPresetId()
@@ -194,7 +214,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 				return null;
 			}
 
-			const defaultPreset = this.state.presets.find((preset) => (preset.default === true && preset.disabled !== true));
+			const defaultPreset = this.getDefaultPreset();
 
 			return (defaultPreset ? defaultPreset.id : null);
 		}
@@ -253,18 +273,30 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 		 */
 		fetchPresetsAndCounters(force = false, visible = true)
 		{
-			if (this.presetsWasLoaded() && !force)
+			const executor = this.getRunActionExecutor();
+			const cacheExpired = executor.getCache().getData() === null;
+			if (!force && this.presetsWasLoaded() && !cacheExpired)
 			{
 				return;
 			}
 
-			const { route, params } = this.presetsBackendProvider;
-
-			new RunActionExecutor(route, params)
-				.setCacheId(this.getCacheId())
+			executor
 				.setCacheHandler((response) => this.onLoadSearchData(response, visible))
 				.setHandler((response) => this.onLoadSearchData(response, visible))
 				.call(true);
+		}
+
+		/**
+		 * @private
+		 * @return {RunActionExecutor}
+		 */
+		getRunActionExecutor()
+		{
+			const { route, params } = this.presetsBackendProvider;
+
+			return new RunActionExecutor(route, params)
+				.setCacheId(this.getCacheId())
+				.setCacheTtl(3600);
 		}
 
 		/**
@@ -401,8 +433,9 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 		 *     }
 		 * }} params
 		 * @param {boolean} closeLayout
+		 * @param {function} callback
 		 */
-		search(params = {}, closeLayout = true)
+		search(params = {}, closeLayout = true, callback = null)
 		{
 			if (closeLayout)
 			{
@@ -468,6 +501,10 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 						searchBarId: this.props.id,
 					},
 				]);
+				if (callback)
+				{
+					callback();
+				}
 			});
 		}
 
@@ -506,6 +543,9 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 					{
 						horizontal: true,
 						style: styles.presetsScrollView,
+						ref: (ref) => {
+							this.scrollRef = ref;
+						},
 					},
 					View(
 						{

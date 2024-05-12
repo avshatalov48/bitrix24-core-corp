@@ -3,10 +3,10 @@
  */
 jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Alert } = require('alert');
+	const { Alert, confirmClosing, confirmDestructiveAction } = require('alert');
 	const { AnalyticsLabel } = require('analytics-label');
+	const { AnalyticsEvent } = require('analytics');
 	const { EventEmitter } = require('event-emitter');
-	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const { ActionsPanel } = require('layout/ui/detail-card/toolbar/actions-panel');
@@ -16,6 +16,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { debounce } = require('utils/function');
 	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
+	const { Loc } = require('loc');
 
 	const CACHE_ID = 'DETAIL_CARD';
 	const TAB_HEADER_HEIGHT = 44;
@@ -35,6 +36,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			this.mounted = false;
 			this.isClosing = false;
+			this.analytics = null;
 
 			this.menuActionsProvider = null;
 			this.setAdditionalProvider = null;
@@ -1015,6 +1017,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 							tabId,
 							...tab.payload,
 							...this.getComponentParams(),
+							analytics: this.getEntityAnalyticsData(),
 						},
 						result: hasTabsData ? tabData && tabData.result : undefined,
 						externalData: tabsExternalData && tabsExternalData[tabId],
@@ -1386,22 +1389,14 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		showConfirmDiscardChanges(onSuccess, onFailed)
 		{
-			Alert.confirm(
-				BX.message('DETAIL_CARD_DISCARD_CHANGES_ALERT_TITLE'),
-				BX.message('DETAIL_CARD_DISCARD_CHANGES_ALERT_TEXT'),
-				[
-					{
-						text: BX.message('DETAIL_CARD_DISCARD_CHANGES_ALERT_OK'),
-						type: 'destructive',
-						onPress: onSuccess,
-					},
-					{
-						text: BX.message('DETAIL_CARD_DISCARD_CHANGES_ALERT_CANCEL'),
-						type: 'cancel',
-						onPress: onFailed,
-					},
-				],
-			);
+			confirmDestructiveAction({
+				title: Loc.getMessage('DETAIL_CARD_DISCARD_CHANGES_ALERT_TITLE'),
+				description: Loc.getMessage('DETAIL_CARD_DISCARD_CHANGES_ALERT_TEXT'),
+				destructionText: Loc.getMessage('DETAIL_CARD_DISCARD_CHANGES_ALERT_OK'),
+				cancelText: Loc.getMessage('DETAIL_CARD_DISCARD_CHANGES_ALERT_CANCEL'),
+				onDestruct: onSuccess,
+				onCancel: onFailed,
+			});
 		}
 
 		handleCancelNewEntity()
@@ -1498,26 +1493,10 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		{
 			Haptics.impactLight();
 
-			Alert.confirm(
-				BX.message('DETAIL_CARD_EXIT_ENTITY_ALERT_TITLE'),
-				BX.message('DETAIL_CARD_EXIT_ENTITY_ALERT_TEXT2'),
-				[
-					{
-						text: BX.message('DETAIL_CARD_EXIT_ENTITY_ALERT_SAVE'),
-						type: 'default',
-						onPress: onSave,
-					},
-					{
-						text: BX.message('DETAIL_CARD_EXIT_ENTITY_ALERT_DISCARD'),
-						type: 'destructive',
-						onPress: onDiscard,
-					},
-					{
-						text: BX.message('DETAIL_CARD_DISCARD_CHANGES_ALERT_CANCEL'),
-						type: 'cancel',
-					},
-				],
-			);
+			confirmClosing({
+				onSave,
+				onClose: onDiscard,
+			});
 		}
 
 		refreshDetailCard()
@@ -1648,6 +1627,19 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			const componentParamsForSave = this.getComponentParamsForSave();
 
 			payload = mergeImmutable(payload, additionalData);
+			let analytics = this.getAnalyticsParams();
+			const analyticsEvent = analytics.getEvent();
+			if (sendAnalytics
+				&& this.isNewEntity()
+				&& (analyticsEvent === 'entity_add'
+					|| analyticsEvent === 'entity_copy'))
+			{
+				analytics.markAsAttempt().send();
+			}
+			else
+			{
+				analytics = null;
+			}
 
 			return (
 				BX.ajax
@@ -1662,8 +1654,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 							event: 'save',
 						},
 					})
-					.then((response) => this.processSaveErrors(response, payload))
-					.catch((response) => this.processSaveErrors(response, payload))
+					.then((response) => this.processSaveErrors(response, payload, analytics))
+					.catch((response) => this.processSaveErrors(response, payload, analytics))
 			);
 		}
 
@@ -1717,8 +1709,14 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			);
 		}
 
-		processSaveErrors(response, payload)
+		processSaveErrors(response, payload, analytics = null)
 		{
+			if (analytics)
+			{
+				const status = response.status === 'success' && response.errors.length === 0 ? 'success' : 'error';
+				analytics.setStatus(status).send();
+			}
+
 			if (this.ajaxErrorHandler)
 			{
 				return this.ajaxErrorHandler(response, payload);
@@ -1935,6 +1933,21 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			}
 
 			return this.componentParams;
+		}
+
+		getAnalyticsParams()
+		{
+			if (this.analytics === null)
+			{
+				this.analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}));
+			}
+
+			return this.analytics;
+		}
+
+		mergeAnalyticsParams(newAnalytics)
+		{
+			this.getAnalyticsParams().merge(newAnalytics);
 		}
 
 		setComponentParams(componentParams)

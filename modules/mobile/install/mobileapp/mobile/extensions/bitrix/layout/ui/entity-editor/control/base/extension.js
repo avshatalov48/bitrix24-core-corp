@@ -116,6 +116,7 @@ jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => 
 					readOnly: this.readOnly,
 					isChanged: this.isChanged,
 					mode: this.getMode(),
+					analytics: this.editor.getAnalytics(),
 				},
 			);
 		}

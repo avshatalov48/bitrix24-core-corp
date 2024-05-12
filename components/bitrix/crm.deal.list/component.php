@@ -23,7 +23,6 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
@@ -366,18 +365,6 @@ if (isset($arResult['CATEGORY_ID']) && $arResult['CATEGORY_ID'] >= 0)
 	);
 }
 
-CCrmDeal::PrepareConversionPermissionFlags(0, $arResult, $userPermissions);
-if ($arResult['CAN_CONVERT'])
-{
-	$config = \Bitrix\Crm\Conversion\DealConversionConfig::load();
-	if ($config === null)
-	{
-		$config = \Bitrix\Crm\Conversion\DealConversionConfig::getDefault();
-	}
-
-	$arResult['CONVERSION_CONFIG'] = $config;
-}
-
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
 $arResult['GADGET'] = 'N';
@@ -551,6 +538,16 @@ $arResult['GRID_ID'] =
 		)
 ;
 
+CCrmDeal::PrepareConversionPermissionFlags(0, $arResult, $userPermissions);
+if ($arResult['CAN_CONVERT'])
+{
+	$config = Crm\Conversion\ConversionManager::getConfig(\CCrmOwnerType::Deal);
+	$config->deleteItemByEntityTypeId(\CCrmOwnerType::SmartDocument);
+	$arResult['CONVERSION_CONFIG'] = $config;
+
+	$arResult['CONVERTER_ID'] = $arResult['GRID_ID'];
+}
+
 $arResult['TYPE_LIST'] = CCrmStatus::GetStatusListEx('DEAL_TYPE');
 $arResult['SOURCE_LIST'] = CCrmStatus::GetStatusListEx('SOURCE');
 // Please, uncomment if required
@@ -723,6 +720,11 @@ if (!$bInternal)
 	if (!in_array('WEBFORM_ID', $effectiveFilterFieldIDs, true))
 	{
 		$effectiveFilterFieldIDs[] = 'WEBFORM_ID';
+	}
+
+	if (!in_array('CONTACT_ID', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'CONTACT_ID';
 	}
 
 	Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
@@ -1346,12 +1348,36 @@ if (!$bInternal)
 	);
 }
 
+if (!empty($arParams['DEFAULT_COLUMNS']) && is_array($arParams['DEFAULT_COLUMNS']))
+{
+	foreach ($arResult['HEADERS'] as &$header)
+	{
+		$header['default'] = in_array($header['id'], $arParams['DEFAULT_COLUMNS'], true);
+	}
+}
+
+if (!empty($arParams['COLUMNS_ORDER']) && is_array($arParams['COLUMNS_ORDER']))
+{
+	// like [ID => 0, NAME => 1]
+	$desiredColumnOrder = array_flip(array_values($arParams['COLUMNS_ORDER']));
+
+	usort($arResult['HEADERS'], function (array $left, array $right) use ($desiredColumnOrder) {
+		// move unfound columns to the end of array
+		$leftOrder = $desiredColumnOrder[$left['id']] ?? PHP_INT_MAX;
+		$rightOrder = $desiredColumnOrder[$right['id']] ?? PHP_INT_MAX;
+
+		return $leftOrder <=> $rightOrder;
+	});
+}
+
 //region Check and fill fields restriction
-$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
-	$arResult['GRID_ID'] ?? '',
-	$arResult['HEADERS'] ?? [],
+$params = [
+	$arResult['GRID_ID'],
+	$arResult['HEADERS'],
 	$entityFilter ?? null
-);
+];
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(...$params);
+$arResult['RESTRICTED_FIELDS'] = $fieldRestrictionManager->getFilterFields(...$params);
 //endregion
 
 // list all fields for export
@@ -3078,10 +3104,25 @@ foreach($arResult['DEAL'] as &$arDeal)
 		);
 	}
 
-	$arDeal['PATH_TO_DEAL_COPY'] = CHTTP::urlAddParams(
-		$arDeal['PATH_TO_DEAL_EDIT'] ?? '',
-		array('copy' => 1)
-	);
+	$arDeal['PATH_TO_DEAL_COPY'] =
+		\Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Deal)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			->buildUri($arDeal['PATH_TO_DEAL_EDIT'] ?? '')
+			->addParams([
+				'copy' => 1,
+			])
+			->getUri()
+	;
 
 	if ($arResult['CATEGORY_ID'] >= 0)
 	{
@@ -3806,10 +3847,6 @@ foreach($arResult['CATEGORIES'] as $categoryID => $IDs)
 
 if (!$isInExportMode)
 {
-	$arResult['ANALYTIC_TRACKER'] = array(
-		'lead_enabled' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isEnabled() ? 'Y' : 'N'
-	);
-
 	$arResult['NEED_FOR_REBUILD_DEAL_ATTRS'] =
 	$arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS'] =
 	$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] =

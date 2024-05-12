@@ -2,7 +2,7 @@
  * @module im/messenger/lib/integration/immobile/calls
  */
 jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { EventType } = require('im/messenger/const');
@@ -21,7 +21,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				const eventData = {
 					dialogId,
 					video: false,
-					chatData: core.getStore().getters['dialoguesModel/getById'](dialogId),
+					chatData: serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId),
 				};
 
 				BX.postComponentEvent('onCallInvite', [eventData], 'calls');
@@ -29,7 +29,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				return;
 			}
 
-			const userData = core.getStore().getters['usersModel/getById'](dialogId);
+			const userData = serviceLocator.get('core').getStore().getters['usersModel/getById'](dialogId);
 			const eventData = {
 				userId: dialogId,
 				video: false,
@@ -50,7 +50,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				const eventData = {
 					dialogId,
 					video: true,
-					chatData: core.getStore().getters['dialoguesModel/getById'](dialogId),
+					chatData: serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId),
 				};
 
 				BX.postComponentEvent('onCallInvite', [eventData], 'calls');
@@ -58,7 +58,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				return;
 			}
 
-			const userData = core.getStore().getters['usersModel/getById'](dialogId);
+			const userData = serviceLocator.get('core').getStore().getters['usersModel/getById'](dialogId);
 			const eventData = {
 				userId: dialogId,
 				video: true,

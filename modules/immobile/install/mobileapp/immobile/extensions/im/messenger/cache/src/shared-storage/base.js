@@ -4,6 +4,9 @@
  * @module im/messenger/cache/base
  */
 jn.define('im/messenger/cache/base', (require, exports, module) => {
+	const {
+		CacheNamespace,
+	} = require('im/messenger/const');
 	const { Type } = require('type');
 
 	class Cache
@@ -20,11 +23,11 @@ jn.define('im/messenger/cache/base', (require, exports, module) => {
 				throw new TypeError('Cache: options.storageId must be a string value');
 			}
 
-			const namespace = 'im/messenger/cache/v2.2/';
 			const name = options.name;
 
-			this.storageId = namespace + name;
+			this.storageId = CacheNamespace + name;
 
+			// eslint-disable-next-line no-undef
 			this.storage = Application.storageById(this.storageId);
 		}
 

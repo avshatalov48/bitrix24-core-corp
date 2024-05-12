@@ -1212,28 +1212,13 @@
 	color: #a8adb4;
 }
 
-.crm-entity-stream-content-new-sms-preview
-{
-	background: #e0f7fe;
-	padding: 12px;
+.crm-entity-stream-content-new-sms-preview {
 	color: #333;
-	border-radius: 4px;
-	margin-top: 18px;
+	margin-top: 12px;
 	position: relative;
-}
-
-.crm-entity-stream-content-new-sms-preview:after {
-	position: absolute;
-	top: -10px;
-	display: block;
-	box-sizing: content-box;
-	width: 0;
-	height: 0;
-	border: 5px solid transparent;
-	content: '';
-	left: 14px;
-	border-bottom-color: #e0f7fe;
-	border-right-color: #e0f7fe;
+	border: 1px solid var(--ui-color-base-20);
+	border-radius: 4px;
+	padding: 14px;
 }
 
 .crm-entity-stream-content-new-sms-connect-link {

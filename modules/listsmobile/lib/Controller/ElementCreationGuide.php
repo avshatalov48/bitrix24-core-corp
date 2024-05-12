@@ -25,9 +25,6 @@ use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Mobile\UI\EntityEditor\FormWrapper;
 
-Loader::requireModule('lists');
-Loader::requireModule('mobile');
-
 class ElementCreationGuide extends Controller
 {
 	private const TOKEN_SALT = 'listsmobile_elementCreationGuide';
@@ -45,6 +42,12 @@ class ElementCreationGuide extends Controller
 
 	public function loadCatalogStepAction(): ?array
 	{
+		if (!Loader::includeModule('lists'))
+		{
+			//todo: add error + loc
+			return null;
+		}
+
 		$service = $this->getService();
 
 		$result = $service->getCatalog();
@@ -75,7 +78,7 @@ class ElementCreationGuide extends Controller
 				}
 			}
 
-			if ($this->canUserAddElement($service::getIBlockTypeId(), (int)$process['ID']))
+			if ($this->canUserAddElement($service->getInnerIBlockTypeId(), (int)$process['ID']))
 			{
 				// todo: mobile DTO
 				$items[] = [
@@ -96,6 +99,12 @@ class ElementCreationGuide extends Controller
 
 	public function loadDescriptionStepAction(int $iBlockId, int $elementId): ?array
 	{
+		if (!Loader::includeModule('lists'))
+		{
+			//todo: add error + loc
+			return null;
+		}
+
 		if ($iBlockId <= 0 || $elementId < 0)
 		{
 			// todo: localization
@@ -105,7 +114,7 @@ class ElementCreationGuide extends Controller
 		}
 
 		$service = $this->getService();
-		if (!$this->canUserReadIBlockDescription($iBlockId, $service::getIBlockTypeId()))
+		if (!$this->canUserReadIBlockDescription($iBlockId, $service->getInnerIBlockTypeId()))
 		{
 			return null;
 		}
@@ -199,6 +208,12 @@ class ElementCreationGuide extends Controller
 
 	public function loadDetailStepAction(int $iBlockId, int $elementId): ?array
 	{
+		if (!Loader::includeModule('lists'))
+		{
+			//todo: add error + loc
+			return null;
+		}
+
 		if ($iBlockId <= 0 || $elementId < 0)
 		{
 			$this->addError(new Error('incorrect entity'));
@@ -207,7 +222,7 @@ class ElementCreationGuide extends Controller
 		}
 
 		$service = $this->getService();
-		if (!$this->canUserReadElement($service::getIBlockTypeId(), $elementId, $iBlockId))
+		if (!$this->canUserReadElement($service->getInnerIBlockTypeId(), $elementId, $iBlockId))
 		{
 			return null;
 		}
@@ -238,7 +253,7 @@ class ElementCreationGuide extends Controller
 		}
 
 		$convertedValues = $converter->getConvertedValues();
-		$convertedValues['IBLOCK_TYPE_ID'] = $service::getIBlockTypeId();
+		$convertedValues['IBLOCK_TYPE_ID'] = $service->getInnerIBlockTypeId();
 
 		$provider = new Provider($convertedValues, $converter->getConvertedFields(), $states);
 
@@ -251,6 +266,12 @@ class ElementCreationGuide extends Controller
 
 	public function createElementAction(string $sign, array $fields = [], ?int $timeToStart = null): ?array
 	{
+		if (!Loader::includeModule('lists'))
+		{
+			//todo: add error + loc
+			return null;
+		}
+
 		$iBlockId = $fields['IBLOCK_ID'] ?? 0;
 		if ($iBlockId <= 0)
 		{

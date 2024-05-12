@@ -22,9 +22,50 @@ final class PlaceholderProvider extends BaseProvider
 		'BANK_DETAIL',
 		'COMPANY',
 		'CONTACT',
+		'PRODUCTS_PRODUCT',
 		'MY_COMPANY',
 		'ASSIGNED',
 		'REQUISITE',
+	];
+	private const ITEM_ID_BLACK_LIST = [
+		'OPENED',
+		'COMMENTS',
+		'REVENUE',
+		'WEBFORM_ID',
+		'ORIGINATOR_ID',
+		'ORIGIN_ID',
+		'ORIGIN_VERSION',
+		'OBSERVER_IDS',
+		'OBSERVERS',
+		'OPPORTUNITY_ACCOUNT',
+		'ORDER_BINDING',
+		'SOURCE_ID',
+		'SOURCE_BY',
+		'SOURCE_DESCRIPTION',
+		'UTM_SOURCE',
+		'UTM_MEDIUM',
+		'UTM_CAMPAIGN',
+		'UTM_CONTENT',
+		'UTM_TERM',
+		'PRODUCT_ID',
+		'QUOTE_ID',
+		'BIRTHDAY_SORT',
+		'IS_MANUAL_OPPORTUNITY',
+		'IS_REPEATED_APPROACH',
+		'IS_NEW',
+		'MOVED_BY_ID',
+		'HISTORY',
+		'FULL_HISTORY',
+		'EXPORT',
+		'BINDINGS',
+		'CURRENCY_ID',
+		'XML_ID',
+		'CLIENT_PHONE',
+		'CLIENT_EMAIL',
+		'REQUISITE.PRESET_ID',
+		'REQUISITE.RQ_COMPANY_ID',
+		'CRM_DEAL_RECURRING',
+		'.ID', // TODO: temporary disable show ID field
 	];
 
 	private int $entityTypeId;
@@ -67,10 +108,8 @@ final class PlaceholderProvider extends BaseProvider
 
 	private function makeItems(): array
 	{
-		$providerClassName = DocumentGeneratorManager::getInstance()
-			->getCrmOwnerTypeProvidersMap()[$this->entityTypeId] ?? null
-		;
-		if (!$providerClassName)
+		$providerClassName = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($this->entityTypeId, false);
+		if ($providerClassName === null)
 		{
 			return [];
 		}
@@ -81,8 +120,8 @@ final class PlaceholderProvider extends BaseProvider
 			[],
 			false
 		);
-		$placeholders = $this->filterItems($placeholders);
 
+		$placeholders = $this->filterItems($placeholders);
 		if ($this->viewType === self::ITEMS_VIEW_TYPE_LIST)
 		{
 			return $this->makeItemsAsFlatList($placeholders);
@@ -112,6 +151,7 @@ final class PlaceholderProvider extends BaseProvider
 				'title' => $row['TITLE'] ?? $placeholder,
 				'customData' => [
 					'value' =>  $row['VALUE'] ?? $placeholder,
+					'entityTypeName' => self::ENTITY_ID,
 				],
 			]);
 		}
@@ -137,6 +177,7 @@ final class PlaceholderProvider extends BaseProvider
 				'entityId' => self::ENTITY_ID,
 				'title' => $title,
 				'tabs' => 'recents',
+				'searchable' => false,
 				'children' => $this->makeItemChildren($groupedItems[$id] ?? $groupedItems, $id, $title),
 			]);
 		}
@@ -238,7 +279,13 @@ final class PlaceholderProvider extends BaseProvider
 					'title' => $leave['TITLE'] ,
 					'customData' => [
 						'value' => $leave['VALUE'] ?? $placeholder,
-					]
+						'entityTypeName' => $parentId,
+						'fieldName' => str_replace(
+							Document::THIS_PLACEHOLDER . '.' . Template::MAIN_PROVIDER_PLACEHOLDER . $parentId,
+							'',
+							$leave['VALUE']
+						),
+					],
 				];
 			}
 		}
@@ -248,23 +295,64 @@ final class PlaceholderProvider extends BaseProvider
 
 	private function filterItems(array $input): array
 	{
+		$duplicatingItems = [];
+
+		// modify 'PRODUCTS.PRODUCT' key
+		array_walk($input, static function (array &$row) use (&$duplicatingItems) {
+			static $productProps = [];
+			if (str_contains($row['VALUE'], 'PRODUCTS.PRODUCT'))
+			{
+				$row['VALUE'] = str_replace('PRODUCTS.PRODUCT', 'PRODUCTS_PRODUCT', $row['VALUE']);
+
+				if (str_contains($row['VALUE'], 'PROPERTY_'))
+				{
+					if (in_array($row['TITLE'], $productProps, true))
+					{
+						$duplicatingItems[] = $row['VALUE'];
+					}
+					else
+					{
+						$productProps[] = $row['TITLE'];
+					}
+
+				}
+			}
+		});
+
 		return array_filter(
 			$input,
-			static function(array $row): bool
+			static function(array $row) use ($duplicatingItems)
 			{
-				$valueArr = array_slice(explode('.', $row['VALUE'] ?? ''), 2, -1);
+				$value = $row['VALUE'] ?? '';
+				$isImageType = isset($row['TYPE']) && $row['TYPE'] === 'IMAGE';
+				$isInBlackList = count(
+					array_filter(
+						self::ITEM_ID_BLACK_LIST,
+						static fn(string $word) => str_ends_with($value, $word)
+					)
+				) > 0;
+				if (
+					$isImageType
+					|| $isInBlackList
+					|| in_array($value, $duplicatingItems, true)
+				)
+				{
+					return false;
+				}
+
+				$valueArr = array_slice(explode('.', $value), 2, -1);
 				$val = implode('.', $valueArr);
-				$isUfCase = str_starts_with($val, 'UF_CRM')
+				$isUfField = str_starts_with($val, 'UF_CRM')
 					&& (
-						str_contains($row['VALUE'], 'TITLE')
-						|| str_contains($row['VALUE'], 'ITEM.VALUE')
+						str_contains($value, 'TITLE')
+						|| str_contains($value, 'ITEM.VALUE')
 					)
 				;
 
 				return
 					empty($valueArr)											// entity placeholders
 					|| in_array($val, self::ITEM_ID_WHITE_LIST)	// white list placeholders
-					|| $isUfCase
+					|| $isUfField
 				;
 			}
 		);

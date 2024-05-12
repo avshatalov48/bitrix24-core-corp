@@ -3,7 +3,7 @@ $MESS["CT_BSP_ALL"] = "(везде)";
 $MESS["CT_BSP_GO"] = "Найти";
 $MESS["CT_BSP_ITEM_TAGS"] = "Теги";
 $MESS["CT_BSP_DATE_CHANGE"] = "Изменено";
-$MESS["CT_BSP_FOUND"] = "Найдено";
+$MESS["CT_BSP_FOUND_MSGVER_1"] = "Найдено: #AMOUNT#";
 $MESS["CT_BSP_ORDER"] = "Отсортировано";
 $MESS["CT_BSP_ORDER_BY_RANK"] = "по релевантности";
 $MESS["CT_BSP_ORDER_BY_DATE"] = "по дате";
@@ -31,6 +31,6 @@ $MESS["CT_BSP_OR_ALT"] = "Оператор <i>логическое &quot;или&
 $MESS["CT_BSP_NOT"] = "не";
 $MESS["CT_BSP_NOT_ALT"] = "Оператор <i>логическое &quot;не&quot;</i> ограничивает поиск страниц, не содержащих слово, указанное после оператора.";
 $MESS["CT_BSP_BRACKETS_ALT"] = "<i>Круглые скобки</i> задают порядок действия логических операторов.";
-$MESS["CT_BSP_NOTHING_TO_FOUND"] = "К сожалению, на ваш поисковый запрос ничего не найдено.";
+$MESS["CT_BSP_NOTHING_TO_FOUND_MSGVER_1"] = "К сожалению, на ваш поисковый запрос ничего не найдено.";
 $MESS["CT_BSP_KEYBOARD_WARNING"] = "В запросе \"#query#\" восстановлена раскладка клавиатуры.";
 ?>

@@ -21,6 +21,7 @@ return [
 		'calendar:aha-moments-manager',
 		'calendar:event-list-view/layout/event-list',
 		'calendar:event-list-view/search',
+		'calendar:calendar-grid',
 		'bottom-sheet',
 		'layout/ui/floating-button',
 	],

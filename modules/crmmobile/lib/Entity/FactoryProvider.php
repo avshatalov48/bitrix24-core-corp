@@ -6,6 +6,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Main\Loader;
 
 final class FactoryProvider
 {
@@ -27,6 +28,11 @@ final class FactoryProvider
 	 */
 	public static function getFactoriesMetaData(): array
 	{
+		if (self::isExtranetUser())
+		{
+			return [];
+		}
+
 		$result = [];
 
 		$factories = Container::getInstance()->getTypesMap()->getFactories();
@@ -115,7 +121,13 @@ final class FactoryProvider
 
 	private static function filterPermittedFactories(array $factories): array
 	{
+		if (self::isExtranetUser())
+		{
+			return [];
+		}
+
 		$result = [];
+
 		$userPermissions = Container::getInstance()->getUserPermissions();
 
 		foreach ($factories as $factory)
@@ -137,5 +149,10 @@ final class FactoryProvider
 				? $factory->getDefaultCategory()->getId()
 				: null
 		);
+	}
+
+	private static function isExtranetUser()
+	{
+		return Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser();
 	}
 }

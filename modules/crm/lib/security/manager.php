@@ -34,12 +34,12 @@ class Manager
 	 * @param string $permissionEntityType Permission Entity Type.
 	 * @return Controller|null
 	 */
-	public static function resolveController(string $permissionEntityType)
+	public static function resolveController(string $permissionEntityType): ?Controller
 	{
 		$controllers = self::getControllers();
 		foreach($controllers as $controller)
 		{
-			if($controller->isEnabled() && $controller->isPermissionEntityTypeSupported($permissionEntityType))
+			if($controller->isPermissionEntityTypeSupported($permissionEntityType))
 			{
 				return $controller;
 			}

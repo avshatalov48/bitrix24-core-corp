@@ -84,7 +84,7 @@ final class KanbanFieldsProvider
 		$fields = [];
 		foreach ($this->getPossibleFields() as $field)
 		{
-			$fields[$field->getCode()] = new TaskFieldDto([
+			$fields[$field->getCode()] = TaskFieldDto::make([
 				'code' => $field->getCode(),
 				'title' => $field->getTitle(),
 				'visible' => $this->isFieldVisible($field),

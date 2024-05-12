@@ -212,6 +212,8 @@ class Delivery extends Activity
 
 	public function getButtons(): array
 	{
+		$result = [];
+
 		$deliveryRequest = $this->getDeliveryRequest();
 		$deliveryService = $this->getDeliveryService();
 		$deliveryShipments = $this->getDeliveryShipments();

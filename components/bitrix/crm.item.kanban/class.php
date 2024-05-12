@@ -52,7 +52,7 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 
 		if (!$this->factory->isStagesEnabled())
 		{
-			LocalRedirect(Service\Container::getInstance()->getRouter()->getItemListUrl($this->entityTypeId, $this->category->getId()));
+			LocalRedirect($this->router->getItemListUrl($this->entityTypeId, $this->category->getId()));
 		}
 
 		$this->includeComponentTemplate();
@@ -75,11 +75,21 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 
 	protected function getListUrl(int $categoryId = null): \Bitrix\Main\Web\Uri
 	{
-		return Service\Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $categoryId);
+		return $this->router->getKanbanUrl($this->entityTypeId, $categoryId);
 	}
 
 	protected function getListViewType(): string
 	{
 		return Router::LIST_VIEW_KANBAN;
+	}
+
+	protected function configureAnalyticsEventBuilder(\Bitrix\Crm\Integration\Analytics\Builder\AbstractBuilder $builder): void
+	{
+		parent::configureAnalyticsEventBuilder($builder);
+
+		if (!$this->isEmbedded())
+		{
+			$builder->setSubSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN);
+		}
 	}
 }

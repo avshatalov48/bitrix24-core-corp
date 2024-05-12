@@ -87,7 +87,10 @@ $APPLICATION->IncludeComponent(
 		'SCRIPTS' => array(
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();',
 			'EXCLUDE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processExclusion();'
-		)
+		),
+		'ANALYTICS' => [
+			'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+		],
 	),
 	$component
 );
@@ -168,7 +171,10 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 								syncEditorEntityListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
 								continueButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CONTINUE_BTN")?>",
 								cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
-							}
+							},
+							analytics: {
+								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS ?>',
+							},
 						}
 					}
 				);
@@ -179,7 +185,10 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 						entityId: <?= (int)$arResult['ENTITY_ID'] ?>,
 						containerId: '<?= CUtil::JSEscape($arResult['CONVERSION_CONTAINER_ID']) ?>',
 						labelId: '<?= CUtil::JSEscape($arResult['CONVERSION_LABEL_ID']) ?>',
-						buttonId: '<?= CUtil::JSEscape($arResult['CONVERSION_BUTTON_ID']) ?>'
+						buttonId: '<?= CUtil::JSEscape($arResult['CONVERSION_BUTTON_ID']) ?>',
+						analytics: {
+							c_element: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CONVERT_BUTTON ?>',
+						},
 					}
 				);
 
@@ -195,6 +204,8 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 					}
 
 					converter.getConfig().updateFromSchemeItem(schemeItem);
+
+					converter.setAnalyticsElement('<?= \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON ?>');
 
 					converter.convert(<?= (int)$arResult['ENTITY_ID'] ?>);
 				};

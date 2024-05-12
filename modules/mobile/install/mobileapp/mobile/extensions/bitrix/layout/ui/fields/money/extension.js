@@ -374,6 +374,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 						onContentClick: this.onAmountClick,
 						renderAdditionalContent: this.handleRenderLockedAmountIcon,
 						hasHiddenEmptyView: false,
+						shouldShowToolbar: false,
 					},
 					secondaryField: {
 						...props,

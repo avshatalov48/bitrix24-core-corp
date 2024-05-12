@@ -24,7 +24,6 @@
 			const siteId = additionalData.siteId || env.siteId;
 			const siteDir = additionalData.siteDir || env.siteDir;
 			const guid = additionalData.guid || WorkgroupUtil.createGuid();
-			const isNewDashboardActive = additionalData.isNewDashboardActive || false;
 
 			const result = [];
 
@@ -35,7 +34,6 @@
 						siteId,
 						siteDir,
 						guid,
-						isNewDashboardActive,
 						item,
 						currentUserId: env.userId,
 					}),
@@ -102,12 +100,12 @@
 				title: BX.message('MOBILE_PROJECT_TAB_TASKS'),
 				component: {
 					name: 'JSStackComponent',
-					componentCode: WorkgroupUtil.getTaskListComponentCode(params.isNewDashboardActive),
+					componentCode: WorkgroupUtil.getTaskListComponentCode(),
 					canOpenInDefault: true,
-					scriptPath: WorkgroupUtil.getTaskListScriptPath(params.isNewDashboardActive),
-					rootWidget: WorkgroupUtil.getTaskListRootWidget(params.isNewDashboardActive),
+					scriptPath: WorkgroupUtil.getTaskListScriptPath(),
+					rootWidget: WorkgroupUtil.getTaskListRootWidget(),
 					params: {
-						COMPONENT_CODE: WorkgroupUtil.getTaskListComponentCode(params.isNewDashboardActive),
+						COMPONENT_CODE: WorkgroupUtil.getTaskListComponentCode(),
 						GROUP_ID: item.id,
 						USER_ID: currentUserId,
 						DATA: {
@@ -131,39 +129,26 @@
 			};
 		}
 
-		static getTaskListComponentCode(isNewDashboardActive)
+		static getTaskListComponentCode()
 		{
-			return (isNewDashboardActive ? 'tasks.dashboard' : 'tasks.list');
+			return 'tasks.dashboard';
 		}
 
-		static getTaskListScriptPath(isNewDashboardActive)
+		static getTaskListScriptPath()
 		{
-			const componentName = (isNewDashboardActive ? 'tasks:tasks.dashboard' : 'tasks:tasks.list.legacy');
+			const componentName = 'tasks:tasks.dashboard';
 
 			return availableComponents[componentName].publicUrl;
 		}
 
-		static getTaskListRootWidget(isNewDashboardActive)
+		static getTaskListRootWidget()
 		{
-			if (isNewDashboardActive)
-			{
-				return {
-					name: 'layout',
-					settings: {
-						objectName: 'layout',
-						useSearch: true,
-						useLargeTitleMode: true,
-					},
-				};
-			}
-
 			return {
-				name: 'tasks.list',
+				name: 'layout',
 				settings: {
-					objectName: 'list',
+					objectName: 'layout',
 					useSearch: true,
 					useLargeTitleMode: true,
-					emptyListMode: true,
 				},
 			};
 		}

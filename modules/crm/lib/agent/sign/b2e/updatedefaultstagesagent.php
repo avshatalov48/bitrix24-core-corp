@@ -3,6 +3,9 @@
 namespace Bitrix\Crm\Agent\Sign\B2e;
 
 use Bitrix\Crm\Agent\AgentBase;
+use Bitrix\Crm\Automation\Trigger\Sign\B2e\CompletedTrigger;
+use Bitrix\Crm\Automation\Trigger\Sign\B2e\CoordinationAndFillingTrigger;
+use Bitrix\Crm\Automation\Trigger\Sign\B2e\SigningTrigger;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use LogicException;
@@ -32,6 +35,12 @@ final class UpdateDefaultStagesAgent extends AgentBase
 	private const SEMANTIC_STATUSES = [
 		'ARCHIVE' => PhaseSemantics::SUCCESS,
 		'FAILURE' => PhaseSemantics::FAILURE,
+	];
+
+	private const DEFAULT_TRIGGERS = [
+		SigningTrigger::class => 'SIGNING',
+		CoordinationAndFillingTrigger::class => 'COORDINATION_AND_FILLING',
+		CompletedTrigger::class => 'COMPLETED',
 	];
 
 	public static function doRun(): bool
@@ -90,7 +99,7 @@ final class UpdateDefaultStagesAgent extends AgentBase
 			$stageService->addStage($stage);
 		}
 
-		$triggers = $statusService->makeTriggerNames($defaultCategoryId, $triggerService->getDefaultTriggers());
+		$triggers = $statusService->makeTriggerNames($defaultCategoryId, self::DEFAULT_TRIGGERS);
 		$triggerService->addTriggers($triggers);
 
 		//Set new stages for items

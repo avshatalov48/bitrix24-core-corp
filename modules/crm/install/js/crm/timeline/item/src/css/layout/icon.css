@@ -237,6 +237,18 @@
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__attention-icon.svg');
 }
 
+.crm-timeline__card_icon.--code-restoration i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__restoration-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-arrow-up i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__arrow-up-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-arrow-down i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__arrow-down-icon.svg");
+}
+
 .crm-timeline__card_icon.--code-task-ping i {
 	mask-image: url('../../images/timeline-card-icons/tasks/crm-timeline__task-ping.svg');
 	width: 20px;

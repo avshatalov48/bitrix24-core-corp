@@ -41,7 +41,6 @@ $MESS["TUNNEL_MENU_DELAY_THROUGH"] = "in";
 $MESS["TUNNEL_MENU_DELAY_TITLE2"] = "Starts";
 $MESS["TUNNEL_MENU_DELETE"] = "Delete";
 $MESS["TUNNEL_MENU_DELETE_CONFIRM"] = "Are you sure you want to delete the tunnel?";
-$MESS["TUNNEL_MENU_DELETE_CONFIRM_OK"] = "Delete";
 $MESS["TUNNEL_MENU_PROPERTY_EMPTY"] = "empty";
 $MESS["TUNNEL_MENU_RESPONSIBLE_TITLE"] = "Responsible person";
 $MESS["TUNNEL_MENU_STAGE_NAME"] = "Deal name";

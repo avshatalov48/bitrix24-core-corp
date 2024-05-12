@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\AI;
 
+use Bitrix\AI\Context;
 use Bitrix\AI\Engine;
 use Bitrix\AI\Limiter\Usage;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
@@ -11,11 +12,13 @@ use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Integration\Market\Router;
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Diag\Logger;
+use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -25,8 +28,6 @@ use CCrmOwnerType;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
-use Bitrix\Crm\Integration\VoxImplantManager;
-use Bitrix\Main\Error;
 
 final class AIManager
 {
@@ -71,7 +72,7 @@ final class AIManager
 		return Loader::includeModule('ai') && Loader::includeModule('bitrix24');
 	}
 
-	public static function isEnabledInGlobalSettings(): bool
+	public static function isEnabledInGlobalSettings(string $code = EventHandler::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE): bool
 	{
 		if (!self::isAvailable())
 		{
@@ -84,9 +85,37 @@ final class AIManager
 			$manager = new \Bitrix\AI\Tuning\Manager();
 		}
 
-		$item = $manager->getItem(EventHandler::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE);
+		if ($code === EventHandler::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE)
+		{
+			$item = $manager->getItem(EventHandler::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE);
+		}
+		elseif ($code === EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE)
+		{
+			if (!self::isEngineAvailable(EventHandler::ENGINE_CATEGORY))
+			{
+				return false;
+			}
 
-		return (bool)$item?->getValue();
+			$item = $manager->getItem(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE);
+		}
+
+		return isset($item) && $item->getValue();
+	}
+
+	public static function isEngineAvailable(string $type): bool
+	{
+		if (!self::isAvailable())
+		{
+			return false;
+		}
+
+		$engine = Engine::getByCategory($type, Context::getFake());
+		if (!$engine)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	public static function isAiCallProcessingEnabled(): bool
@@ -343,6 +372,7 @@ final class AIManager
 		?int $userId = null,
 		?int $storageTypeId = null,
 		?int $storageElementId = null,
+		bool $isManualLaunch = true,
 	): Result
 	{
 		$result = new Result(TranscribeCallRecording::TYPE_ID);
@@ -393,6 +423,8 @@ final class AIManager
 			$storageElementId,
 			$userId,
 		);
+
+		$operation->setIsManualLaunch($isManualLaunch);
 
 		return $operation->launch();
 	}

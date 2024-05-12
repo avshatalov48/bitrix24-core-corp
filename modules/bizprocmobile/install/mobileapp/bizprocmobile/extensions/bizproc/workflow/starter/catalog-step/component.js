@@ -6,9 +6,9 @@ jn.define('bizproc/workflow/starter/catalog-step/component', (require, exports, 
 	const { StorageCache } = require('storage-cache');
 	const { NotifyManager } = require('notify-manager');
 	const { isNil } = require('utils/type');
-	const { Duration } = require('utils/date/duration');
 	const { PureComponent } = require('layout/pure-component');
 	const { CatalogStepView } = require('bizproc/workflow/starter/catalog-step/view');
+	const { formatRoundedTime, roundTimeInSeconds } = require('bizproc/helper/duration');
 
 	class CatalogStepComponent extends PureComponent
 	{
@@ -121,58 +121,7 @@ jn.define('bizproc/workflow/starter/catalog-step/component', (require, exports, 
 				return '';
 			}
 
-			const duration = Duration.createFromSeconds(template.time);
-			const roundedTime = this.roundTime({
-				s: duration.getUnitPropertyModByFormat('s'),
-				i: duration.getUnitPropertyModByFormat('i'),
-				H: duration.getUnitPropertyModByFormat('H'),
-				d: duration.getUnitPropertyModByFormat('d'),
-				m: duration.getUnitPropertyModByFormat('m'),
-				Y: duration.getUnitPropertyModByFormat('Y'),
-			});
-
-			if (roundedTime.Y !== 0)
-			{
-				return (new Duration(roundedTime.Y * Duration.getLengthFormat().YEAR)).format('Y');
-			}
-
-			if (roundedTime.m !== 0)
-			{
-				return (new Duration(roundedTime.m * Duration.getLengthFormat().MONTH)).format('m');
-			}
-
-			if (roundedTime.d !== 0)
-			{
-				return (new Duration(roundedTime.d * Duration.getLengthFormat().DAY)).format('d');
-			}
-
-			if (roundedTime.H !== 0)
-			{
-				return (new Duration(roundedTime.H * Duration.getLengthFormat().HOUR)).format('H');
-			}
-
-			if (roundedTime.i !== 0)
-			{
-				return (new Duration(roundedTime.i * Duration.getLengthFormat().MINUTE)).format('i');
-			}
-
-			return duration.format('s');
-		}
-
-		/**
-		 * @param {{s: number, i: number, H: number, d: number, m: number, Y: number}} time
-		 * @return {{s: number, i: number, H: number, d: number, m: number, Y: number}}
-		 */
-		roundTime(time)
-		{
-			const seconds = time.s;
-			const minutes = (time.i !== 0 && seconds >= 30) ? time.i + 1 : time.i;
-			const hours = (time.H !== 0 && minutes >= 30) ? time.H + 1 : time.H;
-			const days = (time.d !== 0 && hours >= 12) ? time.d + 1 : time.d;
-			const months = (time.m !== 0 && days >= 15) ? time.m + 1 : time.m;
-			const years = (time.Y !== 0 && months >= 6) ? time.Y + 1 : time.Y;
-
-			return { s: seconds, i: minutes, H: hours, d: days, m: months, Y: years };
+			return formatRoundedTime(roundTimeInSeconds(template.time));
 		}
 
 		render()

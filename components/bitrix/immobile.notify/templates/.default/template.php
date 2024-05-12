@@ -1,6 +1,6 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-$APPLICATION->AddHeadString('<script type="text/javascript" src="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/im_mobile.js").'"></script>');
+$APPLICATION->AddHeadString('<script src="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/im_mobile.js").'"></script>');
 $APPLICATION->AddHeadString('<link href="'.CUtil::GetAdditionalFileURL(BX_PERSONAL_ROOT.'/js/im/css/common.css').'" type="text/css" rel="stylesheet" />');
 
 CJSCore::Init("fx");
@@ -23,7 +23,7 @@ CJSCore::Init("fx");
 	color: var(--base0);
 }
 </style>
-<script type="text/javascript">
+<script>
 	console.warn('Notify page loaded');
 	BXMobileApp.UI.Page.isVisible({callback: (data) => {
 		var result = data.status !== 'visible';
@@ -77,12 +77,12 @@ if(empty($arResult['NOTIFY'])):?>
 			$data['text'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text']);
 			$data['text'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text']);
 			$data['text'] = preg_replace(
-				["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/".BX_UTF_PCRE_MODIFIER],
+				["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/u"],
 				["<span style='color: #\\1'>\\2</span>"],
 				$data['text']
 			);
 			$data['text'] = preg_replace(
-				["/\[size=(\d+)](.*?)\[\/size]/".BX_UTF_PCRE_MODIFIER],
+				["/\[size=(\d+)](.*?)\[\/size]/u"],
 				["<span style='font-size: \\1px'>\\2</span>"],
 				$data['text']
 			);
@@ -154,11 +154,11 @@ if(empty($arResult['NOTIFY'])):?>
 			</div>
 		<?endforeach;?>
 	</div>
-	<script type="text/javascript">
+	<script>
 		BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);
 	</script>
 
-	<script type="text/javascript">
+	<script>
 
 		newNotifyReload = null;
 		BX.addCustomEvent("onPull-im", function(data) {
@@ -220,7 +220,7 @@ if(empty($arResult['NOTIFY'])):?>
 		}
 	</script>
 <?endif;?>
-	<script type="text/javascript">
+	<script>
 		function setTitleProgress(progress)
 		{
 			progress = progress === true;
@@ -541,12 +541,12 @@ function decodeBbCode($text, $safe = true)
 	}, $text);
 
 	$text = preg_replace(
-		["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/".BX_UTF_PCRE_MODIFIER],
+		["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/u"],
 		["<span style='color: #\\1'>\\2</span>"],
 		$text
 	);
 	$text = preg_replace(
-		["/\[size=(\d+)](.*?)\[\/size]/".BX_UTF_PCRE_MODIFIER],
+		["/\[size=(\d+)](.*?)\[\/size]/u"],
 		["<span style='font-size: \\1px'>\\2</span>"],
 		$text
 	);

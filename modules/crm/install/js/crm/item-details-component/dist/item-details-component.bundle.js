@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,crm_messagesender,crm_stageModel,main_core,main_core_events,main_loader,main_popup,ui_dialogs_messagebox,ui_stageflow) {
 	'use strict';
@@ -517,6 +518,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "handleBPTemplatesShow",
 	    value: function handleBPTemplatesShow(event) {
+	      if (this.bizprocStarterConfig.availabilityLock) {
+	        // eslint-disable-next-line no-eval
+	        eval(this.bizprocStarterConfig.availabilityLock);
+	        return;
+	      }
 	      var starter = new BX.Bizproc.Starter(this.bizprocStarterConfig);
 	      starter.showTemplatesMenu(event.data.button.button);
 	    }

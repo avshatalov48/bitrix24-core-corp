@@ -2,19 +2,19 @@
  * @module layout/ui/user-selection-manager/src/selection-manager
  */
 jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { clone } = require('utils/object');
 	const { BottomSheet } = require('bottom-sheet');
 	const { BottomToolbar } = require('layout/ui/bottom-toolbar');
 	const { PropTypes } = require('utils/validation');
 	const { withCurrentDomain } = require('utils/url');
 	const { UIScrollView } = require('layout/ui/scroll-view');
-	const { EntitySelectorFactory } = require('selector/widget/factory');
-	const { UserSelectedList } = require('layout/ui/user-selection-manager/src/user-selected-list');
+	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
+	const { UserSection } = require('layout/ui/user-selection-manager/src/user-section');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { showToast } = require('toast');
 	const { withPressed } = require('utils/color');
+	const { Button, buttonTypes } = require('ui-system/form/buttons/button');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class UserSelectionManager
@@ -42,8 +42,8 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 			const userSelectionWidget = await userSelectionBottomSheet
 				.setParentWidget(parentWidget)
 				.setMediumPositionPercent(70)
-				.setBackgroundColor(AppTheme.colors.bgSecondary)
-				.setNavigationBarColor(AppTheme.colors.bgContentPrimary)
+				.setBackgroundColor(Color.bgSecondary)
+				.setNavigationBarColor(Color.bgContentPrimary)
 				.showNavigationBarBorder()
 				.open()
 			;
@@ -58,100 +58,36 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 
 			this.parentWidget = null;
 
-			this.handleOnAddUser = this.handleOnAddUser.bind(this);
-			this.handleOnRemoveUser = this.handleOnRemoveUser.bind(this);
-			this.handleOnMoreToggle = this.handleOnMoreToggle.bind(this);
+			this.sections = props.sections;
+			this.usersBySections = this.getUsersBySections(props.users, props.sections);
 
-			this.initialParams(props);
+			this.onAddUserClick = this.onAddUserClick.bind(this);
+			this.onRemoveUserClick = this.onRemoveUserClick.bind(this);
 		}
 
-		componentWillReceiveProps(props)
+		getUsersBySections(users, sections)
 		{
-			this.initialParams(props);
-		}
-
-		initialParams(props)
-		{
-			this.setParentWidget(props.parentWidget);
-
-			this.state = this.prepareStateParams(props);
-		}
-
-		updateState(newState)
-		{
-			this.setState(this.prepareStateParams(newState));
-		}
-
-		prepareStateParams({ users, sectionsData })
-		{
-			return {
-				userSections: this.getUserSections(users),
-				sectionsData: Object.fromEntries(
-					Object.entries(sectionsData).map(([sectionId, sectionData]) => {
-						const currentIsExpanded = (this.state.sectionsData && this.state.sectionsData[sectionId]?.isExpanded);
-						const isExpanded = Boolean(currentIsExpanded || sectionData.isExpanded);
-
-						return [sectionId, { ...sectionData, isExpanded }];
-					}),
-				),
-			};
-		}
-
-		getParentWidget()
-		{
-			return this.parentWidget;
-		}
-
-		setParentWidget(layoutWidget)
-		{
-			this.parentWidget = layoutWidget;
-		}
-
-		getUserSections(users)
-		{
-			const sections = {};
+			const usersBySections = Object.fromEntries(
+				Object.keys(sections).map((sectionId) => [sectionId, []]),
+			);
 
 			users.forEach((user) => {
 				const { section } = user;
-				if (Array.isArray(sections[section]))
+				if (Array.isArray(usersBySections[section]))
 				{
-					sections[section].push(user);
-				}
-				else
-				{
-					sections[section] = [user];
+					usersBySections[section].push(user);
 				}
 			});
 
-			return sections;
+			return usersBySections;
 		}
 
-		/**
-		 * @param {string} sectionId
-		 * @param sectionId
-		 * @returns {object[]}
-		 */
-		getSelectedIds(sectionId)
+		updateSectionUsers(sectionId)
 		{
-			const { userSections } = this.state;
-			if (!Array.isArray(userSections[sectionId]))
+			if (this.sections[sectionId].ref)
 			{
-				return [];
+				this.sections[sectionId].ref.setUsers(this.usersBySections[sectionId]);
 			}
-
-			return userSections[sectionId].map(({ id }) => id);
-		}
-
-		getUsers()
-		{
-			const { userSections } = this.state;
-
-			const users = [];
-			Object.keys(userSections).forEach((sectionId) => {
-				users.push(...userSections[sectionId]);
-			});
-
-			return users;
 		}
 
 		/**
@@ -160,16 +96,25 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 		 * @param {boolean} params.isMultiple
 		 * @param {boolean} params.canChange
 		 * @param {boolean} params.canBeEmpty
-		 * @param {string} [params.prohibitedChangingText]
-		 * @returns {(function(): void|Promise)}
+		 * @param {string} params.prohibitedChangingText
+		 * @param {string} params.providerContext
+		 * @returns {(function(): void)|*}
 		 */
-		handleOnAddUser({ sectionId, sectionTitle, isMultiple, canChange, canBeEmpty, prohibitedChangingText })
+		onAddUserClick({
+			sectionId,
+			sectionTitle,
+			isMultiple,
+			canChange,
+			canBeEmpty,
+			prohibitedChangingText,
+			providerContext,
+		})
 		{
-			if (!canChange)
-			{
-				const defaultToastText = Loc.getMessage('MOBILE_USER_SELECTION_MANAGER_PROHIBITED_ACTION');
+			return () => {
+				if (!canChange)
+				{
+					const defaultToastText = Loc.getMessage('MOBILE_USER_SELECTION_MANAGER_PROHIBITED_ACTION');
 
-				return () => {
 					Haptics.notifyWarning();
 					showToast(
 						{
@@ -178,92 +123,29 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 						},
 						this.parentWidget,
 					);
-				};
-			}
 
-			const { userSections: stateUserSections } = this.state;
-			const addUser = (users) => {
-				const userSections = clone(stateUserSections);
-				userSections[sectionId] = users.map(({ id, title, imageUrl }) => ({
-					id,
-					title,
-					image: withCurrentDomain(imageUrl),
-					section: sectionId,
-				}));
-
-				this.setState({
-					userSections: this.filterUniqueUserInSections({ userSections, sectionId }),
-				});
-			};
-
-			return () => this.showUserSelector({
-				sectionTitle,
-				isMultiple,
-				canBeEmpty,
-				onClose: addUser,
-				sectionId: sectionId.toUpperCase(),
-			});
-		}
-
-		filterUniqueUserInSections({ userSections, sectionId })
-		{
-			const { uniqueUserInSections } = this.props;
-
-			if (!uniqueUserInSections)
-			{
-				return userSections;
-			}
-
-			const sections = {};
-			const changedUsers = userSections[sectionId];
-
-			Object.keys(userSections).forEach((id) => {
-				const isChangeSections = sectionId === id;
-				if (isChangeSections)
-				{
-					sections[id] = userSections[sectionId];
+					return;
 				}
-				else
-				{
-					sections[id] = userSections[id].filter(({ id: userId }) => {
-						return !changedUsers.some(({ id: newUseId }) => newUseId === userId);
-					});
-				}
-			});
 
-			return sections;
-		}
+				void this.showUserSelector({
+					sectionId,
+					sectionTitle,
+					isMultiple,
+					canBeEmpty,
+					providerContext,
+					onClose: (users) => {
+						this.usersBySections[sectionId] = users.map(({ id, title, imageUrl }) => ({
+							id,
+							title,
+							image: withCurrentDomain(imageUrl),
+							section: sectionId,
+						}));
 
-		/**
-		 * @param {object} params
-		 * @param {boolean} [params.userId]
-		 * @param {string} [params.sectionId]
-		 * @returns {void}
-		 */
-		handleOnRemoveUser({ userId, sectionId })
-		{
-			const { userSections: stateUserSections } = this.state;
+						this.filterUniqueUserInSections(sectionId);
 
-			const userSections = clone(stateUserSections);
-			userSections[sectionId] = userSections[sectionId].filter(({ id }) => id !== userId);
-
-			this.setState({ userSections });
-		}
-
-		handleOnMoreToggle({ sectionId })
-		{
-			const { sectionsData } = this.state;
-
-			return () => {
-				const sectionCurrentData = sectionsData[sectionId];
-
-				this.setState({
-					sectionsData: {
-						...sectionsData,
-						[sectionId]: {
-							...sectionCurrentData,
-							isExpanded: !sectionCurrentData.isExpanded,
-						},
+						Object.keys(this.usersBySections).forEach((userSectionId) => {
+							this.updateSectionUsers(userSectionId);
+						});
 					},
 				});
 			};
@@ -276,15 +158,19 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 		 * @param {boolean} params.isMultiple
 		 * @param {boolean} params.canBeEmpty
 		 * @param {function} params.onClose
+		 * @param {string} params.providerContext
 		 * @returns {Promise<void>}
 		 */
 		showUserSelector(params)
 		{
-			const { sectionId, sectionTitle, isMultiple, canBeEmpty, onClose } = params;
+			const { sectionId, sectionTitle, isMultiple, canBeEmpty, onClose, providerContext } = params;
 
-			const selector = EntitySelectorFactory.createByType('user', {
+			const selector = EntitySelectorFactory.createByType(EntitySelectorFactoryType.USER, {
 				provider: {
-					context: `TASKS_MEMBER_SELECTOR_EDIT_${sectionId}`,
+					context: providerContext,
+					options: {
+						useLettersForEmptyAvatar: Boolean(this.props.useLettersForEmptyAvatar),
+					},
 				},
 				createOptions: {
 					enableCreation: false,
@@ -292,7 +178,7 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 				selectOptions: {
 					canUnselectLast: canBeEmpty,
 				},
-				initSelectedIds: this.getSelectedIds(sectionId.toLowerCase()),
+				initSelectedIds: this.usersBySections[sectionId].map(({ id }) => id),
 				allowMultipleSelection: isMultiple,
 				closeOnSelect: true,
 				events: { onClose },
@@ -307,41 +193,35 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 			return selector.show({}, this.parentWidget);
 		}
 
-		renderSections()
+		filterUniqueUserInSections(changedSectionId)
 		{
-			const { userSections, sectionsData } = this.state;
+			const { uniqueUserInSections } = this.props;
+			if (!uniqueUserInSections)
+			{
+				return;
+			}
 
-			return Object.keys(sectionsData).map((sectionId) => {
-				const {
-					title: sectionTitle,
-					isMultiple = true,
-					isExpanded = false,
-					canChange = true,
-					canBeEmpty = true,
-					prohibitedChangingText = '',
-				} = sectionsData[sectionId];
-
-				return new UserSelectedList({
-					sectionId,
-					sectionTitle,
-					isMultiple,
-					isExpanded,
-					canChange,
-					canBeEmpty,
-					users: userSections[sectionId] || [],
-					onAddUser: this.handleOnAddUser({
-						sectionId,
-						sectionTitle,
-						isMultiple,
-						canChange,
-						canBeEmpty,
-						prohibitedChangingText,
-					}),
-					onRemoveUser: this.handleOnRemoveUser,
-					onMoreToggle: this.handleOnMoreToggle({ sectionId }),
-					getParentWidget: this.getParentWidget.bind(this),
-				});
+			const changedUsers = this.usersBySections[changedSectionId];
+			Object.keys(this.usersBySections).forEach((sectionId) => {
+				if (sectionId !== changedSectionId)
+				{
+					this.usersBySections[sectionId] = this.usersBySections[sectionId].filter(({ id: userId }) => {
+						return !changedUsers.some(({ id: newUseId }) => newUseId === userId);
+					});
+				}
 			});
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {boolean} [params.userId]
+		 * @param {string} [params.sectionId]
+		 * @returns {void}
+		 */
+		onRemoveUserClick({ userId, sectionId })
+		{
+			this.usersBySections[sectionId] = this.usersBySections[sectionId].filter(({ id }) => id !== userId);
+			this.updateSectionUsers(sectionId);
 		}
 
 		render()
@@ -349,7 +229,7 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary,
 						paddingBottom: 66,
 					},
 					safeArea: {
@@ -360,45 +240,117 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 					style: {
 						height: '100%',
 					},
-					children: this.renderSections(),
-				}),
-				new BottomToolbar({
-					style: {
-						borderRadius: 0,
-					},
-					items: [
-						View(
-							{
-								style: {
-									flex: 1,
-									height: 42,
-									marginHorizontal: 24,
-									marginVertical: 12,
-									alignItems: 'center',
-									justifyContent: 'center',
-									borderRadius: 8,
-									backgroundColor: withPressed(AppTheme.colors.accentMainPrimary),
-								},
-								onClick: () => {
-									if (this.props.onChange)
-									{
-										this.props.onChange(this.getUsers());
-									}
-									this.parentWidget.close();
-								},
-							},
-							Text({
-								style: {
-									fontSize: 16,
-									fontWeight: '500',
-									color: AppTheme.colors.baseWhiteFixed,
-								},
-								text: Loc.getMessage('MOBILE_USER_SELECTION_MANAGER_SAVE'),
-							}),
-						),
+					children: [
+						...this.renderSections(),
+						View({ style: { height: 20 } }),
 					],
 				}),
+				this.renderSaveButton(),
 			);
+		}
+
+		renderSections()
+		{
+			return Object.keys(this.sections).map((sectionId) => {
+				const {
+					title: sectionTitle,
+					isMultiple = true,
+					isExpanded = false,
+					canChange = true,
+					canBeEmpty = true,
+					prohibitedChangingText = '',
+					providerContext = null,
+				} = this.sections[sectionId];
+
+				return new UserSection({
+					sectionId,
+					sectionTitle,
+					isMultiple,
+					isExpanded,
+					canChange,
+					canBeEmpty,
+					users: this.usersBySections[sectionId],
+					onAddUser: this.onAddUserClick({
+						sectionId,
+						sectionTitle,
+						isMultiple,
+						canChange,
+						canBeEmpty,
+						prohibitedChangingText,
+						providerContext,
+					}),
+					onRemoveUser: this.onRemoveUserClick,
+					getParentWidget: this.getParentWidget.bind(this),
+					ref: (ref) => {
+						this.sections[sectionId].ref = ref;
+					},
+				});
+			});
+		}
+
+		renderSaveButton()
+		{
+			const { onChange, onClose } = this.props;
+
+			return new BottomToolbar({
+				style: {
+					borderRadius: 0,
+				},
+				items: [
+					View(
+						{
+							style: {
+								flex: 1,
+								marginHorizontal: 24,
+								marginVertical: 12,
+							},
+						},
+						Button({
+							stretched: true,
+							text: Loc.getMessage('MOBILE_USER_SELECTION_MANAGER_SAVE'),
+							size: buttonTypes.L,
+							color: Color.baseWhiteFixed,
+							border: true,
+							borderColor: Color.accentMainPrimary,
+							backgroundColor: withPressed(Color.accentMainPrimary),
+							onClick: () => {
+								const users = this.getUsers();
+
+								if (onChange)
+								{
+									onChange(users);
+								}
+
+								this.parentWidget.close(() => {
+									if (onClose)
+									{
+										onClose(users);
+									}
+								});
+							},
+						}),
+					),
+				],
+			});
+		}
+
+		getUsers()
+		{
+			const users = [];
+
+			Object.values(this.usersBySections).forEach((sectionUsers) => users.push(...sectionUsers));
+
+			return users;
+		}
+
+		getParentWidget()
+		{
+			return this.parentWidget;
+		}
+
+		setParentWidget(layoutWidget)
+		{
+			this.parentWidget = layoutWidget;
 		}
 	}
 
@@ -411,16 +363,18 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 				section: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 			}),
 		),
-		sectionsData: PropTypes.objectOf(
+		sections: PropTypes.objectOf(
 			PropTypes.shape({
 				title: PropTypes.string,
 				isMultiple: PropTypes.bool,
 				canChange: PropTypes.bool,
 				canBeEmpty: PropTypes.bool,
 				prohibitedChangingText: PropTypes.string,
+				providerContext: PropTypes.string,
 			}),
 		),
 		uniqueUserInSections: PropTypes.bool,
+		useLettersForEmptyAvatar: PropTypes.bool,
 		parentWidget: PropTypes.object,
 		onChange: PropTypes.func,
 	};

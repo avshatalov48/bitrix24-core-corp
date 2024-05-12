@@ -468,6 +468,7 @@ class ResultEntity
 				'QUANTITY' => ($product['QUANTITY'] ?? 1) ?: 1,
 				'TAX_INCLUDED' => $product['VAT_INCLUDED'] ?? null,
 				'TAX_RATE' => $taxRate,
+				'TYPE' => $product['TYPE'],
 			];
 		}
 	}

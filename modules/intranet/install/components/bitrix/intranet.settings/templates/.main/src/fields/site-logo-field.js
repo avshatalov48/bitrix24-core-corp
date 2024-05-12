@@ -1,10 +1,11 @@
-import { Event, Loc, Tag } from 'main.core';
+import {Dom, Event, Loc, Runtime, Tag} from 'main.core';
 import { SettingsField, BaseSettingsElement } from "ui.form-elements.field";
 import { TextInput } from "ui.form-elements.view";
 
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { StackWidget } from 'ui.uploader.stack-widget';
 import { SiteThemePickerOptions } from './site-theme-picker-field';
+import {Loader} from "main.loader";
 
 export type SiteLogoOptions = {
 	id: string,
@@ -15,6 +16,7 @@ export type SiteLogoOptions = {
 
 export type SiteLogoFieldType = {
 	parent: BaseSettingsElement,
+	siteLogoLabel: ?string,
 	siteLogoOptions: ?SiteLogoOptions,
 	canUserEditLogo: boolean
 };
@@ -51,6 +53,8 @@ export class SiteLogoField extends SettingsField
 	#hiddenContainer: HTMLElement;
 	#hiddenRemoveInput: HTMLElement;
 
+	#loader: Loader;
+
 	constructor(params: SiteLogoFieldType)
 	{
 		params.fieldView = new HiddenInput({
@@ -58,6 +62,7 @@ export class SiteLogoField extends SettingsField
 		});
 		super(params);
 		this.#siteLogo = params.siteLogoOptions;
+		this.siteLogoLabel = params.siteLogoLabel;
 
 		this.setEventNamespace('BX.Intranet.Settings');
 	}
@@ -209,9 +214,26 @@ export class SiteLogoField extends SettingsField
 		{
 			return this.#content;
 		}
-		const uploaderContent = Tag.render`<div>Logo is there</div>`;
-		this.#content = Tag.render`<div>
-				<div class="ui-section__field-label">${Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE1')}</div>
+
+		this.#content = Tag.render`<div></div>`;
+		this.#showLoader();
+
+		Runtime
+			.loadExtension('ui.uploader.stack-widget')
+			.then((exports) => {
+				this.initUploader(exports);
+				this.#renderAfterLoad();
+				this.#removeLoader();
+			});
+
+		return this.#content;
+	}
+
+	#renderAfterLoad(): void
+	{
+		const uploaderContent = Tag.render`<div></div>`;
+		const content = Tag.render`<div>
+				<div class="ui-section__field-label">${this.siteLogoLabel ?? Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE1')}</div>
 				${uploaderContent}
 				<div class="ui-section__field-label">${Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO_TITLE2')}</div>
 				${this.getFieldView().getInputNode()}
@@ -220,7 +242,31 @@ export class SiteLogoField extends SettingsField
 			</div>`
 		;
 		this.#uploader.renderTo(uploaderContent);
+		Dom.replace(this.#content, content);
+	}
 
-		return this.#content;
+	#showLoader()
+	{
+		this.#loader = new Loader({
+			target: this.#content,
+			color: 'rgba(82, 92, 105, 0.9)',
+			mode: 'inline'
+		});
+		this
+			.#loader
+			.show()
+			.then(() => {
+				console.log('The loader is shown')
+			})
+		;
+	}
+
+	#removeLoader()
+	{
+		if (this.#loader)
+		{
+			this.#loader.destroy();
+			this.#loader = null;
+		}
 	}
 }

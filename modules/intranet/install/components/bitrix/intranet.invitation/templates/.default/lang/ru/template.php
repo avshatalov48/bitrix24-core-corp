@@ -132,4 +132,7 @@ $MESS["INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR"] = "Перед при
 $MESS["INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT"] = "Сейчас в вашем Битрикс24 зарегистрировано уже";
 $MESS["INTRANET_INVITE_DIALOG_UNLIMITED"] = "неограниченно";
 $MESS["INTRANET_INVITE_DIALOG_ACCESS_ERROR"] = "Доступ закрыт";
-
+$MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE"] = "Пригласить интегратора?";
+$MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_DESCRIPTION"] = "В вашем Битрикс24 может храниться важная информация: персональные данные сотрудников и клиентов, финансовые и юридические документы. Обращайтесь только к официальным партнерам Битрикс24.<span>Подробнее</span>";
+$MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES"] = "Да, пригласить";
+$MESS["INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO"] = "Не приглашать";

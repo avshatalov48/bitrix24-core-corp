@@ -3,6 +3,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Service\Container;
 
 class CCrmPerms
@@ -399,10 +400,10 @@ class CCrmPerms
 			/** @var \CCrmPerms $options ['PERMS'] */
 			$userId = $options['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			\Bitrix\Crm\Security\QueryBuilder\Options::createFromArray((array)$options)
-				->setOperations((array)$permType)
-				->setAliasPrefix((string)$aliasPrefix)
+		$builderOptions = OptionsBuilder::makeFromArray((array)$options)
+			->setOperations((array)$permType)
+			->setAliasPrefix((string)$aliasPrefix)
+			->build()
 		;
 
 		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()
@@ -425,10 +426,10 @@ class CCrmPerms
 			/** @var \CCrmPerms $arOptions ['PERMS'] */
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			\Bitrix\Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
-				->setOperations((array)$mPermType)
-				->setAliasPrefix((string)$sAliasPrefix)
+		$builderOptions = OptionsBuilder::makeFromArray((array)$arOptions)
+			->setOperations((array)$mPermType)
+			->setAliasPrefix((string)$sAliasPrefix)
+			->build()
 		;
 
 		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()

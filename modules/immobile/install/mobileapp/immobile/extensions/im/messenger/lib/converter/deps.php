@@ -8,7 +8,7 @@ return [
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/provider/rest',
 		'im:messenger/const',
 		'im:messenger/lib/params',
@@ -22,5 +22,6 @@ return [
 		'./src/recent',
 		'./src/search',
 		'./src/dialog',
+		'./src/chat-layout',
 	],
 ];

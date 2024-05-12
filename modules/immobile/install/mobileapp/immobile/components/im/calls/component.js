@@ -185,6 +185,7 @@
 			this.formShown = false;
 			this.portalCall = false;
 			this.showName = true;
+			this.isOutgoingCallCanceled = false;
 
 			Object.defineProperty(this, "nativeCall", {
 				get: () => {
@@ -335,14 +336,14 @@
 
 		init()
 		{
-			// CallUtil.getSdkClient.getInstance().on(CallUtil.getSdkClient.Events.LogMessage, (m) => console.log(m));
+			// VIClient.getInstance().on(VIClient.Events.LogMessage, (m) => console.log(m));
 
 			BX.addCustomEvent("onPhoneTo", this.onPhoneTo.bind(this));
 			BX.addCustomEvent("onNumpadRequestShow", this.onNumpadRequestShow.bind(this));
 			BX.addCustomEvent("onPullEvent-voximplant", this.onPullEvent.bind(this));
 			BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 
-			CallUtil.getSdkClient().getInstance().on(CallUtil.getSdkClient().Events.IncomingCall, this._onIncomingCall.bind(this))
+			VIClient.getInstance().on(VIClient.Events.IncomingCall, this._onIncomingCall.bind(this))
 
 			this._onNativeIncomingCallHandler = this._onNativeIncomingCall.bind(this);
 			if ("callservice" in window)
@@ -607,7 +608,7 @@
 					});
 				}
 			).then(
-				() => CallUtil.getSdkClientWrapper().getClient()
+				() => VIClientWrapper.getClient()
 			).then(
 				() =>
 				{
@@ -665,6 +666,7 @@
 
 			this.callInit = true;
 			this.callActive = false;
+			this.isOutgoingCallCanceled = false;
 			this.phoneNumber = correctNumber;
 			this.phoneFullNumber = correctNumber;
 
@@ -701,15 +703,20 @@
 
 			this.requestMicrophoneAccess().then(() =>
 			{
-				return CallUtil.getSdkClientWrapper().getClient();
+				return VIClientWrapper.getClient();
 			}).then(client =>
 			{
+				if (this.isOutgoingCallCanceled)
+				{
+					this.isOutgoingCallCanceled = false;
+					return;
+				}
 				this.call = client.call(this.phoneNumber, this.phoneParams);
 
-				this.call.on(CallUtil.getSdk().Events.Connected, this._onCallConnected.bind(this));
-				this.call.on(CallUtil.getSdk().Events.Disconnected, this._onCallDisconnected.bind(this));
-				this.call.on(CallUtil.getSdk().Events.Failed, this._onCallFailed.bind(this));
-				this.call.on(CallUtil.getSdk().Events.Ringing, this._onCallProgressToneStart.bind(this));
+				this.call.on(JNVICall.Events.Connected, this._onCallConnected.bind(this));
+				this.call.on(JNVICall.Events.Disconnected, this._onCallDisconnected.bind(this));
+				this.call.on(JNVICall.Events.Failed, this._onCallFailed.bind(this));
+				this.call.on(JNVICall.Events.Ringing, this._onCallProgressToneStart.bind(this));
 				this.call.start();
 			}).catch((error) =>
 			{
@@ -774,6 +781,7 @@
 			{
 				this.call.hangup();
 				this.call = null;
+				this.isOutgoingCallCanceled = false;
 			}
 
 			if (this.nativeCall)
@@ -1360,9 +1368,9 @@
 
 			this.call = call;
 
-			this.call.on(CallUtil.getSdk().Events.Connected, this._onCallConnected.bind(this));
-			this.call.on(CallUtil.getSdk().Events.Disconnected, this._onCallDisconnected.bind(this));
-			this.call.on(CallUtil.getSdk().Events.Failed, this._onCallFailed.bind(this));
+			this.call.on(JNVICall.Events.Connected, this._onCallConnected.bind(this));
+			this.call.on(JNVICall.Events.Disconnected, this._onCallDisconnected.bind(this));
+			this.call.on(JNVICall.Events.Failed, this._onCallFailed.bind(this));
 
 			this.requestMicrophoneAccess().then(() =>
 			{
@@ -1570,11 +1578,11 @@
 		{
 			if (speakerState)
 			{
-				CallUtil.getSdkAudioManager().selectAudioDevice("speaker");
+				JNVIAudioManager.selectAudioDevice("speaker");
 			}
 			else
 			{
-				CallUtil.getSdkAudioManager().selectAudioDevice("receiver");
+				JNVIAudioManager.selectAudioDevice("receiver");
 			}
 		}
 
@@ -1599,7 +1607,9 @@
 
 		_onUiCloseClicked(e)
 		{
+			this.isOutgoingCallCanceled = true;
 			this.finishCall();
+			this.closeCallForm();
 			this.formShown = false;
 		}
 

@@ -88,7 +88,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	schemeInline: null,
 	isBindEvents: false,
 	fieldsSelectors: {},
-	headersSections: {},
+	//headersSections: {},
 	animationDuration: 800,
 	hintForNotVisibleItems: null,
 	handleHideHintForNotVisibleItems: null,
@@ -2165,15 +2165,12 @@ BX.CRM.Kanban.Grid.prototype = {
 		)
 		{
 			var itemId = (menuItems.length > 0) ? menuItems[0].getId() : 0;
-			var newMenuItems = [
-				{
-					text: BX.message("CRM_KANBAN_SETTINGS_FIELDS_VIEW"),
-					onclick: function(e, /*BX.PopupMenuItem*/item)
-					{
-						this.showFieldsSelectPopup("view");
-					}.bind(this)
-				}
-			];
+
+			const newMenuItems = [{
+				text: BX.Loc.getMessage('CRM_KANBAN_SETTINGS_FIELDS_VIEW'),
+				onclick: () => this.showFieldsSelectPopup('view'),
+			}];
+
 			if (this.getData().entityType !== 'ORDER')
 			{
 				newMenuItems.push({
@@ -2262,59 +2259,153 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Show popup for selecting fields which must show in view / edit.
-	 * @param viewType
+	 * @param {string} viewType
 	 */
 	showFieldsSelectPopup: function(viewType)
 	{
-		if (!this.fieldsSelectors.hasOwnProperty(viewType))
+		if (this.fieldsSelectors[viewType])
 		{
-			var gridData = this.getData();
-			this.fieldsSelectors[viewType] = new BX.Crm.Kanban.FieldsSelector({
-				entityTypeName: gridData.entityType,
-				type: viewType,
-				sections: gridData.customSectionsFields,
-				headersSections: gridData.headersSections || {},
-				defaultHeaderSectionId: gridData.defaultHeaderSectionId || null,
-				selectedFields: (viewType === 'view')
-					? gridData.customFields
-					: gridData.customEditFields,
-				ignoredFields: gridData.customDisabledFields,
-				onSelect: function(selectedItems) {
-					var oldValue = [];
-					if (viewType === 'view')
-					{
-						oldValue = gridData.customFields;
-						gridData.customFields = Object.keys(selectedItems);
-					}
-					else
-					{
-						oldValue = gridData.customEditFields;
-						gridData.customEditFields = Object.keys(selectedItems);
-					}
-					this.ajax({
-							action: "saveFields",
-							fields: selectedItems,
-							type: viewType
-						},
-						function()
-						{
-							// for view-form just refresh
-							if (viewType === "view")
-							{
-								this.onApplyFilter();
-							}
-							else
-							{
-								this.applyCustomEditFields(gridData.customEditFields, oldValue);
-							}
-						}.bind(this)
-					);
-				}.bind(this)
-			});
+			this.fieldsSelectors[viewType].show();
 
+			return;
 		}
-		this.fieldsSelectors[viewType].show();
+
+		const gridData = this.getData();
+		BX.Runtime.loadExtension('ui.dialogs.checkbox-list').then(() => {
+			const selectedFields = viewType === 'view' ? gridData.customFields : gridData.customEditFields;
+
+			this
+				.fetchFields(viewType, gridData.entityType, selectedFields)
+				.then((data) => {
+					this.fieldsSelectors[viewType] = this.createFieldsSelector(viewType, data);
+					this.fieldsSelectors[viewType].show();
+				}
+			);
+		});
 	},
+
+	fetchFields: function(viewType, entityType, selectedFields)
+	{
+		return new Promise((resolve) => {
+			BX.ajax.runComponentAction(
+				'bitrix:crm.kanban',
+				'getPreparedFields',
+				{
+					mode: 'ajax',
+					data: {
+						entityType,
+						viewType,
+						selectedFields,
+					}
+				})
+				.then(({ status, data, errors }) => {
+					if (status === 'success')
+					{
+						resolve(data);
+
+						return;
+					}
+
+					console.error(`Fields for ${entityType} not fetched`);
+				}, (error) => {
+					console.error(`Fields for ${entityType} not fetched`);
+				})
+			;
+		})
+	},
+
+	/**
+	 * @param {string} viewType
+	 * @param {{sections: Object, categories: Object, options: Object}} data
+	 * @returns {CheckboxList}
+	 */
+	createFieldsSelector: function(viewType, data)
+	{
+		const columnCount = 3;
+		const title = BX.Loc.getMessage(`CRM_KANBAN_CUSTOM_FIELDS_${viewType.toUpperCase()}`);
+		const placeholder = BX.Loc.getMessage('CRM_EDITOR_FIELD_SEARCH_PLACEHOLDER');
+		const emptyStateTitle = BX.Loc.getMessage('CRM_EDITOR_FIELD_EMPTY_STATE_TITLE');
+		const emptyStateDescription = BX.Loc.getMessage('CRM_EDITOR_FIELD_EMPTY_STATE_DESCRIPTION');
+		const allSectionsDisabledTitle = BX.Loc.getMessage('CRM_EDITOR_FIELD_ALL_SECTIONS_DISABLED');
+
+		const { sections, categories, options } = data;
+
+		return new BX.UI.CheckboxList({
+			columnCount,
+			lang: {
+				title,
+				placeholder,
+				emptyStateTitle,
+				emptyStateDescription,
+				allSectionsDisabledTitle,
+			},
+			sections,
+			categories,
+			options,
+			params: {
+				destroyPopupAfterClose: false,
+			},
+			events: {
+				onApply: (event) => this.onApplyCheckboxList(viewType, event.data.fields, options),
+			},
+		});
+	},
+
+	/**
+	 * @param {string} viewType
+	 * @param {string[]} fields
+	 * @param {Object[]} options
+	 */
+	onApplyCheckboxList: function(viewType, fields, options)
+	{
+		const preparedFields = {};
+
+		fields.forEach((field) => {
+			const optionField = options.find((option) => option.id === field);
+			preparedFields[field] = optionField?.title;
+		});
+
+		let oldValues;
+		const gridData = this.getData();
+
+		if (viewType === 'view')
+		{
+			oldValues = gridData.customFields;
+			gridData.customFields = Object.keys(preparedFields);
+		}
+		else
+		{
+			oldValues = gridData.customEditFields;
+			gridData.customEditFields = Object.keys(preparedFields);
+		}
+
+		this.ajax(
+			{
+				action: 'saveFields',
+				fields: preparedFields,
+				type: viewType
+			},
+			() => this.onSuccessFieldsSave(viewType, oldValues),
+		);
+	},
+
+	/**
+	 * @param {string} viewType
+	 * @param {string[]} oldValues
+	 */
+	onSuccessFieldsSave: function(viewType, oldValues)
+	{
+		if (viewType === 'view')
+		{
+			this.onApplyFilter();
+
+			return;
+		}
+
+		const gridData = this.getData();
+		this.applyCustomEditFields(gridData.customEditFields, oldValues);
+	},
+
 	applyCustomEditFields: function(newFields, oldFields)
 	{
 		var sectionEditor = this.getQuickEditor().getControlById("main");

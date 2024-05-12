@@ -78,6 +78,41 @@ class Chat implements Tabable
 		];
 	}
 
+	public function getMessengerCopilotComponent(): array
+	{
+		return [
+			"id" => "copilot",
+			"title" => "CoPilot",
+			"component" => [
+				"name" => "JSComponentChatRecent",
+				"componentCode" => "im.copilot.messenger",
+				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath('im:copilot-messenger'),
+				'params' => array_merge(
+					$this->getComponentParams(),
+					[
+						'TAB_CODE' => 'chats.copilot',
+						'COMPONENT_CODE' => 'im.copilot.messenger',
+						'MESSAGES' => [
+							'COMPONENT_TITLE' => Loc::getMessage('TAB_NAME_IM_RECENT_FULL'),
+						],
+						'MIN_SEARCH_SIZE' => \Bitrix\Main\ORM\Query\Filter\Helper::getMinTokenSize(),
+						'IS_NETWORK_SEARCH_AVAILABLE' => $this->isNetworkSearchAvailable(),
+						'IS_DEVELOPMENT_ENVIRONMENT' => $this->isDevelopmentEnvironment(),
+					],
+					\Bitrix\ImMobile\MessengerParams::get(),
+				),
+				'settings' => [
+					'useSearch' => true,
+					'preload' => true,
+					'titleParams' => [
+						'useLargeTitleMode' => true,
+						'text' => Loc::getMessage('TAB_NAME_IM_RECENT_FULL'),
+					],
+				],
+			]
+		];
+	}
+
 	public function getRecentComponent(): array
 	{
 		return [
@@ -109,6 +144,12 @@ class Chat implements Tabable
 	{
 		$chatComponent = $this->getMessengerComponent();
 		$openlinesChatComponent = $this->getRecentComponent();
+		$copilot = null;
+
+		if ($this->isCopilotAvailable() && $this->isCopilotMobileEnabled())
+		{
+			$copilot = $this->getMessengerCopilotComponent();
+		}
 
 		// recent list
 		$chats = [
@@ -207,6 +248,26 @@ class Chat implements Tabable
 		else
 		{
 			$items = [$chats, $notifications];
+		}
+
+		if($copilot)
+		{
+			$chatsIndex = 0;
+			foreach ($items as $key => $component) {
+				if($component['id'] === 'chats')
+				{
+					$chatsIndex = $key + 1;
+				}
+			}
+
+			if( $chatsIndex )
+			{
+				array_splice($items, $chatsIndex, 0, [$copilot]);
+			}
+			else
+			{
+				$items[] = $copilot;
+			}
 		}
 
 		return [
@@ -402,6 +463,16 @@ class Chat implements Tabable
 	public function isDevelopmentEnvironment(): bool
 	{
 		return \Bitrix\Main\Config\Option::get('immobile', 'IS_DEVELOPMENT_ENVIRONMENT', 'N') === 'Y';
+	}
+
+	public function isCopilotAvailable(): bool
+	{
+		return \Bitrix\Im\V2\Chat\CopilotChat::isAvailable();
+	}
+
+	public function isCopilotMobileEnabled(): bool
+	{
+		return \Bitrix\Main\Config\Option::get('immobile', 'copilot_mobile_chat_enabled', 'N') === 'Y';
 	}
 
 	public function getIconId(): string

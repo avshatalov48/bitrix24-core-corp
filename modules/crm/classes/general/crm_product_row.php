@@ -1050,7 +1050,7 @@ class CAllCrmProductRow
 		$result['PRICE'] = isset($product['PRICE']) ? round((float)$product['PRICE'], 2) : 0.0;
 		$result['PRICE_EXCLUSIVE'] = isset($product['PRICE_EXCLUSIVE']) ? round((float)$product['PRICE_EXCLUSIVE'], 2) : 0.0;
 		$result['QUANTITY'] = isset($product['QUANTITY']) ? round((float)$product['QUANTITY'], 4) : 1;
-		$result['TAX_RATE'] = isset($product['TAX_RATE']) ? round((float)$product['TAX_RATE'], 2) : null;
+		$result['TAX_RATE'] = (isset($product['TAX_RATE']) && $product['TAX_RATE'] !== false) ? round((float)$product['TAX_RATE'], 2) : null;
 		$result['TAX_INCLUDED'] = isset($product['TAX_INCLUDED']) ? ($product['TAX_INCLUDED'] === 'Y' ? 'Y' : 'N') : 'N';
 		$result['DISCOUNT_TYPE_ID'] = isset($product['DISCOUNT_TYPE_ID']) ? intval($product['DISCOUNT_TYPE_ID']) : 0;
 

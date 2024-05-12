@@ -329,6 +329,8 @@ final class Payment extends Crm\Controller\Base
 			$result += [
 				'OWNER_ID' => $entityId,
 				'OWNER_TYPE_ID' => $entityTypeId,
+				'CLIENT' => Salescenter\Integration\CrmManager::getInstance()->getClientInfo($entityTypeId, $entityId),
+				'TRADING_PLATFORM' => $this->getTradePlatformId($entityTypeId),
 				'CURRENCY' => \CCurrencyLang::GetFormatDescription($item->getCurrencyId())['CURRENCY'],
 			];
 		}
@@ -340,6 +342,28 @@ final class Payment extends Crm\Controller\Base
 		}
 
 		return $result;
+	}
+
+	private function getTradePlatformId(int $entityTypeId) : ?int
+	{
+		$platform = Crm\Order\TradingPlatform\DynamicEntity::getInstanceByCode(
+			Crm\Order\TradingPlatform\DynamicEntity::getCodeByEntityTypeId($entityTypeId)
+		);
+
+		if ($platform)
+		{
+			if (!$platform->isInstalled())
+			{
+				$platform->install();
+			}
+
+			if ($platform->isInstalled())
+			{
+				return $platform->getId();
+			}
+		}
+
+		return null;
 	}
 
 	private function getNewPayment(Sale\Order $order) :? Sale\Payment

@@ -1539,7 +1539,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		$scope = new Scope();
 		$configScope = $scope->getByConfigId($this->getFormConfigId(), 'ui.form.editor');
 		$formComponent = new CCrmRequisiteUIFormComponent();
-		$formComponent->arParams = [
+		$formComponentParams = [
 			'~GUID' => $configId,
 			'~CONFIG_ID' => $configId,
 			'~SCOPE' => $configScope,
@@ -1560,6 +1560,8 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			'~ENTITY_FIELDS' => $fields,
 			'~FORCE_DEFAULT_SECTION_NAME' => true,
 		];
+		$formComponentParams = array_merge($formComponentParams, $this->prepareFormConfigurationUpdateParams());
+		$formComponent->arParams = $formComponentParams;
 
 		return $formComponent->prepareResult();
 	}
@@ -1773,7 +1775,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$params = [];
 
-		$params['ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
+		$params['~ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
 
 		//region CAN_UPDATE_PERSONAL_CONFIGURATION && CAN_UPDATE_COMMON_CONFIGURATION
 		$canUpdatePersonalConfiguration = true;
@@ -1807,13 +1809,11 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 
 		if ($canUpdateCommonConfiguration && $canUpdatePersonalConfiguration)
 		{
-			$params['ENABLE_CONFIGURATION_UPDATE'] = true;
+			$params['~ENABLE_CONFIGURATION_UPDATE'] = true;
 		}
-		else
-		{
-			$params['ENABLE_COMMON_CONFIGURATION_UPDATE'] = $canUpdateCommonConfiguration;
-			$params['ENABLE_PERSONAL_CONFIGURATION_UPDATE'] = $canUpdatePersonalConfiguration;
-		}
+
+		$params['~ENABLE_COMMON_CONFIGURATION_UPDATE'] = $canUpdateCommonConfiguration;
+		$params['~ENABLE_PERSONAL_CONFIGURATION_UPDATE'] = $canUpdatePersonalConfiguration;
 
 		return $params;
 	}

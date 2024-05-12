@@ -58,6 +58,14 @@ export class DetailInstance
 	#subscribeEvents()
 	{
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelect', (event) => {
+			Dom.clean(this.#frameNode);
+			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+				container: this.#frameNode,
+				isSupersetAvailable: true,
+			});
+		});
+
+		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelectDataLoaded', (event) => {
 			this.#embeddedParams = event.data.credentials;
 			Dom.clean(this.#frameNode);
 			this.#initFrame(event.data.credentials);

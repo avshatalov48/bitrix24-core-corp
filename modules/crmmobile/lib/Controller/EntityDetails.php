@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Mobile\Trait\PublicErrorsTrait;
 use Bitrix\Catalog;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
@@ -85,6 +86,14 @@ class EntityDetails extends Controller
 		Conversion\QuoteConversionWizard::QUERY_PARAM_SRC_ID,
 		Conversion\DealConversionWizard::QUERY_PARAM_SRC_ID,
 	];
+
+	protected function getDefaultPreFilters(): array
+	{
+		return [
+			...parent::getDefaultPreFilters(),
+			new IntranetUser(),
+		];
+	}
 
 	public function configureActions(): array
 	{

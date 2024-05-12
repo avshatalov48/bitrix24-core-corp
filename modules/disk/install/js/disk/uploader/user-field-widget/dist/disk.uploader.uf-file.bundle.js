@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_uploader_core,main_core,main_popup) {
+(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_uploader_core,disk_googleDrivePicker,main_core,main_popup) {
 	'use strict';
 
 	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
@@ -1373,7 +1374,7 @@ this.BX.Disk = this.BX.Disk || {};
 	const openCloudFileDialog = options => {
 	  options = main_core.Type.isPlainObject(options) ? options : {};
 	  const dialogId = main_core.Type.isStringFilled(options.dialogId) ? options.dialogId : `cloud-dialog-${main_core.Text.getRandom(5)}`;
-	  const serviceId = main_core.Type.isStringFilled(options.serviceId) ? options.serviceId : `gdrive`;
+	  const serviceId = main_core.Type.isStringFilled(options.serviceId) ? options.serviceId : 'gdrive';
 	  const onLoad = main_core.Type.isFunction(options.onLoad) ? options.onLoad : null;
 	  const onSelect = main_core.Type.isFunction(options.onSelect) ? options.onSelect : null;
 	  const onClose = main_core.Type.isFunction(options.onClose) ? options.onClose : null;
@@ -1423,6 +1424,32 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      }
 	    };
+	    if (serviceId === 'gdrive') {
+	      main_core.ajax({
+	        url: '/bitrix/tools/disk/uf.php?action=getGoogleAppData',
+	        dataType: 'json',
+	        onsuccess(data) {
+	          if (data.authUrl) {
+	            BX.util.popup(data.authUrl, 1030, 700);
+	            main_core.Event.bind(window, 'hashchange', () => {
+	              const matches = document.location.hash.match(/external-auth-(\w+)/);
+	              if (!matches) {
+	                return;
+	              }
+	              BX.DiskFileDialog.sendRequest = false;
+	              openCloudFileDialog(options);
+	            });
+	          } else {
+	            const picker = new disk_googleDrivePicker.GoogleDrivePicker(data.clientId, data.appId, data.apiKey, data.accessToken, BX.DiskFileDialog.obCallback[dialogId]);
+	            picker.loadAndOpenPicker();
+	          }
+	        },
+	        onfailure(data) {
+	          BX.DiskFileDialog.sendRequest = false;
+	        }
+	      });
+	      return;
+	    }
 	    if (BX.DiskFileDialog.popupWindow === null) {
 	      BX.DiskFileDialog.openDialog(dialogId);
 	    }
@@ -1987,5 +2014,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.openDiskFileDialog = openDiskFileDialog;
 	exports.openCloudFileDialog = openCloudFileDialog;
 
-}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI.Uploader,BX,BX.Main));
+}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI.Uploader,BX.Disk,BX,BX.Main));
 //# sourceMappingURL=disk.uploader.uf-file.bundle.js.map

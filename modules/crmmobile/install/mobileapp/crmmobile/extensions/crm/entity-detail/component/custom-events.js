@@ -153,11 +153,19 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 			 */
 			(detailCard, document) => {
 				const isTerminalToolEnabled = detailCard.entityModel.IS_TERMINAL_TOOL_ENABLED;
+				const contactId = Number(detailCard.entityModel.CONTACT_ID ?? 0);
+				const entityHasContact = contactId > 0;
+				const contactHasPhone = detailCard.entityModel.CONTACT_HAS_PHONE === 'Y';
 
 				PaymentDocument.open({
 					id: document.ID,
 					uid: detailCard.uid,
 					isTerminalToolEnabled,
+					resendParams: {
+						entityHasContact,
+						contactHasPhone,
+						contactId,
+					},
 				}, detailCard.layout);
 			},
 		],

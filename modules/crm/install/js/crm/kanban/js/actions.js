@@ -147,7 +147,7 @@
 				grid.resetMultiSelectMode();
 			}
 
-			params.eventId = (params.eventId || BX.Crm.Kanban.PullManager.registerRandomEventId());
+			params.eventId = (params.eventId || BX.Pull?.QueueManager?.registerRandomEventId());
 
 			return new Promise(function(resolve,reject){
 				grid.ajax(

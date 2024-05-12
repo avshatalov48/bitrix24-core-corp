@@ -30,6 +30,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._modeChangeNotifier = null;
 		this._controlChangeNotifier = null;
 
+		this._entityCreateHandler = BX.delegate(this.onCreateHandler, this);
 		this._entityUpdateHandler = BX.delegate(this.onEntityUpdate, this);
 		this._toolbarMenuBuildHandler = BX.delegate(this.onInterfaceToolbarMenuBuild, this);
 		this._configurationManagerInitializeHandler = BX.delegate(this.onConfigurationManagerInitialize, this);
@@ -110,6 +111,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			this._toolbarMenuBuildHandler
 		);
 
+		BX.addCustomEvent("onCrmEntityCreate", this._entityCreateHandler);
 		BX.addCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
 	};
 	BX.Crm.EntityEditor.prototype.deattachFromEvents = function()
@@ -121,6 +123,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			"Crm.InterfaceToolbar.MenuBuild",
 			this._toolbarMenuBuildHandler
 		);
+		BX.removeCustomEvent("onCrmEntityCreate", this._entityCreateHandler);
 		BX.removeCustomEvent("onCrmEntityUpdate", this._entityUpdateHandler);
 		BX.removeCustomEvent("BX.UI.EntityConfigurationManager:onInitialize", this._configurationManagerInitializeHandler);
 	};
@@ -200,8 +203,32 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		return BX.Crm.EntityEditor.create(id, settings);
 	};
+	BX.Crm.EntityEditor.prototype.onCreateHandler = function(eventParams)
+	{
+		if (eventParams.sender === this)
+		{
+			// propagate create event to other browser tabs
+			BX.Crm.EntityEvent.fireCreate(
+				this._entityTypeId,
+				this._entityId,
+				this._externalContextId,
+				this.makeLocalStorageSafeObject(eventParams),
+			);
+		}
+	};
 	BX.Crm.EntityEditor.prototype.onEntityUpdate = function(eventParams)
 	{
+		if (eventParams.sender === this)
+		{
+			// propagate update event to other browser tabs
+			BX.Crm.EntityEvent.fireUpdate(
+				this._entityTypeId,
+				this._entityId,
+				this._externalContextId,
+				this.makeLocalStorageSafeObject(eventParams),
+			);
+		}
+
 		if(this._isReleased)
 		{
 			return;
@@ -223,6 +250,22 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 				this.refreshLayout({ reset: true });
 			}
 		}
+	};
+	/**
+	 * @private
+	 */
+	BX.Crm.EntityEditor.prototype.makeLocalStorageSafeObject = function(object)
+	{
+		const localStorageSafeObject = {};
+		Object.entries(object).forEach(([key, value]) => {
+			const isClassInstance = BX.Type.isObject(value) && !BX.Type.isPlainObject(value);
+			if (!isClassInstance)
+			{
+				localStorageSafeObject[key] = value;
+			}
+		});
+
+		return localStorageSafeObject;
 	};
 	BX.Crm.EntityEditor.prototype.getEntityTypeForAction = function()
 	{
@@ -714,281 +757,24 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	BX.Crm.EntityEditor.prototype.onSaveSuccess = function(result, params)
 	{
 		this.closeSearchSummary();
-		
-		//todo refactor it on parent class
-		this._isRequestRunning = false;
 
 		this._enableCloseConfirmation = false;
 
-		if(this._toolPanel)
-		{
-			this._toolPanel.setLocked(false);
-			this._toolPanel.clearErrors();
-		}
+		BX.Crm.EntityEditor.superclass.onSaveSuccess.apply(this, [result, params]);
+	};
+	BX.Crm.EntityEditor.prototype.prepareEventParams = function(result)
+	{
+		const eventParams = BX.Crm.EntityEditor.superclass.prepareEventParams.apply(this, [result]);
 
-		if (result.ADDITIONAL_FIELDS_DATA)
-		{
-			this.additionalFieldsData = BX.prop.getObject(result, 'ADDITIONAL_FIELDS_DATA', {});
-		}
-
-		//region Event Params
-		var eventParams = BX.prop.getObject(result, "EVENT_PARAMS", {});
 		eventParams["entityTypeId"] = this._entityTypeId;
 
-		var entityInfo = BX.prop.getObject(result, "ENTITY_INFO", null);
+		const entityInfo = BX.prop.getObject(result, "ENTITY_INFO", null);
 		if(entityInfo)
 		{
 			eventParams["entityInfo"] = entityInfo;
 		}
 
-		var slider = BX.Crm.Page.getTopSlider();
-		if(slider)
-		{
-			eventParams["sliderUrl"] = slider.getUrl();
-		}
-		//endregion
-
-		var checkErrors = BX.prop.getObject(result, "CHECK_ERRORS", null);
-		var error = BX.prop.getString(result, "ERROR", "");
-		var hasRestriction = BX.prop.getBoolean(result, 'RESTRICTION', false);
-		if(checkErrors || error !== "" || hasRestriction)
-		{
-			if(checkErrors)
-			{
-				var firstField = null;
-				var errorMessages = [];
-				for(var fieldId in checkErrors)
-				{
-					if(!checkErrors.hasOwnProperty(fieldId))
-					{
-						return;
-					}
-
-					var field = this.getActiveControlById(fieldId, true);
-					if(field)
-					{
-						field.showError(checkErrors[fieldId]);
-						if(!firstField)
-						{
-							firstField = field;
-						}
-					}
-					else
-					{
-						errorMessages.push(checkErrors[fieldId]);
-					}
-				}
-
-				if(firstField)
-				{
-					firstField.scrollAnimate();
-				}
-
-				error = errorMessages.join("<br/>");
-			}
-
-			var restrictionAction = BX.prop.getString(result, "RESTRICTION_ACTION", "");
-			if (hasRestriction && restrictionAction.length)
-			{
-				eval(restrictionAction);
-				BX.onCustomEvent(window, "BX.Crm.EntityEditor:onRestrictionAction", []);
-			}
-			else
-			{
-				if (error !== "" && this._toolPanel)
-				{
-					this._toolPanel.addError(error);
-				}
-
-				eventParams["checkErrors"] = checkErrors;
-				eventParams["error"] = error;
-
-
-				if (this._isNew)
-				{
-					BX.onCustomEvent(window, "onCrmEntityCreateError", [eventParams]);
-				}
-				else
-				{
-					eventParams["entityId"] = this._entityId;
-					BX.onCustomEvent(window, "onCrmEntityUpdateError", [eventParams]);
-				}
-			}
-
-			this.releaseAjaxForm();
-			this.initializeAjaxForm();
-
-			return;
-		}
-
-		var entityData = BX.prop.getObject(result, "ENTITY_DATA", null);
-		eventParams["entityData"] = entityData;
-		eventParams["isCancelled"] = false;
-
-		if(this._isNew)
-		{
-			this._entityId = BX.prop.getInteger(result, "ENTITY_ID", 0);
-			if(this._entityId <= 0)
-			{
-				if(this._toolPanel)
-				{
-					this._toolPanel.addError(this.getMessage("couldNotFindEntityIdError"));
-				}
-				return;
-			}
-
-			//fire onCrmEntityCreate
-			BX.Crm.EntityEvent.fireCreate(this._entityTypeId, this._entityId, this._externalContextId, eventParams);
-
-			eventParams["sender"] = this;
-			eventParams["entityId"] = this._entityId;
-
-			BX.onCustomEvent(window, "onCrmEntityCreate", [eventParams]);
-
-			if(BX.prop.getBoolean(eventParams, "isCancelled", true))
-			{
-				this._entityId = 0;
-
-				this.rollback();
-
-				this.releaseAjaxForm();
-				this.initializeAjaxForm();
-
-				return;
-			}
-
-			this._isNew = false;
-		}
-		else
-		{
-			//fire onCrmEntityUpdate
-			BX.Crm.EntityEvent.fireUpdate(this._entityTypeId, this._entityId, this._externalContextId, eventParams);
-
-			eventParams["sender"] = this;
-			eventParams["entityId"] = this._entityId;
-			BX.onCustomEvent(window, "onCrmEntityUpdate", [eventParams]);
-
-			if(BX.prop.getBoolean(eventParams, "isCancelled", true))
-			{
-				this.rollback();
-
-				this.releaseAjaxForm();
-				this.initializeAjaxForm();
-
-				return;
-			}
-		}
-
-		const redirectUrl = BX.prop.getString(result, 'REDIRECT_URL', '');
-		const isOpenInNewSlide = BX.prop.getBoolean(result, 'OPEN_IN_NEW_SLIDE', false);
-
-		const additionalEventParams = BX.prop.getObject(result, 'EVENT_PARAMS', null);
-		if (additionalEventParams)
-		{
-			const eventName = BX.prop.getString(additionalEventParams, 'name', '');
-			const eventArgs = BX.prop.getObject(additionalEventParams, 'args', null);
-
-			if (BX.Type.isStringFilled(eventName) && eventArgs !== null)
-			{
-				if (BX.Type.isStringFilled(redirectUrl))
-				{
-					eventArgs.redirectUrl = redirectUrl;
-				}
-				BX.localStorage.set(eventName, eventArgs, 10);
-			}
-		}
-
-		if (this._isReleased)
-		{
-			return;
-		}
-
-		if (BX.Type.isStringFilled(redirectUrl))
-		{
-			eventParams.redirectUrl = redirectUrl;
-			BX.onCustomEvent(window, 'beforeCrmEntityRedirect', [eventParams]);
-
-			const url = BX.util.add_url_param(
-				redirectUrl,
-				{
-					IFRAME: 'Y',
-					IFRAME_TYPE: 'SIDE_SLIDER',
-				},
-			);
-
-			const sidePanel = window.top.BX.SidePanel ? window.top.BX.SidePanel.Instance : null;
-			if (isOpenInNewSlide && sidePanel && sidePanel.isOpen())
-			{
-				sidePanel.close(false, () => BX.Crm.Page.open(url));
-			}
-			else
-			{
-				window.location.replace(url);
-			}
-		}
-		else
-		{
-			var needSwitchMode =  BX.prop.getBoolean(params, "switchMode", true);
-			if (needSwitchMode)
-			{
-				if (BX.type.isPlainObject(entityData))
-				{
-					//Notification event is disabled because we will call "refreshLayout" for all controls at the end.
-					this._model.setData(entityData, {enableNotification: false});
-				}
-
-				this.adjustTitle();
-				this.adjustSize();
-				this.releaseAjaxForm();
-				this.initializeAjaxForm();
-
-				for (var i = 0, length = this._controllers.length; i < length; i++)
-				{
-					this._controllers[i].onAfterSave();
-				}
-
-				if (this._modeSwitch.isRunning())
-				{
-					this._modeSwitch.complete();
-				}
-				else
-				{
-					this.switchToViewMode({refreshLayout: false});
-				}
-
-				this.refreshLayout({reset: true});
-				if (!this.isToolPanelAlwaysVisible())
-				{
-					this.hideToolPanel();
-				}
-			}
-			else if(BX.type.isPlainObject(entityData))
-			{
-				var previousModel = Object.create(this._model); // clone model object
-				previousModel.setData(  // copy model data
-					BX.clone(this._model.getData()),
-					{
-						enableNotification: false
-					}
-				);
-
-				//Notification event is disabled because we will call "refreshViewModeLayout" for all controls at the end.
-				this._model.setData(entityData, {enableNotification: false});
-
-				this.adjustTitle();
-				this.adjustSize();
-
-				for(var i = 0, length = this._controllers.length; i < length; i++)
-				{
-					this._controllers[i].onReload();
-				}
-
-				this.refreshViewModeLayout({
-					previousModel: previousModel,
-					reset: true
-				});
-			}
-		}
+		return eventParams;
 	};
 	BX.Crm.EntityEditor.prototype.onAfterFormSubmit = function(sender, eventArgs)
 	{
@@ -1082,6 +868,18 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			return m.hasOwnProperty(name) ? m[name] : message;
 		}
 		return message;
+	};
+	BX.Crm.EntityEditor.prototype.getGlobalEventName = function(eventName)
+	{
+		const aliases = {
+			'onEntityCreateError': 'onCrmEntityCreateError',
+			'onEntityUpdateError': 'onCrmEntityUpdateError',
+			'onEntityUpdate': 'onCrmEntityUpdate',
+			'onEntityCreate': 'onCrmEntityCreate',
+			'beforeEntityRedirect': 'beforeCrmEntityRedirect'
+		};
+
+		return aliases[eventName] || eventName;
 	};
 	BX.Crm.EntityEditor.defaultInstance = null;
 	BX.Crm.EntityEditor.items = {};

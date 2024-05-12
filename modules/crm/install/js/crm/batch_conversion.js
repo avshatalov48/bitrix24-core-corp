@@ -27,6 +27,8 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 		this._isRunning = false;
 		this._messages = null;
 
+		this._loadExtensionsPromise = null;
+
 		this._progressChangeHandler = BX.delegate(this.onProgress, this);
 		this._documentUnloadHandler = BX.delegate(this.onDocumentUnload, this);
 	};
@@ -68,6 +70,13 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 			);
 			//region
 			this._errors = [];
+
+			this._loadExtensionsPromise = BX.Runtime.loadExtension('crm.integration.analytics', 'ui.analytics')
+				.catch((error) => {
+					console.error('Could not load analytics extensions', error);
+
+					throw error;
+				});
 		},
 		getId: function()
 		{
@@ -181,6 +190,8 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 					sessid: BX.bitrix_sessid(),
 				};
 
+			this.sendAnalyticsData('attempt');
+
 			BX.ajax(
 				{
 					url: this._serviceUrl,
@@ -190,6 +201,53 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 					onsuccess: BX.delegate(this.onPrepare, this)
 				}
 			);
+		},
+		/**
+		 * @private
+		 * @param status
+		 */
+		sendAnalyticsData(status)
+		{
+			if (!BX.CrmEntityType.isDefined(this._settings.entityTypeId))
+			{
+				return;
+			}
+
+			this._loadExtensionsPromise.then((exports) => {
+				Object.keys(this._config).forEach((dstEntityTypeName) => {
+					if (this._config[dstEntityTypeName].active === 'Y')
+					{
+						/** @see BX.Crm.Integration.Analytics.Builder.Entity.ConvertBatchEvent */
+						const event = exports.Builder.Entity.ConvertBatchEvent.createDefault(
+							this._settings.entityTypeId,
+							BX.CrmEntityType.resolveId(dstEntityTypeName),
+						);
+
+						if (BX.Type.isPlainObject(this._settings.analytics))
+						{
+							if (BX.Type.isStringFilled(this._settings.analytics.c_section))
+							{
+								event.setSection(this._settings.analytics.c_section);
+							}
+
+							if (BX.Type.isStringFilled(this._settings.analytics.c_sub_section))
+							{
+								event.setSubSection(this._settings.analytics.c_sub_section);
+							}
+
+							if (BX.Type.isStringFilled(this._settings.analytics.c_element))
+							{
+								event.setElement(this._settings.analytics.c_element);
+							}
+						}
+
+						event.setStatus(status);
+
+						/** @see BX.UI.Analytics.sendData */
+						exports.sendData(event.buildData());
+					}
+				});
+			});
 		},
 		onPrepare: function(result)
 		{
@@ -210,6 +268,8 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 
 			if(status === "ERROR")
 			{
+				this.sendAnalyticsData('error');
+
 				var errors = BX.prop.getArray(data, "ERRORS", []);
 				var dlg = BX.Crm.NotificationDialog.create(
 					"batch_conversion_error",
@@ -259,6 +319,8 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 				return;
 			}
 			this._isRunning = false;
+
+			this.sendAnalyticsData('cancel');
 
 			BX.ajax(
 				{
@@ -328,6 +390,8 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 		{
 			if(BX.prop.getBoolean(args, "isCanceled", false))
 			{
+				this.sendAnalyticsData('cancel');
+
 				this.clearLayout();
 				return;
 			}
@@ -362,10 +426,13 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 				}
 
 				this._failedItemCount++;
+				this.sendAnalyticsData('error');
 			}
 
 			if(state === BX.AutoRunProcessState.completed)
 			{
+				this.sendAnalyticsData('success');
+
 				BX.Crm.ProcessSummaryPanel.create(
 					this._id,
 					{

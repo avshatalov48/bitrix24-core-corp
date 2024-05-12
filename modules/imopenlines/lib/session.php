@@ -385,6 +385,11 @@ class Session
 			$fields['STATUS'] = self::STATUS_ANSWER;
 		}
 
+		if (User::getInstance($fields['USER_ID'])->isConnector())
+		{
+			$fields['DATE_FIRST_LAST_USER_ACTION'] = new DateTime();
+		}
+
 		$resultAdd = Model\SessionTable::add($fields);
 		if ($resultAdd->isSuccess())
 		{

@@ -14,6 +14,11 @@ $pathToList = $categoryId > 0
 	: $arResult['PATH_TO_CONTACT_LIST']
 ;
 
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+];
+
 $isSlider = isset($_REQUEST['IFRAME'], $_REQUEST['IFRAME_TYPE'])
 	&& $_REQUEST['IFRAME'] === 'Y'
 	&& $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER';
@@ -44,6 +49,7 @@ if (!$isSlider)
 			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
 			'PATH_TO_CONTACT_WIDGET' => $arResult['PATH_TO_CONTACT_WIDGET'] ?? '',
 			'PATH_TO_CONTACT_PORTRAIT' => $arResult['PATH_TO_CONTACT_PORTRAIT'] ?? '',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -99,6 +105,7 @@ else
 			'CATEGORY_ID' => $categoryId,
 			'TYPE' => 'list',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -140,6 +147,7 @@ else
 				'PATH_TO_CONTACT_MERGE' => $arResult['PATH_TO_CONTACT_MERGE'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
+				'ANALYTICS' => $analytics,
 			],
 			'USE_UI_TOOLBAR' => 'Y',
 		],

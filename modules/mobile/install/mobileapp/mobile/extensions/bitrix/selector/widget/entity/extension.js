@@ -53,6 +53,7 @@
 				widgetParams,
 				events: props.events || {},
 				initSelectedIds: props.initSelectedIds || [],
+				undeselectableIds: props.undeselectableIds || [],
 				returnKey: BaseSelectorEntity.getReturnKey(),
 			});
 
@@ -78,6 +79,7 @@
 			provider.options = {
 				entities: this.getEntitiesOptions(provider.options, entityIds),
 				useRawResult: this.useRawResult(),
+				useLettersForEmptyAvatar: Boolean(provider?.options?.useLettersForEmptyAvatar),
 			};
 
 			return provider;
@@ -170,6 +172,8 @@
 			{
 				createOptions.handler = this.getCreateEntityHandler(
 					providerOptions.entities[0].options,
+					createOptions.getParentLayout,
+					createOptions.analytics,
 				);
 			}
 
@@ -251,7 +255,7 @@
 			return null;
 		}
 
-		static getCreateEntityHandler(providerOptions)
+		static getCreateEntityHandler(providerOptions, getParentLayoutFunction, analytics)
 		{
 			return null;
 		}

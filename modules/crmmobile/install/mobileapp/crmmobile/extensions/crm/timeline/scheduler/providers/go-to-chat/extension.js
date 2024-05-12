@@ -12,33 +12,12 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 	const { get } = require('utils/object');
 	const { WarningBlock } = require('layout/ui/warning-block');
 	const { getEntityMessage } = require('crm/loc');
-	const { Alert } = require('alert');
+	const { MessageSendersConnector, SenderTypes } = require('crm/message-senders-connector');
 	const { Type } = require('type');
-	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const AppTheme = require('apptheme');
 
-	let TelegramConnectorManager = null;
-	let NotificationServiceConsent = null;
-
-	try
-	{
-		TelegramConnectorManager = require('imconnector/connectors/telegram').TelegramConnectorManager;
-		NotificationServiceConsent = require('imconnector/consents/notification-service').NotificationServiceConsent;
-	}
-	catch (e)
-	{
-		console.warn(e, 'Imconnector extensions not found');
-
-		return null;
-	}
-
 	const PATH_TO_EXTENSION = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/timeline/scheduler/providers/go-to-chat`;
-
-	const senderTypes = {
-		bitrix24: 'bitrix24',
-		sms: 'sms_provider',
-	};
 
 	/**
 	 * @class TimelineSchedulerGoToChatProvider
@@ -147,7 +126,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			this.isSending = false;
 
 			this.config = {};
-			this.manager = new TelegramConnectorManager();
+			// this.manager = new TelegramConnectorManager();
 
 			this.onChangeClientCallback = this.onChangeClientCallback.bind(this);
 			this.onChangeClientWithoutPhoneCallback = this.onChangeClientWithoutPhoneCallback.bind(this);
@@ -595,53 +574,24 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			);
 		}
 
-		showRegistrarAndSend()
+		async showRegistrarAndSend()
 		{
 			if (this.isSending || !this.canSend())
 			{
 				return;
 			}
 
-			this.manager
-				.openRegistrar(this.props.layout)
-				.then(({ lineId }) => {
-					this.checkConsentApproved().then((isApproved) => {
-						if (isApproved)
-						{
-							this.send(lineId);
-						}
-						else
-						{
-							Haptics.notifyWarning();
-
-							Notify.showUniqueMessage(
-								Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_GTC_B24_AGREEMENT_NOTIFY'),
-								null,
-								{ time: 5 },
-							);
-						}
-					}).catch(console.error);
-				})
-				.catch((response) => this.handleError(response))
-			;
-		}
-
-		checkConsentApproved()
-		{
-			const senderType = this.getSenderType();
-
-			if (senderType !== senderTypes.bitrix24)
-			{
-				return Promise.resolve(true);
-			}
-
-			const consent = new NotificationServiceConsent();
-
-			return new Promise((resolve) => {
-				consent.open(this.props.layout).then((result) => {
-					resolve(result);
-				});
+			const messageSendersConnector = new MessageSendersConnector({
+				layout: this.props.layout,
+				senderType: this.getSenderType(),
 			});
+
+			const lineId = await messageSendersConnector.checkAndGetLine();
+
+			if (lineId)
+			{
+				this.send(lineId);
+			}
 		}
 
 		canSend()
@@ -689,7 +639,7 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 		{
 			const { currentChannelId } = this.state;
 
-			return (currentChannelId === senderTypes.bitrix24 ? senderTypes.bitrix24 : senderTypes.sms);
+			return (currentChannelId === SenderTypes.bitrix24 ? SenderTypes.bitrix24 : SenderTypes.sms);
 		}
 
 		onChangeClientCallback(data)
@@ -734,23 +684,6 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			this.setState({
 				fromPhoneId: phoneId,
 			});
-		}
-
-		handleError(error)
-		{
-			const { ex } = error || {};
-
-			if (ex)
-			{
-				Alert.alert(
-					ex ? ex.error_description : Loc.getMessage('M_CRM_TIMELINE_COMMON_ERROR_TITLE'),
-					Loc.getMessage('M_CRM_TIMELINE_COMMON_ERROR_DESCRIPTION'),
-					() => {},
-					Loc.getMessage('M_CRM_TIMELINE_COMMON_ERROR_OK_BUTTON'),
-				);
-			}
-
-			console.error(error);
 		}
 	}
 

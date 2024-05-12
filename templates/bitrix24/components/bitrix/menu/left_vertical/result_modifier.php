@@ -60,6 +60,7 @@ $arResult = [
 		'sites' => ToolsManager::getInstance()->checkAvailabilityByToolId('sites'),
 		'social' => ToolsManager::getInstance()->checkAvailabilityByToolId('team_work')
 	],
+	'SETTINGS_PATH' => \Bitrix\Intranet\Portal::getInstance()->getSettings()->getSettingsUrl(),
 ];
 
 if ($arResult["IS_EXTRANET"] === false && count($defaultItems) > 0)

@@ -8,6 +8,7 @@ $MESS['CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT'] = 'Документ на подпи
 $MESS['CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED'] = 'Документ на подпись обработан';
 $MESS["CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED_TAG"] = "Подписан всеми сторонами";
 $MESS["CRM_SIGN_B2E_ACTIVITY_SIGNING_PROCESS"] = "Следить за процессом";
+$MESS["CRM_SIGN_B2E_ACTIVITY_SIGNING_CANCEL"] = "Отменить подписание";
 $MESS["CRM_SIGN_B2E_ACTIVITY_FIELD_REVIEWER"] = "Согласовывает";
 $MESS["CRM_SIGN_B2E_ACTIVITY_FIELD_REPRESENTATIVE"] = "Подписывает от компании";
 $MESS["CRM_SIGN_B2E_ACTIVITY_FIELD_EDITOR"] = "Заполняет";

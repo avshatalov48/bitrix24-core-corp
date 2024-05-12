@@ -9,6 +9,7 @@ use Bitrix\Main;
 use Bitrix\Main\Text\Encoding;
 use \Bitrix\Sale;
 use Bitrix\Location\Entity\Address;
+use CCrmEntitySelectorHelper;
 use CCrmOwnerType;
 
 class EntityAddress
@@ -864,6 +865,11 @@ class EntityAddress
 					);
 					//endregion Register volatile duplicate criterion fields
 
+					CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(
+						(int)$row['ENTITY_TYPE_ID'],
+						(int)$row['ENTITY_ID']
+					);
+
 					//region Send event
 					$event = new Main\Event('crm', 'OnAfterAddressRegister', array('fields' => $fields));
 					$event->send();
@@ -1373,6 +1379,8 @@ class EntityAddress
 			DuplicateVolatileCriterion::register($entityTypeID, $entityID, [FieldCategory::ADDRESS]);
 			//endregion Register volatile duplicate criterion fields
 
+			CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity($entityTypeID, $entityID);
+
 			//region Send event
 			$event = new Main\Event('crm', 'OnAfterAddressRegister', array('fields' => $fields));
 			$event->send();
@@ -1451,6 +1459,8 @@ class EntityAddress
 		//region Send event
 		if ($result->isSuccess())
 		{
+			CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity($entityTypeID, $entityID);
+
 			$event = new Main\Event('crm', 'OnAfterAddressUnregister', array('fields' => $primaryFields));
 			$event->send();
 		}
@@ -1461,6 +1471,9 @@ class EntityAddress
 	{
 		self::deleteByEntity($newEntityTypeID, $newEntityID);
 		AddressTable::rebind($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID);
+
+		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity($oldEntityTypeID, $oldEntityID);
+		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity($newEntityTypeID, $newEntityID);
 	}
 
 	public static function deleteByEntity($entityTypeID, $entityID)
@@ -1527,6 +1540,8 @@ class EntityAddress
 			)
 		);
 		$connection->queryExecute('DELETE FROM '.$tableName.' WHERE '.$conditionSql);
+
+		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity($entityTypeID, $entityID);
 	}
 
 	public static function setDef($entityTypeID, $entityID, $typeID = 0)

@@ -112,18 +112,37 @@ class ComparerBase
 			return true;
 		}
 
-		$item = current(
-			$factory->getItems([
-				'select' => [Item::FIELD_NAME_ID, Item::FIELD_NAME_STAGE_ID],
-				'filter' => ['=ID' => $identifier->getEntityId()]
-			]),
-		);
-		if (!$item)
+		$semantics = null;
+		if ($factory->isFieldExists(Item::FIELD_NAME_STAGE_SEMANTIC_ID))
 		{
-			return true;
+			// fast way for entities that support it
+			$item = current(
+				$factory->getItems([
+					'select' => [Item::FIELD_NAME_STAGE_SEMANTIC_ID],
+					'filter' => ['=ID' => $identifier->getEntityId()]
+				]),
+			);
+
+			if ($item)
+			{
+				$semantics = $item->getStageSemanticId();
+			}
+		}
+		else
+		{
+			$item = current(
+				$factory->getItems([
+					'select' => [Item::FIELD_NAME_ID, Item::FIELD_NAME_STAGE_ID],
+					'filter' => ['=ID' => $identifier->getEntityId()]
+				]),
+			);
+
+			if ($item)
+			{
+				$semantics = $factory->getStageSemantics((string)$item->getStageId());
+			}
 		}
 
-		$semantics = $factory->getStageSemantics((string)$item->getStageId());
 		if (!$semantics)
 		{
 			return true;

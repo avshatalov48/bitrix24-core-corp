@@ -2,11 +2,12 @@
 
 namespace Bitrix\Crm\Controller;
 
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Timeline\CommentController;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
-use Bitrix\Crm\Timeline\ExternalNoticeController;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Engine\Response\HtmlContent;
@@ -117,6 +118,13 @@ class Timeline extends Main\Engine\Controller
 					['id' => 'OrderedList',  'compact' => true, 'sort' => 110],
 					['separator' => true, 'compact' => false, 'sort' => 120],
 					['id' => 'InsertLink',  'compact' => true, 'sort' => 130, 'wrap' => 'bx-b-link-' . $formId],
+				],
+				'isCopilotTextEnabledBySettings' => AIManager::isEnabledInGlobalSettings(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE),
+				'copilotParams' => [
+					'moduleId' => 'crm',
+					'contextId' => 'crm_timeline_comment_editor_' . $id,
+					'category' => 'crm_timeline_comment',
+					'autoHide' => true,
 				],
 			],
 			'USE_CLIENT_DATABASE' => 'Y',

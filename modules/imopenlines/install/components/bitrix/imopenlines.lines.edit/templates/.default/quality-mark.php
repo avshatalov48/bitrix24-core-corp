@@ -32,7 +32,7 @@ use \Bitrix\Imopenlines\Limit;
 			<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW')?>
 			<?if(!Limit::canUseVoteClient()):?>
 				<span class="tariff-lock"></span>
-				<script type="text/javascript">
+				<script>
 					BX.bind(BX('imol_vote_message'), 'change', function(e){
 						BX('imol_vote_message').checked = false;
 						window.BX.imolTrialHandler.openPopupQueueVote();

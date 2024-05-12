@@ -7,6 +7,7 @@ use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\AgentContractTable;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\PgsqlConnection;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -30,7 +31,9 @@ use Bitrix\Main\ORM\Query;
 use Bitrix\Crm\Service\Operation\Add;
 use Bitrix\Main\DB\SqlExpression;
 
-if (!Loader::includeModule('catalog'))
+if (
+	!Loader::includeModule('catalog')
+)
 {
 	class Converter extends Stepper
 	{
@@ -96,21 +99,19 @@ class Converter extends Stepper implements \Bitrix\Catalog\v2\Contractor\IConver
 			$contractorId = (int)$contractor['ID'];
 
 			Application::getConnection()->query(
-				sprintf(
-					'
-						INSERT INTO b_crm_contractor_conversion (
-							CONTRACTOR_ID
-						) VALUES (
-							%d
-						)
-						ON DUPLICATE KEY UPDATE
-							ENTITY_ID = NULL,
-							ENTITY_TYPE_ID = NULL,
-							SUCCESS = NULL,
-							ERRORS = NULL
-					',
-					$sqlHelper->convertToDbInteger($contractorId)
-				)
+				$sqlHelper->prepareMerge(
+					'b_crm_contractor_conversion',
+					['CONTRACTOR_ID'],
+					[
+						'CONTRACTOR_ID' => $contractorId,
+					],
+					[
+						'ENTITY_ID' => null,
+						'ENTITY_TYPE_ID' => null,
+						'SUCCESS' => null,
+						'ERRORS' => null,
+					],
+				)[0]
 			);
 
 			Application::getConnection()->startTransaction();
@@ -191,7 +192,7 @@ class Converter extends Stepper implements \Bitrix\Catalog\v2\Contractor\IConver
 			$result->addError(new Error(sprintf('Unexpected person type - %s', $contractor['PERSON_TYPE'])));
 			return $result;
 		}
-		
+
 		$addContractorResult = self::addContractorEntity($entityTypeId, $contractor);
 		if (!$addContractorResult->isSuccess())
 		{
@@ -228,55 +229,43 @@ class Converter extends Stepper implements \Bitrix\Catalog\v2\Contractor\IConver
 		}
 
 		Application::getConnection()->query(
-			sprintf(
-				'
-					INSERT INTO b_crm_store_document_contractor (
-						DOCUMENT_ID,
-						ENTITY_ID,
-						ENTITY_TYPE_ID
-					)
-					SELECT
-						csd.ID,
-						%d,
-						%d
-					FROM %s csd
-					WHERE
-						csd.DOC_TYPE = %s
-						AND CONTRACTOR_ID = %d
-					ON DUPLICATE KEY UPDATE
-						ENTITY_ID = VALUES(ENTITY_ID),
-						ENTITY_TYPE_ID = VALUES(ENTITY_TYPE_ID)
-				',
-				$sqlHelper->convertToDbInteger($entityId),
-				$sqlHelper->convertToDbInteger($entityTypeId),
-				StoreDocumentTable::getTableName(),
-				$sqlHelper->convertToDbString(StoreDocumentTable::TYPE_ARRIVAL),
-				$sqlHelper->convertToDbInteger((int)$contractor['ID'])
-		));
+			$sqlHelper->prepareMergeSelect(
+				'b_crm_store_document_contractor',
+				['DOCUMENT_ID', 'ENTITY_ID', 'ENTITY_TYPE_ID'],
+				['DOCUMENT_ID', 'ENTITY_ID', 'ENTITY_TYPE_ID'],
+				sprintf(
+					'SELECT csd.ID, %d, %d FROM %s csd WHERE csd.DOC_TYPE = %s AND CONTRACTOR_ID = %d',
+					$sqlHelper->convertToDbInteger($entityId),
+					$sqlHelper->convertToDbInteger($entityTypeId),
+					StoreDocumentTable::getTableName(),
+					$sqlHelper->convertToDbString(StoreDocumentTable::TYPE_ARRIVAL),
+					$sqlHelper->convertToDbInteger((int)$contractor['ID'])
+				),
+				[
+					'ENTITY_ID' => $sqlHelper->convertToDbInteger($entityId),
+					'ENTITY_TYPE_ID' => $sqlHelper->convertToDbInteger($entityTypeId),
+				]
+			)
+		);
 
 		Application::getConnection()->query(
-			sprintf(
-				'
-					INSERT INTO b_crm_agent_contract_contractor (
-						CONTRACT_ID,
-						ENTITY_ID,
-						ENTITY_TYPE_ID
-					)
-					SELECT
-						cac.ID,
-						%d,
-						%d
-					FROM %s cac
-					WHERE CONTRACTOR_ID = %d
-					ON DUPLICATE KEY UPDATE
-						ENTITY_ID = VALUES(ENTITY_ID),
-						ENTITY_TYPE_ID = VALUES(ENTITY_TYPE_ID)
-				',
-				$sqlHelper->convertToDbInteger($entityId),
-				$sqlHelper->convertToDbInteger($entityTypeId),
-				AgentContractTable::getTableName(),
-				$sqlHelper->convertToDbInteger((int)$contractor['ID'])
-			));
+			$sqlHelper->prepareMergeSelect(
+				'b_crm_agent_contract_contractor',
+				['CONTRACT_ID', 'ENTITY_ID', 'ENTITY_TYPE_ID'],
+				['CONTRACT_ID', 'ENTITY_ID', 'ENTITY_TYPE_ID'],
+				sprintf(
+					'SELECT cac.ID, %d, %d FROM %s cac WHERE CONTRACTOR_ID = %d',
+					$sqlHelper->convertToDbInteger($entityId),
+					$sqlHelper->convertToDbInteger($entityTypeId),
+					AgentContractTable::getTableName(),
+					$sqlHelper->convertToDbInteger((int)$contractor['ID'])
+				),
+				[
+					'ENTITY_ID' => $sqlHelper->convertToDbInteger($entityId),
+					'ENTITY_TYPE_ID' => $sqlHelper->convertToDbInteger($entityTypeId),
+				]
+			)
+		);
 
 		return $result
 			->setEntityTypeId($entityTypeId)

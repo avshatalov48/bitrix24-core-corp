@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'loc',
 		'layout/ui/plan-restriction',
 		'layout/ui/context-menu/item',

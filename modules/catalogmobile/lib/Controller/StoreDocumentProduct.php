@@ -45,7 +45,7 @@ class StoreDocumentProduct extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		$product = new ProductFromWizard($fields);
+		$product = ProductFromWizard::make($fields);
 
 		return DocumentProducts\Facade::buildProductModelFromWizard($product, $documentId, $documentType);
 	}
@@ -87,7 +87,7 @@ class StoreDocumentProduct extends \Bitrix\Main\Engine\Controller
 		$result = [];
 		foreach ($items as $item)
 		{
-			$result[] = new DocumentProductRecord((array)$item);
+			$result[] = DocumentProductRecord::make((array)$item);
 		}
 
 		return (new ConvertCurrency($currencyId))->enrich($result);

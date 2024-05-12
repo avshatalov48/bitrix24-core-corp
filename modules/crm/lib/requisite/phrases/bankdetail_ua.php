@@ -1,12 +1,12 @@
 <?php
 $phrasesConfig = [
-	'encoding' => 'Windows-1251',
+	'encoding' => 'utf-8',
 	'lang' => 'ua',
 	'phrases' => [
-		'CRM_BANK_DETAIL_SECTION_UA_TITLE' => 'Áàíê³âñüê³ ðåêâ³çèòè',
-		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_UA_FIELD' => 'Íàéìåíóâàííÿ áàíêó',
-		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_UA_FIELD' => 'Ðîçðàõóíêîâèé ðàõóíîê',
-		'CRM_BANK_DETAIL_ENTITY_RQ_MFO_UA_FIELD' => 'ÌÔÎ',
+		'CRM_BANK_DETAIL_SECTION_UA_TITLE' => 'Ð‘Ð°Ð½ÐºÑ–Ð²ÑÑŒÐºÑ– Ñ€ÐµÐºÐ²Ñ–Ð·Ð¸Ñ‚Ð¸',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_UA_FIELD' => 'ÐÐ°Ð¹Ð¼ÐµÐ½ÑƒÐ²Ð°Ð½Ð½Ñ Ð±Ð°Ð½ÐºÑƒ',
+		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_UA_FIELD' => 'Ð Ð¾Ð·Ñ€Ð°Ñ…ÑƒÐ½ÐºÐ¾Ð²Ð¸Ð¹ Ñ€Ð°Ñ…ÑƒÐ½Ð¾Ðº',
+		'CRM_BANK_DETAIL_ENTITY_RQ_MFO_UA_FIELD' => 'ÐœÐ¤Ðž',
 		'CRM_BANK_DETAIL_ENTITY_RQ_IBAN_UA_FIELD' => 'IBAN'
 	]
 ];

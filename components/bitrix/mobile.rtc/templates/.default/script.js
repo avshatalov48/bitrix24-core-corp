@@ -294,7 +294,7 @@ if (typeof(getToken) == "undefined")
 			});
 		},
 		connect: new BXMobileApp.UI.NotificationBar({
-			message: "Установка соединения...",
+			message: "РЈСЃС‚Р°РЅРѕРІРєР° СЃРѕРµРґРёРЅРµРЅРёСЏ...",
 			color:"#afF0B31C",
 			textColor: "#ffffff",
 			groupId: "websoket",
@@ -323,7 +323,7 @@ if (typeof(getToken) == "undefined")
 			hideOnTap:true
 		}, "process"),
 		offline: new BXMobileApp.UI.NotificationBar({
-			message: "Соединение потеряно",
+			message: "РЎРѕРµРґРёРЅРµРЅРёРµ РїРѕС‚РµСЂСЏРЅРѕ",
 			color:"#affb0000",
 			textColor: "#ffffff",
 			groupId: "websoket",
@@ -336,7 +336,7 @@ if (typeof(getToken) == "undefined")
 			hideOnTap:true
 		}, "fail"),
 		online: new BXMobileApp.UI.NotificationBar({
-			message: "Соединение установлено!",
+			message: "РЎРѕРµРґРёРЅРµРЅРёРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅРѕ!",
 			color:"#af09A11F",
 			textColor: "#ffffff",
 			groupId: "websoket",

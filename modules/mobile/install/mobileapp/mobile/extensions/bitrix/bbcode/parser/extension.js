@@ -22,6 +22,9 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  isAllowedTag(tagName) {
 	    return true;
 	  }
+	  isChildAllowed(parent, child) {
+	    return true;
+	  }
 	}
 
 	const TAG_REGEX = /\[(\/)?(\w+|\*)(.*?)]/gs;

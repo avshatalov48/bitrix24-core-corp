@@ -71,8 +71,8 @@ final class ShipmentsRepository
 		$dbRes = Order\ShipmentCollection::getList([
 			'select' => ['DEDUCTED', 'DEAL_ID' => 'DEAL_BINDING.OWNER_ID'],
 			'filter' => [
-				'!SYSTEM' => 'Y',
-				'!DELIVERY_ID' => Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId(),
+				'!=SYSTEM' => 'Y',
+				'!=DELIVERY_ID' => Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId(),
 				'@DEAL_ID' => $dealIds,
 			],
 			'order' => ['ORDER_ID' => 'desc', 'ID' => 'desc'],

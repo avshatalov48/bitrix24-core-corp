@@ -12,3 +12,4 @@ $MESS['SE_CHAT_AUTOPLAY_VIDEO_TITLE_V2'] = 'Видео';
 $MESS['SE_CHAT_BETA_TITLE_V2'] = 'Бета-версия';
 $MESS['SE_CHAT_BETA_ENABLE_TITLE_V2'] = 'Тестировать чат';
 $MESS['SE_CHAT_BETA_CALL_ENABLE_TITLE_V2'] = 'Тестировать звонки';
+$MESS['SE_CHAT_BETA_COPILOT_ENABLE_TITLE_V2'] = 'CoPilot';

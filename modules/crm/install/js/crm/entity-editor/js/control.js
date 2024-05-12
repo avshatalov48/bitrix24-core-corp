@@ -475,14 +475,15 @@ if(typeof BX.Crm.EntityEditorMoney === "undefined")
 	}
 }
 
-if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
+if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 {
 	BX.Crm.EntityEditorMoneyPay = function()
 	{
 		BX.Crm.EntityEditorMoneyPay.superclass.constructor.apply(this);
 		this._payButton = null;
-		this._isPayButtonVisible = null;
+		this._isPayButtonVisible = true;
 		this._paymentDocumentsControl = null;
+		this._isPaymentDocumentsVisible = true;
 	};
 
 	BX.Crm.EntityEditorMoneyPay.create = function(id, settings)
@@ -498,13 +499,14 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 	{
 		BX.Crm.EntityEditorMoneyPay.superclass.doInitialize.apply(this);
 
-		this._isPayButtonVisible = BX.prop.getBoolean(this._schemeElement._options, "isPayButtonVisible", true);
-		this._isPayButtonControlVisible = (this._model.getField("IS_PAY_BUTTON_CONTROL_VISIBLE", 'Y') === 'Y');
+		this._isPayButtonVisible = BX.prop.getBoolean(this._schemeElement._options, 'isPayButtonVisible', true);
+		this._isPayButtonControlVisible = (this._model.getField('IS_PAY_BUTTON_CONTROL_VISIBLE', 'Y') === 'Y');
+		this._isPaymentDocumentsVisible = BX.prop.getBoolean(this._schemeElement._options, 'isPaymentDocumentsVisible', true);
 
-		var ownerTypeId = BX.prop.getInteger(this.getModel()._settings, "entityTypeId", 0);
+		var ownerTypeId = BX.prop.getInteger(this.getModel()._settings, 'entityTypeId', 0);
 		var isCopyMode = this._model.getField('IS_COPY_MODE', false);
 
-		var isShowPaymentDocuments = this._schemeElement.getDataBooleanParam("isShowPaymentDocuments", false);
+		var isShowPaymentDocuments = this._schemeElement.getDataBooleanParam('isShowPaymentDocuments', false);
 		if (!isCopyMode && isShowPaymentDocuments)
 		{
 			var paymentDocumentsOptions = {
@@ -525,6 +527,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 				SHOULD_SHOW_CASHBOX_CHECKS: this._schemeElement.getDataBooleanParam('shouldShowCashboxChecks', false),
 			};
 			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
+			this._paymentDocumentsControl.setVisible(this._isPaymentDocumentsVisible);
 
 			if (this._paymentDocumentsControl.hasContent())
 			{
@@ -726,18 +729,42 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 			return;
 		}
 
-		menuItems.unshift({
-			text: self._isPayButtonVisible ? this.getMessage('hidePayButton') : this.getMessage('showPayButton'),
-			onclick: function()
+		menuItems.push(
 			{
-				self._isPayButtonVisible = !self._isPayButtonVisible;
-				self._schemeElement._options.isPayButtonVisible = self._isPayButtonVisible;
-				self._payButton.style.display = (self._isPayButtonVisible) ? '' : 'none';
-				self.markSchemeAsChanged();
-				self.saveScheme();
-				self.closeContextMenu();
+				delimiter: true
+			},
+			{
+				value: 'set_visible_pay_button',
+				text: self._isPayButtonVisible ? this.getMessage('hidePayButton') : this.getMessage('showPayButton')
+			},
+			{
+				value: 'set_visible_payment_documents',
+				text: self._isPaymentDocumentsVisible ? this.getMessage('hidePaymentDocuments') : this.getMessage('showPaymentDocuments')
 			}
-		});
+		);
+	};
+	BX.Crm.EntityEditorMoneyPay.prototype.processContextMenuCommand = function(e, command)
+	{
+		switch (command)
+		{
+			case 'set_visible_pay_button':
+				this._isPayButtonVisible = !this._isPayButtonVisible;
+				this._schemeElement._options.isPayButtonVisible = this._isPayButtonVisible;
+				this._payButton.style.display = (this._isPayButtonVisible) ? '' : 'none';
+				break;
+			case 'set_visible_payment_documents':
+				this._isPaymentDocumentsVisible = !this._isPaymentDocumentsVisible;
+				this._schemeElement._options.isPaymentDocumentsVisible = this._isPaymentDocumentsVisible;
+				this._paymentDocumentsControl.setVisible(this._isPaymentDocumentsVisible);
+				break;
+			default:
+				BX.Crm.EntityEditorMoneyPay.superclass.processContextMenuCommand.apply(this, arguments)
+				return;
+		}
+
+		this.markSchemeAsChanged();
+		this.saveScheme();
+		this.closeContextMenu();
 	};
 	BX.Crm.EntityEditorMoneyPay.prototype.getMessage = function(name)
 	{

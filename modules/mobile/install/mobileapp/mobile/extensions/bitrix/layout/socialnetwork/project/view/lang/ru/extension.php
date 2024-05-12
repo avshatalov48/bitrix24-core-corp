@@ -17,3 +17,6 @@ $MESS["MOBILE_LAYOUT_PROJECT_VIEW_MENU_DELETE_NO"] = "Нет";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_JOIN"] = "Вступить в проект";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_JOINED"] = "Вы в проекте!";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_REQUEST_SENT"] = "Запрос отправлен";
+
+$MESS["MOBILE_LAYOUT_PROJECT_VIEW_ACCESS_DENIED_TITLE"] = "Проект не найден или доступ запрещён";
+$MESS["MOBILE_LAYOUT_PROJECT_VIEW_ACCESS_DENIED_DESC"] = "Обратитесь к владельцу проекта или администратору вашего Битрикс24";

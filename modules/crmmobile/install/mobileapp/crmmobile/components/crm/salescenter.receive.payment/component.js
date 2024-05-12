@@ -258,8 +258,11 @@
 
 			if (this.resendMessageMode)
 			{
-				wizard.openStepWidget('paySystems');
-				wizard.openStepWidget('sendMessage');
+				if (this.entityHasContact)
+				{
+					wizard.openStepWidget('paySystems');
+					wizard.openStepWidget('sendMessage');
+				}
 
 				this.dataForSending.paymentId = this.paymentId;
 				this.dataForSending.shipmentId = 0;
@@ -279,6 +282,14 @@
 			};
 
 			return new Promise((resolve, reject) => {
+				if (this.resendMessageMode && !this.paymentId)
+				{
+					console.error('Payment id is not specified');
+					reject();
+
+					return;
+				}
+
 				const data = {
 					entityId,
 					entityTypeId,

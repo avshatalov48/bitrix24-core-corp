@@ -9,8 +9,7 @@
 	const { Loc } = require('loc');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { DocumentType } = require('catalog/store/document-type');
-	const { Alert } = require('alert');
-	const { ButtonType } = require('alert/confirm');
+	const { confirmDestructiveAction } = require('alert');
 
 	const COMPONENT_ID = 'CATALOG_STORE_LIST';
 	const PULL_MODULE_ID = 'catalog';
@@ -519,14 +518,14 @@
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-						'catalogmobile.StoreDocument.conduct',
-						{
-							data: {
-								id: itemId,
-								docType: options.parent.data.docType,
-							},
+					'catalogmobile.StoreDocument.conduct',
+					{
+						data: {
+							id: itemId,
+							docType: options.parent.data.docType,
 						},
-					)
+					},
+				)
 					.then((response) => {
 						resolve({
 							action: 'update',
@@ -568,14 +567,14 @@
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(
-						'catalogmobile.StoreDocument.cancellation',
-						{
-							data: {
-								id: itemId,
-								docType: options.parent.data.docType,
-							},
+					'catalogmobile.StoreDocument.cancellation',
+					{
+						data: {
+							id: itemId,
+							docType: options.parent.data.docType,
 						},
-					)
+					},
+				)
 					.then((response) => {
 						resolve({
 							action: 'update',
@@ -638,50 +637,40 @@
 		deleteDocumentHandler(actionItemId, itemId, options)
 		{
 			return new Promise((resolve, reject) => {
-				Alert.confirm(
-					'',
-					BX.message('M_CSDL_DOCUMENT_DELETE_CONFIRMATION'),
-					[
-						{
-							text: BX.message('M_CSDL_DOCUMENT_DELETE_CONFIRMATION_CANCEL'),
-							type: ButtonType.CANCEL,
-							onPress: () => resolve({}),
-						},
-						{
-							text: BX.message('M_CSDL_DOCUMENT_DELETE_CONFIRMATION_OK'),
-							type: ButtonType.DESTRUCTIVE,
-							onPress: () => {
-								BX.ajax.runAction(
-										'catalogmobile.StoreDocument.delete',
-										{
-											data: {
-												id: itemId,
-												docType: options.parent.data.docType,
-											},
-										},
-									)
-									.then((response) => {
-										if (response.errors.length > 0)
-										{
-											reject({
-												errors: response.errors,
-												showErrors: true,
-											});
-										}
-										resolve({
-											action: 'delete',
-											id: itemId,
-										});
-									}, (response) => {
-										reject({
-											errors: response.errors,
-											showErrors: true,
-										});
-									});
+				confirmDestructiveAction({
+					title: '',
+					description: Loc.getMessage('M_CSDL_DOCUMENT_DELETE_CONFIRMATION'),
+					onCancel: () => resolve({}),
+					onDestruct: () => {
+						BX.ajax.runAction(
+							'catalogmobile.StoreDocument.delete',
+							{
+								data: {
+									id: itemId,
+									docType: options.parent.data.docType,
+								},
 							},
-						},
-					],
-				);
+						)
+							.then((response) => {
+								if (response.errors.length > 0)
+								{
+									reject({
+										errors: response.errors,
+										showErrors: true,
+									});
+								}
+								resolve({
+									action: 'delete',
+									id: itemId,
+								});
+							}, (response) => {
+								reject({
+									errors: response.errors,
+									showErrors: true,
+								});
+							});
+					},
+				});
 			});
 		}
 

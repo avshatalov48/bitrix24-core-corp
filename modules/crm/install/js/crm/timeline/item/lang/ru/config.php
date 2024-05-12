@@ -9,6 +9,7 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'] = "Произ
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE"] = "Сохранить";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL"] = "Отмена";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER"] = "Опишите, что нужно сделать";
+$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT"] = "Напишите, что нужно сделать, или нажмите пробел для запуска CoPilot";
 $MESS['CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'] = "Отправлено";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE"] = "Сохранить";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL"] = "Отмена";
@@ -33,6 +34,12 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_TITLE'] = 'Вы уве�
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_SHOW_MORE'] = 'Показать еще #COUNT#';
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_COLLAPSE'] = 'Свернуть';
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_EXPAND'] = 'Показать все';
+
+$MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'] = 'Отменить подписание?';
+$MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'] = 'Подписание отменится для сотрудников, которые ещё не подписали документ.';
+$MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_SUCCESS'] = 'Процесс подписания отменен успешно';
+$MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'] = 'Отменить подписание';
+$MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'] = 'Не отменять';
 
 $MESS['CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'] ='Для работы CoPilot в CRM установите приложение из Маркета';
 $MESS['CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT'] ='CoPilot расшифрует разговор с клиентом, выделит главное и заполнит сделку данными из звонка [helpdesklink]Подробнее[/helpdesklink]';

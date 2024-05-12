@@ -10,6 +10,7 @@ abstract class ErrorCode
 {
 	public const ACCESS_DENIED = 'ACCESS_DENIED';
 	public const NOT_FOUND = 'NOT_FOUND';
+	public const FILE_NOT_FOUND = 'FILE_NOT_FOUND';
 	public const ENTITY_NOT_SUPPORTED = 'ENTITY_TYPE_NOT_SUPPORTED';
 	public const OWNER_NOT_FOUND = 'OWNER_NOT_FOUND';
 	public const REQUIRED_ARG_MISSING = 'REQUIRED_ARG_MISSING';

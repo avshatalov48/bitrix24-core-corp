@@ -2899,8 +2899,9 @@ this.BX = this.BX || {};
 	    key: "reinit",
 	    value: function reinit() {
 	      this.elements = this.getInitialElements();
-	      window.removeEventListener('beforeunload', this._unloadHandler);
-	      BX.removeCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+	      var unloadHandler = this.isDesktop() ? babelHelpers.classPrivateFieldGet(this, _onWindowUnload) : this._onBeforeUnloadHandler;
+	      window.removeEventListener('beforeunload', unloadHandler);
+	      BX.removeCustomEvent(window, "onLocalStorageSet", babelHelpers.classPrivateFieldGet(this, _onExternalEvent));
 	      BX.removeCustomEvent("onPullEvent-crm", this._onPullEventCrmHandler);
 	      this.init();
 	    }
@@ -5797,10 +5798,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "autoCloseAfterTimeout",
 	    value: function autoCloseAfterTimeout() {
+	      console.log('Auto close after timeout', this.commentShown, this.autoCloseTimer, BX.localStorage.get(lsKeys.callInited));
 	      if (this.commentShown) {
 	        this._onAddCommentButtonClick();
 	      }
-	      this.close();
+	      if (!BX.localStorage.get(lsKeys.callInited)) {
+	        this.close();
+	      }
+	      this.autoCloseTimer = null;
 	    }
 	  }, {
 	    key: "updateAutoCloseTimer",
@@ -5874,7 +5879,7 @@ this.BX = this.BX || {};
 	          this.desktop.window = null;
 	        }
 	        if (!this.slave) {
-	          window.removeEventListener('beforeunload', this._unloadHandler); //master window unload
+	          window.removeEventListener('beforeunload', babelHelpers.classPrivateFieldGet(this, _onWindowUnload)); //master window unload
 	        }
 	      } else {
 	        window.removeEventListener('beforeunload', this._onBeforeUnloadHandler);
@@ -6310,10 +6315,9 @@ this.BX = this.BX || {};
 	    _this.callInterceptAllowed = options.canInterceptCall || false;
 	    _this.restApps = options.restApps;
 	    _this.hasSipPhone = options.deviceActive === true;
-	    _this.skippedCallsList = [];
 	    _this.skipIncomingCallTimer = null;
+	    _this.hasActiveCallView = false;
 	    _this.readDefaults();
-	    _this.restoreFoldedCallView();
 	    if (main_core.Browser.isLocalStorageSupported()) {
 	      BX.addCustomEvent(window, "onLocalStorageSet", _this.storageSet.bind(babelHelpers.assertThisInitialized(_this)));
 	    }
@@ -6333,6 +6337,7 @@ this.BX = this.BX || {};
 	        _this.startCallList(data.callListId, data.callListParams);
 	      })
 	    });
+	    _this.restoreFoldedCallView();
 	    BX.garbage(function () {
 	      if (_this.hasActiveCall() && _this.callView && _this.callView.canBeUnloaded() && (_this.hasExternalCall || _this.deviceType === 'PHONE')) {
 	        BX.localStorage.set(lsKeys$1.foldedView, {
@@ -7005,9 +7010,14 @@ this.BX = this.BX || {};
 	        this.callView.setPortalCallData(params.portalCallData);
 	        this.callView.setPortalCallUserId(params.portalCallUserId);
 	      }
+	      this.hasActiveCallView = true;
 	      this.skipIncomingCallTimer = setTimeout(function () {
-	        var _this10$callView;
-	        return (_this10$callView = _this10.callView) === null || _this10$callView === void 0 ? void 0 : _this10$callView._onSkipButtonClick();
+	        console.log('Skip phone call by timer');
+	        if (!_this10.currentCall) {
+	          var _this10$callView;
+	          (_this10$callView = _this10.callView) === null || _this10$callView === void 0 ? void 0 : _this10$callView._onSkipButtonClick();
+	        }
+	        _this10.skipIncomingCallTimer = null;
 	      }, 40000);
 	    }
 	  }, {
@@ -7149,6 +7159,7 @@ this.BX = this.BX || {};
 	          _this13.closeCallViewBalloon();
 	          _this13.callView = null;
 	        }
+	        _this13.hasActiveCallView = false;
 	        _this13.callId = '';
 	        _this13.callActive = false;
 	        _this13.hasExternalCall = false;
@@ -7230,7 +7241,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.callActive = true;
-	      this.callId = callProperties.phoneCallId;
+	      this.callId = callProperties.callId;
 	      this.phoneCrm = callProperties.phoneCrm;
 	      this.deviceType = callProperties.phoneCallDevice;
 	      this.hasExternalCall = callProperties.hasExternalCall;
@@ -7270,6 +7281,7 @@ this.BX = this.BX || {};
 	          _this14.closeCallViewBalloon();
 	          _this14.callView = null;
 	        }
+	        _this14.hasActiveCallView = false;
 	      });
 	    }
 	  }, {
@@ -7375,7 +7387,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDebugInfo",
 	    value: function getDebugInfo() {
-	      var _this$callView;
+	      var _this$callView, _this$callView2;
 	      return {
 	        vInitedCall: BX.localStorage.get('vInitedCall') ? 'Y' : 'N',
 	        isDesktop: this.messengerFacade.isDesktop() ? 'Y' : 'N',
@@ -7384,7 +7396,9 @@ this.BX = this.BX || {};
 	        isCallListMode: this.isCallListMode() ? this.callListId : 'N',
 	        currentCall: this.currentCall ? this.currentCall.id() : 'N',
 	        callView: this.callView ? this.callView.callId : 'N',
-	        callViewPopup: (_this$callView = this.callView) !== null && _this$callView !== void 0 && _this$callView.popup ? 'Y' : 'N'
+	        callViewPopup: (_this$callView = this.callView) !== null && _this$callView !== void 0 && _this$callView.popup ? 'Y' : 'N',
+	        hasActiveCallView: this.hasActiveCallView ? 'Y' : 'N',
+	        isFoldedCallView: (_this$callView2 = this.callView) !== null && _this$callView2 !== void 0 && _this$callView2.isFolded() ? 'Y' : 'N'
 	      };
 	    }
 	  }, {
@@ -7426,6 +7440,7 @@ this.BX = this.BX || {};
 	    key: "clearSkipIncomingCallTimer",
 	    value: function clearSkipIncomingCallTimer() {
 	      if (this.skipIncomingCallTimer) {
+	        console.log('Clear skip incoming call timer: ' + this.skipIncomingCallTimer);
 	        clearTimeout(this.skipIncomingCallTimer);
 	        this.skipIncomingCallTimer = null;
 	      }
@@ -7497,6 +7512,7 @@ this.BX = this.BX || {};
 	        });
 	      }
 	      this._currentCall = call;
+	      this.hasActiveCallView = Boolean(this._currentCall);
 	      if (this._currentCall) {
 	        _classPrivateMethodGet$1(this, _setCallEventListeners, _setCallEventListeners2).call(this, call);
 	        this.emit(Events$1.onCallCreated, {
@@ -7544,16 +7560,22 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _onPullInvite2(params) {
-	  var _this$callView2,
-	    _this$callView3,
+	  var _this$callView3,
+	    _this$callView4,
+	    _this$callView5,
+	    _this$callView6,
+	    _this$callView7,
+	    _this$callView8,
 	    _this17 = this;
 	  if (!this.phoneSupport()) {
 	    return false;
 	  }
-	  if (this.callView && !((_this$callView2 = this.callView) !== null && _this$callView2 !== void 0 && _this$callView2.popup)) {
+	  var popupConditions = ((_this$callView3 = this.callView) === null || _this$callView3 === void 0 ? void 0 : _this$callView3.popup) && !((_this$callView4 = this.callView) !== null && _this$callView4 !== void 0 && _this$callView4.commentShown) && !((_this$callView5 = this.callView) !== null && _this$callView5 !== void 0 && _this$callView5.autoCloseTimer) && !this.hasActiveCallView;
+	  if (this.callView && !((_this$callView6 = this.callView) !== null && _this$callView6 !== void 0 && _this$callView6.popup) && !this.currentCall || popupConditions && !this.currentCall || this.callView && (_this$callView7 = this.callView) !== null && _this$callView7 !== void 0 && _this$callView7.isFolded() && !this.currentCall) {
+	    console.log('Close a stuck call view');
 	    _classPrivateMethodGet$1(this, _onCallViewClose, _onCallViewClose2).call(this);
 	  }
-	  if (BX.localStorage.get(lsKeys$1.callView) && (_this$callView3 = this.callView) !== null && _this$callView3 !== void 0 && _this$callView3.popup && !Boolean(this._currentCall) && !this.isCallListMode() && !this.messengerFacade.hasActiveCall()) {
+	  if (BX.localStorage.get(lsKeys$1.callView) && (_this$callView8 = this.callView) !== null && _this$callView8 !== void 0 && _this$callView8.popup && !Boolean(this._currentCall) && !this.isCallListMode() && !this.messengerFacade.hasActiveCall()) {
 	    this.showCallViewBalloon();
 	  }
 	  if (this.hasActiveCall() || this.isCallListMode() || this.messengerFacade.hasActiveCall()) {
@@ -7563,7 +7585,7 @@ this.BX = this.BX || {};
 	    });
 	    return false;
 	  }
-	  if (BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall) || this.skippedCallsList.includes(params.callId)) {
+	  if (BX.localStorage.get(lsKeys$1.callInited) || BX.localStorage.get(lsKeys$1.externalCall)) {
 	    return false;
 	  }
 	  this.checkDesktop().then(function () {
@@ -7608,10 +7630,10 @@ this.BX = this.BX || {};
 	  })["catch"](function () {});
 	}
 	function _onPullAnswerSelf2(params) {
+	  this.clearSkipIncomingCallTimer();
 	  if (this.callSelfDisabled || this.callId != params.callId) {
 	    return false;
 	  }
-	  this.clearSkipIncomingCallTimer();
 	  this.messengerFacade.stopRepeatSound('ringtone');
 	  this.messengerFacade.stopRepeatSound('dialtone');
 	  this.phoneCallFinish();
@@ -7620,9 +7642,7 @@ this.BX = this.BX || {};
 	  this.callId = params.callId;
 	}
 	function _onPullTimeout2(params) {
-	  if (!this.skippedCallsList.includes(params.callId)) {
-	    this.skippedCallsList.push(params.callId);
-	  }
+	  this.clearSkipIncomingCallTimer();
 	  if (this.phoneTransferCallId === params.callId) {
 	    return this.errorInviteTransfer(params.failedCode, params.failedReason);
 	  } else if (this.callId != params.callId) {
@@ -7631,7 +7651,6 @@ this.BX = this.BX || {};
 	  clearInterval(this.phoneConnectedInterval);
 	  BX.localStorage.remove(lsKeys$1.callInited);
 	  var external = this.hasExternalCall;
-	  this.clearSkipIncomingCallTimer();
 	  this.messengerFacade.stopRepeatSound('ringtone');
 	  this.messengerFacade.stopRepeatSound('dialtone');
 	  this.phoneCallFinish();
@@ -7664,7 +7683,7 @@ this.BX = this.BX || {};
 	}
 	function _onPullOutgoing2(params) {
 	  var _this18 = this;
-	  if (this.phoneNumber == params.phoneNumber || params.phoneNumber.indexOf(this.phoneNumber) >= 0) {
+	  if (this.phoneNumber && (this.phoneNumber === params.phoneNumber || params.phoneNumber.indexOf(this.phoneNumber) >= 0)) {
 	    this.deviceType = params.callDevice == DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
 	    this.phonePortalCall = !!params.portalCall;
 	    this.phoneNumber = params.phoneNumber;
@@ -8267,6 +8286,7 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _onCallConnected2(e) {
+	  this.clearSkipIncomingCallTimer();
 	  this.messengerFacade.stopRepeatSound('ringtone', 5000);
 	  BX.localStorage.set(lsKeys$1.callInited, true, 7);
 	  clearInterval(this.phoneConnectedInterval);
@@ -8385,6 +8405,7 @@ this.BX = this.BX || {};
 	    this.closeCallViewBalloon();
 	    this.callView = null;
 	  }
+	  this.hasActiveCallView = false;
 	  if (this.deviceType == DeviceType.Phone) {
 	    this.callId = '';
 	    this.callActive = false;

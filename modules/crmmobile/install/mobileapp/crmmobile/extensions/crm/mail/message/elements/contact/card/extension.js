@@ -175,7 +175,12 @@ jn.define('crm/mail/message/elements/contact/card', (require, exports, module) =
 		{
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
-			EntityDetailOpener.open({ entityTypeId: typeNameId, entityId: id });
+			EntityDetailOpener.open({
+				payload: {
+					entityTypeId: typeNameId,
+					entityId: id,
+				},
+			});
 		}
 	}
 

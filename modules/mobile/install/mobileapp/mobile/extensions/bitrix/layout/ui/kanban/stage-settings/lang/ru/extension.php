@@ -9,4 +9,3 @@ $MESS['STAGE_DETAIL_DEFAULT_STAGE_DEFAULT_NAME'] = 'Новая стадия';
 
 $MESS['STAGE_DETAIL_DELETE'] = 'Удалить стадию';
 $MESS['STAGE_DETAIL_DELETE_TEXT'] = 'Удалить стадию?';
-$MESS['STAGE_DETAIL_DELETE_OK'] = 'Удалить';

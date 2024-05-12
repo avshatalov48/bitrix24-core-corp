@@ -2,8 +2,8 @@
  * @module tasks/layout/checklist/list/src/checkbox/checkbox-counter/important
  */
 jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/important', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { CornerTypes } = require('tokens');
+	const { Corner, Color } = require('tokens');
+	const { OutlineIconTypes } = require('assets/icons/types');
 	const { animate } = require('animation');
 	const { PureComponent } = require('layout/pure-component');
 	const { IconView } = require('ui-system/blocks/icon');
@@ -73,6 +73,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/important',
 
 			return View(
 				{
+					testId: 'importance_block',
 					ref: (importantRef) => {
 						this.importantRef = importantRef;
 					},
@@ -83,14 +84,14 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/important',
 						alignItems: 'center',
 						justifyContent: 'center',
 						opacity: important ? 1 : 0,
-						borderRadius: CornerTypes.circle,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						borderRadius: Corner.circle,
+						backgroundColor: Color.bgContentPrimary,
 					},
 					onClick: this.handleOnClick,
 				},
 				IconView({
-					icon: 'fire',
-					iconColor: AppTheme.colors.accentMainWarning,
+					icon: OutlineIconTypes.fire,
+					iconColor: Color.accentMainWarning,
 					iconSize: IMPORTANT_SIZE,
 				}),
 			);

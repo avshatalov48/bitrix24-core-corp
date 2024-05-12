@@ -71,7 +71,7 @@ class ListPreparer extends Base
 				continue;
 			}
 
-			$dtoField = new Field([
+			$dtoField = Field::make([
 				'name' => $field->getName(),
 				'title' => $field->getTitle(),
 				'type' => $field->getType(),

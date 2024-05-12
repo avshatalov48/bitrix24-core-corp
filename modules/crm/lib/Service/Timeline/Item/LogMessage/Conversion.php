@@ -13,13 +13,14 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use CCrmOwnerType;
 
 class Conversion extends LogMessage
 {
 	protected const SWITCHABLE_ENTITY_TYPE_IDS = [
-		\CCrmOwnerType::Invoice,
-		\CCrmOwnerType::SmartInvoice,
-		\CCrmOwnerType::Quote,
+		CCrmOwnerType::Invoice,
+		CCrmOwnerType::SmartInvoice,
+		CCrmOwnerType::Quote,
 	];
 
 	public function getType(): string
@@ -38,23 +39,23 @@ class Conversion extends LogMessage
 		$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE';
 		switch ($sourceEntityTypeId)
 		{
-			case \CCrmOwnerType::Lead:
+			case CCrmOwnerType::Lead:
 				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_LEAD';
 				break;
-			case \CCrmOwnerType::Deal:
+			case CCrmOwnerType::Deal:
 				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_DEAL';
 				break;
-			case \CCrmOwnerType::Contact:
+			case CCrmOwnerType::Contact:
 				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_CONTACT';
 				break;
-			case \CCrmOwnerType::Company:
+			case CCrmOwnerType::Company:
 				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_COMPANY';
 				break;
-			case \CCrmOwnerType::Quote:
+			case CCrmOwnerType::Quote:
 				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_QUOTE_MSGVER_1';
 				break;
-			case \CCrmOwnerType::Invoice:
-			case \CCrmOwnerType::SmartInvoice:
+			case CCrmOwnerType::Invoice:
+			case CCrmOwnerType::SmartInvoice:
 				$locMessage = 'CRM_TIMELINE_CONVERSION_TITLE_INVOICE';
 				break;
 		}
@@ -68,7 +69,7 @@ class Conversion extends LogMessage
 
 		$result = [];
 
-		$entities = $this->getHistoryItemModel()->get('ENTITIES');
+		$entities = $this->getHistoryItemModel()?->get('ENTITIES');
 		$entityTypeLocks = $this->getEntityTypeLocks($entities);
 
 		foreach($entities as $entityData)
@@ -76,15 +77,15 @@ class Conversion extends LogMessage
 			$entityTypeId = (int)($entityData['ENTITY_TYPE_ID'] ?? 0);
 			$entityId = (int)($entityData['ENTITY_ID'] ?? 0);
 
-			if(\CCrmOwnerType::IsDefined($entityTypeId))
+			if(CCrmOwnerType::IsDefined($entityTypeId))
 			{
-				\CCrmOwnerType::TryGetEntityInfo($entityTypeId, $entityId, $entityInfo, false);
+				CCrmOwnerType::TryGetEntityInfo($entityTypeId, $entityId, $entityInfo, false);
 
 				$entityExists = ($entityInfo['SHOW_URL'] ?? '') !== '';
 				$entityTitle = $entityExists ? (string)$entityInfo['TITLE'] : Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND');
 
-				$key = \CCrmOwnerType::ResolveName($entityTypeId). '_' . $entityId;
-				$title = ContentBlockFactory::createTitle(\CCrmOwnerType::GetDescription($entityTypeId));
+				$key = CCrmOwnerType::ResolveName($entityTypeId). '_' . $entityId;
+				$title = ContentBlockFactory::createTitle(CCrmOwnerType::GetDescription($entityTypeId));
 
 				$result[$key . '_web'] = (new LineOfTextBlocks())
 					->addContentBlock('title', $title)

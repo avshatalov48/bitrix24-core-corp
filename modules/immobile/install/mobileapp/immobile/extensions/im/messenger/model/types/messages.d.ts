@@ -1,4 +1,5 @@
 import { ReactionsModelState } from './messages/reactions';
+import { PayloadData } from "./base";
 
 export type MessagesModelState = {
 	id: number | string,
@@ -14,6 +15,7 @@ export type MessagesModelState = {
 		REACTION: Object //don't use. See property reactions
 		URL_ONLY?: 'Y' | 'N',
 		URL_ID?: Array<string>,
+		componentId: string,
 	},
 	replaces: Array<Object>,
 	files: Array<number | string>,
@@ -134,15 +136,13 @@ declare type AttachRichItem = {
 export type MessagesModelActions =
 	'messagesModel/forceUpdateByChatId'
 	| 'messagesModel/store'
+	| 'messagesModel/setFromLocalDatabase'
 	| 'messagesModel/add'
 	| 'messagesModel/addToChatCollection'
 	| 'messagesModel/setPinned'
 	| 'messagesModel/updateWithId'
 	| 'messagesModel/update'
 	| 'messagesModel/delete'
-	| 'messagesModel/setReaction'
-	| 'messagesModel/addReaction'
-	| 'messagesModel/removeReaction'
 	| 'messagesModel/readMessages'
 	| 'messagesModel/setViewedByOthers'
 	| 'messagesModel/updateLoadTextProgress'
@@ -166,3 +166,106 @@ export type MessagesModelMutation =
 	| 'messagesModel/setTemporaryMessages'
 	| 'messagesModel/deleteTemporaryMessage'
 	| 'messagesModel/deleteTemporaryMessages'
+
+/* region mutation types */
+
+export type MessagesSetChatCollectionActions =
+	'forceUpdateByChatId'
+	| 'setChatCollection'
+	| 'add'
+	| 'addToChatCollection'
+;
+export interface MessagesSetChatCollectionData extends PayloadData
+{
+	messageList: Array<MessagesModelState>;
+}
+
+
+export type MessagesStoreActions =
+	'forceUpdateByChatId'
+	| 'setChatCollection'
+	| 'store'
+	| 'add'
+;
+export interface MessagesStoreData extends PayloadData
+{
+	messageList: Array<MessagesModelState>;
+}
+
+
+export type MessagesSetTemporaryMessagesActions = 'setTemporaryMessages';
+export interface MessagesSetTemporaryMessagesData extends PayloadData
+{
+	messageList: Array<MessagesModelState>;
+}
+
+
+export type MessagesSetPinnedActions = 'setPinned';
+export interface MessagesSetPinnedData extends PayloadData
+{
+	chatId: number;
+	pinnedMessageIds: Array<number>;
+}
+
+
+export type MessagesUpdateWithIdActions = 'updateWithId';
+export interface MessagesUpdateWithIdData extends PayloadData
+{
+	id: number;
+	fields: Partial<MessagesModelState>;
+}
+
+
+export type MessagesUpdateActions =
+	'update'
+	| 'readMessages'
+	| 'setViewedByOthers'
+	| 'updateLoadTextProgress'
+	| 'setAudioState'
+	| 'deleteAttach'
+;
+export interface MessagesUpdateData extends PayloadData
+{
+	id: number;
+	fields: Partial<MessagesModelState>;
+}
+
+
+export type MessagesDeleteActions =
+	'deleteByIdList'
+	| 'delete'
+;
+export interface MessagesDeleteData extends PayloadData
+{
+	id: number;
+}
+
+
+export type MessagesDeleteByChatIdActions = 'deleteByChatId';
+export interface MessagesDeleteByChatIdData extends PayloadData
+{
+	chatId: number;
+}
+
+
+export type MessagesDeleteTemporaryMessageActions = 'deleteTemporaryMessage';
+export interface MessagesDeleteTemporaryMessageData extends PayloadData
+{
+	id: number
+}
+
+
+export type MessagesDeleteTemporaryMessagesActions = 'deleteTemporaryMessages';
+export interface MessagesDeleteTemporaryMessagesData extends PayloadData
+{
+	ids: Array<number>;
+}
+
+
+export type MessagesClearCollectionActions = 'setChatCollection'
+export interface MessagesClearCollectionData extends PayloadData
+{
+	chatId: number;
+}
+
+/* endregion mutation types */

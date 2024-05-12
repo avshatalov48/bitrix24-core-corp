@@ -18,12 +18,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\Restriction\AvailabilityManager;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if (SITE_TEMPLATE_ID === 'bitrix24')
@@ -46,7 +46,6 @@ Extension::load(
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
@@ -160,6 +159,9 @@ if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 	$arResult['DEAL'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Deal))->appendNearestActivityBlock($arResult['DEAL']);
 }
 
+/** @var \Bitrix\Crm\Conversion\EntityConversionConfig $conversionConfig */
+$conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
+
 foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 {
 	$jsTitle = isset($arDeal['~TITLE']) ? CUtil::JSEscape($arDeal['~TITLE']) : '';
@@ -228,25 +230,24 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 	{
 		if ($arResult['CAN_CONVERT'])
 		{
-			if ($arResult['CONVERSION_PERMITTED'])
+			if ($arResult['CONVERSION_PERMITTED'] && $conversionConfig)
 			{
-				$arSchemeDescriptions = \Bitrix\Crm\Conversion\DealConversionScheme::getJavaScriptDescriptions(true);
-				if (!\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
-				{
-					unset($arSchemeDescriptions[\Bitrix\Crm\Conversion\DealConversionScheme::INVOICE_NAME]);
-				}
 				$arSchemeList = [];
 
 				$toolsManager = Container::getInstance()->getIntranetToolsManager();
 				$availabilityManager = AvailabilityManager::getInstance();
-				$curPage = CUtil::JSEscape($APPLICATION->GetCurPage());
 
-				foreach ($arSchemeDescriptions as $name => $description)
+				foreach ($conversionConfig->getScheme()->getItems() as $item)
 				{
-					$entityTypeId = \CCrmOwnerType::ResolveID($name);
+					$entityTypeId = current($item->getEntityTypeIds());
 					if ($toolsManager->checkEntityTypeAvailability($entityTypeId))
 					{
-						$onClick = "BX.CrmDealConverter.getCurrent().convert({$arDeal['ID']}, BX.CrmDealConversionScheme.createConfig('{$name}'), '" . $curPage . "');";
+						$onClick = sprintf(
+							"BX.Crm.Conversion.Manager.Instance.getConverter('%s').convertBySchemeItemId('%s', %d);",
+							\CUtil::JSEscape($arResult['CONVERTER_ID']),
+							\CUtil::JSEscape($item->getId()),
+							(int)$arDeal['ID']
+						);
 					}
 					else
 					{
@@ -254,8 +255,8 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 					}
 
 					$arSchemeList[] = [
-						'TITLE' => $description,
-						'TEXT' => $description,
+						'TITLE' => $item->getPhrase(),
+						'TEXT' => $item->getPhrase(),
 						'ONCLICK' => $onClick,
 					];
 				}
@@ -295,19 +296,6 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				'TEXT' => GetMessage('CRM_DEAL_ADD_TODO'),
 				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Deal . ", " . (int)$arDeal['ID'] . ", " . $currentUser . ", " . $pingSettings . ");"
 			];
-
-			if (RestrictionManager::isHistoryViewPermitted())
-			{
-				$arActions[] = $arActivityMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_DEAL_EVENT_TITLE'),
-					'TEXT' => GetMessage('CRM_DEAL_EVENT'),
-					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}',
-						BX.CrmUIGridMenuCommand.createEvent,
-						{ entityTypeName: BX.CrmEntityType.names.deal, entityId: {$arDeal['ID']} }
-					)"
-				);
-			}
 
 			if (IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 			{
@@ -1136,6 +1124,15 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'category_id' => $arResult['CATEGORY_ID'] ?? null,
+	'is_recurring' => $arParams['IS_RECURRING'],
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -1158,8 +1155,9 @@ $APPLICATION->IncludeComponent(
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => [
 			'LAZY_LOAD' => [
-				'GET_LIST' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+				'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+				'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+				'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
 			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
@@ -1168,6 +1166,10 @@ $APPLICATION->IncludeComponent(
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
+			'RESTRICTED_FIELDS' => $arResult['RESTRICTED_FIELDS'] ?? [],
 		],
 		'LIVE_SEARCH_LIMIT_INFO' => ($arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null),
 		'ENABLE_LIVE_SEARCH' => true,
@@ -1285,12 +1287,6 @@ $APPLICATION->IncludeComponent(
 				}
 			);
 
-			BX.Crm.AnalyticTracker.config =
-				{
-					id: "deal_list",
-					settings: { params: <?=CUtil::PhpToJSObject($arResult['ANALYTIC_TRACKER'])?> }
-				};
-
 			<?php if (isset($arResult['RESTRICTED_VALUE_CLICK_CALLBACK'])):?>
 			BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
 				<?=$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'];?>
@@ -1365,36 +1361,41 @@ if (!$isInternal):
 		}
 	);
 </script>
-<?endif;?>
-<?if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
-	<script type="text/javascript">
+<?php endif;
+
+if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionConfig):
+	Extension::load('crm.conversion');
+	?><script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				BX.CrmDealConversionScheme.messages =
-					<?=CUtil::PhpToJSObject(\Bitrix\Crm\Conversion\DealConversionScheme::getJavaScriptDescriptions(false))?>;
+				BX.Crm.Conversion.Manager.Instance.initializeConverter(
+					BX.CrmEntityType.enumeration.deal,
+					{
+						configItems: <?= CUtil::PhpToJSObject($conversionConfig->toJson()) ?>,
+						scheme: <?= CUtil::PhpToJSObject($conversionConfig->getScheme()->toJson(true)) ?>,
+						params: {
+							id: '<?= \CUtil::JSEscape($arResult['CONVERTER_ID']) ?>',
+							serviceUrl: "<?='/bitrix/components/bitrix/crm.deal.details/ajax.php?action=convert&'.bitrix_sessid_get()?>",
+							originUrl: '<?= CUtil::JSEscape($APPLICATION->GetCurPage()) ?>',
+							messages: {
+								accessDenied: "<?=GetMessageJS("CRM_DEAL_CONV_ACCESS_DENIED")?>",
+								generalError: "<?=GetMessageJS("CRM_DEAL_CONV_GENERAL_ERROR")?>",
+								dialogTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_TITLE")?>",
+								syncEditorLegend: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_LEGEND")?>",
+								syncEditorFieldListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_FILED_LIST_TITLE")?>",
+								syncEditorEntityListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
+								continueButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CONTINUE_BTN")?>",
+								cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
+							},
+							analytics: {
+								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST ?>',
+								c_element: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU ?>',
+							},
+						}
+					},
+				);
 
-				BX.CrmDealConverter.messages =
-					{
-						accessDenied: "<?=GetMessageJS("CRM_DEAL_CONV_ACCESS_DENIED")?>",
-						generalError: "<?=GetMessageJS("CRM_DEAL_CONV_GENERAL_ERROR")?>",
-						dialogTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_TITLE")?>",
-						syncEditorLegend: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_LEGEND")?>",
-						syncEditorFieldListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_FILED_LIST_TITLE")?>",
-						syncEditorEntityListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
-						continueButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CONTINUE_BTN")?>",
-						cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
-					};
-				BX.CrmDealConverter.permissions =
-					{
-						invoice: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_INVOICE'])?>,
-						quote: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_QUOTE'])?>
-					};
-				BX.CrmDealConverter.settings =
-					{
-						serviceUrl: "<?='/bitrix/components/bitrix/crm.deal.show/ajax.php?action=convert&'.bitrix_sessid_get()?>",
-						config: <?=CUtil::PhpToJSObject($arResult['CONVERSION_CONFIG']->toJavaScript())?>
-					};
 				BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 			}
 		);

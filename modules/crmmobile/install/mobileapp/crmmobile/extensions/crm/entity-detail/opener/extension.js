@@ -3,7 +3,7 @@
  */
 jn.define('crm/entity-detail/opener', (require, exports, module) => {
 	const { Alert } = require('alert');
-	const { Feature } = require('feature');
+	const { AnalyticsEvent } = require('analytics');
 	const AppTheme = require('apptheme');
 	const { NotifyManager } = require('notify-manager');
 	const { EntitySvg } = require('crm/assets/entity');
@@ -12,6 +12,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 	const { Type: CoreType } = require('type');
 	const { mergeImmutable } = require('utils/object');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { CrmMode } = require('crm/crm-mode');
 
 	const CACHE_TTL = 60 * 60 * 4; // 4 hours
 	const CACHE_VERSION = 2;
@@ -32,25 +33,51 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 * @param {Number?} payload.entityId
 		 * @param {Number?} payload.categoryId
 		 * @param {Object} widgetParams
+		 * @param {Object|AnalyticsEvent?} analytics
 		 * @param parentWidget
 		 * @param canOpenInDefault
 		 */
-		static open(payload, widgetParams = {}, parentWidget = null, canOpenInDefault = false)
+		static open({
+			payload,
+			widgetParams = {},
+			parentWidget = null,
+			canOpenInDefault = false,
+			analytics = {},
+		})
 		{
 			widgetParams = mergeImmutable(this.getModalWidgetParams(), widgetParams);
 
-			const { entityTypeId } = payload;
+			const { entityTypeId, entityId } = payload;
 
 			this
 				.checkAvailability(entityTypeId)
 				.then(() => {
 					widgetParams.titleParams = this.prepareTitleParams(payload, widgetParams.titleParams);
+					const preparedAnalytics = this.prepareAnalytics(analytics, entityTypeId);
+					const analyticsEvent = preparedAnalytics.getEvent();
+					if (analyticsEvent === 'entity_add_open'
+						|| analyticsEvent === 'entity_copy_open')
+					{
+						preparedAnalytics.send();
+						preparedAnalytics.setEvent(
+							analyticsEvent === 'entity_add_open'
+								? 'entity_add'
+								: 'entity_copy',
+						);
+					}
 
 					ComponentHelper.openLayout(
 						{
 							name: 'crm:crm.entity.details',
-							componentParams: { payload },
-							widgetParams,
+							componentParams: {
+								payload,
+								analytics: preparedAnalytics,
+							},
+							widgetParams: {
+								...this.getModalWidgetParams(),
+								...widgetParams,
+								titleParams: this.prepareTitleParams(payload, widgetParams.titleParams),
+							},
 							canOpenInDefault,
 						},
 						parentWidget,
@@ -61,6 +88,15 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 					this.showAlert(error, entityTypeId);
 				})
 			;
+		}
+
+		static prepareAnalytics(analytics, entityTypeId)
+		{
+			return new AnalyticsEvent(analytics)
+				.setTool('crm')
+				.setCategory('entity_operations')
+				.setType(Type.getCommonEntityTypeName(entityTypeId))
+				.setP1(`crmMode_${CrmMode.getCrmModeFromCache().toLowerCase()}`);
 		}
 
 		/**

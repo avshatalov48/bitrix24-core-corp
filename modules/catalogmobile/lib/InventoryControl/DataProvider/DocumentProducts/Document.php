@@ -35,7 +35,7 @@ class Document
 				throw new \DomainException("Document $documentId not found");
 			}
 
-			return new Dto\Document([
+			return Dto\Document::make([
 				'id' => (int)$document['ID'],
 				'type' => $document['DOC_TYPE'],
 				'currency' => $document['CURRENCY'],
@@ -69,7 +69,7 @@ class Document
 			throw new \DomainException("Document $entityId not found");
 		}
 
-		return new Dto\Document([
+		return Dto\Document::make([
 			'id' => $shipment->getId(),
 			'type' => StoreDocumentTable::TYPE_SALES_ORDERS,
 			'currency' => $shipment->getOrder()->getCurrency(),
@@ -105,7 +105,7 @@ class Document
 	{
 		$currency = Catalog::getBaseCurrency();
 
-		return new Dto\Document([
+		return Dto\Document::make([
 			'type' => $documentType,
 			'currency' => $currency,
 			'total' => [

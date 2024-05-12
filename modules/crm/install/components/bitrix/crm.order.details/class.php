@@ -662,13 +662,23 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 			if(\Bitrix\Crm\Automation\Factory::isAutomationAvailable(CCrmOwnerType::Order))
 			{
-				$this->arResult['TABS'][] = array(
+				$robotsTab = [
 					'id' => 'tab_automation',
 					'name' => Loc::getMessage('CRM_ORDER_TAB_AUTOMATION'),
 					'url' => Container::getInstance()->getRouter()->getAutomationUrl(CCrmOwnerType::Order)
 						->addParams(['id' => $this->entityID]),
-				);
+				];
 
+				$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+				if (!$toolsManager->checkRobotsAvailability())
+				{
+					$robotsTab['availabilityLock'] = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+						->getRobotsAvailabilityLock()
+					;
+					$robotsTab['url'] = '';
+				}
+
+				$this->arResult['TABS'][] = $robotsTab;
 				$checkAutomationTourGuideData = CCrmBizProcHelper::getHowCheckAutomationTourGuideData(
 					CCrmOwnerType::Order,
 					0,

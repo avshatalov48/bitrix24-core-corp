@@ -2,55 +2,98 @@
  * @module ui-system/blocks/plain-view
  */
 jn.define('ui-system/blocks/plain-view', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { IconView } = require('ui-system/blocks/icon');
+	const { mergeImmutable } = require('utils/object');
+	const { Indent, IndentTypes, Color } = require('tokens');
 
 	/**
 	 * @function PlainView
 	 * @params {object} props
 	 * @params {string} [props.text]
+	 * @params {number} [props.fontSize]
+	 * @params {object} [props.after]
+	 * @params {object} [props.before]
 	 * @params {function} [props.onClick]
-	 * @params {string} [props.icon]
-	 * @params {string} [props.iconColor]
-	 * @params {object} [props.iconSize]
-	 * @params {number} [props.iconSize.height]
-	 * @params {number} [props.iconSize.width]
+	 * @params {string} [props.indent]
+	 * @params {string} [props.uri]
+	 *
 	 * @return PlainView
 	 */
 	const PlainView = (props) => {
 		const {
 			text = '',
-			color = AppTheme.colors.base2,
-			icon = null,
-			iconColor = AppTheme.colors.base2,
-			iconSize = null,
-			onClick = null,
+			color = Color.base2,
+			fontSize = 16,
+			after = null,
+			before = null,
+			indent = IndentTypes.XS,
+			...restProps
 		} = props;
 
-		if (!text && !icon)
+		if (!text && !after && !before)
 		{
 			return null;
 		}
 
 		const isText = Boolean(text.trim());
+		const marginHorizontal = Indent[indent] ?? 0;
 
-		return View(
+		let marginLeft = 0;
+		let marginRight = 0;
+
+		if (after)
+		{
+			marginLeft = marginHorizontal;
+		}
+
+		if (before)
+		{
+			marginRight = marginHorizontal;
+		}
+
+		const mergedProps = mergeImmutable(
 			{
 				style: {
 					flexDirection: 'row',
-					alignItems: 'center',
+					flexShrink: 2,
 				},
-				onClick,
 			},
-			IconView({ icon, iconColor, iconSize }),
+			restProps,
+		);
+
+		return View(
+			mergedProps,
+			after,
 			isText && Text({
 				style: {
 					color,
-					fontSize: 16,
+					fontSize,
+					marginLeft,
+					marginRight,
+					flexShrink: 2,
 				},
+				numberOfLines: 1,
+				ellipsize: 'end',
 				text,
 			}),
+			before,
 		);
+	};
+
+	PlainView.defaultProps = {
+		text: '',
+		after: null,
+		before: null,
+		fontSize: 16,
+		color: Color.base1,
+		indent: IndentTypes.XS,
+	};
+
+	PlainView.propTypes = {
+		text: PropTypes.string,
+		fontSize: PropTypes.number,
+		after: PropTypes.object,
+		before: PropTypes.object,
+		indent: PropTypes.string,
 	};
 
 	module.exports = { PlainView };

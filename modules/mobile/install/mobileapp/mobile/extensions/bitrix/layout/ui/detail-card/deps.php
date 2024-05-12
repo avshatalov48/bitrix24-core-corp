@@ -5,8 +5,8 @@ return [
 		'alert',
 		'apptheme',
 		'analytics-label',
+		'analytics',
 		'event-emitter',
-		'feature',
 
 		'layout/ui/detail-card/floating-button',
 		'layout/ui/detail-card/navigation',
@@ -16,6 +16,7 @@ return [
 
 		'layout/ui/fields/focus-manager',
 		'layout/ui/menu',
+		'loc',
 		'notify-manager',
 		'qrauth/utils',
 		'utils',

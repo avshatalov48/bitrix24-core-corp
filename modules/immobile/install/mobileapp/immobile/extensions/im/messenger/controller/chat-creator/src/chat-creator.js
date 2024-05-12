@@ -4,10 +4,11 @@
  * @module im/messenger/controller/chat-creator/chat-creator
  */
 jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports, module) => {
+	/* global PageManager, ChatSearchScopes, ChatDataConverter */
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/**
@@ -17,7 +18,7 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 	{
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		open()
@@ -82,9 +83,13 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 			if (Type.isArrayFilled(recentUserList))
 			{
 				recentUserList.forEach((recentUserChat) => {
-					recentUserListIndex[recentUserChat.user.id] = true;
+					const userStateModel = this.store.getters['usersModel/getById'](recentUserChat.id);
+					if (userStateModel)
+					{
+						recentUserListIndex[recentUserChat.id] = true;
 
-					userItems.push(recentUserChat.user);
+						userItems.push(userStateModel);
+					}
 				});
 			}
 

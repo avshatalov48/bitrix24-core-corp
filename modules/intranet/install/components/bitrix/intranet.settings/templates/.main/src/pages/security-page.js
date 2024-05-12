@@ -33,28 +33,30 @@ export class SecurityPage extends BaseSettingsPage
 		const isBitrix24 = this.hasValue('IS_BITRIX_24') && this.getValue('IS_BITRIX_24');
 		if (this.hasValue('SECURITY_OTP_ENABLED') && this.getValue('SECURITY_OTP_ENABLED'))
 		{
-			this.#buildOTPSection().renderTo(contentNode);
+			this.#buildOTPSection()?.renderTo(contentNode);
 		}
 
 		// if (isBitrix24)
 		// {
 		// 	this.#buildPasswordRecoverySection().renderTo(contentNode);
 		// }
-		this.#buildDevicesHistorySection().renderTo(contentNode);
-		this.#buildEventLogSection().renderTo(contentNode);
+		this.#buildDevicesHistorySection()?.renderTo(contentNode);
+		this.#buildEventLogSection()?.renderTo(contentNode);
 		if (isBitrix24)
 		{
-			this.#buildAccessIPSection().renderTo(contentNode);
-			this.#buildBlackListSection().renderTo(contentNode);
+			this.#buildAccessIPSection()?.renderTo(contentNode);
+			this.#buildBlackListSection()?.renderTo(contentNode);
 		}
 	}
 
-	#buildOTPSection(): SettingsSection
+	#buildOTPSection(): ?SettingsSection
 	{
-		const otpSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_OTP'),
-			titleIconClasses: 'ui-icon-set --shield',
-		});
+		if (!this.hasValue('sectionOtp'))
+		{
+			return ;
+		}
+		const otpSection = new Section(this.getValue('sectionOtp'));
+
 		const section = new SettingsSection({
 			section: otpSection,
 			parent: this,
@@ -72,6 +74,8 @@ export class SecurityPage extends BaseSettingsPage
 		{
 			const securityOtpCheckerRow = new Row({
 				content: this.#getOTPChecker().render(),
+				separator: this.#getOTPChecker().isChecked() ? '' : 'bottom',
+				className: this.#getOTPChecker().isChecked() ? '' : '--block',
 			});
 			new SettingsRow({
 				row: securityOtpCheckerRow,
@@ -132,11 +136,13 @@ export class SecurityPage extends BaseSettingsPage
 
 					if (this.#getOTPChecker().isChecked())
 					{
+						Dom.removeClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 						securityOtpPeriodSelectorRow.show();
 						securityOtpMessageChatCheckerRow.show();
 					}
 					else
 					{
+						Dom.addClass(securityOtpCheckerRow.render(), '--bottom-separator --block');
 						securityOtpPeriodSelectorRow.hide();
 						securityOtpMessageChatCheckerRow.hide();
 					}
@@ -154,15 +160,19 @@ export class SecurityPage extends BaseSettingsPage
 			return this.#otpChecker;
 		}
 
-		this.#otpChecker = new Checker({
-			inputName: 'SECURITY_OTP',
-			checked: this.getValue('SECURITY_OTP'),
-			title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP'),
-			isEnable: true,
-			hideSeparator: true,
-			alignCenter: true,
-			noMarginBottom: true,
-		});
+		if (this.hasValue('fieldSecurityOtp'))
+		{
+			this.#otpChecker = new Checker({
+				inputName: this.getValue('fieldSecurityOtp').inputName,
+				checked: this.getValue('fieldSecurityOtp').checked,
+				title: this.getValue('fieldSecurityOtp').title,
+				isEnable: this.getValue('fieldSecurityOtp').isEnable,
+				hideSeparator: true,
+				alignCenter: true,
+				noMarginBottom: true,
+			});
+		}
+
 		this.#otpChecker.renderLockElement = () => {
 			return null;
 		};
@@ -260,15 +270,13 @@ export class SecurityPage extends BaseSettingsPage
 		</span>`;
 	}
 
-	#buildAccessIPSection(): SettingsSection
+	#buildAccessIPSection(): ?SettingsSection
 	{
-		const accessIpSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP'),
-			titleIconClasses: 'ui-icon-set --attention-i-circle',
-			isOpen: false,
-			isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
-			bannerCode: 'limit_admin_ip',
-		});
+		if (!this.hasValue('sectionAccessIp'))
+		{
+			return;
+		}
+		const accessIpSection = new Section(this.getValue('sectionAccessIp'));
 
 		const section = new SettingsSection({
 			section: accessIpSection,
@@ -335,7 +343,7 @@ export class SecurityPage extends BaseSettingsPage
 		};
 
 		const additionalUsersAccessIpButton = Tag.render`
-			<div class="ui-text-right ui-section__mt-16">
+			<div class="ui-text-right">
 				<a class="ui-section__link" href="javascript:void(0)" onclick="${onclickAddField}">
 					${Loc.getMessage('INTRANET_SETTINGS_ADDITIONAL_USER_ACCESS_IP')}
 				</a>
@@ -380,7 +388,7 @@ export class SecurityPage extends BaseSettingsPage
 		const inputName = `SECURITY_IP_ACCESS_${fieldNumber}_IP`;
 		const accessIp = new TextInput({
 			inputName,
-			label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP'),
+			label: this.getValue('IP_ACCESS_RIGHTS_ENABLED_LABEL') ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP'),
 			isEnable: this.getValue('IP_ACCESS_RIGHTS_ENABLED'),
 			helpMessageProvider: this.helpMessageProviderFactory(Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_PRO')),
 		});
@@ -394,7 +402,7 @@ export class SecurityPage extends BaseSettingsPage
 	{
 		const userSelector = new UserSelector({
 			inputName: `SECURITY_IP_ACCESS_${ipUsersList.fieldNumber}_USERS[]`,
-			label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
+			label: this.getValue('IP_ACCESS_RIGHTS_ENABLED_LABEL') ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
 			values: Object.values(ipUsersList.users),
 			enableDepartments: true,
 			encodeValue: (value) => {
@@ -466,7 +474,7 @@ export class SecurityPage extends BaseSettingsPage
 		});
 	}
 
-	#buildPasswordRecoverySection(): SettingsSection
+	#buildPasswordRecoverySection(): ?SettingsSection
 	{
 		return new Section({
 			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_PASSWORD_RECOVERY'),
@@ -476,15 +484,14 @@ export class SecurityPage extends BaseSettingsPage
 		});
 	}
 
-	#buildDevicesHistorySection(): SettingsSection
+	#buildDevicesHistorySection(): ?SettingsSection
 	{
-		const devicesHistorySection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY'),
-			titleIconClasses: 'ui-icon-set --clock-with-arrow',
-			isOpen: !this.hasValue('SECURITY_OTP_ENABLED') || !this.getValue('SECURITY_OTP_ENABLED'),
-			isEnable: this.getValue('DEVICE_HISTORY_SETTINGS').is_enable,
-			bannerCode: 'limit_office_login_history',
-		});
+		if (!this.hasValue('sectionHistory'))
+		{
+			return;
+		}
+
+		const devicesHistorySection = new Section(this.getValue('sectionHistory'));
 
 		const settingsSection = new SettingsSection({
 			section: devicesHistorySection,
@@ -518,15 +525,15 @@ export class SecurityPage extends BaseSettingsPage
 				'INTRANET_SETTINGS_FIELD_HELP_MESSAGE_ENT', { '#TARIFF#': 'ent250' }
 			)}</span>`;
 			const cleanupDaysField = new Selector({
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS'),
+				label: this.getValue('DEVICE_HISTORY_SETTINGS').label,
 				name: this.getValue('DEVICE_HISTORY_SETTINGS').name,
 				items: this.getValue('DEVICE_HISTORY_SETTINGS').values,
 				current: this.getValue('DEVICE_HISTORY_SETTINGS').current,
-				isEnable: this.getValue('DEVICE_HISTORY_SETTINGS').is_enable,
+				isEnable: this.getValue('DEVICE_HISTORY_SETTINGS').isEnable,
 				bannerCode: 'limit_office_login_history',
 				helpMessageProvider: this.helpMessageProviderFactory(messageNode),
 			});
-			if (!this.getValue('DEVICE_HISTORY_SETTINGS').is_enable)
+			if (!this.getValue('DEVICE_HISTORY_SETTINGS').isEnable)
 			{
 				Event.bind(
 					cleanupDaysField.getInputNode(),
@@ -547,7 +554,7 @@ export class SecurityPage extends BaseSettingsPage
 		}
 
 		const goToUserListButton = Tag.render`
-			<div class="ui-text-right ui-section__mt-16">
+			<div class="ui-text-right">
 				<a class="ui-section__link" href="/company/" target="_blank">
 					${Loc.getMessage('INTRANET_SETTINGS_GO_TO_USER_LIST_LINK')}
 				</a>
@@ -564,15 +571,13 @@ export class SecurityPage extends BaseSettingsPage
 		return settingsSection;
 	}
 
-	#buildEventLogSection(): SettingsSection
+	#buildEventLogSection(): ?SettingsSection
 	{
-		const eventLogSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG'),
-			titleIconClasses: 'ui-icon-set --list',
-			isOpen: false,
-			isEnable: this.hasValue('EVENT_LOG'),
-			bannerCode: 'limit_office_login_log',
-		});
+		if (!this.hasValue('sectionEventLog'))
+		{
+			return;
+		}
+		const eventLogSection = new Section(this.getValue('sectionEventLog'));
 
 		const settingsSection = new SettingsSection({
 			section: eventLogSection,
@@ -602,14 +607,14 @@ export class SecurityPage extends BaseSettingsPage
 
 		const goToUserListButton = this.hasValue('EVENT_LOG')
 			? Tag.render`
-				<div class="ui-text-right ui-section__mt-16">
+				<div class="ui-text-right">
 					<a class="ui-section__link" href="${this.getValue('EVENT_LOG')}" target="_blank">
 						${Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK')}
 					</a>
 				</div>
 			`
 			: Tag.render`
-				<div class="ui-text-right ui-section__mt-16">
+				<div class="ui-text-right">
 					<a class="ui-section__link" href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('limit_office_login_log')">
 						${Loc.getMessage('INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK')}
 					</a>
@@ -626,16 +631,17 @@ export class SecurityPage extends BaseSettingsPage
 		return settingsSection;
 	}
 
-	#buildBlackListSection(): SettingsSection
+	#buildBlackListSection(): ?SettingsSection
 	{
-		return new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST'),
-			titleIconClasses: 'ui-icon-set --cross-50',
-			isOpen: false,
-			canCollapse: false,
-			singleLink: {
-				href: '/settings/configs/mail_blacklist.php',
-			},
-		});
+		if (!this.hasValue('sectionBlackList'))
+		{
+			return;
+		}
+		let params = this.getValue('sectionBlackList');
+		params['singleLink'] = {
+			href: '/settings/configs/mail_blacklist.php',
+		};
+
+		return new Section(params);
 	}
 }

@@ -13,11 +13,6 @@ class Settings extends Base
 		];
 	}
 
-	public function isNewDashboardActiveAction(): bool
-	{
-		return \Bitrix\TasksMobile\Settings::getInstance()->isNewDashboardActive();
-	}
-
 	public function isBetaAvailableAction(): bool
 	{
 		return \Bitrix\TasksMobile\Settings::getInstance()->isBetaAvailable();

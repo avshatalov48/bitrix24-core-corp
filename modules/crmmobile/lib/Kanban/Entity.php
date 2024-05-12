@@ -154,6 +154,36 @@ final class Entity
 	public function getList(): array
 	{
 		$strategy = $this->getPreparedControllerStrategy();
+
+		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($this->getEntityTypeName());
+		if (!$entity)
+		{
+			return [
+				'items' => [],
+			];
+		}
+
+		$defaultPresets = $entity->getFilterPresets();
+		$filterOptions = new \Bitrix\Main\UI\Filter\Options(
+			$strategy->getGridId(),
+			$defaultPresets
+		);
+		$presets = array_merge($defaultPresets, $filterOptions->getPresets());
+		$currentPreset = $strategy->getCurrentFilter()['presetId'];
+
+		if (
+			$currentPreset
+			&& $currentPreset !== 'default_filter'
+			&& $currentPreset !== 'tmp_filter'
+			&& empty($presets[$currentPreset])
+		)
+		{
+			return [
+				'items' => [],
+				'event' => 'refreshPresets',
+			];
+		}
+
 		$itemsList = $strategy->getList($this->pageNavigation);
 
 		$items = [];
@@ -240,10 +270,10 @@ final class Entity
 
 	protected function buildItemDto(array $data): Item
 	{
-		$item = new Item([
+		$item = Item::make([
 			'id' => $data['id'],
 		]);
-		$item->data = new ItemData($data['data']);
+		$item->data = ItemData::make($data['data']);
 
 		return $item;
 	}

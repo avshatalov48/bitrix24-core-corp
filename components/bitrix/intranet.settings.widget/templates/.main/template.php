@@ -33,6 +33,7 @@ if ($arParams['IS_BITRIX24'])
 {
 	$widgetArguments['isFreeLicense'] = $arParams['IS_FREE_LICENSE'];
 	$widgetArguments['holding'] = $arParams['HOLDING'];
+	$widgetArguments['isRenameable'] = $arParams['IS_RENAMEABLE'];
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:bitrix24.holding',

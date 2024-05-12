@@ -1,4 +1,5 @@
 import { DateTimeFormat, Timezone } from 'main.date';
+import { Text } from 'main.core';
 
 declare type DateTimeFormatOptions = {
 	withDayOfWeek: Boolean,
@@ -17,7 +18,7 @@ export default class DatetimeConverter
 	 */
 	static createFromServerTimestamp(timestamp: Number): DatetimeConverter
 	{
-		const offset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.BROWSER_TO_UTC;
+		const offset = BX.Main.Timezone.Offset.SERVER_TO_UTC + Text.toInteger((new Date()).getTimezoneOffset() * 60);
 
 		// make a date object which absolute time will match time of server (even though it has different timezone)
 		const date = new Date((timestamp + offset) * 1000);

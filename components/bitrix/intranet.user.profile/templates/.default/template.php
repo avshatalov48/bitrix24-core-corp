@@ -393,7 +393,7 @@ if (
 			<div class="intranet-user-profile-column-block">
 				<div class="intranet-user-profile-apps">
 					<div class="intranet-user-profile-desktop-block">
-						<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_INSTALLED")?>
+						<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_1")?>
 						<?php
 						if (
 							isset($arResult["DISK_INFO"]["INSTALLATION_DATE"])
@@ -922,6 +922,10 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_SAVE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SAVE")) ?>",
 		"INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE")) ?>",
 		"INTRANET_USER_PROFILE_REINVITE_SUCCESS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REINVITE_SUCCESS")) ?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE")) ?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION")) ?>",
+		"INTRANET_USER_PROFILE_CONFIRM_YES" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_YES")) ?>",
+		"INTRANET_USER_PROFILE_CONFIRM_NO" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_NO")) ?>",
 		"INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM")) ?>",
 		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM" : "<?= CUtil::JSEscape($moveRightsConfirmText) ?>",
 		"INTRANET_USER_PROFILE_FIELD_NAME" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_NAME")) ?>",

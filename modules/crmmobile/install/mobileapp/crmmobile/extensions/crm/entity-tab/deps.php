@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'apptheme',
 		'require-lazy',
 		'loc',

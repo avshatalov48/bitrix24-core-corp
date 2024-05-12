@@ -1,0 +1,34 @@
+<?
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION"] = "Achtung!";
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION_TEXT"] = "Das Formular zeigt die letzten automatisch gespeicherten Änderungen an.";
+$MESS["CRM_WEBFORM_EDIT_V2_AUTO"] = "Auto";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER"] = "Formularrahmen";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_BOTTOM"] = "Unten";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_LEFT"] = "Links";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_RIGHT"] = "Rechts";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_TOP"] = "Oben";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT"] = "Farbe für helle Elemente";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT_TEXT"] = "Textfarbe für helle Elemente";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD"] = "Farbe des Feldhintergrunds";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_BORDER"] = "Farbe der Feldrahmen";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_FOCUS"] = "Hintergrundfarbe der Felder im Fokus";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM"] = "Hintergrundfarbe des Formulars";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM_TEXT"] = "Farbe des Formulartextes";
+$MESS["CRM_WEBFORM_EDIT_V2_DEF"] = "Standardmäßig";
+$MESS["CRM_WEBFORM_EDIT_V2_ENABLE_DESIGN"] = "Neues Design nur für Formulare im Website-Widget oder per direkten Link aktivieren <br>(Design für eingebettete Formulare kann nur über neuen oder alten Code geändert werden).";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT"] = "Schriftart";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_FAMILY_HINT"] = "Name der Schriftart (font-family).<br>Z.B.: Open Sans";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_URI_HINT"] = "Link zu Schriftarten bereitgestellt von fonts.google.com";
+$MESS["CRM_WEBFORM_EDIT_V2_FORM_TRANSPARENT_HINT"] = "Sie können das Formular halbdurchsichtig machen, indem Sie den Parameter der Durchsichtigkeit in den Werten Hintergrundfarbe des Formulars und Hintergrundfarbe der Felder ändern.";
+$MESS["CRM_WEBFORM_EDIT_V2_MANUAL"] = "Benutzerdefiniert";
+$MESS["CRM_WEBFORM_EDIT_V2_MODE"] = "Gestaltung";
+$MESS["CRM_WEBFORM_EDIT_V2_MORE_FIELDS"] = "Zusätzliche Parameter";
+$MESS["CRM_WEBFORM_EDIT_V2_PRIMARY_COLOR"] = "Hauptfarbe";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP"] = "konfigurieren";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_COLOR"] = "Farbe auswählen";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_OPACITY"] = "Durchsichtigkeit auswählen";
+$MESS["CRM_WEBFORM_EDIT_V2_SHADOW"] = "Formularschatten";
+$MESS["CRM_WEBFORM_EDIT_V2_STANDARD"] = "Standard";
+$MESS["CRM_WEBFORM_EDIT_V2_STYLE"] = "Feldstil";
+$MESS["CRM_WEBFORM_EDIT_V2_THEME"] = "Design";
+?>

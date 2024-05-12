@@ -43,8 +43,11 @@ class DashboardRowAssembler extends RowAssembler
 			new Field\ExternalIdFieldAssembler([
 				'ID',
 			]),
-			new Field\DateCreateFieldAssembler([
+			new Field\DateFieldAssembler([
 				'DATE_CREATE',
+			]),
+			new Field\DateFieldAssembler([
+				'DATE_MODIFY',
 			]),
 		];
 	}

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/search/experimental/service/local-search-service', (require, exports, module) => {
 	const { compareWords } = require('utils/string');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogType } = require('im/messenger/const');
 	const { getWordsFromText } = require('im/messenger/controller/search/experimental/get-words-from-text');
 
@@ -15,7 +15,7 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 			 * @private
 			 * @type {MessengerCoreStore}
 			 */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		/**

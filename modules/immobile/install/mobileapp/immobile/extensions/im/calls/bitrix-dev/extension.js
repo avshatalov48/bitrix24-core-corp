@@ -248,6 +248,7 @@
 				onInviteTimeout: this.__onPeerInviteTimeout.bind(this),
 				onInitialState: (e) => {
 					this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [e.userId, e.floorRequest]);
+					this.eventEmitter.emit(BX.Call.Event.onUserMicrophoneState, [e.userId, e.microphoneState]);
 				},
 				onHandRaised: (e) => this.eventEmitter.emit(BX.Call.Event.onUserFloorRequest, [e.userId, e.isHandRaised]),
 			});
@@ -347,8 +348,16 @@
 			}
 		}
 
+		toggleSubscriptionRemoteVideo(toggleList) {
+			if (this.bitrixCallDev && this.bitrixCallDev.toggleSubscriptionRemoteVideo)
+			{
+				this.bitrixCallDev.toggleSubscriptionRemoteVideo(toggleList);
+			}
+		}
+
 		onCentralUserSwitch(userId) {
-			if (this.bitrixCallDev) {
+			if (this.bitrixCallDev && this.bitrixCallDev.onCentralUserSwitch)
+			{
 				this.bitrixCallDev.onCentralUserSwitch(userId);
 			}
 		}
@@ -615,9 +624,18 @@
 							JNBXCameraManager.setResolutionConstraints(960, 540); // force 16:9 aspect ratio
 						}
 
+						const callOptions = {
+							callId: `${this.id}`,
+							sendVideo: this.videoEnabled,
+							receiveVideo: true,
+							enableSimulcast: true,
+							userName: this.userData,
+							callBetaIosEnabled: callEngine.isCallBetaIosEnabled(),
+						};
+
 						this.bitrixCallDev = client.callConference(
 							`bx_conf_${this.id}`,
-							{ sendVideo: this.videoEnabled, receiveVideo: true, enableSimulcast: true, userName: this.userData },
+							callOptions,
 						);
 					}
 					catch (e)
@@ -879,6 +897,7 @@
 			{
 				// Call declined by the same user elsewhere
 				this.joinStatus = BX.Call.JoinStatus.None;
+				this.eventEmitter.emit(BX.Call.Event.onHangup);
 
 				return;
 			}
@@ -1771,6 +1790,7 @@
 			{
 				this.callbacks.onInitialState({
 					userId: this.userId,
+					microphoneState: endpoint.initialState.microphoneState,
 					floorRequest: endpoint.initialState.floorRequest,
 				});
 			}

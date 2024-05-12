@@ -119,7 +119,7 @@ else
 						context: '<?=!empty($arParams['CONTEXT']) ? $arParams['CONTEXT'] : 'crmEntityCreate'?>',
 						listPrefix: <?=\Bitrix\Main\Web\Json::encode($arResult['LIST_PREFIXES'])?>,
 						selectorEntityTypes: <?=\Bitrix\Main\Web\Json::encode($arResult['SELECTOR_ENTITY_TYPES'])?>,
-						listElement: <?=\Bitrix\Main\Web\Json::encode($arResult['ELEMENT'])?>,
+						listElement: <?=\Bitrix\Main\Web\Json::encode($arResult['ELEMENT'] ?? [])?>,
 						listEntityType: <?=\Bitrix\Main\Web\Json::encode($arParams['ENTITY_TYPE'])?>,
 						listEntityCreateUrl: <?=\Bitrix\Main\Web\Json::encode($arResult['LIST_ENTITY_CREATE_URL'])?>,
 						pluralCreation: '<?=!empty($arResult['PLURAL_CREATION']) ? 'true' : '' ?>',

@@ -12,6 +12,7 @@ use Bitrix\CrmMobile\Controller\Terminal\Actions\App\GetPaymentProductListAction
 use Bitrix\CrmMobile\Controller\Terminal\Actions\App\GetSearchDataAction;
 use Bitrix\CrmMobile\Controller\Terminal\Actions\App\InitializeAction;
 use Bitrix\CrmMobile\Controller\Terminal\Actions\App\InitiatePayAction;
+use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Loader;
 use Bitrix\Mobile\UI\StatefulList\BaseController;
@@ -81,6 +82,7 @@ class App extends BaseController
 			new ActionFilter\Csrf(),
 			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
+			new IntranetUser(),
 		];
 	}
 }

@@ -1,7 +1,7 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const AppTheme = require('apptheme');
 	const { throttle } = require('utils/function');
 	const { clone, merge } = require('utils/object');
@@ -13,6 +13,7 @@
 		openNativeViewer,
 		NativeViewerMediaTypes,
 	} = require('utils/file');
+	const { Loc } = require('loc');
 
 	const throttledNativeViewer = throttle(openNativeViewer, 500);
 
@@ -425,20 +426,11 @@
 
 	function deleteItem(onDeleteAttachmentItem)
 	{
-		Alert.confirm(
-			'',
-			BX.message('UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE'),
-			[
-				{
-					text: BX.message('UI_FILE_ATTACHMENT_DELETE_CONFIRM_OK'),
-					type: 'destructive',
-					onPress: onDeleteAttachmentItem,
-				},
-				{
-					type: 'cancel',
-				},
-			],
-		);
+		confirmDestructiveAction({
+			title: '',
+			description: Loc.getMessage('UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE'),
+			onDestruct: onDeleteAttachmentItem,
+		});
 	}
 
 	function buildStyles(externalStyles)

@@ -6,11 +6,8 @@ export default {
 	setMergeUUID: (state, val) => {
 		state.mergeUuid = val;
 	},
-	setCrmMode: (state, val) => {
-		state.crmMode = val;
-	},
-	setCallId: (state, val) => {
-		state.callId = val;
+	setActivityId: (state, val) => {
+		state.activityId = val;
 	},
 	startLoading: (state) => {
 		state.isLoading = true;

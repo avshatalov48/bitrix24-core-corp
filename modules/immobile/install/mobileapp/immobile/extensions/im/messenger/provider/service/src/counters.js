@@ -6,7 +6,7 @@ jn.define('im/messenger/provider/service/counters', (require, exports, module) =
 
 	const { RestMethod } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class CountersService
@@ -28,7 +28,7 @@ jn.define('im/messenger/provider/service/counters', (require, exports, module) =
 
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		async load()

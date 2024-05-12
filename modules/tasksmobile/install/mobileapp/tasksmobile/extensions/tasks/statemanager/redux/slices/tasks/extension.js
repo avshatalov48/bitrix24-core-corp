@@ -75,6 +75,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		disapprovePending,
 		disapproveFulfilled,
 		pingPending,
+		pingFulfilled,
 		pinPending,
 		pinFulfilled,
 		unpinPending,
@@ -89,7 +90,9 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		readPending,
 		readFulfilled,
 		readAllForRolePending,
+		readAllForRoleFulfilled,
 		readAllForProjectPending,
+		readAllForProjectFulfilled,
 	} = require('tasks/statemanager/redux/slices/tasks/extra-reducer');
 
 	const tasksSlice = createSlice({
@@ -180,6 +183,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(disapprove.pending, disapprovePending)
 				.addCase(disapprove.fulfilled, disapproveFulfilled)
 				.addCase(ping.pending, pingPending)
+				.addCase(ping.fulfilled, pingFulfilled)
 				.addCase(pin.pending, pinPending)
 				.addCase(pin.fulfilled, pinFulfilled)
 				.addCase(unpin.pending, unpinPending)
@@ -194,7 +198,9 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(read.pending, readPending)
 				.addCase(read.fulfilled, readFulfilled)
 				.addCase(readAllForRole.pending, readAllForRolePending)
+				.addCase(readAllForRole.fulfilled, readAllForRoleFulfilled)
 				.addCase(readAllForProject.pending, readAllForProjectPending)
+				.addCase(readAllForProject.fulfilled, readAllForProjectFulfilled)
 			;
 		},
 	});

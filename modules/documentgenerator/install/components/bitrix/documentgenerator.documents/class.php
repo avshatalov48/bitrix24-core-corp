@@ -265,13 +265,13 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 						'TEMPLATE' => $template,
 						'UPDATE_TIME' => $document['UPDATE_TIME'],
 						'CREATED_BY' =>
-							!empty($template['CREATED_BY']) && isset($users[$template['CREATED_BY']])
-								? $users[$template['CREATED_BY']]
+							!empty($document['CREATED_BY']) && isset($users[$document['CREATED_BY']])
+								? $users[$document['CREATED_BY']]
 								: ''
 						,
 						'UPDATED_BY' =>
-							!empty($template['UPDATED_BY']) && isset($users[$template['UPDATED_BY']])
-								? $users[$template['UPDATED_BY']]
+							!empty($document['UPDATED_BY']) && isset($users[$document['UPDATED_BY']])
+								? $users[$document['UPDATED_BY']]
 								: ''
 						,
 					],

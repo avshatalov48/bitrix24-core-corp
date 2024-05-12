@@ -480,7 +480,9 @@ final class Task extends Base
 			$executorId = (int)($options['EXECUTOR_ID'] ?? null);
 			$executorId = $executorId > 0 ? $executorId : $responsibleId;
 
-			$handler = TaskHandler::getHandler($executorId);
+			$handler = TaskHandler::getHandler($executorId)
+				->withAutoClose();
+
 			try
 			{
 				$task = $handler->update($taskId, $updateData);

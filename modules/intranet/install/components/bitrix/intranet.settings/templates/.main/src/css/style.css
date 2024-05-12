@@ -1,3 +1,30 @@
+.intranet-settings-iframe-popup .main-ui-filter-search {
+	margin: 0 0 16px 0;
+}
+
+.intranet-settings-iframe-popup .main-ui-filter-search-filter {
+	height: 39px;
+}
+
+.intranet-settings-iframe-popup .main-ui-filter-search,
+.intranet-settings-iframe-popup .main-ui-filter-search-filter,
+.intranet-settings-iframe-popup .main-ui-filter-search-filter:placeholder-shown {
+	background: #f6f7f9;
+}
+
+.intranet-settings-iframe-popup .main-ui-filter-search-filter:not(:placeholder-shown),
+.intranet-settings-iframe-popup .main-ui-filter-search-filter:focus {
+	background: #fff;
+}
+
+.intranet-settings-iframe-popup .main-ui-filter-search-filter:disabled::placeholder {
+	color: var(--ui-color-palette-gray-40);
+}
+
+.intranet-settings-iframe-popup .main-ui-item-icon.--disabled {
+	cursor: default;
+}
+
 .intranet-settings-iframe-popup .ui-sidepanel-title,
 .ui-sidepanel-title:has(.settings-main-title) {
 	/* :has does not work in FF and IE -  https://caniuse.com/?search=%3Ahas */
@@ -9,7 +36,12 @@
 	display: none;
 }
 .intranet-settings-iframe-popup .ui-toolbar .ui-toolbar-title-box {
-	min-width: 30px;
+	min-width: 0;
+	padding: unset;
+}
+.intranet-settings-iframe-popup .ui-side-panel-toolbar
+{
+	margin-left: 0;
 }
 
 .settings-section-wrapper {
@@ -266,8 +298,7 @@
 }
 
 .intranet-settings__page-header_wrap {
-	margin: 10px 0 28px 9px;
-	padding-left: 6px;
+	margin: 10px 0 28px 0;
 }
 
 #portal-page-wrapper .intranet-settings__page-header_wrap {
@@ -283,7 +314,7 @@
 	position: relative;
 	top: 13px;
 	display: block;
-	margin-bottom: 27px;
+	margin-bottom: 35px;
 	line-height: 23px;
 	font-size: var(--ui-font-size-5xl);
 	font-weight: var(--ui-font-weight-medium);
@@ -368,9 +399,14 @@
 }
 
 .intranet-settings__work-time_container .ui-section__field-inline-separator {
-	margin: 40px 12px 0 12px;
+	padding: 0;
+	margin: 58px 0 0 0;
 	width: 16px;
 	height: 1px;
+}
+
+.intranet-settings__work-time_row {
+	width: calc(50% - 48px);
 }
 
 .intranet-settings__tab-info_container {
@@ -768,7 +804,7 @@
 }
 
 .ui-section__row .ui-alert.ui-alert-primary {
-	margin-bottom: 16px;
+	margin-bottom: 0;
 }
 
 /* endregion */
@@ -1025,17 +1061,13 @@
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-size: var(--ui-font-size-4xl);
 	font-weight: var(--ui-font-weight-light);
-	color: var(--ui-color-base-solid);
+	color: var(--ui-color-base-60);
 }
 
 .intranet-settings__holiday-value {
 	display: inline-block;
 	font-size: var(--ui-font-size-md);
 	color: var(--ui-color-base-80);
-}
-
-.ui-section__content .ui-section__row.--intranet-settings__mb-20 {
-	margin-bottom: 20px;
 }
 
 .intranet-settings__loader {

@@ -8,6 +8,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 	const { moreWithDot } = require('assets/common');
 	const { Loc } = require('loc');
 	const { Sorting } = require('tasks/dashboard/src/sorting');
+	const { Views } = require('tasks/statemanager/redux/types');
 
 	const iconPrefix = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/dashboard/images/more-menu-`;
 	const Icons = {
@@ -38,6 +39,8 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 			this.onCounterClick = callbacks.onCounterClick;
 			this.onSortingClick = callbacks.onSortingClick;
 			this.onReadAllClick = callbacks.onReadAllClick;
+
+			this.getSelectedView = callbacks.getSelectedView;
 
 			setTimeout(() => this.prefetchAssets(), 1000);
 		}
@@ -96,9 +99,11 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		 */
 		openMoreMenu()
 		{
+			const articleCode = this.getHelpdeskArticleCode();
 			const menuItems = [
 				{
 					id: TaskFilter.counterType.expired,
+					testId: TaskFilter.counterType.expired,
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_EXPIRED'),
 					iconUrl: Icons[TaskFilter.counterType.expired],
 					sectionCode: 'default',
@@ -112,6 +117,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 				},
 				{
 					id: TaskFilter.counterType.newComments,
+					testId: TaskFilter.counterType.newComments,
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_NEW_COMMENTS'),
 					iconUrl: Icons[TaskFilter.counterType.newComments],
 					sectionCode: 'default',
@@ -126,6 +132,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 				},
 				{
 					id: 'sortByActivity',
+					testId: 'sortByActivity',
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_ACTIVITY_MSGVER_1'),
 					iconUrl: Icons.sortByActivity,
 					sectionCode: 'default',
@@ -136,6 +143,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 				},
 				{
 					id: 'sortByDeadline',
+					testId: 'sortByDeadline',
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_DEADLINE'),
 					iconUrl: Icons.sortByDeadline,
 					sectionCode: 'default',
@@ -146,6 +154,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 				},
 				{
 					id: 'readAll',
+					testId: 'readAll',
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_READ_ALL'),
 					iconUrl: Icons.readAll,
 					iconName: 'read',
@@ -153,10 +162,39 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 					showTopSeparator: true,
 					onItemSelected: this.onMenuItemSelected.bind(this),
 				},
-			];
+				articleCode && {
+					type: UI.Menu.Types.HELPDESK,
+					data: { articleCode },
+				},
+			]
+				.filter(Boolean);
 
 			this.menu = new UI.Menu(menuItems);
 			this.menu.show();
+		}
+
+		/**
+		 * @private
+		 * @return {null|string}
+		 */
+		getHelpdeskArticleCode()
+		{
+			const selectedView = this.getSelectedView();
+
+			switch (selectedView)
+			{
+				case Views.KANBAN:
+					return '19507218';
+
+				case Views.PLANNER:
+					return '19143166';
+
+				case Views.DEADLINE:
+					return '19134714';
+
+				default:
+					return null;
+			}
 		}
 
 		/**

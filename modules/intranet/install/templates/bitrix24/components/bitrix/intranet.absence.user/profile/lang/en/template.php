@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_ABSENCE_USER_DATE_RANGE"] = "from #DATE_ABSENCE_START# till #DATE_ABSENCE_END#";
 $MESS["INTR_IAU_TPL_ALL_DAY"] = "all day";
 $MESS["INTR_IAU_TPL_FROM"] = "from";
 $MESS["INTR_IAU_TPL_FULL_TODAY"] = "All day today";

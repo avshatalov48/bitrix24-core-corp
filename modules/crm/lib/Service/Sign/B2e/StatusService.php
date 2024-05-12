@@ -16,8 +16,8 @@ final class StatusService
 
 	/**
 	 * @param int $documentCategoryId
-	 * @param array<string, string> $defaultTriggers
-	 * @return array
+	 * @param array{string, string} $defaultTriggers
+	 * @return array{string, string}
 	 */
 	public function makeTriggerNames(int $documentCategoryId, array $defaultTriggers): array
 	{

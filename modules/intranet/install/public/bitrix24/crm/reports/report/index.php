@@ -1,7 +1,7 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/crm/reports/report/index.php");
-$APPLICATION->SetTitle(GetMessage("TITLE")/*"Îò÷åòû"*/);
+$APPLICATION->SetTitle(GetMessage("TITLE")/*"ÐžÑ‚Ñ‡ÐµÑ‚Ñ‹"*/);
 ?><?$APPLICATION->IncludeComponent(
 	"bitrix:crm.report",
 	"",

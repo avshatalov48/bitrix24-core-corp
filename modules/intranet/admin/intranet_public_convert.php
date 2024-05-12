@@ -298,7 +298,7 @@ else
 		</tr>
 		<tr>
 			<td width="3%"><input type="checkbox" name="int_convert_public_section" id="int_convert_public_section" value="Y" checked></td>
-			<td width="97%"><label for="int_convert_public_section"><?echo GetMessage("INTRANET_PUBLIC_CONVERT_SECTIONS")?></label></td>
+			<td width="97%"><label for="int_convert_public_section"><?echo GetMessage("INTRANET_PUBLIC_CONVERT_SECTIONS_MSGVER_1")?></label></td>
 
 		</tr>
 		<tr>

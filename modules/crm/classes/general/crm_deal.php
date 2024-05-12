@@ -16,6 +16,8 @@ use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics\DealActivityStatisticEntry;
@@ -1661,11 +1663,11 @@ class CAllCrmDeal
 			/** @var \CCrmPerms $arOptions['PERMS'] */
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
-				->setOperations((array)$mPermType)
-				->setAliasPrefix((string)$sAliasPrefix)
-				->setSkipCheckOtherEntityTypes($allowSkipCheckOtherEntityTypes)
+		$builderOptions = OptionsBuilder::makeFromArray((array)$arOptions)
+			->setOperations((array)$mPermType)
+			->setAliasPrefix((string)$sAliasPrefix)
+			->setSkipCheckOtherEntityTypes($allowSkipCheckOtherEntityTypes)
+			->build()
 		;
 
 		$queryBuilder = Crm\Service\Container::getInstance()
@@ -2114,6 +2116,11 @@ class CAllCrmDeal
 				}
 			}
 
+			$currentStageSemantics = isset($arFields['STAGE_ID'], $arFields['STAGE_SEMANTIC_ID'])
+				? Container::getInstance()->getFactory(\CCrmOwnerType::Deal)?->getStageSemantics($arFields['STAGE_ID'])
+				: Crm\PhaseSemantics::UNDEFINED
+			;
+
 			CCrmEntityHelper::registerAdditionalTimelineEvents([
 				'entityTypeId' => \CCrmOwnerType::Deal,
 				'entityId' => $ID,
@@ -2121,7 +2128,7 @@ class CAllCrmDeal
 				'previousFields' => [],
 				'currentFields' => $arFields,
 				'previousStageSemantics' => Crm\PhaseSemantics::UNDEFINED,
-				'currentStageSemantics' => $arFields['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'currentStageSemantics' => $currentStageSemantics ?? Crm\PhaseSemantics::UNDEFINED,
 				'options' => $options,
 				'bindings' => [
 					'entityTypeId' => \CCrmOwnerType::Contact,
@@ -3373,6 +3380,11 @@ class CAllCrmDeal
 				)
 			);
 
+			$currentStageSemantics = isset($arFields['STAGE_ID'], $arFields['STAGE_SEMANTIC_ID'])
+				? Container::getInstance()->getFactory(\CCrmOwnerType::Deal)?->getStageSemantics($arFields['STAGE_ID'])
+				: Crm\PhaseSemantics::UNDEFINED
+			;
+
 			CCrmEntityHelper::registerAdditionalTimelineEvents([
 				'entityTypeId' => \CCrmOwnerType::Deal,
 				'entityId' => $ID,
@@ -3380,7 +3392,7 @@ class CAllCrmDeal
 				'previousFields' => $arRow,
 				'currentFields' => $arFields,
 				'previousStageSemantics' => $arRow['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
-				'currentStageSemantics' => $arFields['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'currentStageSemantics' => $currentStageSemantics ?? Crm\PhaseSemantics::UNDEFINED,
 				'options' => $options,
 				'bindings' => [
 					'entityTypeId' => \CCrmOwnerType::Contact,

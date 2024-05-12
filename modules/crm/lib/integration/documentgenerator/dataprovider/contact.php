@@ -6,7 +6,6 @@ use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\ContactTable;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value\Name;
 
 class Contact extends CrmEntityDataProvider
@@ -166,9 +165,9 @@ class Contact extends CrmEntityDataProvider
 		}
 		$this->nameData = [
 			'TITLE' => $this->getHonorificName(),
-			'NAME' => $this->data['NAME'],
-			'SECOND_NAME' => $this->data['SECOND_NAME'],
-			'LAST_NAME' => $this->data['LAST_NAME'],
+			'NAME' => $this->data['NAME'] ?? '',
+			'SECOND_NAME' => $this->data['SECOND_NAME'] ?? '',
+			'LAST_NAME' => $this->data['LAST_NAME'] ?? '',
 		];
 		unset($this->data['NAME']);
 		unset($this->data['SECOND_NAME']);
@@ -288,10 +287,12 @@ class Contact extends CrmEntityDataProvider
 	{
 		$value = null;
 
-		if($this->data['HONORIFIC'])
+		$honorific = ($this->data['HONORIFIC'] ?? null);
+
+		if ($honorific)
 		{
 			$all = \CCrmStatus::GetStatusList('HONORIFIC');
-			$value = $all[$this->data['HONORIFIC']];
+			$value = $all[$honorific];
 		}
 
 		return (string)$value;

@@ -6,7 +6,7 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 	const { Uuid } = require('utils/uuid');
 
 	const { EventType } = require('im/messenger/const');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { FileService } = require('im/messenger/provider/service/classes/sending/file');
 
@@ -31,7 +31,7 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 		constructor()
 		{
 			/** @private */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 
 			/** @private */
 			this.fileService = new FileService();
@@ -183,7 +183,7 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 				templateId: temporaryId,
 				chatId: this.getDialog(dialogId).chatId,
 				dialogId,
-				authorId: core.getUserId(),
+				authorId: serviceLocator.get('core').getUserId(),
 				text,
 				date: new Date(),
 				params: messageParams,

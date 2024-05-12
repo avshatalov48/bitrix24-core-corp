@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'loc',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/view/base',
 		'im:messenger/const',
 		'im:messenger/params',

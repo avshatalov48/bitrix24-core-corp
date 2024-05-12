@@ -3,12 +3,16 @@
  */
 jn.define('layout/ui/fields/user', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Loc } = require('loc');
 	const { lock } = require('assets/common');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
 	const { ProfileView } = require('user/profile');
 	const { UserListManager } = require('layout/ui/user-list');
 	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
+	const { isNil } = require('utils/type');
+	const { AnalyticsEvent } = require('analytics');
+	const { isPhoneNumber } = require('utils/phone');
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
@@ -35,7 +39,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						title: (this.getTitleText() === this.props.title ? this.props.title : null),
 						users: this.state.entityList.map((user) => ({
 							id: user.id,
-							name: user.title,
+							name: this.prepareUserTitle(user.title),
 							avatar: user.imageUrl,
 							workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
 						})),
@@ -47,12 +51,33 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 			this.state.showAll = false;
 		}
 
+		prepareUserTitle(userTitle)
+		{
+			return isPhoneNumber(userTitle) ? Loc.getMessage('FIELDS_USER_NO_NAME') : userTitle;
+		}
+
+		getAnalytics()
+		{
+			const analytics = new AnalyticsEvent(
+				isNil(this.props?.analytics) ? {} : this.props.analytics,
+			);
+			if (!isNil(this.props?.analytics?.module))
+			{
+				analytics.setSection(this.props.analytics.module);
+			}
+
+			return analytics;
+		}
+
 		getConfig()
 		{
 			const config = super.getConfig();
+			const enableCreation = BX.prop.getBoolean(this.props.config, 'enableCreation', true);
 
 			return {
 				...config,
+				analytics: this.getAnalytics(),
+				enableCreation,
 				selectorType: (config.selectorType || EntitySelectorFactory.Type.USER),
 				mode: (config.mode && Object.values(Mode).includes(config.mode) ? config.mode : Mode.DEFAULT),
 			};
@@ -97,7 +122,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						style: this.styles.emptyEntity,
 						numberOfLines: 1,
 						ellipsize: 'end',
-						text: BX.message('FIELDS_USER_SELECT'),
+						text: Loc.getMessage('FIELDS_USER_SELECT'),
 					}),
 				),
 			);
@@ -179,7 +204,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						style: this.styles.userTitle,
 						numberOfLines: 1,
 						ellipsize: 'end',
-						text: user.title,
+						text: this.prepareUserTitle(user.title),
 						testId: `${testId}_TITLE`,
 					}),
 					(
@@ -200,27 +225,14 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 
 		renderEntityIcon({ user, onClick, testId })
 		{
-			const hasAvatar = (
-				user.imageUrl
-				&& !user.imageUrl.includes(DEFAULT_SELECTOR_AVATAR)
-				&& !user.imageUrl.includes(DEFAULT_AVATAR)
-				&& !user.imageUrl.includes(EMPTY_AVATAR)
-			)
-				|| (
-					user.avatar
-					&& !user.avatar.includes(DEFAULT_SELECTOR_AVATAR)
-					&& !user.avatar.includes(DEFAULT_AVATAR)
-					&& !user.avatar.includes(EMPTY_AVATAR)
-				);
-
-			if (!hasAvatar && this.getConfig().useLettersForEmptyAvatar)
+			if (!user.imageUrl)
 			{
 				const { width, marginRight } = this.styles.userImage;
 
 				return EmptyAvatar({
 					onClick,
 					id: user.id,
-					name: user.title,
+					name: this.prepareUserTitle(user.title),
 					size: width,
 					additionalStyles: {
 						marginRight,
@@ -231,10 +243,15 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 
 			return Image({
 				style: this.styles.userImage,
-				uri: this.getImageUrl(user.imageUrl || user.avatar || DEFAULT_AVATAR),
+				uri: this.getImageUrl(user.imageUrl || user.avatar || this.getDefaultAvatar()),
 				testId: `${testId}_ICON`,
 				onClick,
 			});
+		}
+
+		getDefaultAvatar()
+		{
+			return DEFAULT_AVATAR;
 		}
 
 		getImageUrl(imageUrl)

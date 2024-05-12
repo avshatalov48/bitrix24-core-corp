@@ -90,7 +90,7 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 				.setAnalyticsProvider((model) => {
 					return {
 						entity: 'store-document',
-						type: model.DOC_TYPE,
+						type: model && model.DOC_TYPE,
 					};
 				})
 				.setMenuActionsProvider((detailCard, callbacks) => {

@@ -2,6 +2,7 @@
 
 namespace Bitrix\CrmMobile\Controller\DocumentGenerator;
 
+use Bitrix\CrmMobile\Controller\BaseJson;
 use Bitrix\Crm\Controller\DocumentGenerator\CheckModule;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
@@ -10,7 +11,6 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Format;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\Engine\JsonController;
 use Bitrix\Main\Error;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
@@ -18,7 +18,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loader::requireModule('crm');
 
-final class Document extends JsonController
+final class Document extends BaseJson
 {
 	/**
 	 * @see \Bitrix\DocumentGenerator\Controller\Document::getAction()
@@ -231,7 +231,7 @@ final class Document extends JsonController
 	/**
 	 * @return array
 	 */
-	protected function getDefaultPreFilters()
+	protected function getDefaultPreFilters(): array
 	{
 		$preFilters = parent::getDefaultPreFilters();
 		$preFilters[] = function()

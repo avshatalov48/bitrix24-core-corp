@@ -71,6 +71,10 @@ $MESS["INTRANET_USER_PROFILE_REINVITE_SUCCESS"] = "Приглашение был
 $MESS["INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить фотографию?";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"] = "На вашем Битрикс24 назначено максимальное допустимое<br/> количество администраторов. 
 При назначении данного<br/>пользователя вы лишитесь права администрировать портал. Вы уверены, что хотите передать права администратора?";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE"] = "Назначить сотрудника администратором?";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION"] = "Администратор имеет полный доступ к персональным данным сотрудников и клиентов, может приглашать и увольнять сотрудников, изменять права и настройки вашего Битрикс24";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_YES"] = "Да, назначить";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_NO"] = "Не назначать";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM_PROMO"] = "#LINK_START#Получить#LINK_END# дополнительные возможности для вашего Битрикс24";
 $MESS["INTRANET_USER_PROFILE_RIGHTS_RESTR_TITLE"] = "Ограничение числа администраторов";
 $MESS["INTRANET_USER_PROFILE_RIGHTS_RESTR_TEXT1"] = "Получите дополнительные полезные возможности для вашего «Битрикс24»";
@@ -102,7 +106,7 @@ $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_VISIBLE"] = "Показат
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_INVISIBLE"] = "Показатель уровня вашего стресса недоступен для просмотра другим пользователям.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "копировать в буфер";
 $MESS["INTRANET_USER_PROFILE_DISK_SPACE"] = "объем - #VALUE#";
-$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED"] = "Установлен Битрикс24.Диск";
+$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_1"] = "Установлен Битрикс24.Диск";
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Вы не можете удалить приглашенного пользователя, так как он связан с другими инструментами.
 Деактивируйте (увольте) пользователя, чтобы закрыть ему доступ к этому Битрикс24.
 <br><br>Хотите уволить?";

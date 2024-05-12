@@ -28,30 +28,30 @@ if (ModuleManager::isModuleInstalled("timeman"))
 		echo $e->getMessage();
 	}
 }
+elseif (
+	!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('worktime')
+	&& (!\Bitrix\Main\Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Feature::isFeatureEnabled('timeman'))
+)
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:intranet.settings.tool.stub',
+		'',
+		[
+			'LIMIT_CODE' => 'limit_office_worktime_off',
+			'MODULE' => 'timeman',
+			'SOURCE' => 'schedules'
+		],
+	);
+}
 elseif (!(!ModuleManager::isModuleInstalled("timeman") && in_array($licenseType, ["company", "edu", "nfr"])))
 {
-	if (LANGUAGE_ID == "de" || LANGUAGE_ID == "la")
-	{
-		$lang = LANGUAGE_ID;
-	}
-	else
-	{
-		$lang = LangSubst(LANGUAGE_ID);
-	}
 	?>
-	<p><?= Loc::getMessage("TARIFF_RESTRICTION_TEXT") ?></p>
-	<div style="text-align: center;"><img src="images/<?= $lang ?>/timeman.png"/></div>
-	<p><?= Loc::getMessage("TARIFF_RESTRICTION_TEXT2") ?></p>
-	<br/>
-	<div style="text-align: center;">
-		<?
-			if (\Bitrix\Main\Loader::includeModule("bitrix24"))
-			{
-				CBitrix24::showTariffRestrictionButtons("timeman");
-			}
-		?>
-	</div>
-	<?
+	<script>
+		BX.ready(() => {
+			BX.UI.InfoHelper.show("limit_office_shift_scheduling");
+		});
+	</script>
+	<?php
 }
 ?>
 <? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>

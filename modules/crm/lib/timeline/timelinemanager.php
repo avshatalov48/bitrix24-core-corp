@@ -14,21 +14,19 @@ class TimelineManager
 	 */
 	public static function resolveController(array $item)
 	{
-		$typeID = isset($item['TYPE_ID']) ? (int)$item['TYPE_ID'] : 0;
-		$assocEntityTypeID = isset($item['ASSOCIATED_ENTITY_TYPE_ID'])
-			? (int)$item['ASSOCIATED_ENTITY_TYPE_ID'] : 0;
-
-		if($typeID === TimelineType::WAIT)
+		$assocEntityTypeID = (int)($item['ASSOCIATED_ENTITY_TYPE_ID'] ?? 0);
+		$typeID = (int)($item['TYPE_ID'] ?? 0);
+		if ($typeID === TimelineType::WAIT)
 		{
 			return WaitController::getInstance();
 		}
 
-		if($typeID === TimelineType::BIZPROC)
+		if ($typeID === TimelineType::BIZPROC)
 		{
 			return BizprocController::getInstance();
 		}
 
-		if($typeID === TimelineType::SENDER)
+		if ($typeID === TimelineType::SENDER)
 		{
 			$senderRecipientControllerClass = '\Bitrix\Sender\Integration\Crm\Timeline\RecipientController';
 			if (Loader::includeModule('sender') && class_exists($senderRecipientControllerClass))
@@ -36,23 +34,21 @@ class TimelineManager
 				/** @var \Bitrix\Sender\Integration\Crm\Timeline\RecipientController $senderRecipientControllerClass */
 				return $senderRecipientControllerClass::getInstance();
 			}
-			else
-			{
-				return null;
-			}
+
+			return null;
 		}
 
-		if($typeID === TimelineType::COMMENT)
+		if ($typeID === TimelineType::COMMENT)
 		{
 			return CommentController::getInstance();
 		}
 
-		if($typeID === TimelineType::EXTERNAL_NOTICE)
+		if ($typeID === TimelineType::EXTERNAL_NOTICE)
 		{
 			return ExternalNoticeController::getInstance();
 		}
 
-		if($typeID === TimelineType::DOCUMENT)
+		if ($typeID === TimelineType::DOCUMENT)
 		{
 			return DocumentController::getInstance();
 		}
@@ -62,9 +58,14 @@ class TimelineManager
 			return DeliveryController::getInstance();
 		}
 
-		if($typeID === TimelineType::LOG_MESSAGE)
+		if ($typeID === TimelineType::LOG_MESSAGE)
 		{
 			return LogMessageController::getInstance();
+		}
+
+		if ($typeID === TimelineType::MARK)
+		{
+			return MarkController::getInstance();
 		}
 
 		if ($typeID === TimelineType::CALENDAR_SHARING)
@@ -82,15 +83,15 @@ class TimelineManager
 			return AI\Call\Controller::getInstance();
 		}
 
-		if($assocEntityTypeID === \CCrmOwnerType::Activity)
+		if ($assocEntityTypeID === \CCrmOwnerType::Activity)
 		{
-			if($typeID === TimelineType::MODIFICATION)
+			if ($typeID === TimelineType::MODIFICATION)
 			{
 				$settings = isset($item['SETTINGS']) && is_array($item['SETTINGS']) ? $item['SETTINGS'] : array();
 				$entity = isset($settings['ENTITY']) && is_array($settings['ENTITY']) ? $settings['ENTITY'] : array();
 				$activityTypeID = isset($entity['TYPE_ID']) ? (int)$entity['TYPE_ID'] : 0;
 
-				if($activityTypeID === \CCrmActivityType::Task)
+				if ($activityTypeID === \CCrmActivityType::Task)
 				{
 					return TaskController::getInstance();
 				}
@@ -382,15 +383,19 @@ class TimelineManager
 				}
 
 				$orderShipmentMap = [];
-				$shipmentsData = \Bitrix\Crm\Order\Shipment::getList(
-					array(
-						'filter' => array(
-							'=ORDER_ID' => $orderIds,
-							'SYSTEM' => 'N'
-						),
-						'select' => array('ID', 'ORDER_ID', 'PRICE_DELIVERY', 'CURRENCY', 'DELIVERY_NAME')
-					)
-				);
+				$shipmentsData = \Bitrix\Crm\Order\Shipment::getList([
+					'filter' => [
+						'=ORDER_ID' => $orderIds,
+						'=SYSTEM' => 'N',
+					],
+					'select' => [
+						'ID',
+						'ORDER_ID',
+						'PRICE_DELIVERY',
+						'CURRENCY',
+						'DELIVERY_NAME',
+					],
+				]);
 				while ($shipment = $shipmentsData->fetch())
 				{
 					$shipment['SHOW_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()

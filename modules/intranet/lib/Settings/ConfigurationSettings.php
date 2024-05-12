@@ -2,6 +2,11 @@
 
 namespace Bitrix\Intranet\Settings;
 
+use Bitrix\Intranet\Settings\Controls\Section;
+use Bitrix\Intranet\Settings\Controls\Selector;
+use Bitrix\Intranet\Settings\Controls\Switcher;
+use Bitrix\Intranet\Settings\Controls\Text;
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
@@ -284,24 +289,71 @@ class ConfigurationSettings extends AbstractSettings
 		//date time section
 		$cultures = Culture::getCultures();
 		$currentSite = Culture::getCurrentSite();
-		$data["isFormat24Hour"] = $this->is24HourFormat($currentSite);
+		$data["isFormat24Hour"] = new Switcher(
+			'settings-configuration-field-is_format_24_hours',
+			'isFormat24Hour',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24'),
+			$this->is24HourFormat($currentSite),
+			[
+				'hintTitle' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24'),
+				'on' => $this->get24HourTime(),
+				'off' => $this->get12HourTime(),
+			]
+		);
+
 		$data["format24HourTime"] = $this->get24HourTime();
 		$data["format12HourTime"] = $this->get12HourTime();
+
+		$currentDate = '';
+		$longDateList = [];
+		foreach ($cultures as $culture)
+		{
+			if ($culture['ID'] === $currentSite["CULTURE_ID"])
+			{
+				$currentDate = $culture['LONG_DATE_FORMAT_USER'];
+			}
+			$longDateList[$culture['ID']] = $culture['LONG_DATE_FORMAT_USER'];
+		}
+		$data['longDates'] = $longDateList;
+		$data['currentDate'] = $currentDate;
+		$data['offsetUTC'] = $this->getOffsetUTC();
 		$data["culture"] = $this->getCultures($currentSite, $cultures);
 
-		//mails section
-		$data["trackOutMailsRead"] = $this->getStatusTrackOutMailsRead();
-		$data["trackOutMailsClick"] = $this->getStatusTrackOutMailsClick();
+		//region mails section
+		$data["trackOutMailsRead"] = new Switcher(
+			'settings-configuration-field-track_out_mails_read',
+			'trackOutMailsRead',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS'),
+			$this->getStatusTrackOutMailsRead(),
+			['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_ON')],
+		);
+
+		$data["trackOutMailsClick"] = new Switcher(
+			'settings-configuration-field-track_out_mails_click',
+			'trackOutMailsClick',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS'),
+			$this->getStatusTrackOutMailsClick(),
+			['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_CLICK_ON_MSGVER_1')],
+			helpDesk: 'redirect=detail&code=18213310'
+		);
 		if ($this->isBitrix24)
 		{
-			$data['defaultEmailFrom'] = $this->getDefaultEmailFrom();
+			$data['defaultEmailFrom'] = new Text(
+				'settings-configuration-field-default_email_from',
+				'defaultEmailFrom',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL'),
+				$this->getDefaultEmailFrom(),
+				['hintTitle' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_DEFAULT_EMAIL')],
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL')
+			);
 		}
-
-		//CRM map section
+		//endregion
+		//region CRM map section
 		$data["yandexApiUrl"] = static::YANDEX_API_URL;
 		$data["mapsProviderCRM"] = $this->getMapsProviderCRM();
 		$mapSetting = $this->getMapsSettings();
 		$data = array_merge($data, $mapSetting);
+		//endregion
 
 		//maps product properties section
 		$data["googleApiUrl"] = static::GOOGLE_API_KEY;
@@ -309,17 +361,86 @@ class ConfigurationSettings extends AbstractSettings
 		$data["yandexKeyProductProperties"] = $this->getYandexKeyProductProperties();
 		$data["googleKeyProductProperties"] = $this->getGoogleKeyProductProperties();
 
-		//additional settings section
-		$data["allowUserInstallApplication"] = $this->getUserInstallApplicationRight();
-
+		//region additional settings section
+		$data["allowUserInstallApplication"] = new Switcher(
+			'settings-configuration-field-allowUserInstallApplication',
+			'allowUserInstallApplication',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
+			$this->getUserInstallApplicationRight(),
+			['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON'),]
+		);
 		if ($this->isBitrix24)
 		{
-			$data["allCanBuyTariff"] = $this->getAllCanBuyTariff();
+			$data["allCanBuyTariff"] = new Switcher(
+				'settings-configuration-field-allCanBuyTariff',
+				'allCanBuyTariff',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
+				$this->getAllCanBuyTariff()['value'],
+				['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON')],
+				isEnable: $this->getAllCanBuyTariff()['isEnable'],
+			);
 		}
 
-		$data["allowMeasureStressLevel"] = $this->getAllowMeasureStressLevel();
-		$data["collectGeoData"] = $this->getCollectGeoData();
+		$data["allowMeasureStressLevel"] = new Switcher(
+			'settings-configuration-field-allowMeasureStressLevel',
+			'allowMeasureStressLevel',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
+			$this->getAllowMeasureStressLevel(),
+			['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON_MSGVER_1')],
+			helpDesk: 'redirect=detail&code=17697808',
+		);
+
+
+		$data["collectGeoData"] = new Switcher(
+			'settings-configuration-field-collectGeoData',
+			'collectGeoData',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
+			$this->getCollectGeoData(),
+			['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1')],
+			helpDesk: 'redirect=detail&code=18213320',
+		);
+
 		$data["showSettingsAllUsers"] = $this->getShowSettingsAllUsers();
+		//endregion
+
+
+		//sections
+		$data['sectionDateFormat'] = new Section(
+			'settings-configuration-section-date_format',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DATETIME'),
+			'ui-icon-set --clock-2',
+		);
+
+		$data['sectionLetters'] = new Section(
+			'settings-configuration-section-letters',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAILS'),
+			'ui-icon-set --mail',
+			false
+		);
+
+		if (!empty($data["mapsProviderCRM"]))
+		{
+			$data['sectionMapsInCrm'] = new Section(
+				'settings-configuration-section-maps_in_crm',
+				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS'),
+				'ui-icon-set --crm-map',
+				false
+			);
+		}
+
+		$data['sectionMapsInProduct'] = new Section(
+			'settings-configuration-section-maps_in_product',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_PRODUCT'),
+			'ui-icon-set --location-2',
+			false
+		);
+
+		$data['sectionOther'] = new Section(
+			'settings-configuration-section-other',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL_SETTINGS'),
+			'ui-icon-set --apps',
+			false
+		);
 
 		return new static($data);
 	}
@@ -464,7 +585,8 @@ class ConfigurationSettings extends AbstractSettings
 		$result = [
 			'name' => 'cardsProviderProductProperties',
 			'values' => $values,
-			'current' => $currentProvider
+			'current' => $currentProvider,
+			'label' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
 		];
 
 		return $result;
@@ -490,7 +612,8 @@ class ConfigurationSettings extends AbstractSettings
 			return [
 				'name' => 'cardsProviderCRM',
 				'values' => $values,
-				'current' => $locationSourceCode
+				'current' => $locationSourceCode,
+				'label' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
 			];
 		}
 
@@ -528,12 +651,10 @@ class ConfigurationSettings extends AbstractSettings
 		return Option::get('main', 'email_from', '');
 	}
 
-	private function getCultures(array $currentSite, array $cultures): array
+	private function getCultures(array $currentSite, array $cultures): Selector
 	{
-		$hintList = [];
+		$hintList = ['hintTitle' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_DATE_FORMAT')];
 		$values = [];
-		$longDateList = [];
-		$currentDate = '';
 
 		foreach ($cultures as $culture)
 		{
@@ -544,23 +665,16 @@ class ConfigurationSettings extends AbstractSettings
 			];
 
 			$hintList[$culture['ID']] = $culture['LONG_DATE_FORMAT_USER'] . ' ' . $culture['SHORT_DATE_FORMAT_USER'];
-			$longDateList[$culture['ID']] = $culture['LONG_DATE_FORMAT_USER'];
-
-			if ($culture['ID'] === $currentSite["CULTURE_ID"])
-			{
-				$currentDate = $culture['LONG_DATE_FORMAT_USER'];
-			}
 		}
 
-		return [
-			'name' => 'culture',
-			'values' => $values,
-			'current' => $currentSite["CULTURE_ID"],
-			'hints' => $hintList,
-			'longDates' => $longDateList,
-			'currentDate' => $currentDate,
-			'offsetUTC' => $this->getOffsetUTC(),
-		];
+		return new Selector(
+			'settings-configuration-field-culture',
+			'culture',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATETIME_REGION_FORMAT'),
+			$values,
+			$currentSite["CULTURE_ID"],
+			hints: $hintList,
+		);
 	}
 
 	private function getOffsetUTC(): string
@@ -612,5 +726,36 @@ class ConfigurationSettings extends AbstractSettings
 		$currentTimeFormat = str_replace($currentSite["FORMAT_DATE"]." ", "", $currentSite["FORMAT_DATETIME"]);
 
 		return $currentTimeFormat === 'HH:MI:SS' ? 'Y' : 'N';
+	}
+
+	public function find(string $query): array
+	{
+		$searchSections = [
+			'settings-configuration-section-date_format' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DATETIME'),
+			'settings-configuration-section-letters' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAILS'),
+			'settings-configuration-section-maps_in_product' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_PRODUCT'),
+			'settings-configuration-section-other' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL_SETTINGS'),
+		];
+
+		if (!empty($this->getMapsProviderCRM()))
+		{
+			$searchSections['settings-configuration-section-maps_in_crm'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS');
+		}
+
+		$searchEngine = SearchEngine::initWithDefaultFormatter($searchSections + [
+			'culture' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATETIME_REGION_FORMAT'),
+			'isFormat24Hour' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24'),
+			'trackOutMailsRead' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS'),
+			'trackOutMailsClick' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS'),
+			'defaultEmailFrom' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL'),
+			'cardsProviderCRM' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+			'cardsProviderProductProperties' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+			'allowUserInstallApplication' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
+			'allCanBuyTariff' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
+			'allowMeasureStressLevel' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
+			'collectGeoData' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
+		]);
+
+		return $searchEngine->find($query);
 	}
 }

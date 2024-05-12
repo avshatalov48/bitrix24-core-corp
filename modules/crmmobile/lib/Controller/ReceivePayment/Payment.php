@@ -81,6 +81,21 @@ class Payment extends Base
 		{
 			return false;
 		}
+
+		if (isset($options['selectedContact']))
+		{
+			$bindContactResult = $this->bindContactToEntity($options['selectedContact']['id'], $entity);
+			if (!$bindContactResult->isSuccess())
+			{
+				$this->errorCollection->clear();
+				$errors = [
+					new Error(Loc::getMessage('RECEIVE_PAYMENT_SAVE_CONTACT_ERROR')),
+				];
+				$errors = $this->markErrorsAsPublic($errors);
+				$this->addErrors($errors);
+			}
+		}
+
 		$orderId = CrmManager::getOrderIdByEntity($entity);
 
 		$this->forward(

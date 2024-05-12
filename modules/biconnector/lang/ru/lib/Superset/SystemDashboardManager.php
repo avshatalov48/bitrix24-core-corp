@@ -5,3 +5,6 @@ $MESS['BICONNECOR_SYSTEM_DASHBOARD_TITLE_LEADS'] = 'Динамика лидог�
 $MESS['BICONNECOR_SYSTEM_DASHBOARD_TITLE_SALES'] = 'Динамика продаж';
 $MESS['BICONNECOR_SYSTEM_DASHBOARD_TITLE_SALES_STRUCT'] = 'Структура продаж';
 $MESS['BICONNECOR_SYSTEM_DASHBOARD_TITLE_TELEPHONY'] = 'Аналитика звонков';
+$MESS['BICONNECTOR_USER_NOTIFICATION_SYSTEM_DASHBOARD_CREATION'] = 'Новый системный отчёт #LINK# ';
+$MESS['BICONNECTOR_USER_NOTIFICATION_SYSTEM_DASHBOARD_MODIFICATION'] = 'Обновлён системный отчёт #LINK#';
+$MESS['BICONNECTOR_USER_NOTIFICATION_SYSTEM_DASHBOARD_TITLE'] = 'BI Конструктор';

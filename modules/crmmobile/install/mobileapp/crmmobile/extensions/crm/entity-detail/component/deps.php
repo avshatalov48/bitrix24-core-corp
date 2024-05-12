@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'analytics-label',
 		'alert',
 		'rest',

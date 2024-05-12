@@ -16,11 +16,11 @@ $MESS["CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_BOX"] = "Sie haben nicht ge
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_CLOUD"] = "Sie haben nicht genügend Rechte, um auf die Bestandsverwaltung zuzugreifen. Bitte wenden Sie sich an Ihren Bitrix24 Administrator, um den Zugriff gewährt zu bekommen. Der Administrator wird Ihnen die Rolle Manager in den CRM-Einstellungen zuweisen müssen. <a onclick=\"top.BX.Helper.show('redirect=detail&code=15955386')\" style=\"cursor: pointer; \">Mehr</a>";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_EXTRA_SERVICES"] = "Zusätzliche Services";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_CLIENT"] = "Kunde";
-$MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_ID"] = "ID";
+$MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_ID_MSGVER_1"] = "ID";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_PRODUCT"] = "Produkte der Bestellung";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_PRODUCT_2"] = "Produkte";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_RESPONSIBLE_ID"] = "Verantwortliche Person";
-$MESS["CRM_STORE_DOCUMENT_SHIPMENT_ORDER_ID"] = "ID der Bestellung";
+$MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_XML_ID_MSGVER_1"] = "Externe ID";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_PAYMENT_NOT_FOUND"] = "Zahlung wurde nicht gefunden.";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY"] = "Kalkulierter Preis";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_PRICE_DELIVERY_WITH_CURRENCY"] = "Lieferpreis";

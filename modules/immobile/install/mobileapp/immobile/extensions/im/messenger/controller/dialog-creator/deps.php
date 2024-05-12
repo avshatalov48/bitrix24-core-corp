@@ -8,7 +8,7 @@ return [
 		'files/converter',
 		'utils/color',
 		'im:chat/selector/chat',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/assets/common',
 		'im:messenger/const',
 		'im:messenger/controller/dialog-selector',
@@ -22,6 +22,8 @@ return [
 		'im:messenger/lib/ui/base/list',
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/logger',
+		'intranet/invite-opener',
+		'analytics',
 	],
 	'bundle' => [
 		'./src/dialog-creator',

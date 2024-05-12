@@ -3,6 +3,7 @@ return [
 	'extensions' => [
 		'user/list',
 		'user/profile',
-		'intranet/invite',
+		'intranet/invite-opener',
+		'analytics',
 	],
 ];

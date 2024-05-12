@@ -2,7 +2,10 @@
 
 use Bitrix\Crm\Activity\Provider\Sms\MessageDto;
 use Bitrix\Crm\Activity\Provider\Sms\TemplatePlaceholderDto;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Json;
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -43,7 +46,7 @@ if(!function_exists('__CrmTimelineEndResponse'))
 		Header('Content-Type: application/json');
 		if(!empty($result))
 		{
-			echo \Bitrix\Main\Web\Json::encode($result);
+			echo Json::encode($result);
 		}
 		if(!defined('PUBLIC_AJAX_MODE'))
 		{
@@ -436,7 +439,7 @@ elseif($action == 'GET_HISTORY_ITEMS')
 		)
 	);
 }
-elseif($action == 'SAVE_SMS_MESSAGE')
+elseif ($action === 'SAVE_SMS_MESSAGE')
 {
 	$ownerTypeId = (int)($_REQUEST['OWNER_TYPE_ID'] ?? 0);
 	if($ownerTypeId <= 0)
@@ -457,6 +460,31 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 	$messageTo = isset($_REQUEST['MESSAGE_TO']) ? (string)$_REQUEST['MESSAGE_TO'] : null;
 	$messageBody = isset($_REQUEST['MESSAGE_BODY']) ? (string)$_REQUEST['MESSAGE_BODY'] : null;
 	$messageTemplateCode = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
+
+	$isTemplatesWithPlaceholdersBased = ($_REQUEST['MESSAGE_TEMPLATE_WITH_PLACEHOLDER'] ?? false) === 'true';
+
+	if ($isTemplatesWithPlaceholdersBased && Loader::includeModule('documentgenerator'))
+	{
+		$documentGeneratorManager = DocumentGeneratorManager::getInstance();
+		$htmlMessageBody = $documentGeneratorManager->replacePlaceholdersInText($ownerTypeId, $ownerId, $messageBody, ' ');
+
+		$messageBody = html_entity_decode(
+			preg_replace('/<br\/?>/i', PHP_EOL, $htmlMessageBody),
+			ENT_NOQUOTES | ENT_HTML401
+		);
+
+		/*
+		 * Bitrix\MessageService\Providers\Edna\WhatsApp::getHSMContent use ['MESSAGE_HEADERS']['template']['text']
+		 * from template, but not MESSAGE_BODY. Because It is assumed that in the future we will
+		 * send templates with headers and footers, then we will need to redo
+		 */
+		if (is_string($messageTemplateCode))
+		{
+			$data = Json::decode($messageTemplateCode);
+			$data['text'] = $messageBody;
+			$messageTemplateCode = Json::encode($data);
+		}
+	}
 
 	$message = new MessageDto([
 		'senderId' => $senderId,
@@ -659,7 +687,7 @@ elseif($action == 'UPDATE_COMMENT') // OBSOLETE: new API 'crm.timeline.comment.u
 
 		if ($bindingDelete->isSuccess())
 		{
-			if (\Bitrix\Main\Loader::includeModule('pull'))
+			if (Loader::includeModule('pull'))
 			{
 				$tag = \Bitrix\Crm\Timeline\TimelineEntry::prepareEntityPushTag($ownerTypeID, $ownerID);
 				\CPullWatch::AddToStack(

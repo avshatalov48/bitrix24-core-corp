@@ -35,6 +35,28 @@ return array(
 			"new" => $new,
 		),
 
+		"light:pancakes-cat" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_PANCAKES_CAT"),
+			"prefetchImages" => array("pancakes-cat.jpg"),
+			"previewImage" => "pancakes-cat-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => time() < strtotime('18 March 2024'),
+			"zones" => array("ru", "by"),
+		),
+
+		"light:pancakes" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_PANCAKES"),
+			"prefetchImages" => array("pancakes.jpg"),
+			"previewImage" => "pancakes-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => time() < strtotime('18 March 2024'),
+			"zones" => array("ru", "by"),
+		),
+
 		"light:video-jupiter" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_JUPITER"),
 			"previewImage" => "jupiter-preview.jpg",

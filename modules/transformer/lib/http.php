@@ -200,7 +200,7 @@ class Http
 
 		$post = array('command' => $command, 'params' => $params);
 
-		if($params['queue'])
+		if(!empty($params['queue']))
 		{
 			$post['QUEUE'] = $params['queue'];
 		}

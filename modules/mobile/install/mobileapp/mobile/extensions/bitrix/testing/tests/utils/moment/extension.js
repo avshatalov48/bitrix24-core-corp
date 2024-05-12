@@ -378,11 +378,15 @@
 
 		test('yearsFromNow should return the number of months between the moment and now', () => {
 			const now = new Moment('2023-06-03T10:00:00');
-			now.setNow(new Moment('2023-06-03T10:00:00'));
 
 			const lastYear = new Moment('2022-12-03T10:00:00');
+			lastYear.setNow(now);
+
 			const thisYear = new Moment('2023-06-03T10:00:00');
+			thisYear.setNow(now);
+
 			const nextYear = new Moment('2024-01-03T10:00:00');
+			nextYear.setNow(now);
 
 			expect(lastYear.yearsFromNow).toBe(1);
 			expect(thisYear.yearsFromNow).toBe(0);

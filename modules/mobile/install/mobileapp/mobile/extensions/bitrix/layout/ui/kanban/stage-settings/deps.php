@@ -12,5 +12,6 @@ return [
 		'layout/ui/buttons',
 		'layout/ui/entity-name',
 		'layout/ui/color-picker',
+		'loc',
 	]
 ];

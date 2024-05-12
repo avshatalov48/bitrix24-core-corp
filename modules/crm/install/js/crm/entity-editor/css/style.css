@@ -1949,6 +1949,13 @@ a.crm-entity-widget-client-box-name:hover {
 	align-items: center;
 }
 
+.ui-entity-editor-delimiter
+{
+	display: block;
+	border-bottom: 1px solid #e8ecee;
+	margin: 10px 15px 10px;
+}
+
 .ui-entity-editor-content-block .ui-entity-editor-content-block .field-item
 {
 	display: flex;
@@ -4233,13 +4240,23 @@ a.crm-widget-employee-position:hover {
 	color: #a3a9b1;
 }
 
+.crm-entity-widget-payment-detail-description {
+	display: block;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: #a8adb4;
+}
+
 /*.crm-entity-widget-payment-detail .ui-link {*/
 /*    letter-spacing: -.5px;*/
 /*}*/
 
 .crm-entity-widget-payment-add-box {
-	margin-top: 16px;
+	margin-top: 12px;
 	padding: 0 15px;
+}
+
+.crm-entity-widget-payment-add-box .ui-entity-editor-content-add-lnk {
+	color: #2066b0;
 }
 
 .crm-entity-widget-payment-add {
@@ -4309,6 +4326,11 @@ a.crm-widget-employee-position:hover {
 .crm-entity-widget-payment-total .crm-entity-widget-payment-text {
 	color: #525C69;
 	font-size: 16px;
+}
+
+.crm-entity-widget-inner--payment.is-empty .crm-entity-widget-payment-total,
+.crm-entity-widget-inner--payment.is-empty .crm-entity-widget-payment-text {
+	color: #bdc1c6;
 }
 
 .crm-entity-widget-payment-total .ui-hint {

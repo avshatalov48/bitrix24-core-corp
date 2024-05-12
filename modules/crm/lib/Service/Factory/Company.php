@@ -486,6 +486,10 @@ final class Company extends Service\Factory
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SocialNetwork\ProcessDelete(),
 			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearEntitySelectorPrepareRequisiteDataCache(),
+			)
 		;
 
 		if ($operation->getItem()->getIsMyCompany())

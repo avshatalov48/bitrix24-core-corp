@@ -83,7 +83,7 @@ class GetPaymentListAction extends Action
 		{
 			$itemData = DtoItemDataConverter::convert($payment);
 
-			$resultItem = new DtoItem([
+			$resultItem = DtoItem::make([
 				'id' => $itemData->id,
 			]);
 			$itemData->fields = $this->getItemFields($itemData);

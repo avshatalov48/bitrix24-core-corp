@@ -5,14 +5,14 @@ namespace Bitrix\DocumentGenerator\Model;
 use Bitrix\DocumentGenerator\Body;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
+use Bitrix\DocumentGenerator\Dictionary;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
-use Bitrix\DocumentGenerator\Dictionary;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ORM\Event;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 Loc::loadMessages(__FILE__);
@@ -141,6 +141,11 @@ class TemplateTable extends FileModel
 				'default_value' => self::PRODUCTS_TABLE_VARIANT_ALL,
 			]),
 			new Main\Entity\BooleanField('IS_DELETED', [
+				'values' => ['N', 'Y'],
+				'default_value' => 'N',
+			]),
+			new Main\Entity\BooleanField('IS_DEFAULT', [
+				'required' => true,
 				'values' => ['N', 'Y'],
 				'default_value' => 'N',
 			]),

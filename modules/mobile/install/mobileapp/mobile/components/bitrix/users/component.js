@@ -8,6 +8,8 @@
 
 	const AppTheme = require('apptheme');
 	const { ProfileView } = require('user/profile');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { AnalyticsEvent } = require('analytics');
 	const storageId = 'user.component.result';
 	const componentResult = {
 		/**
@@ -39,13 +41,8 @@
 	if (BX.componentParameters.get('canInvite', false))
 	{
 		const action = () => {
-			IntranetInvite.openRegisterSlider({
-				originator: 'users',
-				registerUrl: BX.componentParameters.get('registerUrl', ''),
-				adminConfirm: BX.componentParameters.get('registerAdminConfirm', false),
-				disableAdminConfirm: BX.componentParameters.get('disableRegisterAdminConfirm', false),
-				sharingMessage: BX.componentParameters.get('sharingMessage', ''),
-				rootStructureSectionId: BX.componentParameters.get('rootStructureSectionId', 0),
+			openIntranetInviteWidget({
+				analytics: new AnalyticsEvent().setSection('userList'),
 			});
 		};
 

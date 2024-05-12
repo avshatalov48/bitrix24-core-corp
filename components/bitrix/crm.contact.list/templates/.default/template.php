@@ -19,10 +19,10 @@ use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\AvailabilityManager;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')
@@ -44,7 +44,6 @@ Bitrix\Main\UI\Extension::load(
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
@@ -330,19 +329,6 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 				'TEXT' => GetMessage('CRM_CONTACT_ADD_TODO'),
 				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Contact . ", " . (int)$arContact['ID'] . ", " . $currentUser . ", " . $pingSettings . ");"
 			];
-
-			if (RestrictionManager::isHistoryViewPermitted() && !$arResult['CATEGORY_ID'])
-			{
-				$arActions[] = $arActivityMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_CONTACT_EVENT_TITLE'),
-					'TEXT' => GetMessage('CRM_CONTACT_EVENT'),
-					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}',
-						BX.CrmUIGridMenuCommand.createEvent,
-						{ entityTypeName: BX.CrmEntityType.names.contact, entityId: {$arContact['ID']} }
-					)"
-				);
-			}
 
 			if(IsModuleInstalled('subscribe'))
 			{
@@ -907,6 +893,14 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.contact.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'category_id' => $arResult['CATEGORY_ID'] ?? null,
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -927,10 +921,11 @@ $APPLICATION->IncludeComponent(
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => array(
-			'LAZY_LOAD' => array(
-				'GET_LIST' => '/bitrix/components/bitrix/crm.contact.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.contact.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			),
+			'LAZY_LOAD' => [
+				'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+				'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+				'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
+			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
@@ -939,6 +934,10 @@ $APPLICATION->IncludeComponent(
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
+			'RESTRICTED_FIELDS' => $arResult['RESTRICTED_FIELDS'] ?? [],
 		),
 		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
 			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
@@ -1097,12 +1096,6 @@ BX.ready(
 				mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_CONTACT_MERGE'])?>"
 			}
 		);
-
-		BX.Crm.AnalyticTracker.config =
-			{
-				id: "contact_list",
-				settings: { params: <?=CUtil::PhpToJSObject($arResult['ANALYTIC_TRACKER'])?> }
-			};
 	}
 );
 </script>

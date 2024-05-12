@@ -2,12 +2,29 @@
 
 namespace Bitrix\Crm\Service\Broker;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Broker;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 
 final class Activity extends Broker
 {
+	public function getOwner(int $id): ?ItemIdentifier
+	{
+		$activity = $this->getById($id);
+		if (
+			is_array($activity)
+			&& isset($activity['OWNER_TYPE_ID'], $activity['OWNER_ID'])
+			&& \CCrmOwnerType::IsDefined($activity['OWNER_TYPE_ID'])
+			&& $activity['OWNER_ID'] > 0
+		)
+		{
+			return new ItemIdentifier((int)$activity['OWNER_TYPE_ID'], (int)$activity['OWNER_ID']);
+		}
+
+		return null;
+	}
+
 	public function __construct()
 	{
 		$eventManager = EventManager::getInstance();

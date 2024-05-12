@@ -6,7 +6,7 @@ use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\CrmMobile\Dto;
-use Bitrix\Main\Engine\Controller;
+use Bitrix\CrmMobile\Controller\Base;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -14,7 +14,7 @@ use Bitrix\Main\Localization\Loc;
 Loader::requireModule('crm');
 Loader::requireModule('bizproc');
 
-class Stage extends Controller
+class Stage extends Base
 {
 	public function createAction(Factory $factory, int $categoryId, array $fields): ?Dto\Stage
 	{
@@ -44,7 +44,7 @@ class Stage extends Controller
 
 		$stage = $status->GetStatusById($id);
 
-		return new Dto\Stage([
+		return Dto\Stage::make([
 			'id' => $stage['ID'],
 			'name' => $stage['NAME'],
 			'sort' => $stage['SORT'],

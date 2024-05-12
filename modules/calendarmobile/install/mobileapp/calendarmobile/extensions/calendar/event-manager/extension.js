@@ -23,7 +23,9 @@ jn.define('calendar/event-manager', (require, exports, module) => {
 
 			this.storage = [];
 			this.loadedEventsIndex = {};
+			this.filteredEventsIndex = {};
 			this.eventsMap = {};
+			this.eventIdsMap = {};
 
 			this.nowDate = new Date();
 
@@ -130,6 +132,15 @@ jn.define('calendar/event-manager', (require, exports, module) => {
 		getByUniqueId(uid)
 		{
 			return this.storage[this.loadedEventsIndex[uid]] ?? this.filteredEventsStorage[this.filteredEventsIndex[uid]];
+		}
+
+		/**
+		 * @public
+		 * @returns {*|{}}
+		 */
+		getEventsMap()
+		{
+			return this.eventsMap;
 		}
 
 		/**
@@ -399,6 +410,11 @@ jn.define('calendar/event-manager', (require, exports, module) => {
 			}
 		}
 
+		deleteEvent(id)
+		{
+			this.storage = this.storage.filter((event) => event.getUniqueId() !== id);
+		}
+
 		/**
 		 * @private
 		 * @param events
@@ -481,14 +497,23 @@ jn.define('calendar/event-manager', (require, exports, module) => {
 		 */
 		onEventListReceived(startDate, endDate, data)
 		{
-			if (data.events)
+			if (!data?.events)
 			{
-				const eventsRaw = BX.prop.getArray(data, 'events', []);
-				this.eventsMap = this.appendEventsRawToIndex(eventsRaw, this.storage, this.loadedEventsIndex);
-
-				this.setLoadedRange(startDate, endDate);
-				this.props.onEventLoaded();
+				return;
 			}
+
+			const rangeKey = `${DateHelper.getDayCode(startDate)}:${DateHelper.getDayCode(endDate)}`;
+			const currentIds = this.eventIdsMap[rangeKey] || [];
+			const receivedIds = data.events.map((event) => parseInt(event.ID, 10));
+			this.eventIdsMap[rangeKey] = receivedIds;
+			const deletedIds = currentIds.filter((id) => !receivedIds.includes(id));
+			deletedIds.forEach((id) => this.deleteEvent(id));
+
+			const eventsRaw = BX.prop.getArray(data, 'events', []);
+			this.eventsMap = this.appendEventsRawToIndex(eventsRaw, this.storage, this.loadedEventsIndex);
+
+			this.setLoadedRange(startDate, endDate);
+			this.props.onEventLoaded();
 		}
 
 		/**

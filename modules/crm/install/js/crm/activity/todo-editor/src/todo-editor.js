@@ -1,12 +1,12 @@
+import { ajax as Ajax, Dom, Loc, Reflection, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { DateTimeFormat } from 'main.date';
 import { FileUploader as TodoEditorFileUploader } from 'crm.activity.file-uploader';
 import {
 	Calendar as SettingsPopupCalendar,
 	SettingsPopup as TodoEditorSettingsPopup,
 } from 'crm.activity.settings-popup';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { ajax as Ajax, Dom, Loc, Reflection, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { DateTimeFormat } from 'main.date';
 import { UI } from 'ui.notification';
 import { BitrixVue } from 'ui.vue3';
 import { TodoEditor as TodoEditorComponent } from './components/todo-editor';
@@ -22,6 +22,7 @@ declare type TodoEditorParams = {
 	ownerId: number,
 	currentUser?: Object,
 	pingSettings?: Object,
+	copilotSettings?: Object,
 	ownerTypeId: number,
 	borderColor: string,
 	enableCalendarSync: boolean,
@@ -45,7 +46,7 @@ export type SectionSettings = {
 export const TodoEditorMode = {
 	ADD: 'add',
 	UPDATE: 'update',
-}
+};
 
 /**
  * @memberOf BX.Crm.Activity
@@ -69,6 +70,7 @@ export class TodoEditor
 	#ownerId: Number = null;
 	#currentUser: Object = null;
 	#pingSettings: Object = null;
+	#copilotSettings: ?Object = null;
 	#defaultDescription: String = null;
 	#deadline: Date = null;
 	#parentActivityId: Number = null;
@@ -88,8 +90,7 @@ export class TodoEditor
 			throw new Error('TodoEditor container must be a DOM Node');
 		}
 		this.#container = params.container;
-		this.#borderColor =
-			this.#isValidBorderColor(params.borderColor)
+		this.#borderColor = this.#isValidBorderColor(params.borderColor)
 			? params.borderColor
 			: TodoEditor.BorderColor.DEFAULT
 		;
@@ -97,19 +98,19 @@ export class TodoEditor
 
 		if (!Type.isNumber(params.ownerTypeId))
 		{
-			throw new Error('OwnerTypeId must be set');
+			throw new TypeError('OwnerTypeId must be set');
 		}
 		this.#ownerTypeId = params.ownerTypeId;
 
 		if (!Type.isNumber(params.ownerId))
 		{
-			throw new Error('OwnerId must be set');
+			throw new TypeError('OwnerId must be set');
 		}
 		this.#ownerId = params.ownerId;
 
 		if (!Type.isObjectLike(params.currentUser))
 		{
-			throw new Error('Current user must be set');
+			throw new TypeError('Current user must be set');
 		}
 		this.#currentUser = params.currentUser;
 
@@ -119,28 +120,20 @@ export class TodoEditor
 		}
 		this.#pingSettings = params.pingSettings || {};
 
-		this.#defaultDescription = Type.isString(params.defaultDescription) ? params.defaultDescription : this.#getDefaultDescription();
+		this.#copilotSettings = params.copilotSettings || null;
+
+		this.#defaultDescription = Type.isString(params.defaultDescription)
+			? params.defaultDescription
+			: this.#getDefaultDescription()
+		;
 
 		this.#deadline = Type.isDate(params.deadline) ? params.deadline : null;
-
 		if (!this.#deadline)
 		{
 			this.setDefaultDeadLine(false);
 		}
 
-		this.#eventEmitter = new EventEmitter;
-		this.#eventEmitter.setEventNamespace('Crm.Activity.TodoEditor');
-
-		if (Type.isObject(params.events))
-		{
-			for (const eventName in params.events)
-			{
-				if (Type.isFunction(params.events[eventName]))
-				{
-					this.#eventEmitter.subscribe(eventName, params.events[eventName])
-				}
-			}
-		}
+		this.#bindEvents(params);
 
 		this.#enableCalendarSync = Type.isBoolean(params.enableCalendarSync) ? params.enableCalendarSync : false;
 		this.#popupMode = Type.isBoolean(params.popupMode) ? params.popupMode : false;
@@ -148,7 +141,7 @@ export class TodoEditor
 
 	setMode(mode: String): self
 	{
-		if (!Object.values(TodoEditorMode).some(value => value === mode) )
+		if (!Object.values(TodoEditorMode).some(value => value === mode))
 		{
 			throw new Error(`Unknown TodoEditor mode ${mode}`);
 		}
@@ -169,10 +162,28 @@ export class TodoEditor
 			additionalButtons: this.#getAdditionalButtons(),
 			popupMode: this.#popupMode,
 			currentUser: this.#currentUser,
-			pingSettings: this.#pingSettings
+			pingSettings: this.#pingSettings,
+			copilotSettings: this.#copilotSettings,
 		});
 
 		this.#layoutComponent = this.#layoutApp.mount(this.#container);
+	}
+
+	#bindEvents(params: TodoEditorParams): void
+	{
+		this.#eventEmitter = new EventEmitter();
+		this.#eventEmitter.setEventNamespace('Crm.Activity.TodoEditor');
+
+		if (Type.isObject(params.events))
+		{
+			for (const eventName in params.events)
+			{
+				if (Type.isFunction(params.events[eventName]))
+				{
+					this.#eventEmitter.subscribe(eventName, params.events[eventName]);
+				}
+			}
+		}
 	}
 
 	#getAdditionalButtons(): ReadonlyArray<TodoEditorAdditionalButton>
@@ -196,7 +207,7 @@ export class TodoEditor
 			icon: 'settings',
 			description: Loc.getMessage('CRM_ACTIVITY_TODO_SETTINGS_BUTTON_HINT'),
 			action: this.#onSettingsButtonClick.bind(this),
-		}
+		};
 	}
 
 	#onSettingsButtonClick(): void
@@ -233,11 +244,6 @@ export class TodoEditor
 		this.#settings = settings;
 	}
 
-	#getSettingsSection(name: String): ?Object
-	{
-		return (this.#settings[name] || null);
-	}
-
 	#getFileUploaderButton(): TodoEditorAdditionalButton
 	{
 		return {
@@ -245,7 +251,7 @@ export class TodoEditor
 			icon: 'attach',
 			description: Loc.getMessage('CRM_ACTIVITY_TODO_UPLOAD_FILE_BUTTON_HINT'),
 			action: this.#onFileUploadButtonClick.bind(this),
-		}
+		};
 	}
 
 	save(): Promise
@@ -263,14 +269,14 @@ export class TodoEditor
 					.then(resolve)
 					.catch(reject)
 				;
-			})
+			}).catch(reject);
 		}).catch((response) => {
 			UI.Notification.Center.notify({
 				content: response.errors[0].message,
 				autoHideDelay: 5000,
 			});
 
-			//so that on error returned promise is marked as rejected
+			// so that on error returned promise is marked as rejected
 			throw response;
 		}).finally(() => {
 			this.#loadingPromise = null;
@@ -294,7 +300,7 @@ export class TodoEditor
 					fileTokens: this.#fileUploader ? this.#fileUploader.getServerFileIds() : [],
 					settings,
 					pingOffsets: userData.pingOffsets,
-				}
+				};
 
 				if (this.#mode === TodoEditorMode.UPDATE)
 				{
@@ -330,7 +336,7 @@ export class TodoEditor
 
 		// must first work out vue reactivity in nested components
 		return new Promise(resolve => {
-			setTimeout(()=>{
+			setTimeout(() => {
 				resolve(this.#settingsPopup.getSettings());
 			}, 0);
 		});
@@ -371,7 +377,7 @@ export class TodoEditor
 					from: calendarSettings.from,
 					to: calendarSettings.to,
 					duration: calendarSettings.duration,
-				}
+				};
 				calendar.active = true;
 			}
 		}
@@ -394,11 +400,11 @@ export class TodoEditor
 		const duration = 3600;
 		const to = from + duration;
 
-		return  {
+		return {
 			from,
 			duration,
 			to,
-		}
+		};
 	}
 
 	getDeadline(): ?Date
@@ -448,6 +454,7 @@ export class TodoEditor
 
 	setDefaultDeadLine(isNeedUpdateLayout: Boolean = true): self
 	{
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 		let defaultDate = BX.parseDate(Loc.getMessage('CRM_TIMELINE_TODO_EDITOR_DEFAULT_DATETIME'));
 		if (Type.isDate(defaultDate))
 		{
@@ -537,7 +544,7 @@ export class TodoEditor
 	{
 		const event = new BaseEvent({
 			data: {
-				description
+				description,
 			},
 		});
 
@@ -579,7 +586,7 @@ export class TodoEditor
 					'File:onRemove': (event) => {
 						this.#eventEmitter.emit('onChangeUploaderContainerSize');
 					},
-					'onUploadStart': (event) => {
+					onUploadStart: (event) => {
 						this.#eventEmitter.emit('onChangeUploaderContainerSize');
 					},
 					// TODO: not implemented yet

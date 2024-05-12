@@ -70,12 +70,14 @@ class SupersetDashboardSelector
 
 	#onSelectItem(event): Promise
 	{
+		EventEmitter.emit('BiConnector:DashboardSelector.onSelect');
+
 		return this.getDashboardEmbeddedData(event.data.item.id)
 			.then((response) => {
 				if (response.data.dashboard)
 				{
 					this.#setTitle(response.data.dashboard.title);
-					EventEmitter.emit('BiConnector:DashboardSelector.onSelect', {
+					EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
 						item: event.data.item,
 						dashboardId: event.data.item.id,
 						credentials: response.data.dashboard,
@@ -125,7 +127,7 @@ class SupersetDashboardSelector
 
 	#setTitle(text: string)
 	{
-		this.#textNode.innerHTML = text;
+		this.#textNode.innerHTML = Text.encode(text);
 	}
 }
 

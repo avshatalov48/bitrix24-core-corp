@@ -2,12 +2,12 @@
  * @module im/messenger/api/dialog-opener
  */
 jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { EntityReady } = require('entity-ready');
 	const {
 		EventType,
 		FeatureFlag,
+		ComponentCode,
 	} = require('im/messenger/const');
 
 	/**
@@ -74,7 +74,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 				}
 
 				EntityReady.wait('chat').then(() => {
-					const openDialogParamsEvent = EventType.messenger.openDialogParams + '::' + options.dialogId;
+					const openDialogParamsEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
 
 					const onOpenDialogParams = (params) => {
 						BX.removeCustomEvent(openDialogParamsEvent, onOpenDialogParams);
@@ -96,7 +96,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					BX.postComponentEvent(EventType.messenger.getOpenDialogParams, [{
 						dialogId: options.dialogId,
 						dialogTitleParams: options.dialogTitleParams,
-					}], 'im.messenger');
+					}], ComponentCode.imMessenger);
 				});
 			});
 		}
@@ -152,7 +152,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 				}
 
 				EntityReady.wait('chat').then(() => {
-					const openLineParamsEvent = EventType.messenger.openLineParams + '::' + options.userCode;
+					const openLineParamsEvent = `${EventType.messenger.openLineParams}::${options.userCode}`;
 
 					const onOpenLineParams = (params) => {
 						BX.removeCustomEvent(openLineParamsEvent, onOpenLineParams);
@@ -184,7 +184,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					BX.postComponentEvent(EventType.messenger.getOpenLineParams, [{
 						userCode: options.userCode,
 						dialogTitleParams: options.dialogTitleParams,
-					}], 'im.messenger');
+					}], ComponentCode.imMessenger);
 				});
 			});
 		}

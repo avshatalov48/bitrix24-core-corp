@@ -1,16 +1,20 @@
-"use strict";
+'use strict';
+
 /**
  * @bxjs_lang_path component.php
  */
 
 var { EventType } = jn.require('im/messenger/const');
+var { openIntranetInviteWidget } = jn.require('intranet/invite-opener');
+var { AnalyticsEvent } = jn.require('analytics');
 
 /* Clean session variables after page restart */
-if (typeof clearInterval == 'undefined')
+if (typeof clearInterval === 'undefined')
 {
 	clearInterval = (id) => clearTimeout(id);
 }
-if (typeof ChatCreate != 'undefined' && typeof ChatCreate.cleaner != 'undefined')
+
+if (typeof ChatCreate !== 'undefined' && typeof ChatCreate.cleaner !== 'undefined')
 {
 	ChatCreate.cleaner();
 }
@@ -29,14 +33,14 @@ ChatCreate.init = function()
 	this.searchMinTokenLength = BX.componentParameters.get('SEARCH_MIN_SIZE', 3);
 
 	/* set cross-links in class */
-	let links = ['base', 'event', 'search'];
+	const links = ['base', 'event', 'search'];
 	links.forEach((subClass) => {
-		if (typeof this[subClass] != 'undefined')
+		if (typeof this[subClass] !== 'undefined')
 		{
 			links.forEach((element) => {
 				if (element == 'base')
 				{
-					this[subClass]['base'] = this;
+					this[subClass].base = this;
 				}
 				else if (subClass != element)
 				{
@@ -47,8 +51,8 @@ ChatCreate.init = function()
 	});
 
 	ChatDataConverter.init({
-		'userId': this.userId,
-		'generalChatId': this.generalChatId
+		userId: this.userId,
+		generalChatId: this.generalChatId,
 	});
 
 	this.event.init();
@@ -61,9 +65,9 @@ ChatCreate.openDialog = function(dialogId, dialogTitleParams)
 {
 	console.log('ChatCreate.openDialog', dialogId, dialogTitleParams);
 
-	BX.postComponentEvent("onOpenDialog", [{
-		dialogId : dialogId,
-		dialogTitleParams : dialogTitleParams,
+	BX.postComponentEvent('onOpenDialog', [{
+		dialogId,
+		dialogTitleParams,
 	}, true], 'im.recent');
 
 	BX.postComponentEvent(EventType.messenger.openDialog, [{
@@ -79,12 +83,14 @@ ChatCreate.openDialog = function(dialogId, dialogTitleParams)
 ChatCreate.alert = function(text)
 {
 	ChatCreateInterface.showAlert(text);
+
 	return true;
 };
 
 ChatCreate.close = function()
 {
 	ChatCreateInterface.close();
+
 	return true;
 };
 
@@ -95,29 +101,28 @@ ChatCreate.cleaner = function()
 	console.warn('ChatCreate.cleaner: OK');
 };
 
-
 /* Event API */
 ChatCreate.event = {};
 
-ChatCreate.event.init = function ()
+ChatCreate.event.init = function()
 {
 	this.debug = false;
 	this.handlersList = {
 		// first screen
-		onViewShown : this.onPrivateView,
-		onSearchShow : this.onPrivateSearchShow,
-		onSearchHide : this.onPrivateSearchHide,
-		onPrivateTypeText : this.onSearchText,
-		onPrivateChat : this.onPrivateDialogOpen,
-		onSearchItemSelected : this.onPrivateDialogOpen,
+		onViewShown: this.onPrivateView,
+		onSearchShow: this.onPrivateSearchShow,
+		onSearchHide: this.onPrivateSearchHide,
+		onPrivateTypeText: this.onSearchText,
+		onPrivateChat: this.onPrivateDialogOpen,
+		onSearchItemSelected: this.onPrivateDialogOpen,
 		// second screen
-		onScopeSelected : this.onScopeSelected,
-		onRecipientsView : this.onRecipientsView,
-		onRecipientTypeText : this.onSearchText,
-		onRecipientButtonSelected : this.onRecipientButtonSelected,
+		onScopeSelected: this.onScopeSelected,
+		onRecipientsView: this.onRecipientsView,
+		onRecipientTypeText: this.onSearchText,
+		onRecipientButtonSelected: this.onRecipientButtonSelected,
 		// third screen
-		onResult : this.onChatCreate,
-		onInviteEmployees : this.onInviteEmployees
+		onResult: this.onChatCreate,
+		onInviteEmployees: this.onInviteEmployees,
 	};
 
 	ChatCreateInterface.setListener(this.router.bind(this));
@@ -129,13 +134,13 @@ ChatCreate.event.router = function(eventName, eventResult)
 	{
 		if (!(eventName == 'onPrivateTypeText' || eventName == 'onRecipientTypeText'))
 		{
-			console.log('ChatCreate.event.router: catch event - '+eventName, eventResult);
+			console.log(`ChatCreate.event.router: catch event - ${eventName}`, eventResult);
 		}
-		this.handlersList[eventName].apply(this, [eventResult])
+		this.handlersList[eventName].apply(this, [eventResult]);
 	}
 	else if (this.debug)
 	{
-		console.info('ChatCreate.event.router: skipped event - '+eventName+' '+JSON.stringify(eventResult));
+		console.info(`ChatCreate.event.router: skipped event - ${eventName} ${JSON.stringify(eventResult)}`);
 	}
 };
 
@@ -157,11 +162,11 @@ ChatCreate.event.onPrivateDialogOpen = function(listElement)
 
 	if (listElement.params.action == 'item')
 	{
-		let dialogId = (listElement.params.type === "chat"? "chat": "") + listElement.params.id;
+		const dialogId = (listElement.params.type === 'chat' ? 'chat' : '') + listElement.params.id;
 		this.base.openDialog(dialogId, {
 			name: listElement.title,
 			description: listElement.subtitle,
-			avatar: listElement.imageUrl
+			avatar: listElement.imageUrl,
 		});
 	}
 
@@ -191,7 +196,7 @@ ChatCreate.event.onScopeSelected = function(event)
 	this.search.listType = event.id;
 	BX.componentParameters.set('SCOPE', event.id);
 	ChatSearchScopes.setType(event.id);
-	this.onSearchText({text: ChatSearchScopes.result.text})
+	this.onSearchText({ text: ChatSearchScopes.result.text });
 
 	return true;
 };
@@ -215,15 +220,15 @@ ChatCreate.event.onSearchText = function(event)
 {
 	console.log('ChatCreate.event.onSearchText', event);
 
-	let text = event.text.trim();
-	if (!text)
+	const text = event.text.trim();
+	if (text)
 	{
-		ChatSearchScopes.clear();
-		this.search.drawStartList();
+		ChatSearchScopes.find(text);
 	}
 	else
 	{
-		ChatSearchScopes.find(text);
+		ChatSearchScopes.clear();
+		this.search.drawStartList();
 	}
 };
 
@@ -231,7 +236,7 @@ ChatCreate.event.onChatCreate = function(event)
 {
 	console.log('ChatCreate.event.onChatCreate', event);
 
-	let users = [];
+	const users = [];
 	if (event.recipients)
 	{
 		event.recipients.forEach((recipient) => {
@@ -239,53 +244,52 @@ ChatCreate.event.onChatCreate = function(event)
 		});
 	}
 
-	let config = {
-		'TYPE': event.type == 'public'? this.base.TYPE_OPEN: this.base.TYPE_CHAT,
-		'TITLE': event.title,
+	const config = {
+		TYPE: event.type == 'public' ? this.base.TYPE_OPEN : this.base.TYPE_CHAT,
+		TITLE: event.title,
 	};
-	if (users.length>0)
+	if (users.length > 0)
 	{
 		config.USERS = users;
 	}
+
 	if (event.icon)
 	{
 		config.AVATAR = event.icon;
 	}
 
 	BX.rest.callMethod('im.chat.add', config)
-		.then((result) =>
-		{
-			if (typeof fabric != 'undefined')
+		.then((result) => {
+			if (typeof fabric !== 'undefined')
 			{
-				fabric.Answers.sendCustomEvent("imChatAdd", {});
+				fabric.Answers.sendCustomEvent('imChatAdd', {});
 			}
-			let chatId = parseInt(result.data());
+			const chatId = parseInt(result.data());
 			if (chatId > 0)
 			{
-				console.info("ChatCreate.event.onChatCreate: chat id:\n", result.data());
-				this.base.openDialog('chat'+result.data(), {
+				console.info('ChatCreate.event.onChatCreate: chat id:\n', result.data());
+				this.base.openDialog(`chat${result.data()}`, {
 					name: event.title,
-					description: event.type == 'public'? BX.message('IM_CHAT_TYPE_OPEN_NEW'): BX.message('IM_CHAT_TYPE_CHAT_NEW'),
-					avatar: ''
+					description: event.type == 'public' ? BX.message('IM_CHAT_TYPE_OPEN_NEW') : BX.message('IM_CHAT_TYPE_CHAT_NEW'),
+					avatar: '',
 				});
 			}
 			else
 			{
-				console.error("ChatCreate.event.onChatCreate: we have some problems on server\n", result.answer);
+				console.error('ChatCreate.event.onChatCreate: we have some problems on server\n', result.answer);
 				this.base.alert(BX.message('IM_CREATE_API_ERROR'));
 			}
 		})
-		.catch((result) =>
-		{
-			let error = result.error();
+		.catch((result) => {
+			const error = result.error();
 			if (error.ex.error == 'NO_INTERNET_CONNECTION')
 			{
-				console.error("ChatCreate.event.onChatCreate - error: connection error", error.ex);
+				console.error('ChatCreate.event.onChatCreate - error: connection error', error.ex);
 				this.base.alert(BX.message('IM_CREATE_CONNECTION_ERROR'));
 			}
 			else
 			{
-				console.error("ChatCreate.event.onChatCreate - error: we have some problems on server\n", result.answer);
+				console.error('ChatCreate.event.onChatCreate - error: we have some problems on server\n', result.answer);
 				this.base.alert(BX.message('IM_CREATE_API_ERROR'));
 			}
 		});
@@ -305,13 +309,8 @@ ChatCreate.event.onInviteEmployees = function(event)
 		return false;
 	}
 
-	IntranetInvite.openRegisterSlider({
-		originator: 'im.chat.create',
-		registerUrl: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
-		rootStructureSectionId: BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
-		adminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
-		disableAdminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
-		sharingMessage: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', '')
+	openIntranetInviteWidget({
+		analytics: new AnalyticsEvent().setSection('chat'),
 	});
 
 	return true;
@@ -320,10 +319,10 @@ ChatCreate.event.onInviteEmployees = function(event)
 /* Search API */
 ChatCreate.search = {
 	STATE_PRIVATE: 'private',
-	STATE_CHAT_RECIPIENT: 'chat'
+	STATE_CHAT_RECIPIENT: 'chat',
 };
 
-ChatCreate.search.init = function ()
+ChatCreate.search.init = function()
 {
 	this.state = BX.componentParameters.get('STATE', this.STATE_PRIVATE);
 	this.listType = BX.componentParameters.get('SCOPE', ChatSearchScopes.TYPE_USER);
@@ -336,7 +335,7 @@ ChatCreate.search.init = function ()
 		listType: this.listType,
 		dataConverterInited: true,
 		minTokenLength: this.base.searchMinTokenLength,
-		onDrawSearchResult: this.drawSearchResult.bind(this)
+		onDrawSearchResult: this.drawSearchResult.bind(this),
 	});
 
 	ChatSearchScopes.setList(this.listUsers, ChatSearchScopes.TYPE_USER);
@@ -345,7 +344,7 @@ ChatCreate.search.init = function ()
 	ChatSearchScopes.setMinTokenLength(1, ChatSearchScopes.TYPE_DEPARTMENT);
 };
 
-ChatCreate.search.drawSearchResult = function (items, sections)
+ChatCreate.search.drawSearchResult = function(items, sections)
 {
 	console.log('ChatCreate.search.drawSearchResult', this.state, items);
 	if (this.state == this.STATE_PRIVATE)
@@ -375,24 +374,24 @@ ChatCreate.search.drawStartList = function()
 ChatCreate.search.prepareItems = function(type = this.listType)
 {
 	let items = [];
-	let itemsIndex = {};
+	const itemsIndex = {};
 
 	if (type == ChatSearchScopes.TYPE_USER)
 	{
 		if (this.listUsers.length > 0)
 		{
-			this.listUsers.map(element =>
-			{
+			this.listUsers.map((element) => {
 				if (!element || itemsIndex[element.id])
 				{
 					return false;
 				}
+
 				if (element.bot && element.network)
 				{
 					return false;
 				}
 
-				let item = ChatDataConverter.getListElementByUser(element);
+				const item = ChatDataConverter.getListElementByUser(element);
 
 				items.push(item);
 				itemsIndex[item.id] = true;
@@ -400,20 +399,19 @@ ChatCreate.search.prepareItems = function(type = this.listType)
 				return true;
 			});
 		}
-		items = items.filter((element) => this.skipList.indexOf(element.id) == -1);
+		items = items.filter((element) => !this.skipList.includes(element.id));
 	}
 	else if (type == ChatSearchScopes.TYPE_DEPARTMENT)
 	{
 		if (this.listDepartment.length > 0)
 		{
-			this.listDepartment.map(element =>
-			{
+			this.listDepartment.map((element) => {
 				if (!element || itemsIndex[element.id])
 				{
 					return false;
 				}
 
-				let item = ChatDataConverter.getListElementByDepartment(element);
+				const item = ChatDataConverter.getListElementByDepartment(element);
 
 				items.push(item);
 				itemsIndex[item.id] = true;
@@ -424,7 +422,7 @@ ChatCreate.search.prepareItems = function(type = this.listType)
 		else
 		{
 			items.push(
-				{title : BX.message("IM_DEPARTMENT_START"), sectionCode: this.listType, type:"button", unselectable: true, params: { action: 'empty'}}
+				{ title: BX.message('IM_DEPARTMENT_START'), sectionCode: this.listType, type: 'button', unselectable: true, params: { action: 'empty' } },
 			);
 		}
 	}

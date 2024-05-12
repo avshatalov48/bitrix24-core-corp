@@ -48,11 +48,7 @@ class Deal extends Base
 
 	public function getProgressSteps($permissionEntityType): array
 	{
-		return array_keys(
-			Crm\Category\DealCategory::getStageList(
-				Crm\Category\DealCategory::convertFromPermissionEntityType($permissionEntityType)
-			)
-		);
+		return $this->controllerQueries->getDealProgressSteps($permissionEntityType);
 	}
 
 	public function tryParseProgressStep($attribute, &$value): bool
@@ -81,9 +77,4 @@ class Deal extends Base
 	}
 
 	//endregion
-
-	protected static function getEnabledFlagOptionName(): string
-	{
-		return '~CRM_SECURITY_DEAL_CONTROLLER_ENABLED';
-	}
 }

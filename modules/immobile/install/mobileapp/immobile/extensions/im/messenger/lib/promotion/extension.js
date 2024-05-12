@@ -8,7 +8,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { PromotionRest } = require('im/messenger/provider/rest');
-	const { Settings } = require('im/messenger/lib/settings');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { ReleaseView } = require('im/messenger/lib/promotion/release-view');
 	const { Type } = require('type');
 
@@ -55,7 +55,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 			this.activePromoList = response.data();
 
-			if (Settings.isChatV2Enabled && response.data().includes(Promo.immobileRelease2023))
+			if (Feature.isChatV2Enabled && response.data().includes(Promo.immobileRelease2023))
 			{
 				this.show(Promo.immobileRelease2023);
 			}

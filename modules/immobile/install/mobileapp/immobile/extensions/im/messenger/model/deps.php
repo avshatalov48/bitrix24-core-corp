@@ -14,6 +14,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/utils',
+		'im:messenger/lib/feature',
 	],
 	'bundle' => [
 		'./src/application',
@@ -27,5 +28,8 @@ return [
 		'./src/draft',
 		'./src/queue',
 		'./src/messages/reactions',
+		'./src/messages/pin',
+		'./src/validators/message',
+		'./src/validators/pin',
 	],
 ];

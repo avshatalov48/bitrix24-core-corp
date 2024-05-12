@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Router;
@@ -62,11 +61,21 @@ class CrmItemDeadlinesComponent extends Bitrix\Crm\Component\ItemList
 
 	protected function getListUrl(int $categoryId = null): \Bitrix\Main\Web\Uri
 	{
-		return Service\Container::getInstance()->getRouter()->getDeadlinesUrl($this->entityTypeId, $categoryId);
+		return $this->router->getDeadlinesUrl($this->entityTypeId, $categoryId);
 	}
 
 	protected function getListViewType(): string
 	{
 		return Router::LIST_VIEW_DEADLINES;
+	}
+
+	protected function configureAnalyticsEventBuilder(\Bitrix\Crm\Integration\Analytics\Builder\AbstractBuilder $builder): void
+	{
+		parent::configureAnalyticsEventBuilder($builder);
+
+		if (!$this->isEmbedded())
+		{
+			$builder->setSubSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DEADLINES);
+		}
 	}
 }

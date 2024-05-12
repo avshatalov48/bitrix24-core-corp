@@ -38,7 +38,7 @@ use Bitrix\Main\Localization\Loc;
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_ENABLE')?>
 						<?if(!Limit::canWorkHourSettings()):?>
 							<span class="tariff-lock"></span>
-							<script type="text/javascript">
+							<script>
 								BX.bind(BX('imol_worktime_checkbox'), 'change', function(e){
 									BX('imol_worktime_checkbox').checked = false;
 									window.BX.imolTrialHandler.openPopupWorkTime();

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'alert',
 		'analytics-label',
 		'apptheme',
 		'assets/common',

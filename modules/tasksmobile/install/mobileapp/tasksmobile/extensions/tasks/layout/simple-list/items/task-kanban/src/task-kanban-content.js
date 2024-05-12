@@ -87,7 +87,12 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 		/**
 		 * @private
-		 * @return {{deadline: number|null, statusId: string, id: number}[]}
+		 * @return {{
+		 * 	deadline: number|null,
+		 * 	leftBorder: number|null,
+		 * 	rightBorder: number|null,
+		 * 	statusId: string,
+		 * 	id: number}[]}
 		 */
 		getDeadlineViewStages()
 		{
@@ -110,8 +115,8 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 			const stageOverdue = stages.find((stage) => stage.statusId === DeadlinePeriod.PERIOD_OVERDUE);
 			const stageOverTwoWeeks = stages.find((stage) => stage.statusId === DeadlinePeriod.PERIOD_OVER_TWO_WEEKS);
 			const stagesByDeadline = stages
-				.filter((stage) => Boolean(stage.deadline))
-				.sort((a, b) => a.deadline - b.deadline);
+				.filter((stage) => Boolean(stage.rightBorder))
+				.sort((a, b) => a.rightBorder - b.rightBorder);
 
 			if (!ts)
 			{
@@ -126,7 +131,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 			const deadline = Math.round(ts / 1000);
 			for (const stage of stagesByDeadline)
 			{
-				if (deadline <= stage.deadline)
+				if (deadline <= stage.rightBorder)
 				{
 					return stage;
 				}
@@ -187,11 +192,39 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 			// eslint-disable-next-line promise/catch-or-return
 			this.stageSelectorRef.scrollTo(nextStage.id).finally(() => {
-				this.onChangeStageAnimationCompleted({ columnId: nextStage.id });
+				this.dispatchStageChanged(nextStage.id);
 			});
 		}
 
 		onChangeStageAnimationCompleted({ columnId: nextStageId })
+		{
+			if (this.props.view === ViewMode.DEADLINE)
+			{
+				const { deadline } = selectStageById(store.getState(), nextStageId) || {};
+
+				const nextStageByDeadline = Number.isInteger(deadline)
+					? this.getNextStageByDeadline(deadline * 1000)
+					: null;
+
+				if (nextStageByDeadline && nextStageByDeadline.id !== nextStageId && this.stageSelectorRef)
+				{
+					// eslint-disable-next-line promise/catch-or-return
+					this.stageSelectorRef.scrollTo(nextStageByDeadline.id).finally(() => {
+						this.dispatchStageChanged(nextStageByDeadline.id);
+					});
+
+					return;
+				}
+			}
+
+			this.dispatchStageChanged(nextStageId);
+		}
+
+		/**
+		 * @private
+		 * @param {number} nextStageId
+		 */
+		dispatchStageChanged(nextStageId)
 		{
 			const prevStageId = this.task.stageId;
 

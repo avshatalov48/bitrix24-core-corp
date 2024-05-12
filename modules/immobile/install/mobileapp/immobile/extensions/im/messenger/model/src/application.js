@@ -140,7 +140,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<ApplicationSetStatusData, ApplicationSetStatusActions>} payload
 			 */
 			setStatus: (state, payload) => {
 				logger.log('applicationModel: setStatus mutation', payload);
@@ -153,7 +153,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 			},
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<ApplicationOpenDialogIdData, ApplicationOpenDialogIdActions>} payload
 			 */
 			openDialogId: (state, payload) => {
 				logger.warn('applicationModel: openDialogId mutation', payload);
@@ -166,7 +166,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<ApplicationCloseDialogIdData, ApplicationCloseDialogIdActions>} payload
 			 */
 			closeDialogId: (state, payload) => {
 				logger.warn('applicationModel: closeDialogId mutation', payload);

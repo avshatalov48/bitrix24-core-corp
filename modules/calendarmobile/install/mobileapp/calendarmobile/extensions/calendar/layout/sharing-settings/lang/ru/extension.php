@@ -9,3 +9,7 @@ $MESS['M_CALENDAR_SETTINGS_SELECT_ADD_RANGE'] = 'Добавить новое р�
 $MESS['M_CALENDAR_SETTINGS_SELECT_ADD'] = 'Добавить';
 $MESS['M_CALENDAR_SETTINGS_SELECT_WEEKDAYS'] = 'Выбор дней недели';
 $MESS['M_CALENDAR_SETTINGS_READONLY'] = 'Вы не можете настраивать слоты других сотрудников';
+$MESS['M_CALENDAR_SETTINGS_CREATE_JOINT_SLOTS'] = 'Создать совместные слоты с коллегами';
+$MESS['M_CALENDAR_SETTINGS_LINK_MEMBERS'] = 'Участники ссылки';
+$MESS['M_CALENDAR_SETTINGS_SUBTITLE_DEFAULT'] = 'По умолчанию выбраны все рабочие дни';
+$MESS['M_CALENDAR_SETTINGS_SUBTITLE_PERSONAL'] = 'Выбраны персональные настройки';

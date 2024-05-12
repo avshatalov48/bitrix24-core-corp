@@ -2,13 +2,13 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Exclusion\Manager;
-use Bitrix\Main\Engine\Response\AjaxJson;
-use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\Recyclebin\RecyclingManager;
 use Bitrix\Crm\Kanban;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
 use Bitrix\Recyclebin\Recyclebin;
-use Bitrix\Main\Engine\Response\Component;
 
 class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -47,6 +47,10 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @todo remove?
+	 */
 	public function getFieldsAction(string $entityType, string $viewType): array
 	{
 		Loader::includeModule('crm');
@@ -66,6 +70,30 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		return array_values($entity->getPopupFields($viewType));
+	}
+
+	public function getPreparedFieldsAction(string $entityType, string $viewType, array $selectedFields = []): array
+	{
+		Loader::includeModule('crm');
+
+		$entity = Kanban\Entity::getInstance($entityType);
+
+		if (!$entity)
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+
+			return [];
+		}
+
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
+		if (!Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return [];
+		}
+
+		return $entity->getPreparedCustomFieldsConfig($viewType, $selectedFields);
 	}
 
 	public function excludeEntityAction(string $entityType, array $ids): void

@@ -2,26 +2,38 @@
 
 namespace Bitrix\Crm\Security;
 
+use Bitrix\Crm\Security\Controller\QueryBuilder\Conditions\UseJoin;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
+use Bitrix\Crm\Security\QueryBuilder\QueryBuilderOptions;
 use Bitrix\Crm\Security\QueryBuilder\Result;
-use Bitrix\Crm\Security\QueryBuilder\Options;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Crm\Security\AccessAttribute\Collection;
 
 class QueryBuilder
 {
-	private $options;
-	private $permissionEntityTypes = [];
-	private $userPermissions;
-	private $controller;
+	private QueryBuilderOptions $options;
+	private array $permissionEntityTypes;
+	private UserPermissions $userPermissions;
+	private ?Controller $controller = null;
 
 	public function __construct(
 		array $permissionEntityTypes,
-		\Bitrix\Crm\Service\UserPermissions $userPermissions,
-		Options $options = null
+		UserPermissions $userPermissions,
+		?QueryBuilderOptions $options = null
 	)
 	{
 		$this->userPermissions = $userPermissions;
-		$this->options = ($options ?? new Options());
+
+		if ($options === null)
+		{
+			$this->options = OptionsBuilder::makeEmptyOptions();
+		}
+		else
+		{
+			$this->options = $options;
+		}
+
 		$this->permissionEntityTypes = $permissionEntityTypes;
 	}
 
@@ -56,13 +68,20 @@ class QueryBuilder
 
 		$builder = $this->getController()->getQueryBuilder();
 
-		$sql = $builder->build(
+		$data = $builder->build(
 			$attributes,
 			$this->options
 		);
 
 		$result->setHasAccess(true);
-		$result->setSql($sql);
+		$result->setSql($data->getSql());
+
+		$idColName = $this->options->getResult()->getIdentityColumnName();
+		$ormConditions = $data->getConditions()?->makeOrmConditions(new UseJoin($idColName));
+
+		$result->setOrmConditions($ormConditions);
+
+		$result->setEntity($data->getEntity());
 
 		return $result;
 	}
@@ -74,7 +93,7 @@ class QueryBuilder
 	 * @see QueryBuilder::build()
 	 * @return false|string
 	 */
-	public function buildCompatible()
+	public function buildCompatible(): false|string
 	{
 		$result = $this->build();
 		if ($result->hasAccess())
@@ -87,7 +106,7 @@ class QueryBuilder
 
 	protected function getController(): Controller
 	{
-		if ($this->controller)
+		if ($this->controller !== null)
 		{
 			return $this->controller;
 		}
@@ -97,7 +116,7 @@ class QueryBuilder
 			$resolvedController = Manager::resolveController($permissionEntityType);
 			if ($resolvedController === null)
 			{
-				throw new NotSupportedException("Permission entity type '{$permissionEntityType}' is not supported in current context");
+				throw new NotSupportedException("Permission entity type '$permissionEntityType' is not supported in current context");
 			}
 			if ($this->controller && $this->controller !== $resolvedController)
 			{
@@ -111,23 +130,10 @@ class QueryBuilder
 
 	protected function getAttributes(): Collection
 	{
-		$userId = $this->userPermissions->getUserId();
-		$userAttributes = new Collection($userId);
-		foreach ($this->permissionEntityTypes as $permissionEntityType)
-		{
-			$operations = $this->options->getOperations();
-			foreach ($operations as $operation)
-			{
-				$userAttributes->addByEntityType(
-					$permissionEntityType,
-					$this->userPermissions->getAttributesProvider()->getEntityListAttributes(
-						$permissionEntityType,
-						$operation
-					)
-				);
-			}
-		}
-
-		return $userAttributes;
+		return Collection::build(
+			$this->userPermissions,
+			$this->permissionEntityTypes,
+			$this->options->getOperations()
+		);
 	}
 }

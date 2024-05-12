@@ -47,6 +47,12 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 		setLayoutWidget(widget)
 		{
 			this.layoutWidget = widget;
+			this.layoutWidget.setListener((eventName) => {
+				if (eventName === 'onViewHidden')
+				{
+					this.sharing.getModel().clearMembers();
+				}
+			});
 		}
 
 		isCalendarContext()
@@ -77,10 +83,7 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 		{
 			return ScrollView(
 				{
-					style: {
-						boxSizing: 'border-box',
-						flex: 1,
-					},
+					style: styles.scrollView,
 				},
 				View(
 					{},
@@ -94,17 +97,13 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 		{
 			return View(
 				{
-					style: {
-						...styles.block,
-						marginTop: 20,
-						height: 140,
-						backgroundColor: AppTheme.colors.accentSoftBlue2,
-					},
+					style: styles.switcher,
 				},
 				new SharingSwitcher({
 					isCalendarContext: this.isCalendarContext(),
 					isOn: this.isSharingEnabled(),
 					onChange: this.onSwitcherChangeHandler,
+					model: this.sharing.getModel(),
 				}),
 			);
 		}
@@ -168,52 +167,46 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 			return View(
 				{},
 				this.renderSettings(),
-				this.renderPanel(),
+				this.renderPanelContainer(),
 			);
 		}
 
 		renderSettings()
 		{
-			return View(
-				{
-					testId: 'SharingPanelSettings',
-					style: {
-						flexDirection: 'row',
-						justifyContent: 'center',
-						alignItems: 'center',
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						...styles.block,
-					},
-				},
-				new SharingSettings({
-					model: this.sharing.getModel(),
-					readOnly: this.readOnly,
-					customEventEmitter: this.props.customEventEmitter || null,
-					layoutWidget: this.layoutWidget,
-				}),
-			);
+			return new SharingSettings({
+				model: this.sharing.getModel(),
+				readOnly: this.readOnly,
+				customEventEmitter: this.props.customEventEmitter || null,
+				layoutWidget: this.layoutWidget,
+			});
 		}
 
-		renderPanel()
+		renderPanelContainer()
 		{
 			return View(
 				{
-					style: {
-						...styles.block,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-					},
+					style: styles.panelContainer,
 				},
-				SharingPanel({
-					isCalendarContext: this.isCalendarContext(),
-					publicShortUrl: this.state.model.publicShortUrl,
+				new SharingPanel({
 					model: this.sharing.getModel(),
+					layoutWidget: this.layoutWidget,
 				}),
 			);
 		}
 	}
 
 	const styles = {
-		block: {
+		scrollView: {
+			boxSizing: 'border-box',
+			flex: 1,
+		},
+		switcher: {
+			borderRadius: 12,
+			marginBottom: 15,
+			marginTop: 20,
+			backgroundColor: AppTheme.colors.accentSoftBlue2,
+		},
+		panelContainer: {
 			borderRadius: 12,
 			marginBottom: 15,
 		},

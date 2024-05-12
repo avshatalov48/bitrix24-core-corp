@@ -90,6 +90,9 @@ $backgroundImageCss = "url('data:image/svg+xml;charset=UTF-8,%3csvg width=%27295
 					canConvert: <?=$arResult['CAN_CONVERT'] ? 'true' : 'false'?>,
 					conversionTypeId: <?=CUtil::PhpToJSObject($arResult['CONVERSION_TYPE_ID'])?>,
 					conversionScheme: <?=CUtil::PhpToJSObject($arResult['CONVERSION_SCHEME'])?>,
+					<?php if (!empty($arResult['CONVERTER_ID'])): ?>
+					converterId: '<?= CUtil::JSEscape($arResult['CONVERTER_ID']) ?>',
+					<?php endif; ?>
 					readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,
 					containerId: "<?=CUtil::JSEscape($containerId)?>",
 					serviceUrl: "<?=CUtil::JSEscape($arResult['SERVICE_URL'])?>",

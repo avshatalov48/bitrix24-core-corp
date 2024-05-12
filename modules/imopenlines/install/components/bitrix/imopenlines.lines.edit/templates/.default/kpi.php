@@ -34,7 +34,7 @@ $arResult['kpiSelector'] = [
 	],
 ];
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.OpenLinesConfigEdit.loadKpiTimeMenus(<?=CUtil::PhpToJSObject($arResult['KPI_MENU'])?>);
 		BX.OpenLinesConfigEdit.loadKpiEntitySelector(<?=CUtil::PhpToJSObject($arResult['kpiSelector'])?>);

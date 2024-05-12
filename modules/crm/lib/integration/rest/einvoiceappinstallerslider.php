@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\Rest;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Rest;
@@ -38,7 +39,7 @@ final class EInvoiceAppInstallerSlider
 					};
 
 					BX.SidePanel.Instance.open(
-						'/einvoice/install/',
+						'{$this->getEinvoiceUrl()}',
 						{
 							width: 575, 
 							allowChangeHistory: false,
@@ -104,5 +105,16 @@ final class EInvoiceAppInstallerSlider
 		$userSeenCount = $userSeenCountOption[self::USER_SEEN_COUNT_OPTION_VALUE_NAME] ?? 0;
 
 		return (int)$userSeenCount;
+	}
+
+	public function getEinvoiceUrl(): string
+	{
+		$newEinvoicePath = '/marketplace/einvoice/index.php';
+		if (file_exists(Application::getDocumentRoot() . $newEinvoicePath))
+		{
+			return '/marketplace/einvoice/';
+		}
+
+		return '/einvoice/install/';
 	}
 }

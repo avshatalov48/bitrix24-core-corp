@@ -1,3 +1,4 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { ajax as Ajax, Loc, Type } from 'main.core';
 import { sendData } from 'ui.analytics';
 import { MessageBox } from 'ui.dialogs.messagebox';
@@ -8,15 +9,14 @@ import './css/feedback-popup.css';
  */
 export function showSendFeedbackPopupIfFeedbackWasNeverSent(
 	mergeUuid: number,
-	ownerType: string,
-	crmMode: string,
+	ownerType: string | number,
 	callId: string,
 ): Promise
 {
 	return wasFeedbackSent(mergeUuid).then((wasSent) => {
 		if (!wasSent)
 		{
-			return showSendFeedbackPopup(mergeUuid, ownerType, crmMode, callId);
+			return showSendFeedbackPopup(mergeUuid, ownerType, callId);
 		}
 
 		// eslint-disable-next-line promise/no-return-wrap
@@ -52,7 +52,10 @@ export function wasFeedbackSent(mergeUuid: number): Promise
 	});
 }
 
-export function sendFeedback(mergeUuid: number, ownerType: string, crmMode: string, callId: string): void
+/**
+ * @memberof BX.Crm.AI.Feedback
+ */
+export function sendFeedback(mergeUuid: number, ownerType: string | number, activityId: number): void
 {
 	Ajax.runAction('crm.timeline.ai.sendFeedback', {
 		data: {
@@ -60,25 +63,11 @@ export function sendFeedback(mergeUuid: number, ownerType: string, crmMode: stri
 		},
 	})
 		.then(() => {
-			if (
-				Type.isStringFilled(ownerType)
-				&& Type.isStringFilled(crmMode)
-				&& Type.isStringFilled(callId)
-			)
-			{
-				sendData({
-					event: 'call_parsing',
-					tool: 'AI',
-					category: 'crm_operations',
-					type: 'manual',
-					c_section: 'crm',
-					c_element: 'feedback_send',
-					c_sub_section: ownerType,
-					p1: crmMode,
-					p2: callId,
-					status: 'success',
-				});
-			}
+			sendData(
+				Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+					.setElement(Dictionary.ELEMENT_FEEDBACK_SEND)
+					.buildData(),
+			);
 		})
 		.catch(({ errors }) => console.error('Error sending feedback', errors));
 }
@@ -86,30 +75,27 @@ export function sendFeedback(mergeUuid: number, ownerType: string, crmMode: stri
 /**
  * @memberof BX.Crm.AI.Feedback
  */
-export function showSendFeedbackPopup(mergeUuid: number, ownerType: string, crmMode: string, callId: string): Promise
+export function showSendFeedbackPopup(
+	mergeUuid: number,
+	ownerType: string,
+	activityId: number,
+): Promise
 {
 	return new Promise((resolve) => {
 		const messageBox = createFeedbackMessageBox({
 			onOk: () => {
-				sendFeedback(mergeUuid, ownerType, crmMode, callId);
+				sendFeedback(mergeUuid, ownerType, activityId);
 				messageBox.close();
 				resolve();
 			},
 			onCancel: () => {
 				messageBox.close();
 
-				sendData({
-					event: 'call_parsing',
-					tool: 'AI',
-					category: 'crm_operations',
-					type: 'manual',
-					c_section: 'crm',
-					c_element: 'feedback_refused',
-					c_sub_section: ownerType,
-					p1: crmMode,
-					p2: callId,
-					status: 'success',
-				});
+				sendData(
+					Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+						.setElement(Dictionary.ELEMENT_FEEDBACK_REFUSED)
+						.buildData(),
+				);
 
 				resolve();
 			},
@@ -128,6 +114,9 @@ interface FeedbackMessageBoxOpts {
 	}
 }
 
+/**
+ * @memberof BX.Crm.AI.Feedback
+ */
 export function createFeedbackMessageBox(options: FeedbackMessageBoxOpts): MessageBox
 {
 	const message = `

@@ -686,6 +686,11 @@ class Item extends Base
 			$component->arParams
 		);
 
+		if (isset($params['ANALYTICS_CONFIG']) && is_array($params['ANALYTICS_CONFIG']))
+		{
+			$editorConfig['ANALYTICS_CONFIG'] = $params['ANALYTICS_CONFIG'];
+		}
+
 		$disabledOptions = [
 			'ENABLE_SECTION_EDIT',
 			'ENABLE_SECTION_CREATION',

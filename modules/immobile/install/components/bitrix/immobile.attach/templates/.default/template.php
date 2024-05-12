@@ -1,6 +1,6 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-$APPLICATION->AddHeadString('<script type="text/javascript" src="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/im_mobile.js").'"></script>');
+$APPLICATION->AddHeadString('<script src="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/im_mobile.js").'"></script>');
 $APPLICATION->AddHeadString('<link href="'.CUtil::GetAdditionalFileURL(BX_PERSONAL_ROOT.'/js/im/css/common.css').'" type="text/css" rel="stylesheet" />');
 CJSCore::Init("fx");
 ?>
@@ -31,7 +31,7 @@ CJSCore::Init("fx");
 }
 
 </style>
-<script type="text/javascript">
+<script>
 	function urlValidation(el)
 	{
 		let link = BX.util.htmlspecialcharsback(el.getAttribute('data-url'));
@@ -121,12 +121,12 @@ function decodeBbCode($text, $safe = true)
 	}, $text);
 
 	$text = preg_replace(
-		["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/".BX_UTF_PCRE_MODIFIER],
+		["/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/u"],
 		["<span style='color: #\\1'>\\2</span>"],
 		$text
 	);
 	$text = preg_replace(
-		["/\[size=(\d+)](.*?)\[\/size]/".BX_UTF_PCRE_MODIFIER],
+		["/\[size=(\d+)](.*?)\[\/size]/u"],
 		["<span style='font-size: \\1px'>\\2</span>"],
 		$text
 	);

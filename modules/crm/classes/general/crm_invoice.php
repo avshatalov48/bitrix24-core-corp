@@ -7,6 +7,7 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Invoice\Compatible;
 use Bitrix\Crm\Invoice\Invoice;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings;
 use Bitrix\Iblock;
@@ -572,10 +573,10 @@ class CAllCrmInvoice
 			/** @var \CCrmPerms $arOptions['PERMS'] */
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			\Bitrix\Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
-				->setOperations((array)$mPermType)
-				->setAliasPrefix((string)$sAliasPrefix)
+		$builderOptions = OptionsBuilder::makeFromArray((array)$arOptions)
+			->setOperations((array)$mPermType)
+			->setAliasPrefix((string)$sAliasPrefix)
+			->build()
 		;
 
 		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()

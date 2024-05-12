@@ -3,6 +3,7 @@
  */
 jn.define('tasks/dashboard/src/filter', (require, exports, module) => {
 	const { TaskFilter } = require('tasks/filter/task');
+	const { FieldChangeRegistry } = require('tasks/statemanager/redux/slices/tasks/field-change-registry');
 
 	class Filter
 	{
@@ -139,9 +140,18 @@ jn.define('tasks/dashboard/src/filter', (require, exports, module) => {
 						[TaskFilter.counterType.newComments]: Number(counter[TaskFilter.counterType.newComments]),
 					};
 				});
-				this.updateCounterValue(
-					Object.values(this.counters[TaskFilter.roleType.all]).reduce((a, b) => a + b, 0),
-				);
+
+				const onPullValue = Object.values(this.counters[TaskFilter.roleType.all]).reduce((a, b) => a + b, 0);
+				const potentialValue = onPullValue + FieldChangeRegistry.getCounter();
+
+				if (potentialValue === 0)
+				{
+					this.counters[TaskFilter.roleType.all] = {
+						[TaskFilter.counterType.expired]: 0,
+						[TaskFilter.counterType.newComments]: 0,
+					};
+				}
+				this.updateCounterValue(potentialValue);
 
 				resolve();
 			});

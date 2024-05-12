@@ -1,5 +1,5 @@
 <?php
-$MESS['MOBILE_LANDING_TITLE_PAGE'] = 'Ñàéòû';
-$MESS['MOBILE_LANDING_TITLE_STORE'] = 'Ìàãàçèíû';
-$MESS['MOBILE_LANDING_ACTION_SHARE'] = 'Ïîäåëèòüñÿ';
-$MESS['MOBILE_LANDING_ACTION_DEALS'] = 'Ñäåëêè';
+$MESS['MOBILE_LANDING_TITLE_PAGE'] = 'Ã‘Ã Ã©Ã²Ã»';
+$MESS['MOBILE_LANDING_TITLE_STORE'] = 'ÃŒÃ Ã£Ã Ã§Ã¨Ã­Ã»';
+$MESS['MOBILE_LANDING_ACTION_SHARE'] = 'ÃÃ®Ã¤Ã¥Ã«Ã¨Ã²Ã¼Ã±Ã¿';
+$MESS['MOBILE_LANDING_ACTION_DEALS'] = 'Ã‘Ã¤Ã¥Ã«ÃªÃ¨';

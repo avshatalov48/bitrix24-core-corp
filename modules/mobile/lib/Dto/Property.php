@@ -16,7 +16,7 @@ final class Property
 		$this->object = $object;
 	}
 
-	public function setValue($object, $serializedValue)
+	public function setValue($object, $serializedValue): void
 	{
 		if ($caster = $this->getCaster())
 		{
@@ -66,19 +66,50 @@ final class Property
 	}
 
 	/**
+	 * @return \ReflectionAttribute[]
+	 */
+	public function getAttributes(): array
+	{
+		return $this->property->getAttributes();
+	}
+
+	public function getCollectionAttribute() : ?\ReflectionAttribute
+	{
+		foreach ($this->getAttributes() as $attribute)
+		{
+			$typeName = $attribute->getName();
+			if ($typeName !== \Bitrix\Mobile\Dto\Attributes\Collection::class)
+			{
+				continue;
+			}
+
+			return $attribute;
+		}
+
+		return null;
+	}
+
+	/**
 	 * @return Caster|null
 	 */
 	private function getCaster(): ?Caster
 	{
 		$casts = $this->object->getCachedCasts();
 		$caster = $casts[$this->getName()] ?? null;
+		$attribute = $this->getCollectionAttribute();
+		$type = $this->property->getType();
+
+		if ($attribute)
+		{
+			$caster = Type::makeCollectionCasterFromAttributes($attribute, $type->allowsNull());
+		}
 
 		if ($caster)
 		{
 			return $caster;
 		}
 
-		if ($type = $this->property->getType())
+		if ($type)
 		{
 			return Type::makeCasterByPropertyType($type);
 		}

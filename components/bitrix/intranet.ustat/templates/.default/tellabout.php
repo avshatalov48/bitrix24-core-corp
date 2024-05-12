@@ -33,7 +33,7 @@ elseif ($_REQUEST['WHAT'] == 'IM')
 elseif ($_REQUEST['WHAT'] == 'DISK')
 {
 	$title = GetMessage('INTRANET_USTAT_TELLABOUT_DISK_TITLE');
-	$text = GetMessage('INTRANET_USTAT_TELLABOUT_DISK_TEXT');
+	$text = GetMessage('INTRANET_USTAT_TELLABOUT_DISK_TEXT_MSGVER_1');
 }
 elseif ($_REQUEST['WHAT'] == 'MOBILE')
 {

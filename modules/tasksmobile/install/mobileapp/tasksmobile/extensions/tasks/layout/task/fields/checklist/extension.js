@@ -18,6 +18,7 @@ jn.define('tasks/layout/task/fields/checklist', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId: 'checklists',
 					style: (this.props.style || {}),
 				},
 				new ChecklistLegacy({
@@ -42,6 +43,7 @@ jn.define('tasks/layout/task/fields/checklist', (require, exports, module) => {
 			{
 				return View(
 					{
+						testId: 'checklists',
 						style,
 					},
 					new ChecklistPreview(restProps),

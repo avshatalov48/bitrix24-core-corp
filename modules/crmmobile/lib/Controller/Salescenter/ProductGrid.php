@@ -7,7 +7,7 @@ namespace Bitrix\CrmMobile\Controller\Salescenter;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 use Bitrix\Crm\Item;
 use Bitrix\CrmMobile\ProductGrid\SingleProductCreatePaymentQuery;
-use Bitrix\Main\Engine\JsonController;
+use Bitrix\CrmMobile\Controller\BaseJson;
 use Bitrix\Main\Loader;
 use Bitrix\SalesCenter\Controller\Order;
 use Bitrix\SalesCenter\Integration\CrmManager;
@@ -15,15 +15,12 @@ use Bitrix\Main\Engine\ActionFilter;
 
 Loader::requireModule('salescenter');
 
-class ProductGrid extends JsonController
+class ProductGrid extends BaseJson
 {
 	protected function getDefaultPreFilters(): array
 	{
 		return [
-			new ActionFilter\Authentication(),
-			new ActionFilter\Csrf(),
-			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-			new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+			...parent::getDefaultPreFilters(),
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 			new CheckReadPermission(),
 		];

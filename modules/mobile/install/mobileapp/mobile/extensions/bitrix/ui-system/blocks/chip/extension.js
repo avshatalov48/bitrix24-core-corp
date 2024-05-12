@@ -2,6 +2,7 @@
  * @module ui-system/blocks/chip
  */
 jn.define('ui-system/blocks/chip', (require, exports, module) => {
+	const { PropTypes } = require('utils/validation');
 	const { Indent, IndentTypes, Color, Corner } = require('tokens');
 	const { merge } = require('utils/object');
 	const { last } = require('utils/array');
@@ -11,7 +12,7 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 	/**
 	 * @function Chip
 	 * @params {object} props
-	 * @params {boolean} [props.ellipse]
+	 * @params {boolean} [props.rounded]
 	 * @params {boolean} [props.disabled]
 	 * @params {string} [props.indent]
 	 * @params {number} [props.height]
@@ -21,11 +22,12 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 	 */
 	const Chip = (props) => {
 		const {
-			ellipse = false,
+			rounded = false,
 			disabled = false,
 			indent = IndentTypes.M,
 			height = 30,
-			borderColor = Color.bgSeparatorPrimary,
+			borderColor,
+			backgroundColor,
 			children = [],
 			...restProps
 		} = props;
@@ -36,9 +38,9 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 			flexDirection: 'row',
 			borderWidth: 1,
 			height,
-			borderColor,
-			borderRadius: ellipse ? Corner.circle : Corner.M,
-			opacity: disabled ? 0.5 : 1,
+			borderColor: disabled ? Color.bgSeparatorPrimary : borderColor || Color.base4,
+			borderRadius: rounded ? Corner.circle : Corner.M,
+			backgroundColor,
 		};
 
 		if (typeof indent === 'object')
@@ -66,7 +68,7 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 	};
 
 	Chip.propTypes = {
-		ellipse: PropTypes.bool,
+		rounded: PropTypes.bool,
 		disabled: PropTypes.bool,
 		indent: PropTypes.oneOfType([
 			PropTypes.string,
@@ -77,6 +79,17 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 		]),
 		height: PropTypes.number,
 		borderColor: PropTypes.string,
+		backgroundColor: PropTypes.string,
+		children: PropTypes.object,
+	};
+
+	Chip.defaultProps = {
+		rounded: false,
+		indent: IndentTypes.M,
+		height: 30,
+		disabled: false,
+		backgroundColor: null,
+		borderColor: Color.base4,
 	};
 
 	module.exports = { Chip };

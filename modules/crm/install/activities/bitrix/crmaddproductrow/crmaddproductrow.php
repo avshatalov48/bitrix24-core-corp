@@ -72,6 +72,7 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		$row['TAX_RATE'] = $product['VAT_RATE'];
 		$row['TAX_INCLUDED'] = $product['VAT_INCLUDED'];
+		$row['TYPE'] = (int)$product['TYPE'];
 
 		$price = $this->RowPriceAccount;
 		if (CBPHelper::isEmptyValue($price))
@@ -165,8 +166,17 @@ class CBPCrmAddProductRow extends CBPActivity
 	{
 		$dbProduct = CCrmProduct::GetList(
 			[],
-			['ID' => $id],
-			['ID', 'NAME', 'PRICE', 'VAT_ID', 'VAT_INCLUDED']
+			[
+				'ID' => $id,
+			],
+			[
+				'ID',
+				'NAME',
+				'TYPE',
+				'PRICE',
+				'VAT_ID',
+				'VAT_INCLUDED',
+			]
 		);
 
 		$product = $dbProduct->fetch();

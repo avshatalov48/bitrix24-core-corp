@@ -14,11 +14,13 @@ use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\Activity\Provider\StoreDocument;
 use Bitrix\Crm\Activity\Provider\Tasks;
 use Bitrix\Crm\Activity\Provider\ToDo;
+use Bitrix\Crm\Activity\Provider\Visit;
 use Bitrix\Crm\Activity\ProviderId;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\Activity\StoreDocument\NotEnoughGoodsInStock;
 use Bitrix\Crm\Service\Timeline\Item\Model;
+use CCrmActivityType;
 
 class ConfigurableActivity
 {
@@ -29,23 +31,24 @@ class ConfigurableActivity
 	 * @param string $providerId
 	 * @param Context $context
 	 * @param Model $model
-	 * @return Item
+	 *
+	 * @return Item|null
 	 */
 	public static function create(int $typeId, string $providerId, Context $context, Model $model): ?Item
 	{
-		$providerTypeId = $model->getAssociatedEntityModel()->get('PROVIDER_TYPE_ID');
+		$providerTypeId = $model->getAssociatedEntityModel()?->get('PROVIDER_TYPE_ID');
 
-		if ($typeId === \CCrmActivityType::Email)
+		if ($typeId === CCrmActivityType::Email)
 		{
 			return new Item\Activity\Email($context, $model);
 		}
 
-		if ($typeId === \CCrmActivityType::Call)
+		if ($typeId === CCrmActivityType::Call)
 		{
 			return new Item\Activity\Call($context, $model);
 		}
 
-		if ($typeId === \CCrmActivityType::Provider)
+		if ($typeId === CCrmActivityType::Provider)
 		{
 			if ($providerId === ProviderId::IMOPENLINES_SESSION)
 			{
@@ -139,6 +142,11 @@ class ConfigurableActivity
 			if ($providerId === Tasks\Task::getId())
 			{
 				return new Item\Activity\Tasks\Task($context, $model);
+			}
+
+			if ($providerId === Visit::getId())
+			{
+				return new Item\Activity\Visit($context, $model);
 			}
 		}
 

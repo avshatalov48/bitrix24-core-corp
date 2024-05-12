@@ -113,7 +113,7 @@ $arServices = Array(
 		"NAME" => GetMessage("SERVICE_MAIL"),
 	),
 	"disk" => array(
-		"NAME" => GetMessage("SERVICE_DISK"),
+		"NAME" => GetMessage("SERVICE_DISK_MSGVER_1"),
 	),
 	"bitrix24" => array(
 		"NAME" => GetMessage("SERVICE_BITIRIX24"),

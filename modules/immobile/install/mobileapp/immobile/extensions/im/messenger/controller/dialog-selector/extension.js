@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 	const { ChatSelector } = require('im/chat/selector/chat');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { EventType } = require('im/messenger/const');
 	const { SearchConverter } = require('im/messenger/lib/converter');
@@ -36,7 +36,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				throw new Error('DialogSelector: options.view is required');
 			}
 
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 
 			if (options.entities)
 			{
@@ -140,6 +140,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 		 */
 		getUserCarouselItem()
 		{
+			/** @type {RecentModelState[]} */
 			const recentUserList = clone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			const recentUserListRemoveIndex = {};
@@ -149,20 +150,24 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			if (Type.isArrayFilled(recentUserList))
 			{
 				recentUserList.forEach((recentUserChat) => {
-					if (
-						recentUserChat.user.id === MessengerParams.getUserId()
-						|| recentUserChat.user.bot
-						|| recentUserChat.invited
-					)
+					const userStateModel = this.store.getters['usersModel/getById'](recentUserChat.id);
+					if (userStateModel)
 					{
-						recentUserListRemoveIndex[recentUserChat.user.id] = true;
+						if (
+							userStateModel.id === MessengerParams.getUserId()
+							|| userStateModel.bot
+							|| userStateModel.invited
+						)
+						{
+							recentUserListRemoveIndex[recentUserChat.id] = true;
 
-						return;
+							return;
+						}
+
+						recentUserListIndex[recentUserChat.id] = true;
+
+						userItems.push(SearchConverter.toUserCarouselItem(userStateModel));
 					}
-
-					recentUserListIndex[recentUserChat.user.id] = true;
-
-					userItems.push(SearchConverter.toUserCarouselItem(recentUserChat.user));
 				});
 			}
 

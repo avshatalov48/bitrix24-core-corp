@@ -10,6 +10,7 @@ namespace Bitrix\Intranet;
 
 use Bitrix\Main;
 use Bitrix\Intranet;
+use Bitrix\Main\IO\File;
 
 class PortalSettings
 {
@@ -20,6 +21,7 @@ class PortalSettings
 	protected string $siteLogo24 = '24';
 	protected ?int $siteLogoId = null;
 	protected ?int $siteLogoIdForRetina = null;
+	protected ?string $settingsPath = null;
 
 	protected function __construct(?string $siteId = null)
 	{
@@ -210,7 +212,17 @@ class PortalSettings
 
 	public function getSettingsUrl(): string
 	{
-		return '/configs/';
+		if (!$this->settingsPath)
+		{
+			$this->settingsPath = '/configs/';
+
+			if(!File::isFileExists($_SERVER['DOCUMENT_ROOT'] . $this->settingsPath . '/index.php'))
+			{
+				$this->settingsPath = '/settings/configs/';
+			}
+		}
+
+		return $this->settingsPath;
 	}
 
 	final public static function getInstance(): static

@@ -130,7 +130,7 @@ $isStExport = is_array($arResult['STEXPORT_PARAMS']);
 if ($isStExport)
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -166,7 +166,7 @@ UI\Extension::load([
 	'ui.notification'
 ]);
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

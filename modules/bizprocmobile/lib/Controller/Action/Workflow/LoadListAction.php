@@ -4,6 +4,7 @@ namespace Bitrix\BizprocMobile\Controller\Action\Workflow;
 
 use Bitrix\Bizproc;
 use Bitrix\Bizproc\Api\Data\WorkflowStateService\WorkflowStateToGet;
+use Bitrix\Bizproc\Api\Data\WorkflowStateService\WorkflowStateFilter;
 use Bitrix\Bizproc\Api\Service\WorkflowStateService;
 use Bitrix\BizprocMobile\UI\WorkflowView;
 use Bitrix\Main\UI\PageNavigation;
@@ -26,9 +27,14 @@ class LoadListAction extends BaseAction
 
 		$toGet->setFilterUserId($currentUserId);
 
-		if (isset($extra['filterPresetId']))
+		if (!empty($extra['filterPresetId']))
 		{
 			$toGet->setFilterPresetId($extra['filterPresetId']);
+		}
+
+		if (!empty($extra['filterSearchQuery']) && is_string($extra['filterSearchQuery']))
+		{
+			$toGet->setFilterSearchQuery($extra['filterSearchQuery']);
 		}
 
 		if (!empty($extra['filterParams']['ID']) && is_array($extra['filterParams']['ID']))
@@ -53,16 +59,28 @@ class LoadListAction extends BaseAction
 			return $this->showErrors();
 		}
 
-		$items = array_map(
-			static fn($workflow) => new WorkflowView($workflow, $currentUserId),
-			array_values($result->getWorkflowStatesList()),
-		);
+		$userIds = [];
+		$items = [];
+		foreach ($result->getWorkflowStatesList() as $workflow)
+		{
+			$workflowView = new WorkflowView($workflow, $currentUserId);
+			$items[] = $workflowView;
 
-		$userIds = array_column($result->getMembersInfo(), 'ID');
+			if (isset($workflow['STARTED_USER_INFO']['ID']))
+			{
+				$userIds[(int)($workflow['STARTED_USER_INFO']['ID'])] = true;
+			}
+
+			$facesIds = $workflowView->getFacesIds();
+			foreach ($facesIds as $userId)
+			{
+				$userIds[(int)$userId] = true;
+			}
+		}
 
 		return [
 			'items' => $items,
-			'users' => UserRepository::getByIds($userIds),
+			'users' => UserRepository::getByIds(array_keys($userIds)),
 			'permissions' => [],
 		];
 	}

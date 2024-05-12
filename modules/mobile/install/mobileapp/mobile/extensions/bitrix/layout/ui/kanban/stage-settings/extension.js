@@ -7,7 +7,8 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 	const { stringify } = require('utils/string');
 	const { getStageNavigationIcon } = require('assets/stages');
 	const { throttle } = require('utils/function');
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
+	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 
 	const SUCCESS_SEMANTICS = 'S';
@@ -93,7 +94,7 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 				this.updateNavigationTitleAndIcon();
 				this.layout.setRightButtons([
 					{
-						name: BX.message('STAGE_DETAIL_SAVE'),
+						name: Loc.getMessage('STAGE_DETAIL_SAVE'),
 						type: 'text',
 						color: AppTheme.colors.accentMainLinks,
 						callback: () => this.saveAndClose(),
@@ -116,8 +117,8 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 
 			return (
 				stringify(name) === ''
-					? BX.message('STAGE_DETAIL_FUNNEL_EMPTY')
-					: BX.message('STAGE_DETAIL_FUNNEL').replace('#STAGE_NAME#', name)
+					? Loc.getMessage('STAGE_DETAIL_FUNNEL_EMPTY')
+					: Loc.getMessage('STAGE_DETAIL_FUNNEL').replace('#STAGE_NAME#', name)
 			);
 		}
 
@@ -194,10 +195,10 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 				new EntityName({
 					focus: this.hasDefaultName(),
 					iconColor: AppTheme.colors.base3,
-					title: BX.message('STAGE_DETAIL_NAME'),
+					title: Loc.getMessage('STAGE_DETAIL_NAME'),
 					showTitle: true,
 					name: this.stageName || this.changedFields.name,
-					placeholder: BX.message('STAGE_DETAIL_DEFAULT_STAGE_NAME'),
+					placeholder: Loc.getMessage('STAGE_DETAIL_DEFAULT_STAGE_NAME'),
 					required: true,
 					showRequired: false,
 					onChange: (value) => {
@@ -224,7 +225,7 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 
 		hasDefaultName()
 		{
-			return this.stageName === BX.message('STAGE_DETAIL_DEFAULT_STAGE_DEFAULT_NAME');
+			return this.stageName === Loc.getMessage('STAGE_DETAIL_DEFAULT_STAGE_DEFAULT_NAME');
 		}
 
 		renderColorPicker()
@@ -311,35 +312,26 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 					},
 				},
 				icon: svgImages.deleteIcon,
-				text: BX.message('STAGE_DETAIL_DELETE'),
+				text: Loc.getMessage('STAGE_DETAIL_DELETE'),
 				onClick: () => this.openAlertOnDelete(id),
 			});
 		}
 
 		openAlertOnDelete(stageId)
 		{
-			Alert.confirm(
-				'',
-				BX.message('STAGE_DETAIL_DELETE_TEXT'),
-				[
-					{
-						type: 'cancel',
-					},
-					{
-						text: BX.message('STAGE_DETAIL_DELETE_OK'),
-						type: 'destructive',
-						onPress: () => {
-							this.deleteStageHandler(stageId)
-								.then((() => {
-									this.layout.close();
-								}))
-								.catch((error) => {
-									throw error;
-								});
-						},
-					},
-				],
-			);
+			confirmDestructiveAction({
+				title: '',
+				description: Loc.getMessage('STAGE_DETAIL_DELETE_TEXT'),
+				onDestruct: () => {
+					this.deleteStageHandler(stageId)
+						.then((() => {
+							this.layout.close();
+						}))
+						.catch((error) => {
+							throw error;
+						});
+				},
+			});
 		}
 
 		/**

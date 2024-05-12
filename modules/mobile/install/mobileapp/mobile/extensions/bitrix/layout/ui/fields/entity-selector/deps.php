@@ -9,5 +9,6 @@ return [
 		'utils',
 		'utils/object',
 		'utils/type',
+		'utils/validation',
 	],
 ];

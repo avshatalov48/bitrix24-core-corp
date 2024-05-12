@@ -1,31 +1,41 @@
-import { CategoryList } from 'crm.category-list';
-import { CategoryModel } from 'crm.category-model';
-import { ajax as Ajax, Loc, Tag, Text, Type } from 'main.core';
+import { type CategoryModel } from 'crm.category-model';
+import { Builder, Dictionary, type EntityConvertEvent, type EventStatus } from 'crm.integration.analytics';
+import { ajax as Ajax, Dom, Loc, Tag, Text, Type, Uri } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
+import { sendData as sendAnalyticsData } from 'ui.analytics';
 import { Button, ButtonColor } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.forms';
+import { CategoryRepository } from './category-repository';
 import { Config } from './config';
 import type { ConfigItemData } from './config-item';
 import { ConfigItem } from './config-item';
 import { SchemeItem } from './scheme-item';
 
-declare type CategorySelectResult = {
-	isCanceled?: boolean,
-	category?: CategoryModel|null,
+type ResolveResult = {
+	isCanceled: boolean, // default false
+	isFinished: boolean, // default true
 };
 
-declare type CollectAdditionalDataResult = {
-	isCanceled: boolean,
+type CategorySelectResult = ResolveResult & {
+	category?: CategoryModel | null,
 };
 
 export type ConverterParams = {
+	id?: string,
 	serviceUrl: string,
 	originUrl: string,
 	isRedirectToDetailPageEnabled?: boolean,
-	messages: Object<string, string>
+	messages: Object<string, string>,
+	analytics?: {
+		c_sub_section?: EntityConvertEvent['c_sub_section'],
+		c_element?: EntityConvertEvent['c_element'],
+	},
 };
+
+// eslint-disable-next-line unicorn/numeric-separators-style
+const REQUIRED_FIELDS_INFOHELPER_CODE = 8233923;
 
 /**
  * @memberOf BX.Crm.Conversion
@@ -38,7 +48,8 @@ export class Converter
 	#params: ConverterParams;
 	#isProgress: boolean;
 	#isSynchronisationAllowed: boolean;
-	#fieldsSynchronizer: BX.CrmEntityFieldSynchronizationEditor|null;
+	#fieldsSynchronizer: BX.CrmEntityFieldSynchronizationEditor | null;
+	#data: Object;
 
 	constructor(
 		entityTypeId: number,
@@ -53,9 +64,12 @@ export class Converter
 		}
 		else
 		{
-			console.error('Config is invalid in Converter constructor. Expected instance of Config, got ' + (typeof config));
+			console.error('Config is invalid in Converter constructor. Expected instance of Config', config, this);
 		}
 		this.#params = params ?? {};
+
+		this.#params.id = Type.isStringFilled(this.#params.id) ? this.#params.id : Text.getRandom();
+		this.#params.analytics = this.#filterExternalAnalytics(this.#params.analytics);
 
 		this.#isProgress = false;
 		this.#isSynchronisationAllowed = false;
@@ -72,20 +86,25 @@ export class Converter
 		return this.#config;
 	}
 
-	getServiceUrl()
+	getId(): string
 	{
-		let serviceUrl = this.#params.serviceUrl;
+		return this.#params.id;
+	}
+
+	getServiceUrl(): ?string
+	{
+		const serviceUrl = this.#params.serviceUrl;
 		if (!serviceUrl)
 		{
 			return null;
 		}
 
 		const additionalParams = {
-			action: "convert",
+			action: 'convert',
 		};
 
 		this.getConfig().getItems().forEach((item: ConfigItem) => {
-			additionalParams[BX.CrmEntityType.resolveName(item.getEntityTypeId()).toLowerCase()] = item.isActive() ? "Y" : "N";
+			additionalParams[BX.CrmEntityType.resolveName(item.getEntityTypeId()).toLowerCase()] = item.isActive() ? 'Y' : 'N';
 		});
 
 		return BX.util.add_url_param(serviceUrl, additionalParams);
@@ -93,7 +112,7 @@ export class Converter
 
 	getOriginUrl(): ?string
 	{
-		if (this.#params && this.#params.hasOwnProperty("originUrl"))
+		if (this.#params && 'originUrl' in this.#params)
 		{
 			return String(this.#params.originUrl);
 		}
@@ -103,7 +122,7 @@ export class Converter
 
 	isRedirectToDetailPageEnabled(): boolean
 	{
-		if (this.#params && this.#params.hasOwnProperty("isRedirectToDetailPageEnabled"))
+		if (this.#params && 'isRedirectToDetailPageEnabled' in this.#params)
 		{
 			return this.#params.isRedirectToDetailPageEnabled;
 		}
@@ -111,119 +130,270 @@ export class Converter
 		return true;
 	}
 
+	/**
+	 * Overwrite current analytics[c_element] param.
+	 * Note that you are not allowed to change analytics[c_sub_section] - its by design.
+	 *
+	 * @param c_element
+	 * @returns {BX.Crm.Conversion.Converter}
+	 */
+	// eslint-disable-next-line camelcase
+	setAnalyticsElement(c_element: EntityConvertEvent['c_element']): Converter
+	{
+		// eslint-disable-next-line camelcase
+		const filtered = this.#filterExternalAnalytics({ c_element });
+		if ('c_element' in filtered)
+		{
+			this.#params.analytics.c_element = filtered.c_element;
+		}
+
+		return this;
+	}
+
+	convertBySchemeItemId(schemeItemId: string, entityId: number, data?: Object): void
+	{
+		const targetSchemeItem = this.#config.getScheme().getItemById(schemeItemId);
+		if (!targetSchemeItem)
+		{
+			console.error('Scheme is not found', schemeItemId, this);
+
+			return;
+		}
+
+		this.#config.updateFromSchemeItem(targetSchemeItem);
+
+		this.convert(entityId, data);
+	}
+
 	convert(entityId: number, data?: Object): void
 	{
 		this.#entityId = entityId;
-		this.data = data;
+		this.#data = data;
 		const schemeItem = this.#config.getScheme().getCurrentItem();
 		if (!schemeItem)
 		{
-			console.error('Scheme is not found');
+			console.error('Scheme is not found', this);
+
 			return;
 		}
 
 		if (Type.isStringFilled(schemeItem.getAvailabilityLock()))
 		{
+			// eslint-disable-next-line no-eval
 			eval(schemeItem.getAvailabilityLock());
 
 			return;
 		}
 
-		this.#collectAdditionalData(schemeItem).then((result: CollectAdditionalDataResult) => {
+		this.#config.getActiveItems().forEach((item) => {
+			this.#sendAnalyticsData(item.getEntityTypeId(), Dictionary.STATUS_ATTEMPT);
+		});
+
+		this.#collectAdditionalData(schemeItem).then((result: ResolveResult) => {
 			if (result.isCanceled)
 			{
+				// pass it to next 'then' handler
+				return result;
+			}
+
+			return this.#request();
+		}).then((result: ResolveResult) => {
+			if (!result.isFinished)
+			{
+				// dont need to register anything in statistics
+
 				return;
 			}
 
-			this.#request();
+			const status = result.isCanceled ? Dictionary.STATUS_CANCEL : Dictionary.STATUS_SUCCESS;
 
+			this.#config.getActiveItems().forEach((item) => {
+				this.#sendAnalyticsData(item.getEntityTypeId(), status);
+			});
 		}).catch((error) => {
 			if (error)
 			{
-				console.error(error);
+				// eslint-disable-next-line no-console
+				console.log('Convert error', error, this);
 			}
+
+			this.#config.getActiveItems().forEach((item) => {
+				this.#sendAnalyticsData(item.getEntityTypeId(), Dictionary.STATUS_ERROR);
+			});
 		});
 	}
 
-	#request(): void
+	#request(): Promise<ResolveResult>
 	{
-		const serviceUrl = this.getServiceUrl();
-		if (!serviceUrl)
-		{
-			console.error('Convert endpoint is not specifier');
-			return;
-		}
-		if (this.#isProgress)
-		{
-			console.error('Another request is in progress');
-			return;
-		}
-		this.#isProgress = true;
-		Ajax({
-			url: serviceUrl,
-			method: "POST",
-			dataType: "json",
-			data:
+		const promise = new Promise((resolve, reject) => {
+			const serviceUrl = this.getServiceUrl();
+			if (!serviceUrl)
+			{
+				console.error('Convert endpoint is not specifier');
+
+				reject();
+
+				return;
+			}
+
+			if (this.#isProgress)
+			{
+				console.error('Another request is in progress');
+
+				reject();
+
+				return;
+			}
+
+			this.#isProgress = true;
+			Ajax({
+				url: serviceUrl,
+				method: 'POST',
+				dataType: 'json',
+				data:
+					{
+						MODE: 'CONVERT',
+						ENTITY_ID: this.#entityId,
+						ENABLE_SYNCHRONIZATION: this.#isSynchronisationAllowed ? 'Y' : 'N',
+						ENABLE_REDIRECT_TO_SHOW: this.isRedirectToDetailPageEnabled() ? 'Y' : 'N',
+						CONFIG: this.getConfig().externalize(),
+						CONTEXT: this.#data,
+						ORIGIN_URL: this.getOriginUrl(),
+					},
+				onsuccess: resolve,
+				onfailure: reject,
+			});
+		});
+
+		return promise
+			.then((response) => {
+				this.#isProgress = false;
+
+				return this.#onRequestSuccess(response);
+			})
+			.catch((error) => {
+				this.#isProgress = false;
+
+				if (Type.isStringFilled(error))
 				{
-					"MODE": "CONVERT",
-					"ENTITY_ID": this.#entityId,
-					"ENABLE_SYNCHRONIZATION": this.#isSynchronisationAllowed ? "Y" : "N",
-					"ENABLE_REDIRECT_TO_SHOW": this.isRedirectToDetailPageEnabled ? "Y" : "N",
-					"CONFIG": this.getConfig().externalize(),
-					"CONTEXT": this.data,
-					"ORIGIN_URL": this.getOriginUrl()
-				},
-			onsuccess: this.#onRequestSuccess.bind(this),
-			onfailure: this.#onRequestError.bind(this),
+					// response may contain info about action required from user
+					MessageBox.alert(Text.encode(error));
+				}
+
+				// pass error to next 'catch'
+				throw error;
+			})
+		;
+	}
+
+	#sendAnalyticsData(dstEntityTypeId: number, status: EventStatus): void
+	{
+		const builder = Builder.Entity.ConvertEvent.createDefault(this.#entityTypeId, dstEntityTypeId)
+			.setSubSection(this.#params.analytics.c_sub_section)
+			.setElement(this.#params.analytics.c_element)
+			.setStatus(status)
+		;
+
+		sendAnalyticsData(builder.buildData());
+	}
+
+	#filterExternalAnalytics(analytics: any): ConverterParams['analytics']
+	{
+		if (!Type.isPlainObject(analytics))
+		{
+			return {};
+		}
+
+		const allowedKeys = new Set([
+			'c_sub_section',
+			'c_element',
+		]);
+
+		const result = {};
+		for (const [key, value] of Object.entries(analytics))
+		{
+			if (allowedKeys.has(key) && Type.isStringFilled(value))
+			{
+				result[key] = value;
+			}
+		}
+
+		return result;
+	}
+
+	#onRequestSuccess(response): Promise<ResolveResult, string>
+	{
+		return new Promise((resolve, reject) => {
+			if (response.ERROR)
+			{
+				reject(response.ERROR?.MESSAGE || response.ERROR || 'Error during conversion');
+
+				return;
+			}
+
+			if (Type.isPlainObject(response.REQUIRED_ACTION))
+			{
+				resolve(this.#processRequiredAction(response.REQUIRED_ACTION));
+
+				return;
+			}
+
+			const data = Type.isPlainObject(response.DATA) ? response.DATA : {};
+			if (!data)
+			{
+				reject();
+
+				return;
+			}
+
+			const resolveResult: ResolveResult = { isCanceled: false, isFinished: true };
+
+			const redirectUrl = Type.isString(data.URL) ? data.URL : '';
+			if (data.IS_FINISHED === 'Y')
+			{
+				// result entity was created on backend, conversion is finished
+				this.#data = {};
+
+				const wasRedirectedInExternalEventHandler = this.#emitConvertedEvent(redirectUrl);
+				if (wasRedirectedInExternalEventHandler)
+				{
+					resolve(resolveResult);
+
+					return;
+				}
+			}
+			else
+			{
+				// backend could not create result entity automatically, user interaction is required
+				resolveResult.isFinished = false;
+			}
+
+			if (redirectUrl)
+			{
+				const redirectUrlObject = new Uri(redirectUrl);
+
+				const currentRedirectUrlAnalytics = redirectUrlObject.getQueryParam('st') || {};
+
+				redirectUrlObject.setQueryParam(
+					'st',
+					{
+						...this.#params.analytics,
+						...currentRedirectUrlAnalytics,
+					},
+				);
+
+				BX.Crm.Page.open(redirectUrlObject.toString());
+			}
+			else if (window.top !== window)
+			{
+				// window.location.reload();
+			}
+
+			resolve(resolveResult);
 		});
 	}
 
-	#onRequestSuccess(response)
-	{
-		// todo return promise
-		this.#isProgress = false;
-		if (response.ERROR)
-		{
-			MessageBox.alert(response.ERROR.MESSAGE || "Error during conversion");
-			return;
-		}
-		if (Type.isPlainObject(response.REQUIRED_ACTION))
-		{
-			return this.#processRequiredAction(response.REQUIRED_ACTION);
-		}
-
-		const data = Type.isPlainObject(response.DATA) ? response.DATA : {};
-		if (!data)
-		{
-			return;
-		}
-
-		const redirectUrl = Type.isString(data.URL) ? data.URL : "";
-		let isRedirected = false;
-		if (data.IS_FINISHED && data.IS_FINISHED === "Y")
-		{
-			this.data = {};
-
-			isRedirected = this.#emitConvertedEvent(redirectUrl);
-		}
-
-		if(redirectUrl !== "" && !isRedirected)
-		{
-			BX.Crm.Page.open(redirectUrl);
-		}
-		else if(!(isRedirected && window.top === window))
-		{
-			// window.location.reload();
-		}
-	}
-
-	#onRequestError(error: string)
-	{
-		this.#isProgress = false;
-		MessageBox.alert(error);
-	}
-
-	#collectAdditionalData(schemeItem: SchemeItem): Promise<CollectAdditionalDataResult,string>
+	#collectAdditionalData(schemeItem: SchemeItem): Promise<ResolveResult, string>
 	{
 		const config = this.getConfig();
 
@@ -235,17 +405,19 @@ export class Converter
 			});
 		});
 
-		let result: CollectAdditionalDataResult = {
+		const result: ResolveResult = {
 			isCanceled: false,
+			isFinished: true,
 		};
-		const promiseIterator = ((promises: Array, index: number = 0) => {
+		const promiseIterator = ((receivedPromises: Array, index: number = 0) => {
 			return new Promise((resolve, reject) => {
-				if (result.isCanceled || !promises[index])
+				if (result.isCanceled || !receivedPromises[index])
 				{
 					resolve(result);
+
 					return;
 				}
-				promises[index]().then((categoryResult: CategorySelectResult) => {
+				receivedPromises[index]().then((categoryResult: CategorySelectResult) => {
 					if (categoryResult.isCanceled)
 					{
 						result.isCanceled = true;
@@ -256,7 +428,9 @@ export class Converter
 						const configItem = config.getItemByEntityTypeId(entityTypeId);
 						if (!configItem)
 						{
-							reject('Scheme is not correct: configItem is not found for ' + entityTypeId);
+							console.error(`Scheme is not correct: configItem is not found for ${entityTypeId}`, this);
+							reject();
+
 							return;
 						}
 						const initData = configItem.getInitData();
@@ -264,29 +438,32 @@ export class Converter
 						configItem.setInitData(initData);
 					}
 
-					resolve(promiseIterator(promises, ++index));
-				});
-			})
+					resolve(promiseIterator(receivedPromises, index + 1));
+				}).catch(reject);
+			});
 		});
 
 		return promiseIterator(promises);
 	}
 
-	#getCategoryForEntityTypeId(entityTypeId): Promise<CategorySelectResult, string>
+	#getCategoryForEntityTypeId(entityTypeId): Promise<CategorySelectResult>
 	{
 		return new Promise((resolve, reject) => {
 			const configItem = this.getConfig().getItemByEntityTypeId(entityTypeId);
 			if (!configItem)
 			{
-				reject('Scheme is not correct: configItem is not found for ' + entityTypeId);
+				console.error(`Scheme is not correct: configItem is not found for ${entityTypeId}`, this);
+				reject();
+
 				return;
 			}
+
 			if (this.#isNeedToLoadCategories(entityTypeId))
 			{
-				CategoryList.Instance.getItems(entityTypeId).then((categories: CategoryModel[]) => {
+				CategoryRepository.Instance.getCategories(entityTypeId).then((categories: CategoryModel[]) => {
 					if (categories.length > 1)
 					{
-						this.#showCategorySelector(categories, configItem.getTitle()).then(resolve).catch(reject);
+						resolve(this.#showCategorySelector(categories, configItem.getTitle()));
 					}
 					else
 					{
@@ -299,28 +476,24 @@ export class Converter
 			}
 			else
 			{
-				resolve({isCanceled:false, category:null});
+				resolve({ isCanceled: false, category: null });
 			}
 		});
 	}
 
 	#isNeedToLoadCategories(entityTypeId: number): boolean
 	{
-		// todo pass isCategoriesEnabled from backend
-		return (
-			entityTypeId === BX.CrmEntityType.enumeration.deal
-			|| BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId)
-		);
+		return CategoryRepository.Instance.isCategoriesEnabled(entityTypeId);
 	}
 
-	#showCategorySelector(categories: CategoryModel[], title: string): Promise<CategorySelectResult,string>
+	#showCategorySelector(categories: CategoryModel[], title: string): Promise<CategorySelectResult>
 	{
 		return new Promise((resolve) => {
 			const categorySelectorContent: HTMLElement = Tag.render`
 				<div class="crm-converter-category-selector ui-form ui-form-line">
 					<div class="ui-form-row">
 						<div class="crm-converter-category-selector-label ui-form-label">
-							<div class="ui-ctl-label-text">${Loc.getMessage("CRM_COMMON_CATEGORY")}</div>
+							<div class="ui-ctl-label-text">${Loc.getMessage('CRM_COMMON_CATEGORY')}</div>
 						</div>
 						<div class="ui-form-content">
 							<div class="crm-converter-category-selector-select ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
@@ -334,11 +507,14 @@ export class Converter
 
 			const select = categorySelectorContent.querySelector('select');
 			categories.forEach((category) => {
-				select.appendChild(Tag.render`<option value="${category.getId()}">${Text.encode(category.getName())}</option>`);
+				Dom.append(
+					Tag.render`<option value="${category.getId()}">${Text.encode(category.getName())}</option>`,
+					select,
+				);
 			});
 
 			const popup = new Popup({
-				titleBar: Loc.getMessage("CRM_CONVERSION_CATEGORY_SELECTOR_TITLE", {
+				titleBar: Loc.getMessage('CRM_CONVERSION_CATEGORY_SELECTOR_TITLE', {
 					'#ENTITY#': Text.encode(title),
 				}),
 				content: categorySelectorContent,
@@ -346,10 +522,10 @@ export class Converter
 				closeIcon: true,
 				buttons: [
 					new Button({
-						text: Loc.getMessage("CRM_COMMON_ACTION_SAVE"),
+						text: Loc.getMessage('CRM_COMMON_ACTION_SAVE'),
 						color: ButtonColor.SUCCESS,
 						onclick: () => {
-							const value = Array.from(select.selectedOptions)[0].value;
+							const value = [...select.selectedOptions][0].value;
 
 							popup.destroy();
 
@@ -357,47 +533,48 @@ export class Converter
 							{
 								if (category.getId() === Number(value))
 								{
-									resolve({category});
+									resolve({ category });
+
 									return true;
 								}
 							}
-							console.error('Selected category not found');
-							resolve({isCanceled: true});
+							console.error('Selected category not found', value, categories);
+							resolve({ isCanceled: true });
 
 							return true;
 						},
 					}),
 					new Button({
-						text: Loc.getMessage("CRM_COMMON_ACTION_CANCEL"),
+						text: Loc.getMessage('CRM_COMMON_ACTION_CANCEL'),
 						color: ButtonColor.LIGHT,
 						onclick: () => {
 							popup.destroy();
 
-							resolve({isCanceled: true});
+							resolve({ isCanceled: true });
+
 							return true;
 						},
 					}),
 				],
 				events: {
-					onClose: () =>
-					{
-						resolve({isCanceled: true});
-					}
-				}
+					onClose: () => {
+						resolve({ isCanceled: true });
+					},
+				},
 			});
 
 			popup.show();
 		});
 	}
 
-	#processRequiredAction(action: Object): void
+	#processRequiredAction(action: Object): Promise<ResolveResult>
 	{
 		const name = String(action.NAME);
 		const data = Type.isPlainObject(action.DATA) ? action.DATA : {};
 
-		if(name === "SYNCHRONIZE")
+		if (name === 'SYNCHRONIZE')
 		{
-			let newConfig: ConfigItemData[]|null = null;
+			let newConfig: ConfigItemData[] | null = null;
 			if (Type.isArray(data.CONFIG))
 			{
 				newConfig = data.CONFIG;
@@ -412,64 +589,117 @@ export class Converter
 				this.#config.updateItems(newConfig);
 			}
 
-			this.#getFieldsSynchronizer(Type.isArray(data.FIELD_NAMES) ? data.FIELD_NAMES : []).show();
+			return this.#synchronizeFields(Type.isArray(data.FIELD_NAMES) ? data.FIELD_NAMES : []);
+		}
 
-			return;
-		}
-		if(name === "CORRECT")
+		if (name === 'CORRECT' && Type.isPlainObject(data.CHECK_ERRORS))
 		{
-			if(Type.isPlainObject(data.CHECK_ERRORS))
-			{
-				// todo this is actual for leads only.
-				// this.openEntityEditorDialog(
-				// 	{
-				// 		title: manager ? manager.getMessage("checkErrorTitle") : null,
-				// 		helpData: { text: manager.getMessage("checkErrorHelp"), code: manager.getMessage("checkErrorHelpArticleCode") },
-				// 		fieldNames: Object.keys(checkErrors),
-				// 		initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
-				// 		context: BX.prop.getObject(data, "CONTEXT", null)
-				// 	}
-				// );
-				return;
-			}
+			return this.#askToFillRequiredFields(data);
 		}
+
+		return Promise.resolve({ isCanceled: false, isFinished: true });
 	}
 
-	#getFieldsSynchronizer(fieldNames: string[])
+	#synchronizeFields(fieldNames: string[]): Promise<ResolveResult>
 	{
-		if (this.#fieldsSynchronizer)
-		{
-			this.#fieldsSynchronizer.setConfig(this.#config.externalize());
-			this.#fieldsSynchronizer.setFieldNames(fieldNames);
+		const synchronizer = this.#getFieldsSynchronizer(fieldNames);
 
-			return this.#fieldsSynchronizer;
+		return new Promise((resolve) => {
+			const listener = (sender, args) => {
+				const isConversionCancelled = Type.isBoolean(args.isCanceled) && args.isCanceled === true;
+				if (isConversionCancelled)
+				{
+					synchronizer.removeClosingListener(listener);
+
+					resolve({ isCanceled: true, isFinished: true });
+
+					return;
+				}
+
+				this.#isSynchronisationAllowed = true;
+				this.#config.updateItems(Object.values(this.#fieldsSynchronizer.getConfig()));
+
+				synchronizer.removeClosingListener(listener);
+				resolve(this.#request());
+			};
+
+			synchronizer.addClosingListener(listener);
+			synchronizer.show();
+		});
+	}
+
+	#getFieldsSynchronizer(fieldNames: string[]): BX.CrmEntityFieldSynchronizationEditor
+	{
+		if (!this.#fieldsSynchronizer)
+		{
+			this.#fieldsSynchronizer = BX.CrmEntityFieldSynchronizationEditor.create(
+				`crm_converter_fields_synchronizer_${this.getEntityTypeId()}`,
+				{
+					config: this.#config.externalize(),
+					title: this.#getMessage('dialogTitle'),
+					fieldNames,
+					legend: this.#getMessage('syncEditorLegend'),
+					fieldListTitle: this.#getMessage('syncEditorFieldListTitle'),
+					entityListTitle: this.#getMessage('syncEditorEntityListTitle'),
+					continueButton: this.#getMessage('continueButton'),
+					cancelButton: this.#getMessage('cancelButton'),
+				},
+			);
 		}
 
-		this.#fieldsSynchronizer = BX.CrmEntityFieldSynchronizationEditor.create(
-			"crm_converter_fields_synchronizer_" + this.getEntityTypeId(),
-			{
-				config: this.#config.externalize(),
-				title: this.#getMessage("dialogTitle"),
-				fieldNames: fieldNames,
-				legend: this.#getMessage("syncEditorLegend"),
-				fieldListTitle: this.#getMessage("syncEditorFieldListTitle"),
-				entityListTitle: this.#getMessage("syncEditorEntityListTitle"),
-				continueButton: this.#getMessage("continueButton"),
-				cancelButton: this.#getMessage("cancelButton"),
-			}
-		);
-		this.#fieldsSynchronizer.addClosingListener((sender, args) => {
-			if(!(Type.isBoolean(args["isCanceled"]) && args["isCanceled"] === false))
-			{
-				return;
-			}
-
-			this.#isSynchronisationAllowed = true;
-			this.#config.updateItems(Object.values(this.#fieldsSynchronizer.getConfig()));
-			this.#request();
-		});
+		this.#fieldsSynchronizer.setConfig(this.#config.externalize());
+		this.#fieldsSynchronizer.setFieldNames(fieldNames);
 
 		return this.#fieldsSynchronizer;
+	}
+
+	#askToFillRequiredFields(data: Object): Promise<ResolveResult>
+	{
+		// just in case that there is previous not yet closed editor
+		BX.Crm.PartialEditorDialog.close('entity-converter-editor');
+
+		const entityEditor = BX.Crm.PartialEditorDialog.create(
+			'entity-converter-editor',
+			{
+				title: Loc.getMessage('CRM_CONVERSION_REQUIRED_FIELDS_POPUP_TITLE'),
+				entityTypeId: this.#entityTypeId,
+				entityId: this.#entityId,
+				fieldNames: Object.keys(data.CHECK_ERRORS),
+				helpData: {
+					text: Loc.getMessage('CRM_CONVERSION_MORE_ABOUT_REQUIRED_FIELDS'),
+					code: REQUIRED_FIELDS_INFOHELPER_CODE,
+				},
+				context: data.CONTEXT,
+			},
+		);
+
+		return new Promise((resolve) => {
+			const handler = (sender: BX.Crm.PartialEditorDialog, eventParams: Object) => {
+				if (this.#entityTypeId !== eventParams?.entityTypeId || this.#entityId !== eventParams?.entityId)
+				{
+					return;
+				}
+
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+				BX.removeCustomEvent(window, 'Crm.PartialEditorDialog.Close', handler);
+
+				// yes, 'canceled' with double 'l' in this case
+				const isCanceled = Type.isBoolean(eventParams.isCancelled) ? eventParams.isCancelled : true;
+				if (isCanceled)
+				{
+					resolve({ isCanceled: true, isFinished: true });
+				}
+				else
+				{
+					resolve(this.#request());
+				}
+			};
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+			BX.addCustomEvent(window, 'Crm.PartialEditorDialog.Close', handler);
+
+			entityEditor.open();
+		});
 	}
 
 	#getMessage(phraseId): string
@@ -478,7 +708,17 @@ export class Converter
 		{
 			this.#params.messages = {};
 		}
+
 		return this.#params.messages[phraseId] || phraseId;
+	}
+
+	/**
+	 * @deprecated Will be removed soon
+	 * @todo delete, replace with messages from config.php
+	 */
+	getMessagePublic(phraseId): string
+	{
+		return this.#getMessage(phraseId);
 	}
 
 	#emitConvertedEvent(redirectUrl): boolean
@@ -493,24 +733,22 @@ export class Converter
 			isRedirected: false,
 		};
 
-		var current = BX.Crm.Page.getTopSlider();
-		if(current)
+		const current = BX.Crm.Page.getTopSlider();
+		if (current)
 		{
-			eventArgs["sliderUrl"] = current.getUrl();
+			eventArgs.sliderUrl = current.getUrl();
 		}
 
-		BX.onCustomEvent(window, "Crm.EntityConverter.Converted", [ this, eventArgs ]);
-		BX.localStorage.set("onCrmEntityConvert", eventArgs, 10);
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+		BX.onCustomEvent(window, 'Crm.EntityConverter.Converted', [this, eventArgs]);
+		BX.localStorage.set('onCrmEntityConvert', eventArgs, 10);
 
-		this.getConfig().getItems().forEach((item) => {
-			if (item.isActive())
-			{
-				EventEmitter.emit('Crm.EntityConverter.SingleConverted', {
-					entityTypeName: BX.CrmEntityType.resolveName(item.getEntityTypeId()),
-				});
-			}
+		this.getConfig().getActiveItems().forEach((item) => {
+			EventEmitter.emit('Crm.EntityConverter.SingleConverted', {
+				entityTypeName: BX.CrmEntityType.resolveName(item.getEntityTypeId()),
+			});
 		});
 
-		return eventArgs["isRedirected"];
+		return eventArgs.isRedirected;
 	}
 }

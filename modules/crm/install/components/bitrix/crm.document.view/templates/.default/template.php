@@ -89,7 +89,7 @@ if ($arParams['IS_SLIDER']):
 	<div class="crm__document-view--title">
 		<div class="crm__document-view--container-docs-preview">
 			<div class="pagetitle crm__document-view--pagetitle">
-				<span id="pagetitle" class="pagetitle-item crm__document-view--pagetitle-item"><?=htmlspecialcharsbx($arResult['title']);?></span>
+				<span id="pagetitle" class="pagetitle-item crm__document-view--pagetitle-item"><?= htmlspecialcharsbx($arResult['title'] ?? '') ?></span>
 			</div>
 			<div class="crm__document-view--buttons">
 				<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-print" id="crm-document-print"></button>

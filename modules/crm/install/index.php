@@ -1709,6 +1709,14 @@ class crm extends CModule
 			'\Bitrix\Crm\Requisite\EntityLink',
 			'clearMyCompanyCache'
 		);
+
+		$eventManager->registerEventHandler(
+			'biconnector',
+			'onBIConnectorDataSources',
+			'crm',
+			'\Bitrix\Crm\Integration\BiConnector\EventHandler',
+			'onBIConnectorDataSources'
+		);
 	}
 
 	private function installAgents()

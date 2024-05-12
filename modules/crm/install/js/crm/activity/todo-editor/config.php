@@ -13,6 +13,7 @@ return [
 		'crm.activity.settings-popup',
 		'ui.notification',
 		'ui.vue3',
+		'crm.ai.copilot-textarea',
 		'crm.timeline.tools',
 		'main.date',
 		'main.popup',

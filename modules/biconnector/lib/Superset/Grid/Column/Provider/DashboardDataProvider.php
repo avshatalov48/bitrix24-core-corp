@@ -14,6 +14,7 @@ class DashboardDataProvider extends DataProvider
 
 		$result[] =
 			$this->createColumn('TITLE')
+				->setEditable(true)
 				->setType(Type::TEXT)
 				->setName(Loc::getMessage('BICONNECTOR_SUPERSET_GRID_COLUMN_TITLE_NAME'))
 				->setAlign('left')
@@ -43,7 +44,7 @@ class DashboardDataProvider extends DataProvider
 				->setType(Type::TEXT)
 				->setName(Loc::getMessage('BICONNECTOR_SUPERSET_GRID_COLUMN_TITLE_ACTIONS'))
 				->setAlign('left')
-				->setDefault(true)
+				->setDefault(false)
 		;
 
 		$result[] =
@@ -79,6 +80,15 @@ class DashboardDataProvider extends DataProvider
 				->setAlign('left')
 				->setDefault(false)
 				->setSort('DATE_CREATE')
+		;
+
+		$result[] =
+			$this->createColumn('DATE_MODIFY')
+				 ->setType(Type::DATE)
+				 ->setName(Loc::getMessage('BICONNECTOR_SUPERSET_GRID_COLUMN_TITLE_DATE_MODIFY'))
+				 ->setAlign('left')
+				 ->setDefault(false)
+				 ->setSort('DATE_MODIFY')
 		;
 
 		return $result;

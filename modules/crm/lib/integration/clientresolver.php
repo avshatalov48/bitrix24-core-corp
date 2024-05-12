@@ -866,7 +866,7 @@ class ClientResolver
 		;
 		if (is_string($title) && $title !== '' && $clientResolverPropertyType['IS_PLACEMENT'] !== 'Y')
 		{
-			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN');
+			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN_01');
 			if (is_string($template) && $template !== '')
 			{
 				$template = mb_strtolower($template);
@@ -881,7 +881,7 @@ class ClientResolver
 	{
 		if (is_string($title) && $title !== '')
 		{
-			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN');
+			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN_01');
 			if (is_string($template) && $template !== '')
 			{
 				$template = mb_strtolower($template);

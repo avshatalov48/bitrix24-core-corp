@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var array $arResult
  */
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
@@ -22,7 +23,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
@@ -77,7 +78,7 @@ $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELE
 
 if ($arParams['ELEMENT_ID'] > 0)
 {
-	$arResult['CATEGORY_ID'] = (int)\Bitrix\Crm\Service\Container::getInstance()
+	$arResult['CATEGORY_ID'] = (int)Container::getInstance()
 		->getFactory(CCrmOwnerType::Company)
 		->getItemCategoryId($arParams['ELEMENT_ID'])
 	;
@@ -94,6 +95,12 @@ if ($CrmPerms->HavePerm(
 )
 {
 	return;
+}
+
+$category = null;
+if ($arResult['CATEGORY_ID'])
+{
+	$category = Container::getInstance()->getFactory(\CCrmOwnerType::Company)?->getCategory($arResult['CATEGORY_ID']);
 }
 
 $arResult['MYCOMPANY_MODE'] = (isset($arParams['MYCOMPANY_MODE']) && $arParams['MYCOMPANY_MODE'] === 'Y') ? 'Y' : 'N';
@@ -202,13 +209,34 @@ if ($arParams['TYPE'] === 'details')
 
 	if ($bAdd)
 	{
-		$copyUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_COMPANY_DETAILS'],
-				array('company_id' => $arParams['ELEMENT_ID'])
-			),
-			array('copy' => 1)
-		);
+		$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Company)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_SETTINGS_BUTTON)
+		;
+		if ($category && $category->getCode())
+		{
+			$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+		}
+
+		$copyUrl = $analyticsEventBuilder
+			->buildUri(
+				CComponentEngine::makePathFromTemplate($arParams['PATH_TO_COMPANY_DETAILS'], ['company_id' => $arParams['ELEMENT_ID']])
+			)
+			->addParams([
+				'copy' => 1,
+			])
+			->getUri()
+		;
+
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_COPY'),
 			'TITLE' => GetMessage('COMPANY_COPY_TITLE'),
@@ -244,7 +272,7 @@ if ($arParams['TYPE'] === 'details')
 
 if($arParams['TYPE'] === 'list')
 {
-	$createUrl = CComponentEngine::MakePathFromTemplate(
+	$createUrl = CComponentEngine::makePathFromTemplate(
 		$arParams[$isSliderEnabled ? 'PATH_TO_COMPANY_DETAILS' : 'PATH_TO_COMPANY_EDIT'],
 		['company_id' => 0]
 	);
@@ -258,6 +286,40 @@ if($arParams['TYPE'] === 'list')
 	{
 		$createUrl = CCrmUrlUtil::AddUrlParams($createUrl, ['category_id' => $arResult['CATEGORY_ID']]);
 	}
+
+	$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Company)
+		->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_BUTTON)
+	;
+	if ($category && $category->getCode())
+	{
+		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+	}
+
+	if ($isMyCompanyMode)
+	{
+		$analyticsEventBuilder
+			->setSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_MYCOMPANY)
+			->setSubSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST)
+			->setP3WithBooleanValue('myCompany', true)
+		;
+	}
+	else
+	{
+		$analyticsEventBuilder
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+		;
+	}
+
+	$createUrl = $analyticsEventBuilder->buildUri($createUrl)->getUri();
 
 	$arResult['BUTTONS'][] = [
 		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
@@ -417,7 +479,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('COMPANY_DEDUPE_AUTOSEARCH'),
 				'TITLE' => GetMessage('COMPANY_DEDUPE_AUTOSEARCH'),
-				'ONCLICK' => 'BX.Crm.DedupeAutosearch.getDefault("COMPANY").showSettings();BX.PopupMenu.getCurrentMenu().close();'
+				'ONCLICK' => 'BX.Crm.DedupeAutosearch.getDefault("COMPANY").showSettings();'
 			);
 			$arResult['BUTTONS'][] = array(
 				'HTML' => GetMessage('COMPANY_DEDUPE_HELP').' <span class="ui-hint"><span class="ui-hint-icon"></span></span>',

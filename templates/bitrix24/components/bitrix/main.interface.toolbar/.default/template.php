@@ -63,7 +63,7 @@ foreach($arParams["BUTTONS"] as $index=>$item):
 <?
 	else:
 ?>
-				<td><a href="<?=$item["LINK"]?>" hidefocus="true" title="<?=$item["TITLE"]?>" <?= $item["LINK_PARAM"] ?? null ?> class="bx-context-button"><span class="bx-context-button-left"></span><?if(!empty($item["ICON"])):?><span class="bx-context-button-icon <?=$item["ICON"]?>"></span><?endif?><span class="bx-context-button-text"><?=$item["TEXT"]?></span><span class="bx-context-button-right"></span></a></td>
+				<td><a href="<?=  htmlspecialcharsbx($item["LINK"], ENT_COMPAT, false) ?>" hidefocus="true" title="<?=$item["TITLE"]?>" <?= $item["LINK_PARAM"] ?? null ?> class="bx-context-button"><span class="bx-context-button-left"></span><?if(!empty($item["ICON"])):?><span class="bx-context-button-icon <?=$item["ICON"]?>"></span><?endif?><span class="bx-context-button-text"><?=$item["TEXT"]?></span><span class="bx-context-button-right"></span></a></td>
 <?
 	endif;
 endforeach;?>

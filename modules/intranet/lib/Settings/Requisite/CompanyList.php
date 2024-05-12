@@ -16,6 +16,7 @@ class CompanyList
 		private array $filter,
 		private array $sorting,
 		private array $select = [],
+		private array $requisiteSelect = [],
 		private int $limit = 50
 	)
 	{
@@ -56,7 +57,7 @@ class CompanyList
 	{
 		if (!$this->requisiteList)
 		{
-			$this->requisiteList = new RequisiteList($this, new AddressList($this));
+			$this->requisiteList = new RequisiteList($this, new AddressList($this), $this->requisiteSelect);
 		}
 
 		return $this->requisiteList;

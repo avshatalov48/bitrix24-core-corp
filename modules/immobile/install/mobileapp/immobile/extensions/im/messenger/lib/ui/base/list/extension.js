@@ -29,6 +29,10 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 			this.state.itemList = props.itemList || [];
 			this.keyBuilder = new KeyBuilder(this.state.itemList);
 			this.state.itemList = this.creatingKeysForItems(this.state.itemList);
+			if (this.props.openWithLoader)
+			{
+				this.state.itemList.push(this.getLoaderItem(this.props.openingLoaderTitle));
+			}
 
 			this.style = props.style ?? this.getDefaultStyle();
 
@@ -67,6 +71,7 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 						{
 							return new LoaderItem({
 								enable: true,
+								text: props.title,
 							});
 						}
 
@@ -311,12 +316,13 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 			}
 		}
 
-		getLoaderItem()
+		getLoaderItem(title = null)
 		{
 			return {
 				data: {
 					id: 'loader',
 				},
+				title,
 				key: this.keyBuilder.getKeyById('loader'),
 				type: 'loader',
 			};

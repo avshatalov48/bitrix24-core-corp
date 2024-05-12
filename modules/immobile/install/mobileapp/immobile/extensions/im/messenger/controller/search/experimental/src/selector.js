@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 	const { SearchConverter } = require('im/messenger/lib/converter/search');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { formatDateByDialogId } = require('im/messenger/controller/search/experimental/helper/search-date-formatter');
 
@@ -24,12 +24,12 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 		 */
 		constructor(ui)
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.ui = ui;
 			this.isOpen = false;
 			this.sections = {};
 			/**
-			 * @private
+			 * @protected
 			 * @type {RecentProvider}
 			 */
 			this.provider = null;
@@ -78,7 +78,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 		}
 
 		/**
-		 * @private
+		 * @protected
 		 */
 		initProvider()
 		{
@@ -340,7 +340,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 		 * @param {string} text
 		 * @param {string} scope
 		 */
-		onUserTypeText({ text, scope })
+		onUserTypeText({ text, scope = '' })
 		{
 			const currentQuery = this.getClearQuery(text);
 

@@ -2,13 +2,13 @@
 
 namespace Bitrix\Crm\Order;
 
-use Bitrix\Main;
-use Bitrix\Crm;
-use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
-use Bitrix\Main\Type\Date;
 use Bitrix\Catalog;
 use Bitrix\Catalog\VatTable;
+use Bitrix\Crm;
+use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
+use Bitrix\Main;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Date;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -647,7 +647,7 @@ class ProductManager
 				'QUANTITY' => $product['quantity'],
 				'MEASURE_CODE' => $product['measureCode'],
 				'MEASURE_NAME' => $product['measureName'],
-				'TAX_RATE' => $product['taxRate'],
+				'TAX_RATE' => $product['taxRate'] ?? null,
 				'TAX_INCLUDED' => $product['taxIncluded'],
 				'XML_ID' => $basketId ? ProductRowXmlId::getXmlIdFromBasketId($basketId) : null,
 				'TYPE' => $productTypes[$productId] ?? Crm\ProductType::TYPE_PRODUCT,

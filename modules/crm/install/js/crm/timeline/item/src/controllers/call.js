@@ -1,22 +1,33 @@
-import { ajax as Ajax, Event, Loc, Text, Type } from 'main.core';
+import { Engine } from 'ai.engine';
+import { Builder, Dictionary } from 'crm.integration.analytics';
+import { Router } from 'crm.router';
+import { ajax as Ajax, Event, Loc, Runtime, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { sendData } from 'ui.analytics';
 import { Button as ButtonUI, ButtonState } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
+
 import 'ui.feedback.form';
-import { Router } from 'crm.router';
+
+import { Button } from '../components/layout/button';
+import ConfigurableItem from '../configurable-item';
 
 import { Base } from './base';
-import ConfigurableItem from '../configurable-item';
-import { Button } from '../components/layout/button';
 
 const COPILOT_BUTTON_DISABLE_DELAY = 5000;
 const COPILOT_HELPDESK_CODE = 18_799_442;
 
+declare type CoPilotAdditionalInfoData = {
+	sliderCode: ?string,
+	isAiMarketplaceAppsExist: ?boolean,
+	isCopilotBannerNeedShow: ?boolean,
+}
+
 export class Call extends Base
 {
 	#isCopilotTourShown: boolean = false;
+	#isCopilotBannerShown: boolean = false;
 
 	onInitialize(item: ConfigurableItem): void
 	{
@@ -168,9 +179,6 @@ export class Call extends Base
 			ownerTypeId: actionData.ownerTypeId,
 			ownerId: actionData.ownerId,
 		};
-		const ownerType: string = BX.CrmEntityType.resolveName(data.ownerTypeId).toLowerCase();
-		const crmMode: string = Type.isStringFilled(actionData.crmMode) ? actionData.crmMode : '';
-		const callId: string = Type.isStringFilled(actionData.callId) ? actionData.callId : '';
 
 		// start call record transcription
 		aiCopilotBtnUI.setState(ButtonState.AI_WAITING);
@@ -178,15 +186,17 @@ export class Call extends Base
 		Ajax
 			.runAction('crm.timeline.ai.launchRecordingTranscription', { data })
 			.then(() => {
-				this.#sendAiCallParsingData(ownerType, crmMode, callId, 'success');
+				this.#sendAiCallParsingData(data.ownerTypeId, data.activityId, 'success');
 			})
 			.catch((response) => {
 				let errorType = 'error';
 
-				const customData = response.errors[0].customData;
+				const customData: ?CoPilotAdditionalInfoData = response.errors[0].customData;
 				if (customData)
 				{
-					this.#showAdditionalInfo(customData);
+					customData.isCopilotBannerNeedShow = actionData.isCopilotBannerNeedShow || false;
+
+					this.#showAdditionalInfo(customData, item, actionData);
 
 					aiCopilotBtnUI.setState(ButtonState.ACTIVE);
 
@@ -208,78 +218,36 @@ export class Call extends Base
 					errorType = 'error_b24';
 				}
 
-				this.#sendAiCallParsingData(ownerType, crmMode, callId, errorType);
+				this.#sendAiCallParsingData(data.ownerTypeId, data.activityId, errorType);
 
 				throw response;
 			});
 	}
 
-	#showAdditionalInfo(data: Object): void
+	#showAdditionalInfo(data: CoPilotAdditionalInfoData, item: ConfigurableItem, actionData: Object): void
 	{
-		if (Object.hasOwn(data, 'sliderCode') && Type.isStringFilled(data.sliderCode))
+		if (this.#isSliderCodeExist(data))
 		{
 			BX.UI.InfoHelper.show(data.sliderCode);
 		}
-		else if (Object.hasOwn(data, 'isAiMarketplaceAppsExist') && Type.isBoolean(data.isAiMarketplaceAppsExist))
+		else if (this.#isAiMarketplaceAppsExist(data))
 		{
-			if (data.isAiMarketplaceAppsExist)
+			if (!this.#isCopilotBannerShown && data.isCopilotBannerNeedShow)
 			{
-				MessageBox.show({
-					title: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
-					message: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
-						'[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
-						'[/helpdesklink]': '</a>',
-					}),
-					modal: true,
-					buttons: MessageBoxButtons.OK_CANCEL,
-					okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
-					onOk: () => {
-						return Router.openSlider(Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK'));
-					},
-					onCancel: (messageBox) => {
-						messageBox.close();
-					},
-				});
+				this.#showCopilotBanner(item, actionData);
 			}
 			else
 			{
-				MessageBox.show({
-					title: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'),
-					message: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'),
-					modal: true,
-					buttons: MessageBoxButtons.OK_CANCEL,
-					okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'),
-					onOk: (messageBox) => {
-						messageBox.close();
-
-						BX.UI.Feedback.Form.open({
-							id: 'b24_ai_provider_partner_crm_feedback',
-							defaultForm: {
-								id: 682,
-								lang: 'en',
-								sec: '3sd3le',
-							},
-							forms: [{
-								zones: ['cn'],
-								id: 678,
-								lang: 'cn',
-								sec: 'wyufoe',
-							}, {
-								zones: ['vn'],
-								id: 680,
-								lang: 'vn',
-								sec: '2v97xr',
-							}],
-						});
-					},
-					onCancel: (messageBox) => {
-						messageBox.close();
-					},
-				});
+				this.#showMarketMessageBox();
 			}
+		}
+		else
+		{
+			this.#showFeedbackMessageBox();
 		}
 	}
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	#showCopilotTourIfNeeded(item: ConfigurableItem): void
 	{
 		if (!item)
@@ -334,6 +302,95 @@ export class Call extends Base
 		}, 50);
 	}
 
+	#showMarketMessageBox(): void
+	{
+		MessageBox.show({
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'),
+			message: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
+				'[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
+				'[/helpdesklink]': '</a>',
+			}),
+			modal: true,
+			buttons: MessageBoxButtons.OK_CANCEL,
+			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
+			onOk: () => {
+				return Router.openSlider(Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK'));
+			},
+			onCancel: (messageBox) => {
+				messageBox.close();
+			},
+		});
+	}
+
+	#showFeedbackMessageBox(): void
+	{
+		MessageBox.show({
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'),
+			message: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'),
+			modal: true,
+			buttons: MessageBoxButtons.OK_CANCEL,
+			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'),
+			onOk: (messageBox) => {
+				messageBox.close();
+
+				BX.UI.Feedback.Form.open({
+					id: 'b24_ai_provider_partner_crm_feedback',
+					defaultForm: {
+						id: 682,
+						lang: 'en',
+						sec: '3sd3le',
+					},
+					forms: [{
+						zones: ['cn'],
+						id: 678,
+						lang: 'cn',
+						sec: 'wyufoe',
+					}, {
+						zones: ['vn'],
+						id: 680,
+						lang: 'vn',
+						sec: '2v97xr',
+					}],
+				});
+			},
+			onCancel: (messageBox) => {
+				messageBox.close();
+			},
+		});
+	}
+
+	async #showCopilotBanner(item: ConfigurableItem, actionData: Object): void
+	{
+		const { AppsInstallerBanner, AppsInstallerBannerEvents } = await Runtime.loadExtension('ai.copilot-banner');
+		const portalZone = Loc.getMessage('PORTAL_ZONE');
+		const copilotBannerOptions = {
+			isWestZone: portalZone !== 'ru' && portalZone !== 'by' && portalZone !== 'kz',
+		};
+		const copilotBanner = new AppsInstallerBanner(copilotBannerOptions);
+		copilotBanner.show();
+		copilotBanner.subscribe(AppsInstallerBannerEvents.actionStart, () => {
+			// eslint-disable-next-line no-console
+			console.info('Install app started');
+		});
+		copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishSuccess, () => {
+			setTimeout(() => {
+				(new Engine()).setBannerLaunched().then(() => {}).catch(() => {});
+
+				// eslint-disable-next-line no-console
+				console.info('App installed successfully');
+				this.#isCopilotBannerShown = true;
+			}, 500);
+		});
+
+		copilotBanner.subscribe(AppsInstallerBannerEvents.actionFinishFailed, () => {
+			console.error('Install app failed. Try installing the application manually.');
+
+			setTimeout(() => {
+				this.#showMarketMessageBox();
+			}, 500);
+		});
+	}
+
 	#emitTimelineCopilotTourEvent(container: Element): void
 	{
 		EventEmitter.emit('BX.Crm.Timeline.Call:onShowCopilotTour', {
@@ -343,20 +400,28 @@ export class Call extends Base
 		});
 	}
 
-	#sendAiCallParsingData(ownerType: string, crmMode: string, callId: string, result: string): void
+	#sendAiCallParsingData(ownerType: string, activityId: string, result: string): void
 	{
-		sendData({
-			event: 'call_parsing',
-			tool: 'AI',
-			category: 'crm_operations',
-			type: 'manual',
-			c_section: 'crm',
-			c_element: 'copilot_button',
-			c_sub_section: ownerType,
-			p1: crmMode,
-			p2: callId,
-			status: result,
-		});
+		sendData(
+			Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, result)
+				.setElement(Dictionary.ELEMENT_COPILOT_BUTTON)
+				.buildData(),
+		);
+	}
+
+	#isSliderCodeExist(data: CoPilotAdditionalInfoData): boolean
+	{
+		return Object.hasOwn(data, 'sliderCode')
+			&& Type.isStringFilled(data.sliderCode)
+		;
+	}
+
+	#isAiMarketplaceAppsExist(data: CoPilotAdditionalInfoData): boolean
+	{
+		return Object.hasOwn(data, 'isAiMarketplaceAppsExist')
+			&& Type.isBoolean(data.isAiMarketplaceAppsExist)
+			&& data.isAiMarketplaceAppsExist
+		;
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

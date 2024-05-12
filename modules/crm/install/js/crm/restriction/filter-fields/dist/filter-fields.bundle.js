@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core) {
@@ -19,6 +20,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (filterId && BX.Main.filterManager) {
 	        var filter = BX.Main.filterManager.getById(filterId);
 	        if (filter) {
+	          filter.getEmitter().subscribe('onBeforeChangeFilterItems', function (event) {
+	            var eventData = event.getData();
+	            var fields = eventData.fields,
+	              oldFields = eventData.oldFields;
+	            var newFields = fields.filter(function (field) {
+	              return !oldFields.includes(field);
+	            });
+	            var hasRestrictions = newFields.some(function (field) {
+	              return _this.isRestrictedFilterField(field);
+	            });
+	            if (hasRestrictions) {
+	              event.preventDefault();
+	              _this.callRestrictionCallback();
+	            }
+	          });
 	          filter.getEmitter().subscribe('onBeforeAddFilterItem', function (event) {
 	            var eventData = event.getData();
 	            if (eventData.hasOwnProperty('NAME') && _this.isRestrictedFilterField(eventData.NAME)) {
@@ -52,14 +68,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function isRestrictedFilterField(fieldName) {
 	      var _this$options$filterF;
 	      var fields = (_this$options$filterF = this.options.filterFields) !== null && _this$options$filterF !== void 0 ? _this$options$filterF : [];
-	      return main_core.Type.isArray(fields) && fields.indexOf(fieldName) > -1;
+	      return main_core.Type.isArray(fields) && fields.includes(fieldName);
 	    }
 	  }, {
 	    key: "isRestrictedGridField",
 	    value: function isRestrictedGridField(fieldName) {
 	      var _this$options$gridFie;
 	      var fields = (_this$options$gridFie = this.options.gridFields) !== null && _this$options$gridFie !== void 0 ? _this$options$gridFie : [];
-	      return main_core.Type.isArray(fields) && fields.indexOf(fieldName) > -1;
+	      return main_core.Type.isArray(fields) && fields.includes(fieldName);
 	    }
 	  }, {
 	    key: "callRestrictionCallback",

@@ -45,6 +45,7 @@ function updateUserEmployee(int $userId, int $departmentId)
 
 function AddDepartment($SITE_ID, $arFields)
 {
+	$GLOBALS['DB']->StartTransaction();
 	if (CModule::IncludeModule('iblock'))
 	{
 		global $iblockID;
@@ -56,11 +57,19 @@ function AddDepartment($SITE_ID, $arFields)
 			"IBLOCK_ID" => $iblockID
 		);
 
-		$section = new CIBlockSection;
-		$ID = $section->Add($arNewFields);
+		try
+		{
+			$section = new CIBlockSection;
+			$ID = $section->Add($arNewFields);
+		}
+		catch (\Exception $e)
+		{
+			$GLOBALS['DB']->Rollback();
+		}
 	}
 	if(!$ID)
 	{
+		$GLOBALS['DB']->Rollback();
 		$arErrors = preg_split("/<br>/", $section->LAST_ERROR);
 		return $arErrors;
 	}
@@ -74,12 +83,15 @@ function AddDepartment($SITE_ID, $arFields)
 				return preg_split("/<br>/", $result);
 			}
 		}
+		$GLOBALS['DB']->Commit();
+
 		return $ID;
 	}
 }
 
 function EditDepartment($SITE_ID, $arFields)
 {
+	$GLOBALS['DB']->StartTransaction();
 	if (CModule::IncludeModule('iblock'))
 	{
 		global $iblockID;
@@ -91,11 +103,19 @@ function EditDepartment($SITE_ID, $arFields)
 			"IBLOCK_ID" => $iblockID
 		);
 
-		$section = new CIBlockSection;
-		$ID = $section->Update(intval($arFields['CURRENT_DEPARTMENT_ID']), $arNewFields);
+		try
+		{
+			$section = new CIBlockSection;
+			$ID = $section->Update(intval($arFields['CURRENT_DEPARTMENT_ID']), $arNewFields);
+		}
+		catch (\Exception $e)
+		{
+			$GLOBALS['DB']->Rollback();
+		}
 	}
 	if(!$ID)
 	{
+		$GLOBALS['DB']->Rollback();
 		$arErrors = preg_split("/<br>/", $section->LAST_ERROR);
 		return $arErrors;
 	}
@@ -109,6 +129,7 @@ function EditDepartment($SITE_ID, $arFields)
 				return preg_split("/<br>/", $result);
 			}
 		}
+		$GLOBALS['DB']->Commit();
 
 		return $ID;
 	}
@@ -317,7 +338,7 @@ else
 					<script type="text/javascript" src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
 					<script type="text/javascript">BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
 					<script>// user_selector:
-						var multiPopup, singlePopup, taskIFramePopup;
+						var multiPopup, singlePopup;
 
 						function onSingleSelect(arUser)
 						{

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'loc',
 		'in-app-url',
 		'utils/array',
@@ -20,6 +21,7 @@ return [
 		'crm:conversion/wizard',
 		'crm:conversion/menu',
 		'crm:selector/entity/element',
+		'crm:crm-mode',
 	],
 	'bundle' => [
 		'./menu',

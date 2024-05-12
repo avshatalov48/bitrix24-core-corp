@@ -16,6 +16,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const ERROR_TEXT_COLOR = AppTheme.colors.accentMainAlert;
 	const TOOLTIP_COLOR = AppTheme.colors.accentMainWarning;
+	const { PropTypes } = require('utils/validation');
+	const { Random } = require('utils/random');
 
 	const TitlePosition = {
 		top: 'top',
@@ -55,6 +57,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			this.handleContentClick = this.handleContentClick.bind(this);
 			this.handleContentLongClick = this.handleContentLongClick.bind(this);
 			this.setFocusInternal = throttle(this.setFocusInternal, 300, this);
+			this.bindContainerRefHandler = this.bindContainerRef.bind(this);
 
 			this.debouncedValidation = debounce(this.validate, 300, this);
 
@@ -143,11 +146,19 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return !isEqual(this.props.value, value);
 		}
 
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
 		isMultiple()
 		{
 			return BX.prop.getBoolean(this.props, 'multiple', false);
 		}
 
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
 		isReadOnly()
 		{
 			if (this.isDisabled())
@@ -183,7 +194,20 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'showRequired', true);
 		}
 
+		/**
+		 * @deprecated use shouldShowTitle
+		 * @return {boolean}
+		 */
 		showTitle()
+		{
+			return BX.prop.getBoolean(this.props, 'showTitle', true);
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		shouldShowTitle()
 		{
 			return BX.prop.getBoolean(this.props, 'showTitle', true);
 		}
@@ -213,7 +237,20 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return this.isEmptyEditable() && this.hasKeyboard();
 		}
 
+		/**
+		 * @deprecated use shouldShowBorder
+		 * @return {boolean}
+		 */
 		showBorder()
+		{
+			return BX.prop.getBoolean(this.props, 'showBorder', false);
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		shouldShowBorder()
 		{
 			return BX.prop.getBoolean(this.props, 'showBorder', false);
 		}
@@ -221,6 +258,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		hasSolidBorderContainer()
 		{
 			return BX.prop.getBoolean(this.props, 'hasSolidBorderContainer', false);
+		}
+
+		getThemeComponent()
+		{
+			return BX.prop.getFunction(this.props, 'ThemeComponent', null);
 		}
 
 		getExternalWrapperBorderColor()
@@ -258,7 +300,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 			return {
 				...config,
-				parentWidget: BX.prop.get(config, 'parentWidget', undefined),
+				parentWidget: BX.prop.get(config, 'parentWidget'),
 				copyingOnLongClick: BX.prop.getBoolean(config, 'copyingOnLongClick', true),
 			};
 		}
@@ -558,9 +600,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 			this.styles = this.getStyles();
 
-			if (this.props.renderFunction)
+			const ThemeComponent = this.getThemeComponent();
+
+			if (ThemeComponent)
 			{
-				return this.props.renderFunction(this);
+				return ThemeComponent({ field: this });
 			}
 
 			let leftIcons = null;
@@ -577,9 +621,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return View(
 				{
 					style: this.styles.externalWrapper,
-					ref: (ref) => {
-						this.fieldContainerRef = ref;
-					},
+					ref: this.bindContainerRefHandler,
 				},
 				View(
 					{
@@ -601,6 +643,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				this.hasErrorMessage() && this.renderError(),
 				!this.hasErrorMessage() && this.hasTooltipMessage() && this.renderTooltip(),
 			);
+		}
+
+		bindContainerRef(ref)
+		{
+			this.fieldContainerRef = ref;
 		}
 
 		renderLeftTitleContent()
@@ -675,6 +722,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @public
+		 * @return {(function(null=): void)|*|null}
+		 */
 		getContentLongClickHandler()
 		{
 			if (!this.canCopyValue() || (Application.getPlatform() === 'android' && Application.getApiVersion() < 51))
@@ -842,6 +893,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @public
+		 * @return {*}
+		 */
 		getValue()
 		{
 			if (this.preparedValue === null)
@@ -884,6 +939,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return Promise.resolve(this.getValue());
 		}
 
+		/**
+		 * @public
+		 * @return {*|boolean}
+		 */
 		isEmpty()
 		{
 			const value = this.getValue();
@@ -1151,6 +1210,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @public
+		 * @return {string}
+		 */
 		getTitleText()
 		{
 			return typeof this.props.title === 'string'
@@ -1293,13 +1356,58 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		{
 			return Text({
 				style: this.styles.emptyValue,
-				text: this.getReadOnlyEmptyValue(),
+				text: this.getEmptyText(),
 			});
 		}
 
+		/**
+		 * @public
+		 * @return {*|string}
+		 */
+		getEmptyText()
+		{
+			if (this.isReadOnly())
+			{
+				return this.getReadOnlyEmptyValue();
+			}
+
+			return this.getEditableEmptyValue();
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
 		getReadOnlyEmptyValue()
 		{
-			return this.props.emptyValue || BX.message('FIELDS_BASE_EMPTY_VALUE');
+			return this.props.emptyValue || this.getDefaultReadOnlyEmptyValue();
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getDefaultReadOnlyEmptyValue()
+		{
+			return BX.message('FIELDS_BASE_EMPTY_VALUE');
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getEditableEmptyValue()
+		{
+			return this.props.emptyEditableValue || this.getDefaultEmptyEditableValue();
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getDefaultEmptyEditableValue()
+		{
+			return BX.message('FIELDS_BASE_FILL_IN_PLACEHOLDER');
 		}
 
 		renderError()
@@ -1392,7 +1500,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		renderShowAllButton(hiddenFieldsCount = null)
 		{
 			if (this.showAllFromProps || this.state.showAll || isNil(hiddenFieldsCount) || Number.isInteger(
-				hiddenFieldsCount) && hiddenFieldsCount <= 0)
+				hiddenFieldsCount,
+			) && hiddenFieldsCount <= 0)
 			{
 				return null;
 			}
@@ -1496,7 +1605,143 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		{
 			return true;
 		}
+
+		/**
+		 * @public
+		 * @return {*|null}
+		 */
+		getDisplayedValue()
+		{
+			console.error('Method "getDisplayedValue" must be implemented.');
+
+			return null;
+		}
+
+		/**
+		 * @public
+		 * @return {object}
+		 */
+		getLeftIcon()
+		{
+			console.error('Method "getLeftIcon" must be implemented.');
+
+			return {};
+		}
 	}
+
+	BaseField.propTypes = {
+		// ids
+		id: PropTypes.string,
+		uid: PropTypes.string,
+		testId: PropTypes.string,
+
+		// base props
+		multiple: PropTypes.bool,
+		hidden: PropTypes.bool,
+		readOnly: PropTypes.bool,
+		editable: PropTypes.bool,
+		disabled: PropTypes.bool,
+
+		// value props
+		value: PropTypes.any,
+		emptyValue: PropTypes.string,
+		emptyEditableValue: PropTypes.string,
+		onBeforeChange: PropTypes.func,
+		onChange: PropTypes.func,
+
+		// title props
+		title: PropTypes.string,
+		showTitle: PropTypes.bool,
+		titlePosition: PropTypes.oneOf(Object.values(TitlePosition)),
+		canFocusTitle: PropTypes.bool,
+
+		// required props
+		required: PropTypes.bool,
+		requiredErrorMessage: PropTypes.string,
+		showRequired: PropTypes.bool,
+		customValidation: PropTypes.func,
+		tooltip: PropTypes.func,
+
+		// icons props
+		showLeftIcon: PropTypes.bool,
+		showEditIcon: PropTypes.bool,
+		editIcon: PropTypes.object, // View
+		showEditIconInReadOnly: PropTypes.bool,
+
+		// focus props
+		focus: PropTypes.bool, // focus field on mount
+		onFocusIn: PropTypes.func,
+		onFocusOut: PropTypes.func,
+
+		// other
+		parent: PropTypes.object, // parent layout
+		context: PropTypes.object,
+		restrictedEdit: PropTypes.bool, // used to show plan restriction
+		config: PropTypes.shape({
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+		}),
+
+		// other callbacks
+		onContentClick: PropTypes.func,
+
+		// layout props
+		hasHiddenEmptyView: PropTypes.bool,
+		showBorder: PropTypes.bool,
+		hasSolidBorderContainer: PropTypes.bool,
+
+		// render functions
+		renderFunction: PropTypes.func,
+		renderAdditionalContent: PropTypes.func,
+		renderAdditionalBottomContent: PropTypes.func,
+	};
+
+	BaseField.defaultProps = {
+		id: '',
+		uid: '',
+		testId: '',
+		multiple: false,
+		hidden: false,
+		readOnly: false,
+		editable: false,
+		disabled: false,
+		title: '',
+		showTitle: true,
+		titlePosition: TitlePosition.top,
+		canFocusTitle: true,
+		required: false,
+		showRequired: true,
+		showLeftIcon: true,
+		showEditIcon: false,
+		showEditIconInReadOnly: false,
+		focus: false,
+		restrictedEdit: false,
+		hasHiddenEmptyView: false,
+		showBorder: false,
+		hasSolidBorderContainer: false,
+		config: {
+			showAll: false,
+			styles: {
+				externalWrapperBorderColor: null,
+				externalWrapperBorderColorFocused: null,
+				externalWrapperBackgroundColor: null,
+				externalWrapperMarginHorizontal: 6,
+			},
+			deepMergeStyles: {},
+			parentWidget: undefined,
+			copyingOnLongClick: true,
+			titleIcon: {},
+		},
+	};
 
 	module.exports = { BaseField };
 });

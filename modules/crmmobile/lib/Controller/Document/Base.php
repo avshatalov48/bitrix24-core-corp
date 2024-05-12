@@ -8,7 +8,7 @@ use Bitrix\CrmMobile\ProductGrid\ProductGridDocumentQuery;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 
-abstract class Base extends Controller
+abstract class Base extends \Bitrix\CrmMobile\Controller\Base
 {
 	use PublicErrorsTrait;
 	use PrimaryAutoWiredEntity;

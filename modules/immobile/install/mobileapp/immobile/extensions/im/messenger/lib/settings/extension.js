@@ -4,6 +4,10 @@
 jn.define('im/messenger/lib/settings', (require, exports, module) => {
 	const { MessengerParams } = require('im/messenger/lib/params');
 
+	const dynamicProperties = {
+		localStorageEnable: true,
+	};
+
 	/**
 	 * @class Settings
 	 */
@@ -40,6 +44,7 @@ jn.define('im/messenger/lib/settings', (require, exports, module) => {
 				&& MessengerParams.isChatLocalStorageAvailable()
 				&& Settings.isLocalStorageSupported
 				&& Settings.get().localStorageEnable
+				&& dynamicProperties.localStorageEnable
 			);
 		}
 
@@ -60,6 +65,16 @@ jn.define('im/messenger/lib/settings', (require, exports, module) => {
 		static get isAutoplayVideoEnabled()
 		{
 			return Settings.get().autoplayVideo;
+		}
+
+		static disableLocalStorage()
+		{
+			dynamicProperties.localStorageEnable = false;
+		}
+
+		static enableLocalStorage()
+		{
+			dynamicProperties.localStorageEnable = true;
 		}
 	}
 

@@ -94,6 +94,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 				shouldResizeContent: true,
 				partiallyHidden: false,
 				selectShowImages: !this.isReadOnly(),
+				isCustomIconColor: true,
 			};
 		}
 

@@ -9,6 +9,7 @@ use Bitrix\Disk\CrumbStorage;
 use Bitrix\Disk\Document\CloudImport;
 use Bitrix\Disk\Document\Contract\CloudImportInterface;
 use Bitrix\Disk\Document\DocumentHandler;
+use Bitrix\Disk\Document\GoogleHandler;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
@@ -68,6 +69,7 @@ class Controller extends Internals\Controller
 			'listStorages',
 			'listFolders',
 			'getFolderForSavedFiles',
+			'getGoogleAppData',
 			'uploadFileMobileImport' => array(
 				'method' => array('POST'),
 				'check_csrf_token' => false,
@@ -924,6 +926,46 @@ class Controller extends Internals\Controller
 			'type' => 'folder',
 			'name' => $folder->getName(),
 		));
+	}
+
+	protected function processActionGetGoogleAppData()
+	{
+		$service = GoogleHandler::getCode();
+		$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
+		$documentHandler = $documentHandlersManager->getHandlerByCode($service);
+		if (!$documentHandler)
+		{
+			$this->errorCollection->add($documentHandlersManager->getErrors());
+			$this->sendJsonErrorResponse();
+		}
+		if (!($documentHandler instanceof CloudImportInterface))
+		{
+			$this->errorCollection[] = new Error("Document handler {{$documentHandler::getCode()}} does not implement " . CloudImportInterface::class);
+			$this->sendJsonErrorResponse();
+		}
+		if (!$documentHandler->checkAccessibleTokenService())
+		{
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_UF_CONTROLLER_ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE_B24', array('#NAME#' => $documentHandler::getName())), self::ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE)));
+			$this->errorCollection->add($documentHandler->getErrors());
+			$this->sendJsonErrorResponse();
+		}
+
+		if (!$documentHandler->queryAccessToken()->hasAccessToken() || $documentHandler->isRequiredAuthorization())
+		{
+			$this->sendNeedAuth($documentHandler->getUrlForAuthorizeInTokenService('opener'));
+		}
+
+		if (!$documentHandler->listFolder('/', '') && $documentHandler->isRequiredAuthorization())
+		{
+			$this->sendNeedAuth($documentHandler->getUrlForAuthorizeInTokenService('opener'));
+		}
+
+		$this->sendJsonSuccessResponse([
+		   'clientId' => $documentHandler->getClientId(),
+		   'apiKey' => $documentHandler->getApiKey(),
+		   'appId' => $documentHandler->getAppId(),
+		   'accessToken' => $documentHandler->queryAccessToken()->getAccessToken(),
+	   ]);
 	}
 
 	protected function processActionLoadItems()

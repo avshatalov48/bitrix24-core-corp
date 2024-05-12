@@ -11,7 +11,7 @@ import Meeting from './items/meeting';
 import RestPlacementWithLayout from './items/restplacement/withlayout';
 import RestPlacementWithSlider from './items/restplacement/withslider';
 import Sharing from './items/sharing';
-import Sms from './items/sms';
+import Sms from './items/sms/sms';
 import Task from './items/task';
 import ToDo from './items/todo';
 import Visit from './items/visit';

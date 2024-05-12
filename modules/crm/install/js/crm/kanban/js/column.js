@@ -519,6 +519,14 @@
 					this.disabledAddButton();
 				}
 
+				const analyticsConfig = {
+					data: BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(entityType)
+						.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN)
+						.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_QUICK_BUTTON)
+						.buildData()
+					,
+				};
+
 				if (isFactoryBasedApproach)
 				{
 					BX.ajax.runAction('crm.api.item.getEditor',  {
@@ -535,6 +543,7 @@
 								'ENABLE_COMMON_CONFIGURATION_UPDATE': true,
 								'ENABLE_CONFIG_SCOPE_TOGGLE': true,
 								'ENABLE_SETTINGS_FOR_ALL': true,
+								'ANALYTICS_CONFIG': analyticsConfig,
 							}
 						}
 					}).then(function (response){
@@ -596,7 +605,8 @@
 							ENABLE_REQUIRED_USER_FIELD_CHECK: "Y",
 							ENABLE_FIELDS_CONTEXT_MENU: "N",
 							FIELDS: formFields,
-							CONTEXT: context
+							CONTEXT: context,
+							ANALYTICS_CONFIG: analyticsConfig,
 						},
 						function (result)
 						{
@@ -872,6 +882,13 @@
 				context: context,
 				values: [],
 				presetValues: presetValues,
+				analyticsConfig: {
+					data: BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(gridData.entityType)
+						.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN)
+						.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_FILL_REQUIRED_FIELDS_POPUP)
+						.buildData()
+					,
+				},
 			};
 
 			if(this.getGrid().getTypeInfoParam('useFactoryBasedApproach'))

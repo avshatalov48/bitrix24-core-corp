@@ -306,8 +306,6 @@ else if($request->isPost() &&
 	}
 	else if ($request->getPost('COMMAND') == 'voteHead')
 	{
-		$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter());
-
 		$control = new \Bitrix\ImOpenLines\Operator(0, $userId);
 		$result = $control->voteAsHead($request->getPost('SESSION_ID'), $request->getPost('RATING'), $request->getPost('COMMENT'));
 		if ($result)

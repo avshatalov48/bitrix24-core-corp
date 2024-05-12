@@ -8,12 +8,15 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 	const { BaseField } = require('layout/ui/fields/base');
 	const { isEqual } = require('utils/object');
 	const { isNil } = require('utils/type');
-	const { EntitySelectorFactory } = require('selector/widget/factory');
+	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
+	const { PropTypes } = require('utils/validation');
 
 	const CastType = {
 		STRING: 'string',
 		INT: 'int',
 	};
+
+	const MAX_VISIBLE_ENTITY = 3;
 
 	/**
 	 * @class EntitySelectorField
@@ -26,6 +29,8 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			this.initSelectedIds = null;
 			this.state.entityList = this.prepareEntityListFromConfig(this.getConfig().entityList);
 			this.state.showAll = true;
+			this.openSelector = this.openSelector.bind(this);
+			this.layout = null;
 		}
 
 		getEntityList()
@@ -171,6 +176,10 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			return [];
 		}
 
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
 		isEmpty()
 		{
 			return this.state.entityList.length === 0;
@@ -210,7 +219,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 					style: this.styles.emptyValue,
 					numberOfLines: 1,
 					ellipsize: 'end',
-					text: BX.message('FIELDS_SELECTOR_CONTROL_SELECT'),
+					text: this.getEmptyText(),
 				}),
 				this.shouldShowChevronDown() && Image({
 					tintColor: AppTheme.colors.base3,
@@ -227,12 +236,21 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getEditableEmptyValue()
+		{
+			return BX.message('FIELDS_SELECTOR_CONTROL_SELECT');
+		}
+
 		renderEntityContent()
 		{
 			let showAllButton = null;
 			if (this.isMultiple())
 			{
-				const hiddenEntitiesCount = this.isMultiple() && this.getValue().filter((
+				const hiddenEntitiesCount = (this.getVisibleEntities() || this.getValue()).filter((
 					item,
 					index,
 				) => index > 3).length;
@@ -256,7 +274,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						{
 							style: this.styles.entityContent,
 						},
-						...this.renderEntities(this.state.entityList),
+						...this.renderEntities(this.getVisibleEntities()),
 					),
 					this.shouldShowChevronDown() && Image({
 						style: {
@@ -274,6 +292,16 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 			);
 		}
 
+		getVisibleEntities()
+		{
+			if (this.props.showHiddenEntities === false)
+			{
+				return this.state.entityList.filter((entity) => !entity.hidden);
+			}
+
+			return this.state.entityList;
+		}
+
 		renderEntities(entityList)
 		{
 			return entityList.map((entity, index) => {
@@ -282,12 +310,13 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 					entity.hidden = true;
 				}
 
-				if (!this.state.showAll && index > 3)
+				if (!this.state.showAll && index > MAX_VISIBLE_ENTITY)
 				{
 					return null;
 				}
 
-				const showDot = this.isMultiple() && entityList.length - 1 !== index || !this.state.showAll && index === 3;
+				const isLastEntity = entityList.length - 1 === index;
+				const showDot = (this.isMultiple() && !isLastEntity) || (!this.state.showAll && index === MAX_VISIBLE_ENTITY);
 
 				return this.renderEntity(entity, showDot);
 			});
@@ -360,6 +389,8 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				canUnselectLast,
 				canUseRecent,
 				selectorTitle,
+				useLettersForEmptyAvatar,
+				analytics,
 			} = this.getConfig();
 
 			let {
@@ -371,6 +402,12 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				selectorType = forceSelectorType;
 			}
 
+			provider.options ||= {};
+			provider.options = {
+				...provider.options,
+				useLettersForEmptyAvatar: Boolean(useLettersForEmptyAvatar),
+			};
+
 			return (
 				EntitySelectorFactory
 					.createByType(selectorType, {
@@ -379,6 +416,8 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						createOptions: {
 							enableCreation,
 							closeAfterCreation,
+							analytics,
+							getParentLayout: () => this.layout,
 						},
 						selectOptions: {
 							canUnselectLast,
@@ -410,6 +449,9 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						},
 					})
 					.show({}, this.getParentWidget())
+					.then((widget) => {
+						this.layout = widget;
+					})
 			);
 		}
 
@@ -435,10 +477,10 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		{
 			if (this.isComplexSelector())
 			{
-				return this.state.entityList.map(({ id, type }) => (type && id) && [type, id]).filter(Boolean);
+				return this.getVisibleEntities().map(({ id, type }) => (type && id) && [type, id]).filter(Boolean);
 			}
 
-			return this.state.entityList.map((entity) => entity.id);
+			return this.getVisibleEntities().map((entity) => entity.id);
 		}
 
 		updateSelectorState(entities)
@@ -557,7 +599,6 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 							height: 15,
 							width: 14,
 						},
-						tintColor: AppTheme.colors.base3,
 						svg: {
 							content: pen(),
 						},
@@ -661,7 +702,131 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				},
 			};
 		}
+
+		getDisplayedValue()
+		{
+			if (this.isEmpty() || (this.isMultiple() && this.state.entityList.length > 1))
+			{
+				return this.getTitleText();
+			}
+
+			return this.state.entityList[0].title;
+		}
+
+		/**
+		 * @public
+		 * @return {{uri: string}|{icon: string}}
+		 */
+		getLeftIcon()
+		{
+			if (this.isEmpty() || this.isMultiple())
+			{
+				return {
+					icon: this.getDefaultLeftIcon(),
+				};
+			}
+
+			return {
+				uri: this.state.entityList[0].imageUrl || this.getDefaultEntityAvatar(),
+			};
+		}
+
+		getDefaultEntityAvatar()
+		{
+			return '';
+		}
+
+		getDefaultLeftIcon()
+		{
+			return 'group';
+		}
+
+		/**
+		 * @public
+		 * @param {string} imageUrl
+		 * @return {string|null}
+		 */
+		getImageUrl(imageUrl)
+		{
+			return null;
+		}
+
+		/**
+		 * @public
+		 * @return {string|null}
+		 */
+		getDefaultAvatar()
+		{
+			return null;
+		}
+
+		/**
+		 * @public
+		 * @return {string|null}
+		 */
+		getAddButtonText()
+		{
+			return null;
+		}
 	}
+
+	EntitySelectorField.propTypes = {
+		...BaseField.propTypes,
+		showChevronDown: PropTypes.bool,
+		showHiddenEntities: PropTypes.bool,
+		config: PropTypes.shape({
+			// base field props
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			// entity selector props
+			selectorTitle: PropTypes.string,
+			selectorType: PropTypes.oneOf(Object.values(EntitySelectorFactoryType)),
+			castType: PropTypes.oneOf(Object.values(CastType)),
+			provider: PropTypes.object,
+			enableCreation: PropTypes.bool,
+			closeAfterCreation: PropTypes.bool,
+			reloadEntityListFromProps: PropTypes.bool,
+			entityList: PropTypes.array,
+			canUnselectLast: PropTypes.bool,
+			canUseRecent: PropTypes.bool,
+			entityIds: PropTypes.array,
+			isComplex: PropTypes.bool,
+		}),
+	};
+
+	EntitySelectorField.defaultProps = {
+		...BaseField.defaultProps,
+		showEditIcon: true,
+		showHiddenEntities: true,
+		showChevronDown: false,
+		config: {
+			...BaseField.defaultProps.config,
+			selectorTitle: '',
+			// selectorType: '',
+			castType: CastType.INT,
+			provider: {
+				context: '',
+			},
+			enableCreation: false,
+			closeAfterCreation: true,
+			reloadEntityListFromProps: false,
+			entityList: [],
+			canUnselectLast: true,
+			canUseRecent: true,
+			// entityIds: null,
+			isComplex: false,
+		},
+	};
 
 	module.exports = {
 		EntitySelectorType: 'entity-selector',

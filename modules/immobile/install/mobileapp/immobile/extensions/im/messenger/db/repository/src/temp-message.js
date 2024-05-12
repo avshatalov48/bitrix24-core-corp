@@ -2,7 +2,7 @@
  * @module im/messenger/db/repository/temp-message
  */
 jn.define('im/messenger/db/repository/temp-message', (require, exports, module) => {
-	const { Settings } = require('im/messenger/lib/settings');
+	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		TempMessageTable,
 	} = require('im/messenger/db/table');
@@ -22,7 +22,7 @@ jn.define('im/messenger/db/repository/temp-message', (require, exports, module) 
 		 */
 		async getList()
 		{
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
 				return {
 					messageList: [],

@@ -47,5 +47,25 @@ jn.define('asset-manager', (require, exports, module) => {
 		return AssetsManager.downloadLottieAnimations(lottieAnimationList);
 	};
 
-	module.exports = { downloadImages, downloadLottieAnimations };
+	/**
+	 * @param {string} url
+	 * @returns {Promise}
+	 */
+	const isImageInCache = (url) => {
+		if (!isSupported)
+		{
+			const errorText = 'AssetsManager is not supported by your app';
+
+			return Promise.reject(new Error(errorText));
+		}
+
+		if (!Type.isStringFilled(url) || !AssetsManager.isImageInCache)
+		{
+			return Promise.resolve(null);
+		}
+
+		return AssetsManager.isImageInCache(url);
+	}
+
+	module.exports = { downloadImages, downloadLottieAnimations, isImageInCache };
 });

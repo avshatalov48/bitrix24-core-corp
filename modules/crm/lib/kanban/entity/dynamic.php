@@ -397,7 +397,7 @@ class Dynamic extends Kanban\Entity
 	public function getFilterOptions(): Options
 	{
 		$options = parent::getFilterOptions();
-		
+
 		$dynamicFieldRestrictionManager = new FieldRestrictionManager(
 			FieldRestrictionManager::MODE_KANBAN,
 			[FieldRestrictionManagerTypes::OBSERVERS],
@@ -423,6 +423,25 @@ class Dynamic extends Kanban\Entity
 		);
 
 		return implode("\n", [$parentFieldsRestrictions, $dynamicFieldsRestrictions]);
+	}
+
+	public function getFieldsRestrictions(): array
+	{
+		$parentFieldsRestrictions = parent::getFieldsRestrictions();
+
+		$dynamicFieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_KANBAN,
+			[FieldRestrictionManagerTypes::OBSERVERS],
+			$this->factory->getEntityTypeId()
+		);
+
+		$dynamicFieldsRestrictions = $dynamicFieldRestrictionManager->getFilterFields(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
+
+		return [...$parentFieldsRestrictions, ...$dynamicFieldsRestrictions];
 	}
 
 	protected function getPopupFieldsBeforeUserFields(): array

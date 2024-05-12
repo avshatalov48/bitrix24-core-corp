@@ -38,6 +38,8 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 			return;
 		}
 
+		$this->entityTypeId = (int)$this->arParams['entityTypeId'];
+
 		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
 		$isAvailable = $toolsManager->checkRobotsAvailability();
 		if (!$isAvailable)
@@ -54,11 +56,9 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 
 		if (!Main\Loader::includeModule('bizproc'))
 		{
-			$this->errorCollection[] = new Main\Error(Loc::getMessage('CRM_ITEM_AUTOMATION_BP_MODULE_NOT_INSTALLED'));
+			$this->errorCollection[] = new Main\Error(Loc::getMessage('CRM_ITEM_AUTOMATION_BP_MODULE_NOT_INSTALLED_MSGVER_1'));
 			return;
 		}
-
-		$this->entityTypeId = (int)$this->arParams['entityTypeId'];
 
 		$factory = Container::getInstance()->getFactory($this->entityTypeId);
 

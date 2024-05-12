@@ -245,6 +245,10 @@ class CCrmLeadDetailsComponent
 		//region Conversion
 		$this->arResult['PERMISSION_ENTITY_TYPE'] = 'LEAD';
 		\CCrmLead::PrepareConversionPermissionFlags($this->entityID, $this->arResult, $this->userPermissions);
+		if ($this->isCopyMode || $this->entityID <= 0)
+		{
+			$this->arResult['CAN_CONVERT'] = false;
+		}
 		$this->arResult['ENABLE_PROGRESS_CHANGE'] = !$this->arResult['READ_ONLY'];
 
 		$this->arResult['CONVERSION_TYPE_ID'] = LeadConversionDispatcher::resolveTypeID($this->entityData);
@@ -261,8 +265,12 @@ class CCrmLeadDetailsComponent
 				'SCHEME_CAPTION' => GetMessage('CRM_LEAD_CREATE_ON_BASIS')
 			);
 
-			$this->arResult['CONVERSION_CONFIGS'] = LeadConversionDispatcher::getJavaScriptConfigurations();
-			$this->arResult['CONVERSION_SCRIPT_DESCRIPTIONS'] = LeadConversionScheme::getJavaScriptDescriptions(false);
+			$this->arResult['CONVERSION_CONFIG'] = $config;
+
+			$this->arResult['CONVERTER_ID'] = $this->guid;
+			$this->arResult['CONVERSION_CONTAINER_ID'] = "toolbar_lead_details_{$this->getEntityID()}_convert_label";
+			$this->arResult['CONVERSION_LABEL_ID'] = $this->arResult['CONVERSION_CONTAINER_ID'];
+			$this->arResult['CONVERSION_BUTTON_ID'] = "toolbar_lead_details_{$this->getEntityID()}_convert_button";
 		}
 		//endregion
 
@@ -359,6 +367,11 @@ class CCrmLeadDetailsComponent
 							'ENABLE_TOOLBAR' => true,
 							'PRESERVE_HISTORY' => true,
 							'ADD_EVENT_NAME' => 'CrmCreateQuoteFromLead',
+							'ANALYTICS' => [
+								// we dont know where from this component was opened from - it could be anywhere on portal
+								// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
+								'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+							],
 						], 'crm.quote.list'),
 					],
 				],
@@ -377,13 +390,23 @@ class CCrmLeadDetailsComponent
 
 			if (\Bitrix\Crm\Automation\Factory::isAutomationAvailable(CCrmOwnerType::Lead))
 			{
-				$this->arResult['TABS'][] = array(
+				$robotsTab = [
 					'id' => 'tab_automation',
 					'name' => Loc::getMessage('CRM_LEAD_TAB_AUTOMATION'),
 					'url' => Container::getInstance()->getRouter()->getAutomationUrl(CCrmOwnerType::Lead)
 						->addParams(['id' => $this->entityID]),
-				);
+				];
 
+				$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+				if (!$toolsManager->checkRobotsAvailability())
+				{
+					$robotsTab['availabilityLock'] = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+						->getRobotsAvailabilityLock()
+					;
+					$robotsTab['url'] = '';
+				}
+
+				$this->arResult['TABS'][] = $robotsTab;
 				$checkAutomationTourGuideData = CCrmBizProcHelper::getHowCheckAutomationTourGuideData(
 					CCrmOwnerType::Lead,
 					0,
@@ -399,36 +422,57 @@ class CCrmLeadDetailsComponent
 			}
 			if (CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
 			{
-				$this->arResult['TABS'][] = array(
+				$bpTab = [
 					'id' => 'tab_bizproc',
 					'name' => Loc::getMessage('CRM_LEAD_TAB_BIZPROC'),
-					'loader' => array(
+					'loader' => [
 						'serviceUrl' => '/bitrix/components/bitrix/bizproc.document/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
-						'componentData' => array(
+						'componentData' => [
 							'template' => 'frame',
-							'params' => array(
+							'params' => [
 								'MODULE_ID' => 'crm',
 								'ENTITY' => 'CCrmDocumentLead',
 								'DOCUMENT_TYPE' => 'LEAD',
 								'DOCUMENT_ID' => 'LEAD_'.$this->entityID
-							)
-						)
-					)
-				);
-				$this->arResult['BIZPROC_STARTER_DATA'] = array(
-					'templates' => CBPDocument::getTemplatesForStart(
-						$this->userID,
-						array('crm', 'CCrmDocumentLead', 'LEAD'),
-						array('crm', 'CCrmDocumentLead', 'LEAD_'.$this->entityID),
-						[
-							'DocumentStates' => []
+							]
 						]
-					),
-					'moduleId' => 'crm',
-					'entity' => 'CCrmDocumentLead',
-					'documentType' => 'LEAD',
-					'documentId' => 'LEAD_'.$this->entityID
-				);
+					]
+				];
+
+				$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+				if (!$toolsManager->checkBizprocAvailability())
+				{
+					$bpTab['availabilityLock'] = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+						->getBizprocAvailabilityLock()
+					;
+					unset($bpTab['loader']);
+				}
+
+				$this->arResult['TABS'][] = $bpTab;
+
+				if (isset($bpTab['availabilityLock']))
+				{
+					$this->arResult['BIZPROC_STARTER_DATA'] = [
+						'availabilityLock' => $bpTab['availabilityLock'],
+					];
+				}
+				else
+				{
+					$this->arResult['BIZPROC_STARTER_DATA'] = [
+						'templates' => CBPDocument::getTemplatesForStart(
+							$this->userID,
+							['crm', 'CCrmDocumentLead', 'LEAD'],
+							['crm', 'CCrmDocumentLead', 'LEAD_' . $this->entityID],
+							[
+								'DocumentStates' => [],
+							]
+						),
+						'moduleId' => 'crm',
+						'entity' => 'CCrmDocumentLead',
+						'documentType' => 'LEAD',
+						'documentId' => 'LEAD_' . $this->entityID,
+					];
+				}
 			}
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_tree',

@@ -1,7 +1,7 @@
-import { ajax, Runtime, Type } from 'main.core';
+import { ajax, Runtime, Text, Type } from 'main.core';
+import ConfigurableItem from '../../configurable-item';
 
 import { ActionAnimationCallbacks, ActionParams, Base } from '../base';
-import ConfigurableItem from '../../configurable-item';
 
 export class EntityFieldsFillingResult extends Base
 {
@@ -50,15 +50,11 @@ export class EntityFieldsFillingResult extends Base
 			return;
 		}
 
-		const label = Type.isStringFilled(actionData.label) ? actionData.label : '';
-		const crmMode: string = Type.isStringFilled(actionData.crmMode) ? actionData.crmMode : '';
-		const callId: string = Type.isStringFilled(actionData.callId) ? actionData.callId : '';
-
 		top.BX.Runtime.loadExtension('crm.ai.form-fill')
 			.then((exports) => {
 				const { createAiFormFillApplicationInsideSlider } = exports;
 
-				createAiFormFillApplicationInsideSlider({ ...actionData, mergeUuid, label, crmMode, callId });
+				createAiFormFillApplicationInsideSlider({ ...actionData, mergeUuid });
 			})
 			.catch(() => {
 				throw new Error('Cant load createAiFormFillApplicationInsideSlider extension');
@@ -98,9 +94,7 @@ export class EntityFieldsFillingResult extends Base
 		{
 			return;
 		}
-		const ownerType: string = BX.CrmEntityType.resolveName(actionData.ownerTypeId).toLowerCase();
-		const crmMode: string = Type.isStringFilled(actionData.crmMode) ? actionData.crmMode : '';
-		const callId: string = Type.isStringFilled(actionData.callId) ? actionData.callId : '';
+		const activityId: number = Text.toInteger(actionData.activityId) > 0 ? Text.toInteger(actionData.activityId) : 0;
 
 		animationCallbacks?.onStart?.();
 
@@ -109,11 +103,11 @@ export class EntityFieldsFillingResult extends Base
 				const { showSendFeedbackPopup } = exports;
 
 				/** @see BX.Crm.AI.Feedback.showSendFeedbackPopup */
-				showSendFeedbackPopup(mergeUuid, ownerType, crmMode, callId);
+				showSendFeedbackPopup(mergeUuid, actionData.ownerTypeId, activityId);
 			})
 			.catch(() => {
 				console.error('Cant load showSendFeedbackPopup extension');
-			}).finally(() => animationCallbacks.onStop?.());
+			}).finally(() => animationCallbacks?.onStop?.());
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

@@ -11,6 +11,11 @@ $categoryID = isset($arResult['VARIABLES']['category_id'])
 	? (int)$arResult['VARIABLES']['category_id']
 	: -1;
 
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+];
+
 $isSlider = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER');
 if (!$isSlider)
 {
@@ -42,7 +47,8 @@ if (!$isSlider)
 			'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
 			'PATH_TO_EVENT_LIST' => $arResult['PATH_TO_EVENT_LIST'] ?? '',
 			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
-			//'COUNTER_EXTRAS' => array('DEAL_CATEGORY_ID' => $categoryID)
+			//'COUNTER_EXTRAS' => array('DEAL_CATEGORY_ID' => $categoryID),
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -123,6 +129,7 @@ else
 			'CATEGORY_ID' => $categoryID,
 			'TYPE' => 'list',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -195,7 +202,8 @@ else
 				'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Deal))
 					->getDefaultSuffix($categoryID),
 				'DISABLE_NAVIGATION_BAR' => $isRecurring && $isSlider ? 'Y' : 'N',
-				'CATEGORY_ID' => $categoryID
+				'CATEGORY_ID' => $categoryID,
+				'ANALYTICS' => $analytics,
 			],
 			'USE_UI_TOOLBAR' => 'Y',
 		]

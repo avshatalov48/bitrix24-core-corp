@@ -20,6 +20,8 @@ return [
 		'utils/function',
 		'utils/object',
 		'utils/skeleton',
+		'utils/date/formats',
+		'layout/ui/friendly-date',
 		'layout/ui/empty-screen',
 		'layout/ui/search-bar',
 		'layout/ui/stateful-list',

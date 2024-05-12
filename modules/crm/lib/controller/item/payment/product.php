@@ -85,6 +85,7 @@ class Product extends Base
 			return null;
 		}
 
+		/** @var Crm\Order\Payment $payment */
 		$payment = $this->getPaymentById($paymentId);
 		if (!$payment || !$this->canEditPayment($payment))
 		{
@@ -187,9 +188,9 @@ class Product extends Base
 		return [];
 	}
 
-	private function getNewPayableItem(Sale\Payment $payment) : ?Sale\PayableItem
+	private function getNewPayableItem(Crm\Order\Payment $payment) : ?Crm\Order\PayableBasketItem
 	{
-		foreach ($payment->getPayableItemCollection() as $payableItem)
+		foreach ($payment->getPayableItemCollection()->getBasketItems() as $payableItem)
 		{
 			if ($payableItem->getId() === 0)
 			{
@@ -202,9 +203,8 @@ class Product extends Base
 
 	/**
 	 * @param int $id
-	 * @param int $rowId
 	 * @param int $quantity
-	 * @return bool
+	 * @return bool|null
 	 */
 	public function setQuantityAction(int $id, int $quantity): ?bool
 	{
@@ -254,15 +254,15 @@ class Product extends Base
 		return true;
 	}
 
-	private function canSetQuantity(Sale\PayableItem $payableItem, float $quantity) : bool
+	private function canSetQuantity(Crm\Order\PayableBasketItem $payableItem, float $quantity) : bool
 	{
 		/** @var Crm\Order\BasketItem $basketItem */
 		$basketItem = $payableItem->getEntityObject();
 
-		/** @var Sale\PayableItemCollection $payableCollection */
+		/** @var Crm\Order\PayableItemCollection $payableCollection */
 		$payableCollection = $payableItem->getCollection();
 
-		/** @var Sale\PaymentCollection $paymentCollection */
+		/** @var Crm\Order\PaymentCollection $paymentCollection */
 		$paymentCollection = $payableCollection->getPayment()->getCollection();
 
 		$disturbQuantity = $paymentCollection->getBasketItemQuantity($basketItem);
@@ -270,11 +270,11 @@ class Product extends Base
 		return ($disturbQuantity - $payableItem->getQuantity()) + $quantity <= $basketItem->getQuantity();
 	}
 
-	private function getFieldsForBuilder(array $product, Sale\Payment $payment, $quantity)
+	private function getFieldsForBuilder(array $product, Crm\Order\Payment $payment, $quantity) : array
 	{
 		$basketCode = $product['BASKET_CODE'];
 
-		return [
+		$fields = [
 			'ID' => $payment->getOrder()->getId(),
 			'PRODUCT' => [$basketCode => $product],
 			'PAYMENT' => [
@@ -289,6 +289,17 @@ class Product extends Base
 				]
 			]
 		];
+
+		$entity = $payment->getOrder()->getEntityBinding();
+		if ($entity)
+		{
+			$fields['CLIENT'] = Salescenter\Integration\CrmManager::getInstance()->getClientInfo(
+				$entity->getOwnerTypeId(),
+				$entity->getOwnerId()
+			);
+		}
+
+		return $fields;
 	}
 
 	protected function getEntityType(): string

@@ -682,6 +682,14 @@ export class ItemDetailsComponent
 
 	handleBPTemplatesShow(event)
 	{
+		if (this.bizprocStarterConfig.availabilityLock)
+		{
+			// eslint-disable-next-line no-eval
+			eval(this.bizprocStarterConfig.availabilityLock);
+
+			return;
+		}
+
 		const starter = new BX.Bizproc.Starter(this.bizprocStarterConfig);
 		starter.showTemplatesMenu(event.data.button.button);
 	}

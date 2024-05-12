@@ -269,11 +269,6 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 		{
 			return Loc.getMessage('FIELDS_ADDRESS_VALUE_COPIED');
 		}
-
-		getReadOnlyEmptyValue()
-		{
-			return this.props.emptyValue || BX.message('FIELDS_BASE_FILL_IN_PLACEHOLDER');
-		}
 	}
 
 	const ContextMenuActions = {

@@ -20,5 +20,6 @@ return [
 		'./src/ui',
 		'./src/search-bar',
 		'./src/search-layout',
+		'./src/search-layout-view',
 	],
 ];

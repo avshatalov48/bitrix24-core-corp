@@ -7,7 +7,12 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 
 	const { updateDatabase } = require('im/messenger/db/update');
 	const { VuexModelWriter } = require('im/messenger/db/model-writer');
-	const { Settings } = require('im/messenger/lib/settings');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
+	const {
+		CacheNamespace,
+		CacheName,
+	} = require('im/messenger/const');
 	const {
 		OptionRepository,
 		RecentRepository,
@@ -19,6 +24,7 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 		ReactionRepository,
 		SmileRepository,
 		QueueRepository,
+		PinMessageRepository,
 	} = require('im/messenger/db/repository');
 	const {
 		applicationModel,
@@ -31,10 +37,7 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 		draftModel,
 		queueModel,
 	} = require('im/messenger/model');
-	const {
-		RecentCache,
-		DraftCache,
-	} = require('im/messenger/cache');
+
 	const {
 		LoggerManager,
 		Logger,
@@ -48,10 +51,9 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 	{
 		constructor()
 		{
+			/** @type {MessengerCoreInitializeOptions} */
+			this.config = {};
 			this.inited = false;
-			this.initPromise = new Promise((resolve) => {
-				this.initPromiseResolver = resolve;
-			});
 
 			this.repository = {
 				dialog: null,
@@ -60,6 +62,7 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 				message: null,
 				reaction: null,
 				smile: null,
+				pinMessage: null,
 			};
 
 			this.store = null;
@@ -69,31 +72,39 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 			this.siteId = env.siteId || 's1';
 			this.siteDir = env.siteDir || '/';
 
-			this.loggerManager = LoggerManager.getInstance();
 			this.logger = Logger;
-
-			this.init()
-				.then(() => {
-					this.initComplete();
-				})
-				.catch((error) => {
-					logger.error(error);
-				})
-			;
 		}
 
-		async init()
+		/**
+		 * @param {MessengerCoreInitializeOptions} config
+		 * @return {Promise<void>}
+		 */
+		async init(config)
 		{
-			await this.updateDatabase();
-			this.initRepository();
+			this.config = config ?? {};
+
+			await this.initDatabase();
 			this.initStore();
 			this.initLocalStorageWriter();
-			await this.fillStoreFromCache();
+
+			this.initComplete();
+		}
+
+		async initDatabase()
+		{
+			if (!this.config.localStorageEnable)
+			{
+				Feature.disableLocalStorage();
+			}
+
+			await this.updateDatabase();
+
+			this.initRepository();
 		}
 
 		async updateDatabase()
 		{
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
 				return Promise.resolve();
 			}
@@ -105,9 +116,14 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 		{
 			this.createRepository();
 
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
-				this.repository.drop();
+				if (this.config.localStorageEnable)
+				{
+					// if the database is programmatically supported, but is disabled by the user
+					this.repository.drop();
+				}
+
 				this.createRepository();
 			}
 		}
@@ -125,6 +141,7 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 				reaction: new ReactionRepository(),
 				queue: new QueueRepository(),
 				smile: new SmileRepository(),
+				pinMessage: new PinMessageRepository(),
 			};
 
 			this.repository.drop = () => {
@@ -140,6 +157,12 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 				this.repository.reaction.reactionTable.drop();
 				this.repository.queue.queueTable.drop();
 				this.repository.smile.smileTable.drop();
+				this.repository.pinMessage.pinTable.drop();
+				this.repository.pinMessage.pinMessageTable.drop();
+
+				Application.storageById(CacheNamespace + CacheName.chatRecent).clear();
+				Application.storageById(CacheNamespace + CacheName.copilotRecent).clear();
+				Application.storageById(CacheNamespace + CacheName.draft).clear();
 
 				logger.warn('CoreApplication drop database complete');
 			};
@@ -168,7 +191,7 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 
 		initLocalStorageWriter()
 		{
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
 				return;
 			}
@@ -179,58 +202,6 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 			});
 		}
 
-		async fillStoreFromCache()
-		{
-			// if (!Settings.isLocalStorageEnabled)
-			// {
-			//
-			// }
-
-			this.recentCache = new RecentCache({
-				storeManager: this.getStoreManager(),
-			});
-
-			const cache = this.recentCache.get();
-			logger.log('CoreApplication.fillStoreFromCache cache:', cache);
-			if (cache && cache.users)
-			{
-				await this.getStore().dispatch('usersModel/setState', cache.users);
-			}
-
-			if (cache && cache.dialogues)
-			{
-				await this.getStore().dispatch('dialoguesModel/setState', cache.dialogues);
-			}
-
-			if (cache && cache.recent)
-			{
-				// invalidation of recent elements without dialog
-				cache.recent.collection = cache.recent.collection.filter((recentItem) => {
-					if (cache.dialogues.collection[recentItem.id])
-					{
-						return true;
-					}
-
-					logger.error(
-						`RecentCache.save: there is no dialog ${recentItem.id} in model`,
-						cache.recent,
-						cache.dialogues,
-						cache.users,
-					);
-
-					return false;
-				});
-
-				await this.getStore().dispatch('recentModel/setState', cache.recent);
-			}
-
-			const draftState = DraftCache.get();
-			if (draftState)
-			{
-				await this.getStore().dispatch('draftModel/setState', draftState);
-			}
-		}
-
 		getHost()
 		{
 			return this.host;
@@ -238,7 +209,12 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 
 		isCloud()
 		{
-			return CoreApplication.getOption('isCloud', false);
+			return MessengerParams.isCloud();
+		}
+
+		hasActiveCloudStorageBucket()
+		{
+			return MessengerParams.hasActiveCloudStorageBucket();
 		}
 
 		getUserId()
@@ -256,11 +232,6 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 			return this.siteDir;
 		}
 
-		getLoggerManager()
-		{
-			return this.loggerManager;
-		}
-
 		/**
 		 * @return {{
 		 *  option: OptionRepository,
@@ -273,6 +244,7 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 		 *  reaction: ReactionRepository
 		 *  queue: QueueRepository
 		 *  smile: SmileRepository,
+		 *  pinMessage: PinMessageRepository,
 		 * }}
 		 */
 		getRepository()
@@ -309,35 +281,8 @@ jn.define('im/messenger/core/application', (require, exports, module) => {
 		initComplete()
 		{
 			this.inited = true;
-			this.initPromiseResolver(this);
 
 			logger.warn('CoreApplication.initComplete');
-		}
-
-		ready()
-		{
-			if (this.inited)
-			{
-				return Promise.resolve(this);
-			}
-
-			return this.initPromise;
-		}
-
-		/**
-		 * @private
-		 */
-		static getOption(name, defaultValue)
-		{
-			const options = jnExtensionData.get('im:messenger/core');
-
-			// eslint-disable-next-line no-prototype-builtins
-			if (options.hasOwnProperty(name))
-			{
-				return options[name];
-			}
-
-			return defaultValue;
 		}
 	}
 

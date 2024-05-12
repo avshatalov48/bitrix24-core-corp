@@ -30,6 +30,7 @@ jn.define('selector/widget', (require, exports, module) => {
 			closeOnSelect,
 			events,
 			initSelectedIds,
+			undeselectableIds,
 			returnKey,
 		})
 		{
@@ -53,6 +54,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			this.entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
 			this.initSelectedIds = this.prepareInitSelectedIds(initSelectedIds);
+			this.undeselectableIds = this.prepareInitSelectedIds(undeselectableIds);
 
 			this.setupProvider(provider);
 		}
@@ -174,7 +176,7 @@ jn.define('selector/widget', (require, exports, module) => {
 							}
 						});
 
-						resolve();
+						resolve(this.widget);
 					})
 					.catch(reject);
 			});
@@ -230,12 +232,12 @@ jn.define('selector/widget', (require, exports, module) => {
 			switch (buttonCode)
 			{
 				case CREATE_BUTTON_CODE:
-					this.createItem(text);
+					this.createItems(text);
 					break;
 			}
 		}
 
-		createItem(text)
+		createItems(text)
 		{
 			if (
 				!this.createOptions.enableCreation
@@ -249,50 +251,62 @@ jn.define('selector/widget', (require, exports, module) => {
 			this.setIsItemCreating(true);
 
 			this.createOptions
-				.handler(text)
-				.then((item) => {
-					if (item && item.id)
-					{
-						if (!this.provider.isInRecentCache(item))
-						{
-							this.provider.addToRecentCache(item);
-						}
-
+				.handler(text, this.allowMultipleSelection)
+				.then(
+					(created) => {
+						const items = Array.isArray(created) ? created : [created];
 						this.manualSelection = true;
+						let newSelected = [];
+						items.forEach((item) => {
+							if (item.id)
+							{
+								if (!this.provider.isInRecentCache(item))
+								{
+									this.provider.addToRecentCache(item);
+								}
 
-						const preparedItem = this.provider.prepareItemForDrawing(item);
-						this.provider.prepareResult([preparedItem]);
+								const preparedItem = this.provider.prepareItemForDrawing(item);
+								if (!this.isInSelected(preparedItem))
+								{
+									newSelected.push(preparedItem);
+								}
+							}
+						});
 
-						if (!this.isInSelected(preparedItem))
+						if (newSelected.length > 0)
 						{
-							let selected = [preparedItem];
-
+							this.provider.prepareResult(newSelected);
 							if (this.allowMultipleSelection)
 							{
-								selected = [
-									...selected,
+								newSelected = [
+									...newSelected,
 									...this.currentSelectedItems,
 								];
 							}
-
-							this.setSelected(selected);
+							else
+							{
+								newSelected = [newSelected[0]];
+							}
+							this.setSelected(newSelected);
 						}
-					}
 
-					const closeParams = {
-						...item,
-						queryText: this.queryText,
-					};
+						const closeParams = {
+							items,
+							queryText: this.queryText,
+						};
 
-					this.setIsItemCreating(false);
-					this.resetQuery();
+						this.setIsItemCreating(false);
+						this.resetQuery();
 
-					if (this.createOptions.closeAfterCreation)
-					{
-						this.closeOnCreation(closeParams);
-					}
-				})
-			;
+						if (this.createOptions.closeAfterCreation)
+						{
+							this.closeOnCreation(closeParams);
+						}
+					},
+					(errors) => {
+						this.setIsItemCreating(false);
+					},
+				);
 		}
 
 		getEntityType(item)
@@ -333,7 +347,7 @@ jn.define('selector/widget', (require, exports, module) => {
 		 */
 		sectionButtonClickListener(section)
 		{
-			this.createItem(this.queryText);
+			this.createItems(this.queryText);
 		}
 
 		/**
@@ -531,6 +545,10 @@ jn.define('selector/widget', (require, exports, module) => {
 				this.widget.setSections(this.currentSections);
 			}
 
+			items.forEach((item) => {
+				item.undeselectable = this.undeselectableIds.some(([entityId, id]) => item.id === `${entityId}/${id}`);
+			});
+
 			if (!isEqual(this.currentItems, items))
 			{
 				this.currentItems = items;
@@ -686,17 +704,17 @@ jn.define('selector/widget', (require, exports, module) => {
 			this.handleOnEventsCallback('onWidgetClosed', this.getEntityItems());
 		}
 
-		closeOnCreation(entity)
+		closeOnCreation(entities)
 		{
 			if (this.events.onCreateBeforeClose)
 			{
-				this.events.onCreateBeforeClose(entity);
+				this.events.onCreateBeforeClose(entities);
 			}
 
 			this.close().then(() => {
 				if (this.events.onCreate)
 				{
-					this.events.onCreate(entity);
+					this.events.onCreate(entities);
 				}
 			});
 		}

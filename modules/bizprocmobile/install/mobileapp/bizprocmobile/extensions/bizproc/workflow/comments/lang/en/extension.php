@@ -1,0 +1,4 @@
+<?php
+$MESS["MBP_WORKFLOW_COMMENTS_LIKE"] = "Like";
+$MESS["MBP_WORKFLOW_COMMENTS_STUB"] = "Comments are coming soon";
+$MESS["MBP_WORKFLOW_COMMENTS_TITLE"] = "Comments";

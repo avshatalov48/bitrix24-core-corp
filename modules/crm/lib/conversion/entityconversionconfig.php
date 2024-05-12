@@ -390,19 +390,30 @@ class EntityConversionConfig
 		if ($this->scheme === null)
 		{
 			$oldScheme = ConversionManager::getSchemeClass($this->srcEntityTypeID);
+
+			$allEntityTypeIds = [];
 			$activeEntityTypeIds = [];
-			$currentSchemeId = null;
-			$activeItems = $this->getActiveItems();
-			foreach ($activeItems as $activeItem)
+			foreach ($this->getItems() as $item)
 			{
-				$activeEntityTypeIds[] = $activeItem->getEntityTypeID();
+				$allEntityTypeIds[] = $item->getEntityTypeID();
+				if ($item->isActive())
+				{
+					$activeEntityTypeIds[] = $item->getEntityTypeID();
+				}
 			}
 			sort($activeEntityTypeIds);
 
+			$currentSchemeId = null;
 			$items = [];
 			foreach ($oldScheme::getAllDescriptions() as $schemeId => $phrase)
 			{
 				$entityTypeIds = $oldScheme::getEntityTypeIds($schemeId);
+				if (!empty(array_diff($entityTypeIds, $allEntityTypeIds)))
+				{
+					// scheme item contains entity type that is not present in current config
+					continue;
+				}
+
 				$item =
 					(new SchemeItem($entityTypeIds, $phrase))
 						->setId($schemeId)

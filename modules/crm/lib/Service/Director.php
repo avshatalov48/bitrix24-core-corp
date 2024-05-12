@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Service\Scenario\Sign\B2e\DefaultTriggers;
+use Bitrix\Main\Loader;
+use Bitrix\Sign\Config\Storage;
 use CCrmOwnerType;
 
 class Director
@@ -29,7 +31,7 @@ class Director
 		{
 			$defaultStages->setStagesData($defaultStagesData);
 		}
-		if ($entityTypeId === CCrmOwnerType::SmartB2eDocument)
+		if ($entityTypeId === CCrmOwnerType::SmartB2eDocument && $this->isB2eEnabled())
 		{
 			$scenarios[] = new DefaultTriggers($categoryId);
 		}
@@ -49,11 +51,19 @@ class Director
 		{
 			return \CCrmStatus::GetDefaultSmartDocumentStatuses();
 		}
-		if ($factory instanceof Factory\SmartB2eDocument)
+		if ($factory instanceof Factory\SmartB2eDocument && $this->isB2eEnabled())
 		{
 			return \CCrmStatus::GetDefaultSmartB2eDocumentStatuses();
 		}
 
 		return null;
+	}
+
+	private function isB2eEnabled(): bool
+	{
+		return Loader::includeModule('sign')
+			&& method_exists(Storage::instance(), 'isB2eAvailable')
+			&& Storage::instance()->isB2eAvailable()
+		;
 	}
 }

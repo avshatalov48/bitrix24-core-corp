@@ -309,6 +309,11 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 			(int)$currentUserId !== $userFields["ID"]
 			&& !in_array($userFields['USER_TYPE'], ['bot', 'imconnector'])
 			&& CurrentUser::get()->isAdmin()
+			&& !(
+				Loader::includeModule('bitrix24')
+				&& \Bitrix\Bitrix24\Integrator::isIntegrator($USER->getId())
+				&& \CBitrix24::IsPortalAdmin($userFields['ID'])
+			)
 		)
 		{
 			if ($userFields["ACTIVE"] != 'Y')

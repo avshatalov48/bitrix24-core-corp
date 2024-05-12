@@ -8,11 +8,13 @@ use Bitrix\AI\Quality;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Integration\AI\AIManager;
-use Bitrix\Crm\Integration\AI\Analytics;
 use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Result;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\CallParsingEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Monitor;
@@ -29,6 +31,9 @@ use Bitrix\Rest\Marketplace;
 use CCrmActivity;
 use CCrmOwnerType;
 
+/**
+ * @todo refactor
+ */
 abstract class AbstractOperation
 {
 	public const TYPE_ID = 0;
@@ -38,6 +43,7 @@ abstract class AbstractOperation
 	protected const PAYLOAD_CLASS = Dto::class;
 	protected const ENGINE_CATEGORY = 'text';
 
+	private bool $isManualLaunch = true;
 
 	public function __construct(
 		protected ItemIdentifier $target,
@@ -95,6 +101,13 @@ abstract class AbstractOperation
 			->setLimit(1)
 			->fetchObject()
 		;
+	}
+
+	public function setIsManualLaunch(bool $isManualLaunch): self
+	{
+		$this->isManualLaunch = $isManualLaunch;
+
+		return $this;
 	}
 
 	public function launch(): Result
@@ -161,7 +174,10 @@ abstract class AbstractOperation
 		$engine = Engine::getByCategory(
 			static::ENGINE_CATEGORY,
 			$context,
-			new Quality('fields_highlight')
+			new Quality([
+				Quality::QUALITIES['fields_highlight'],
+				Quality::QUALITIES['translate'],
+			])
 		);
 		if (!$engine)
 		{
@@ -424,6 +440,7 @@ abstract class AbstractOperation
 			'ERROR_CODE' => null,
 			'ERROR_MESSAGE' => null,
 			'RETRY_COUNT' => new SqlExpression('?# + 1', 'RETRY_COUNT'),
+			'IS_MANUAL_LAUNCH' => $this->isManualLaunch,
 		];
 	}
 
@@ -435,6 +452,7 @@ abstract class AbstractOperation
 			'TYPE_ID' => static::TYPE_ID,
 			'USER_ID' => $this->userId,
 			'PARENT_ID' => (int)$this->parentJobId,
+			'IS_MANUAL_LAUNCH' => $this->isManualLaunch,
 		];
 	}
 
@@ -592,6 +610,12 @@ abstract class AbstractOperation
 			static::notifyAboutJobError($result, true, false);
 		}
 
+		self::constructJobFinishEventBuilder($job)
+			?->setStatus($result->isSuccess() ? Dictionary::STATUS_SUCCESS : Dictionary::STATUS_ERROR)
+			->buildEvent()
+			->send()
+		;
+
 		AIManager::logger()->debug(
 			'{date}: {class}: Job for target {hash} finished with result {result}' . PHP_EOL,
 			[
@@ -608,9 +632,9 @@ abstract class AbstractOperation
 	 * @template T of \Bitrix\Main\Result
 	 *
 	 * @param EO_Queue $job
-	 * @param \Bitrix\Main\Result $result
+	 * @param T $result
 	 *
-	 * @return \Bitrix\Main\Result
+	 * @return T
 	 */
 	private static function saveErrorToJobAndReturnResult(EO_Queue $job, \Bitrix\Main\Result $result): \Bitrix\Main\Result
 	{
@@ -639,6 +663,12 @@ abstract class AbstractOperation
 				],
 			);
 		}
+
+		self::constructJobFinishEventBuilder($job)
+			?->setStatus(Dictionary::STATUS_ERROR)
+			->buildEvent()
+			->send()
+		;
 
 		return $result;
 	}
@@ -690,24 +720,6 @@ abstract class AbstractOperation
 			$badge->bind($itemIdentifier, $sourceIdentifier);
 			Monitor::getInstance()->onBadgesSync($itemIdentifier);
 		}
-	}
-
-	final protected static function sendAnalyticsWrapper(int $activityId, string $status): void
-	{
-		$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
-		if (!$activity)
-		{
-			return;
-		}
-
-		Analytics::getInstance()->sendAnalytics(
-			Analytics::CONTEXT_EVENT_CALL,
-			Analytics::CONTEXT_TYPE_UNKNOWN,
-			Analytics::CONTEXT_ELEMENT_COPILOT_BTN,
-			$status,
-			(int)($activity['OWNER_TYPE_ID'] ?? 0),
-			(string)($activity['ORIGIN_ID'] ?? ''),
-		);
 	}
 
 	public static function onQueueJobFail(Event $event, EO_Queue $job): Result
@@ -784,7 +796,8 @@ abstract class AbstractOperation
 			$payload,
 			$job->requireOperationStatus(),
 			$job->requireParentId(),
-			$job->requireRetryCount()
+			$job->requireRetryCount(),
+			$job->requireIsManualLaunch(),
 		);
 
 		if ($job->requireExecutionStatus() === QueueTable::EXECUTION_STATUS_ERROR)
@@ -869,4 +882,62 @@ abstract class AbstractOperation
 	{
 		return self::getTargetRealId(new ItemIdentifier($job->getEntityTypeId(), $job->getEntityId()), $job->getParentId());
 	}
+
+	final protected static function sendCallParsingAnalyticsEvent(int $activityId, string $status, bool $isManualLaunch): void
+	{
+		$owner = Container::getInstance()->getActivityBroker()->getOwner($activityId);
+		if (!$owner)
+		{
+			return;
+		}
+
+		(new CallParsingEvent())
+			->setIsManualLaunch($isManualLaunch)
+			->setActivityOwnerTypeId($owner->getEntityTypeId())
+			->setActivityId($activityId)
+			->setElement(Dictionary::ELEMENT_COPILOT_BUTTON)
+			->setStatus($status)
+			->buildEvent()
+			->send()
+		;
+	}
+
+	private static function constructJobFinishEventBuilder(EO_Queue $job): ?AIBaseEvent
+	{
+		$activityId = self::extractActivityIdFromJob($job);
+		$owner = null;
+		if ($activityId >= 0)
+		{
+			$owner = Container::getInstance()->getActivityBroker()->getOwner($activityId);
+		}
+		if ($activityId <= 0 || !$owner)
+		{
+			return null;
+		}
+
+		if (!$job->requireFinishedTime())
+		{
+			AIManager::logger()->info(
+				'{date}: {class}: Skipping analytics because job doesnt have finishedTime set.'
+				. ' May be this job was created before the update: {job}',
+				[
+					'job' => $job->collectValues(fieldsMask: FieldTypeMask::FLAT),
+					'class' => static::class,
+				]
+			);
+
+			return null;
+		}
+
+		return static::getJobFinishEventBuilder()
+			->setOperationType(static::TYPE_ID)
+			->setCreatedTime($job->requireCreatedTime())
+			->setFinishedTime($job->requireFinishedTime())
+			->setIsManualLaunch($job->requireIsManualLaunch())
+			->setActivityOwnerTypeId($owner->getEntityTypeId())
+			->setActivityId($activityId)
+		;
+	}
+
+	abstract protected static function getJobFinishEventBuilder(): AIBaseEvent;
 }

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'loc',
 		'alert',
 		'apptheme',

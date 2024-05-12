@@ -1,9 +1,10 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_switcher,ui_entitySelector,main_core_events,main_core,ui_analytics) {
+(function (exports,main_popup,ui_buttons,ui_switcher,ui_entitySelector,main_core_events,main_core,ui_analytics) {
 	'use strict';
 
+	var _templateObject;
 	var Submit = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Submit, _EventEmitter);
 	  function Submit(parent) {
@@ -182,14 +183,52 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }, {
 	    key: "submitIntegrator",
 	    value: function submitIntegrator() {
-	      var integratorForm = this.parent.contentBlocks["integrator"].querySelector("form");
+	      this.getIntegratorConfirmPopup().show();
+	    }
+	  }, {
+	    key: "getIntegratorConfirmPopup",
+	    value: function getIntegratorConfirmPopup() {
+	      var _this3 = this;
+	      var integratorForm = this.parent.contentBlocks.integrator.querySelector('form');
 	      var obRequestData = {
-	        "integrator_email": integratorForm["integrator_email"].value
+	        integrator_email: integratorForm.integrator_email.value
 	      };
 	      var analyticsLabel = {
-	        "INVITATION_TYPE": "integrator"
+	        INVITATION_TYPE: 'integrator'
 	      };
-	      this.sendAction("inviteIntegrator", obRequestData, analyticsLabel);
+	      var message = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-integrator-confirm-message\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_DESCRIPTION'));
+	      var moreLink = message.querySelector('span');
+	      main_core.Event.bind(moreLink, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=20682986');
+	      });
+	      var popup = new main_popup.Popup({
+	        id: 'integrator-confirm-invitation-popup',
+	        maxWidth: 500,
+	        closeIcon: false,
+	        overlay: true,
+	        contentPadding: 10,
+	        titleBar: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE'),
+	        content: message,
+	        offsetLeft: 100,
+	        buttons: [new ui_buttons.CreateButton({
+	          text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES'),
+	          onclick: function onclick() {
+	            popup.close();
+	            _this3.sendAction('inviteIntegrator', obRequestData, analyticsLabel);
+	          }
+	        }), new ui_buttons.CancelButton({
+	          text: main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO'),
+	          onclick: function onclick() {
+	            popup.close();
+	          }
+	        })],
+	        events: {
+	          onClose: function onClose() {
+	            popup.destroy();
+	          }
+	        }
+	      });
+	      return popup;
 	    }
 	  }, {
 	    key: "submitMassInvite",
@@ -223,7 +262,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }, {
 	    key: "sendAction",
 	    value: function sendAction(action, requestData, analyticsLabel) {
-	      var _this3 = this;
+	      var _this4 = this;
 	      this.disableSubmitButton(true);
 	      requestData["userOptions"] = this.parent.userOptions;
 	      requestData["analyticsData"] = this.parent.analyticsLabel;
@@ -233,21 +272,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        data: requestData,
 	        analyticsLabel: analyticsLabel
 	      }).then(function (response) {
-	        _this3.disableSubmitButton(false);
+	        _this4.disableSubmitButton(false);
 	        if (response.data) {
 	          if (action === "self") {
-	            _this3.parent.showSuccessMessage(response.data);
+	            _this4.parent.showSuccessMessage(response.data);
 	          } else {
-	            _this3.parent.changeContent("success");
-	            _this3.sendSuccessEvent(response.data);
+	            _this4.parent.changeContent("success");
+	            _this4.sendSuccessEvent(response.data);
 	          }
 	        }
 	      }, function (response) {
-	        _this3.disableSubmitButton(false);
+	        _this4.disableSubmitButton(false);
 	        if (response.data == "user_limit") {
 	          B24.licenseInfoPopup.show("featureID", BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"), BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"));
 	        } else {
-	          _this3.parent.showErrorMessage(response.errors[0].message);
+	          _this4.parent.showErrorMessage(response.errors[0].message);
 	        }
 	      });
 	    }
@@ -406,7 +445,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return SelfRegister;
 	}();
 
-	var _templateObject;
+	var _templateObject$1;
 	var Phone = /*#__PURE__*/function () {
 	  function Phone(parent) {
 	    babelHelpers.classCallCheck(this, Phone);
@@ -430,7 +469,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (inputNode.parentNode.querySelector("#phone_number_" + num)) {
 	        return;
 	      }
-	      var element = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span style=\"z-index: 3;\" class=\"ui-ctl-before\" data-role=\"phone-block\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE_COUNTRY[]\" id=\"phone_country_", "\" value=\"\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE[]\" id=\"phone_number_", "\" value=\"\">\n\t\t\t\t<div class=\"invite-dialog-phone-flag-block\" data-role=\"flag\">\n\t\t\t\t\t<span data-role=\"phone_flag_", "\" style=\"pointer-events: none;\"></span>\n\t\t\t\t</div>\n\t\t\t\t<input class=\"invite-dialog-phone-input\" type=\"hidden\" id=\"phone_input_", "\" value=\"\">&nbsp;\n\t\t\t</span>\n\t\t"])), num, num, num, num);
+	      var element = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span style=\"z-index: 3;\" class=\"ui-ctl-before\" data-role=\"phone-block\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE_COUNTRY[]\" id=\"phone_country_", "\" value=\"\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE[]\" id=\"phone_number_", "\" value=\"\">\n\t\t\t\t<div class=\"invite-dialog-phone-flag-block\" data-role=\"flag\">\n\t\t\t\t\t<span data-role=\"phone_flag_", "\" style=\"pointer-events: none;\"></span>\n\t\t\t\t</div>\n\t\t\t\t<input class=\"invite-dialog-phone-input\" type=\"hidden\" id=\"phone_input_", "\" value=\"\">&nbsp;\n\t\t\t</span>\n\t\t"])), num, num, num, num);
 	      inputNode.style.paddingLeft = "57px";
 	      main_core.Dom.append(element, inputNode.parentNode);
 	      var flagNode = inputNode.parentNode.querySelector("[data-role='flag']");
@@ -474,7 +513,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Phone;
 	}();
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4;
+	var _templateObject$2, _templateObject2, _templateObject3, _templateObject4;
 	var Row = /*#__PURE__*/function () {
 	  function Row(parent, params) {
 	    babelHelpers.classCallCheck(this, Row);
@@ -546,11 +585,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        });
 	        main_core.Event.bind(closeIcon, 'click', function (event) {
 	          event.preventDefault();
-	          node.value = "";
 	          if (main_core.Type.isDomNode(node.parentNode)) {
 	            var phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
 	            if (main_core.Type.isDomNode(phoneBlock)) {
-	              var newInput = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), node.getAttribute('data-num'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'));
+	              var newInput = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), node.getAttribute('data-num'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'));
 	              main_core.Dom.replace(node, newInput);
 	              _this3.bindCloseIcons(newInput.parentNode);
 	              _this3.bindPhoneChecker(newInput.parentNode);
@@ -1065,5 +1103,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.Form = Form;
 
-}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI,BX.UI.EntitySelector,BX.Event,BX,BX.UI.Analytics));
+}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.Main,BX.UI,BX.UI,BX.UI.EntitySelector,BX.Event,BX,BX.UI.Analytics));
 //# sourceMappingURL=script.js.map

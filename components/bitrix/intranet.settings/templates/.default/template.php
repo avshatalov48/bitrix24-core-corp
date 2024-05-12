@@ -34,7 +34,7 @@ if ($arParams['SHOW_LOADER'] !== 'N')
 						new RegExp(path + "\\?page|analyticContext=[a-z]+", 'i'),
 					],
 					options: {
-						loader: 'intranet:settings',
+						loader: 'intranet:slider-settings',
 						width: 1034
 					}
 				},

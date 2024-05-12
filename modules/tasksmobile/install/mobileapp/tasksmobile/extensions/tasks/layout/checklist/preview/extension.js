@@ -61,6 +61,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 
 			return ProgressView(
 				{
+					testId: 'checklist_Items_count_in_task',
 					params: {
 						type: 'circle',
 						currentPercent: this.getPercent(completedCount, totalCount),
@@ -145,6 +146,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 							},
 							this.renderProgressView(rootItem),
 							Text({
+								testId: 'checklist_title_in_task',
 								text: rootItem.getTitle(),
 								style: {
 									marginLeft: 6,
@@ -163,8 +165,13 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 
 		render()
 		{
-			const { parentWidget } = this.props;
+			const { parentWidget, ThemeComponent } = this.props;
 			const { handleOnCreateChecklist } = this.controller;
+
+			if (ThemeComponent)
+			{
+				return this.props.ThemeComponent({ field: this, handleOnCreateChecklist });
+			}
 
 			return View(
 				{

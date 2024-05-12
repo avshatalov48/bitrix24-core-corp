@@ -218,7 +218,7 @@ class AI extends Activity
 		return [
 			'src' => $fileInfo['VIEW_URL'],
 			'id' => mb_substr($activity['ORIGIN_ID'], 3),
-			'title' => CCrmOwnerType::GetCaption($ownerTypeId, $ownerId, true),
+			'title' => CCrmOwnerType::GetCaption($ownerTypeId, $ownerId),
 		];
 	}
 

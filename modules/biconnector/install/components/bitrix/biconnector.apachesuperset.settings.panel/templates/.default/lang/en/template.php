@@ -8,3 +8,4 @@ $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK"] = "Learn more";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT"] = "New date range will be applied to this dashboard only.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Error refreshing key.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Key has been refreshed.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Select employees who will receive notifications when a new dashboard or update is available. #HINT_LINK#";

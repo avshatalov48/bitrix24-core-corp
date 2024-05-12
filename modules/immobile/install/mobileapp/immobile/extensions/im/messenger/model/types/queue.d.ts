@@ -1,4 +1,7 @@
+import {PayloadData} from "./base";
+
 export type QueueModelState = {
+	id: string,
 	requestName: string,
 	requestData: object,
 	priority: number,
@@ -12,3 +15,16 @@ export type QueueModelActions =
 export type QueueModelMutation =
 	'queueModel/add'
 	| 'queueModel/deleteById'
+
+
+export type QueueAddActions = 'add';
+export interface QueueAddData extends PayloadData
+{
+	requests: Array<QueueModelState>
+}
+
+export type QueueDeleteByIdActions = 'deleteById';
+export interface QueueDeleteByIdData extends PayloadData
+{
+	requestsIds: Array<string>;
+}

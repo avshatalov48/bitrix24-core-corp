@@ -2,7 +2,7 @@
  * @module im/messenger/controller/search/adapter/user
  */
 jn.define('im/messenger/controller/search/adapter/user', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SelectorDialogListAdapter } = require('im/chat/selector/adapter/dialog-list');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
@@ -16,7 +16,7 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 		{
 			super(list);
 
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		onScopeSelected(data)

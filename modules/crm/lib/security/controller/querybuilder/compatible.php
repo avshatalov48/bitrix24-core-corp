@@ -2,35 +2,53 @@
 
 namespace Bitrix\Crm\Security\Controller\QueryBuilder;
 
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Security\AccessAttribute\Collection;
 use Bitrix\Crm\Security\Controller\QueryBuilder;
-use Bitrix\Crm\Security\QueryBuilder\Options;
+use Bitrix\Crm\Security\QueryBuilder\QueryBuilderOptions;
+use Bitrix\Crm\Security\QueryBuilder\Result\InConditionResult;
+use Bitrix\Crm\Security\QueryBuilder\Result\JoinResult;
+use Bitrix\Crm\Security\QueryBuilder\Result\RawQueryResult;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Main\ArgumentException;
+use CCrmOwnerType;
+use CCrmPerms;
 
+/**
+ * @deprecated
+ */
 class Compatible extends QueryBuilder
 {
 
-	public function build(Collection $attributes, Options $options): string
+	public function build(Collection $attributes, QueryBuilderOptions $options): QueryBuilderData
 	{
+		$resultType = $options->getResult();
 		$permissionEntityTypes = $attributes->getAllowedEntityTypes();
 		$total = count($permissionEntityTypes);
 		if ($total === 0)
 		{
-			throw new \Bitrix\Main\ArgumentException('Permission entity types can not be empty');
+			throw new ArgumentException('Permission entity types can not be empty');
 		}
 		if ($total === 1)
 		{
-			return $this->buildForEntity($attributes, $options, array_pop($permissionEntityTypes));
+			return new QueryBuilderData(
+				$this->buildForEntity($attributes, $options, array_pop($permissionEntityTypes))
+			);
 		}
 
 		$restrictedQueries = [];
 		$unrestrictedQueries = [];
 		$subQueryOptions = clone $options;
-		$subQueryOptions->setNeedReturnRawQuery(true);
+
+		$isUseJoin = $resultType instanceof JoinResult;
+
 		$aliasPrefix = $subQueryOptions->getAliasPrefix();
 		$effectiveEntityIDs = $subQueryOptions->getLimitByIds();
+
 		foreach ($permissionEntityTypes as $permissionEntityType)
 		{
-			$sql = $this->buildForEntity($attributes, $subQueryOptions, $permissionEntityType);
+			$sql = $this->buildForEntity($attributes, $subQueryOptions, $permissionEntityType, true);
 			if ($sql === '')
 			{
 				$subQuery = "SELECT {$aliasPrefix}P.ENTITY_ID FROM b_crm_entity_perms {$aliasPrefix}P WHERE {$aliasPrefix}P.ENTITY = '{$permissionEntityType}'";
@@ -38,7 +56,7 @@ class Compatible extends QueryBuilder
 				{
 					$subQuery .= " AND {$aliasPrefix}P.ENTITY_ID IN (" . implode(', ', $effectiveEntityIDs) . ")";
 				}
-				if ($subQueryOptions->needUseJoin())
+				if ($isUseJoin)
 				{
 					$subQuery .= " GROUP BY {$aliasPrefix}P.ENTITY_ID";
 				}
@@ -53,44 +71,27 @@ class Compatible extends QueryBuilder
 
 		if (empty($restrictedQueries))
 		{
-			return ''; // allowed all
+			return new QueryBuilderData('');
 		}
 		$queries = array_merge($unrestrictedQueries, $restrictedQueries);
 
 		$querySql = implode($options->needUseDistinctUnion() ? ' UNION ' : ' UNION ALL ', $queries);
-		if ($options->needReturnRawQuery())
-		{
-			if ($options->getRawQueryLimit() > 0)
-			{
-				$order = $options->getRawQueryOrder();
 
-				$querySql = \Bitrix\Main\Application::getConnection()->getSqlHelper()->getTopSql(
-					"{$querySql} ORDER BY ENTITY_ID {$order}",
-					$options->getRawQueryLimit()
-				)
-				;
-			}
-
-			return $querySql;
-		}
-
-		$identityCol = $subQueryOptions->getIdentityColumnName();
-
-		if ($options->needUseJoin())
-		{
-			return "INNER JOIN ({$querySql}) {$aliasPrefix}GP ON {$aliasPrefix}.{$identityCol} = {$aliasPrefix}GP.ENTITY_ID";
-		}
-
-		return "{$aliasPrefix}.{$identityCol} IN ({$querySql})";
+		return new QueryBuilderData($resultType->makeCompatible($querySql, $aliasPrefix));
 	}
 
-	protected function buildForEntity(Collection $attributes, Options $options, string $permEntity): string
+	protected function buildForEntity(
+		Collection $attributes,
+		QueryBuilderOptions $options,
+		string $permEntity,
+		bool $forceRawQueryResult = false
+	): string
 	{
 		$entityListAttributes = $attributes->getByEntityType($permEntity);
 		$scopeRegex = $this->getScopeRegexForEntity($permEntity);
 
 		$enableCumulativeMode = \COption::GetOptionString('crm', 'enable_permission_cumulative_mode', 'Y') === 'Y';
-		$userAccessAttributes = \Bitrix\Crm\Service\Container::getInstance()
+		$userAccessAttributes = Container::getInstance()
 			->getUserPermissions($attributes->getUserId())
 			->getAttributesProvider()
 			->getUserAttributes()
@@ -234,7 +235,7 @@ class Compatible extends QueryBuilder
 		$effectiveEntityIDs = $options->getLimitByIds();
 		$aliasPrefix = $options->getAliasPrefix();
 
-		foreach ($permissionSets as &$permissionSet)
+		foreach ($permissionSets as $permissionSet)
 		{
 			$scopes = $permissionSet['SCOPES'];
 			$scopeQty = count($scopes);
@@ -346,7 +347,7 @@ class Compatible extends QueryBuilder
 		if ($options->isReadAllAllowed())
 		{
 			//Add permission 'Read allowed to Everyone' permission
-			$readAll = \CCrmPerms::ATTR_READ_ALL;
+			$readAll = CCrmPerms::ATTR_READ_ALL;
 			$subQuery = "SELECT {$aliasPrefix}P.ENTITY_ID FROM b_crm_entity_perms {$aliasPrefix}P WHERE {$aliasPrefix}P.ENTITY = '{$permEntity}' AND {$aliasPrefix}P.ATTR = '{$readAll}'";
 			if (!empty($effectiveEntityIDs))
 			{
@@ -357,41 +358,23 @@ class Compatible extends QueryBuilder
 
 		$subQuerySql = implode($options->needUseDistinctUnion() ? ' UNION ' : ' UNION ALL ', $subQueries);
 
-		if ($options->needReturnRawQuery())
+		if ($forceRawQueryResult)
 		{
-			if ($options->getRawQueryLimit() > 0)
-			{
-				$order = $options->getRawQueryOrder();
-
-				$subQuerySql = \Bitrix\Main\Application::getConnection()->getSqlHelper()->getTopSql(
-					"{$subQuerySql} ORDER BY ENTITY_ID {$order}",
-					$options->getRawQueryLimit()
-				)
-				;
-			}
-
-			return $subQuerySql;
+			return (new RawQueryResult())->makeCompatible($subQuerySql, $aliasPrefix);
 		}
 
-		$identityCol = $options->getIdentityColumnName();
-
-		if ($options->needUseJoin())
-		{
-			return "INNER JOIN ({$subQuerySql}) {$aliasPrefix}GP ON {$aliasPrefix}.{$identityCol} = {$aliasPrefix}GP.ENTITY_ID";
-		}
-
-		return "{$aliasPrefix}.{$identityCol} IN ({$subQuerySql})";
+		return $options->getResult()->makeCompatible($subQuerySql, $aliasPrefix);
 	}
 
 	protected function getScopeRegexForEntity(string $permissionEntityType): string
 	{
 		$scopeRegex = '';
-		$entityName = \Bitrix\Crm\Service\UserPermissions::getEntityNameByPermissionEntityType($permissionEntityType);
-		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityName));
+		$entityName = UserPermissions::getEntityNameByPermissionEntityType($permissionEntityType);
+		$factory = Container::getInstance()->getFactory(CCrmOwnerType::ResolveID($entityName));
 		if ($factory && $factory->isStagesSupported())
 		{
-			$stageFieldName = $factory->getEntityFieldNameByMap(\Bitrix\Crm\Item::FIELD_NAME_STAGE_ID);
-			if ($entityName === \CCrmOwnerType::QuoteName)
+			$stageFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_STAGE_ID);
+			if ($entityName === CCrmOwnerType::QuoteName)
 			{
 				$stageFieldName = 'QUOTE_ID'; // strange but true
 			}

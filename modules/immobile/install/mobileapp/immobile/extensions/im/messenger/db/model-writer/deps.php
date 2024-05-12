@@ -5,7 +5,7 @@ return [
 		'type',
 		'logger',
 		'utils/object',
-		'im:messenger/lib/settings',
+		'im:messenger/lib/feature',
 		'im:messenger/lib/logger',
 	],
 	'bundle' => [
@@ -19,5 +19,6 @@ return [
 		'./src/vuex/message',
 		'./src/vuex/temp-message',
 		'./src/vuex/queue',
+		'./src/vuex/pin-message',
 	],
 ];

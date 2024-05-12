@@ -6,7 +6,7 @@
  * @module im/messenger/provider/service/classes/message/reaction
  */
 jn.define('im/messenger/provider/service/classes/message/reaction', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { RestMethod } = require('im/messenger/const');
@@ -21,8 +21,22 @@ jn.define('im/messenger/provider/service/classes/message/reaction', (require, ex
 		constructor({ chatId })
 		{
 			/** @type {MessengerCoreStore} */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.chatId = chatId;
+		}
+
+		set(reaction, messageId)
+		{
+			const reactions = this.store.getters['messagesModel/reactionsModel/getByMessageId'](messageId);
+
+			if (reactions && reactions.ownReactions.has(reaction))
+			{
+				this.remove(reaction, messageId);
+			}
+			else
+			{
+				this.add(reaction, messageId);
+			}
 		}
 
 		/**

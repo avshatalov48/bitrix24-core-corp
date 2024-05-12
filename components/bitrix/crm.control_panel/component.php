@@ -12,6 +12,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ActivitySettings;
@@ -22,7 +23,6 @@ use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Settings\OrderSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
-use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -262,6 +262,10 @@ if($currentCategoryID >= 0)
 		$arParams['PATH_TO_DEAL_KANBANCATEGORY'],
 		array('category_id' => $currentCategoryID)
 	);
+	$arParams['PATH_TO_DEAL_ACTIVITY'] = CComponentEngine::makePathFromTemplate(
+		$arParams['PATH_TO_DEAL_ACTIVITYCATEGORY'],
+		['category_id' => $currentCategoryID],
+	);
 }
 
 // set default view from settings
@@ -362,6 +366,20 @@ $isLeadEnabled = \Bitrix\Crm\Settings\LeadSettings::isEnabled();
 $stdItems = array();
 $leadItem = array();
 
+$analyticsEventBuilder = (new Crm\Integration\Analytics\Builder\Entity\AddOpenEvent())
+	->setSection(
+		!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+			? $arParams['ANALYTICS']['c_section']
+			: null
+	)
+	->setSubSection(
+		!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+			? $arParams['ANALYTICS']['c_sub_section']
+			: null
+	)
+	->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CONTROL_PANEL_CREATE_BUTTON)
+;
+
 if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 {
 	$counter = EntityCounterFactory::create(
@@ -389,7 +407,15 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 			);
 		}
 
-		$actions[] = array('ID' => 'CREATE', 'URL' => $createUrl);
+		$actions[] = [
+			'ID' => 'CREATE',
+			'URL' =>
+				$analyticsEventBuilder
+					->setEntityTypeId(\CCrmOwnerType::Lead)
+					->buildUri($createUrl)
+					->getUri()
+			,
+		];
 	}
 
 	$leadItem = array(
@@ -453,7 +479,15 @@ if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
 			$createUrl = CCrmUrlUtil::AddUrlParams($createUrl, array('category_id' => $currentCategoryID));
 		}
 
-		$actions[] = array('ID' => 'CREATE', 'URL' => $createUrl);
+		$actions[] = [
+			'ID' => 'CREATE',
+			'URL' =>
+				$analyticsEventBuilder
+					->setEntityTypeId(\CCrmOwnerType::Deal)
+					->buildUri($createUrl)
+					->getUri()
+			,
+		];
 	}
 
 	$stdItems['DEAL'] = array(
@@ -504,7 +538,15 @@ if($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
 			);
 		}
 
-		$actions[] = array('ID' => 'CREATE', 'URL' => $createUrl);
+		$actions[] = [
+			'ID' => 'CREATE',
+			'URL' =>
+				$analyticsEventBuilder
+					->setEntityTypeId(\CCrmOwnerType::Contact)
+					->buildUri($createUrl)
+					->getUri()
+			,
+		];
 	}
 	$stdItems['CONTACT'] = array(
 		'ID' => 'CONTACT',
@@ -554,7 +596,15 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 			);
 		}
 
-		$actions[] = array('ID' => 'CREATE', 'URL' => $createUrl);
+		$actions[] = [
+			'ID' => 'CREATE',
+			'URL' =>
+				$analyticsEventBuilder
+					->setEntityTypeId(\CCrmOwnerType::Company)
+					->buildUri($createUrl)
+					->getUri()
+			,
+		];
 	}
 
 	$stdItems['COMPANY'] = array(
@@ -641,35 +691,6 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 {
 	if (Loader::includeModule('catalog') && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
 	{
-		$actions = [];
-
-		$catalogId = Crm\Product\Catalog::getDefaultId();
-		if ($catalogId !== null)
-		{
-			if (
-				CIBlockSectionRights::UserHasRightTo($catalogId, 0, 'section_element_bind')
-				&& AccessController::getCurrent()->check(ActionDictionary::ACTION_PRICE_EDIT)
-			)
-			{
-				$productLimit = \Bitrix\Catalog\Config\State::getExceedingProductLimit($catalogId);
-				if (empty($productLimit))
-				{
-					$createUrl = CComponentEngine::MakePathFromTemplate(
-						$arParams['PATH_TO_PRODUCT_DETAILS'],
-						[
-							'catalog_id' => $catalogId,
-							'product_id' => 0
-						]
-					);
-
-					$actions[] = [
-						'ID' => 'CREATE',
-						'URL' => $createUrl
-					];
-				}
-			}
-		}
-
 		$stdItems['CATALOGUE'] = array(
 			'ID' => 'CATALOG',
 			'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CATALOG'), // 'menu_crm_catalog',
@@ -677,10 +698,6 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
 			'ICON' => 'catalog',
 		);
-		if (!empty($actions))
-		{
-			$stdItems['CATALOGUE']['ACTIONS'] = $actions;
-		}
 	}
 	else
 	{
@@ -881,13 +898,21 @@ if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 		}
 		else
 		{
-		$createUrl = CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_QUOTE_EDIT'],
-			array('quote_id' => 0)
-		);
+			$createUrl = CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_QUOTE_EDIT'],
+				array('quote_id' => 0)
+			);
 		}
 
-		$actions[] = array('ID' => 'CREATE', 'URL' => $createUrl);
+		$actions[] = [
+			'ID' => 'CREATE',
+			'URL' =>
+				$analyticsEventBuilder
+					->setEntityTypeId(\CCrmOwnerType::Quote)
+					->buildUri($createUrl)
+					->getUri()
+			,
+		];
 	}
 
 

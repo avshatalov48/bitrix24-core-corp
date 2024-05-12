@@ -1,4 +1,4 @@
-import { Type } from "main.core";
+import { Type } from 'main.core';
 
 export type ConfigItemData = {
 	entityTypeId: number,
@@ -52,8 +52,8 @@ export class ConfigItem
 			entityTypeId: this.getEntityTypeId(),
 			title: this.getTitle(),
 			initData: this.getInitData(),
-			active: this.isActive() ? "Y" : "N",
-			enableSync: this.isEnableSync() ? "Y" : "N",
+			active: this.isActive() ? 'Y' : 'N',
+			enableSync: this.isEnableSync() ? 'Y' : 'N',
 		};
 	}
 

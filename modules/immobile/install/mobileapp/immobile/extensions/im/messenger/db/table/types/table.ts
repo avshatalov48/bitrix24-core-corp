@@ -16,8 +16,20 @@ declare enum FieldType
 	map = 'map',
 }
 
-interface ITable
+interface ITable<T>
 {
 	getMap(): string
 	getFields(): Array<TableField>
+	getList(options: TableGetListOptions<T>): Promise<{items: Array<T>}>
+	getListByIds(idList: Array<any>, shouldRestoreRows: boolean = true): Promise<{items: Array<T>}>
+	getById(id: any): Promise<T | null>
+}
+
+interface TableGetListOptions<T>
+{
+	select?: Array<string>
+	filter?: Partial<T>;
+	order?: { name: 'asc' | 'desc' };
+	offset?: number;
+	limit?: number;
 }

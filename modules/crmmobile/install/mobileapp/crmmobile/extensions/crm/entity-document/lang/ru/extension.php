@@ -21,3 +21,4 @@ $MESS['M_CRM_ENTITY_DOCUMENT_TERMINAL'] = 'Терминал';
 $MESS['M_CRM_ENTITY_DOCUMENT_TERMINAL_CHECK'] = 'Терминальный чек от #DATE#';
 $MESS['M_CRM_ENTITY_DOCUMENT_TERMINAL_CHECK_PHONE'] = 'Чек отправлен на номер #PHONE_NUMBER#';
 $MESS['M_CRM_ENTITY_DOCUMENT_RECEIVE_PAYMENT'] = 'Принять оплату';
+$MESS['M_CRM_ENTITY_DOCUMENT_PAYMENT_PHONE_DRAWER_WARNING_TEXT'] = 'Без номера телефона невозможно отправить сообщение со ссылкой на оплату';

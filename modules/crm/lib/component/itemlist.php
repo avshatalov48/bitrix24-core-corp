@@ -6,19 +6,23 @@ use Bitrix\Crm\Automation;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Filter\Filter;
+use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Filter\ItemUfDataProvider;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Integration\Analytics\Builder\AbstractBuilder;
+use Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Relation\EntityRelationTable;
+use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Toolbar;
@@ -35,6 +39,7 @@ abstract class ItemList extends Base
 	protected $users;
 	/** @var Category */
 	protected $category;
+	protected Service\Router $router;
 	/** @var Service\Factory */
 	protected $factory;
 	/** @var Kanban\Entity */
@@ -79,8 +84,8 @@ abstract class ItemList extends Base
 
 		$this->entityTypeId = $type->getEntityTypeId();
 
-		$router = Container::getInstance()->getRouter();
-		$router->setCurrentListView($this->entityTypeId, $this->getListViewType());
+		$this->router = Container::getInstance()->getRouter();
+		$this->router->setCurrentListView($this->entityTypeId, $this->getListViewType());
 
 		$this->factory = Service\Container::getInstance()->getFactory($this->entityTypeId);
 		$this->kanbanEntity = Kanban\Entity::getInstance($this->factory->getEntityName());
@@ -116,7 +121,7 @@ abstract class ItemList extends Base
 					if ($this->userPermissions->canReadTypeInCategory($this->entityTypeId, $category->getId()))
 					{
 						LocalRedirect(
-							$router->getItemListUrlInCurrentView(
+							$this->router->getItemListUrlInCurrentView(
 								$this->entityTypeId,
 								$category->getId()
 							)
@@ -291,7 +296,7 @@ abstract class ItemList extends Base
 		{
 			$settingsItems[] = [
 				'text' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
-				'href' => Container::getInstance()->getRouter()->getItemListUrlInCurrentView(\CCrmOwnerType::Invoice),
+				'href' => $this->router->getItemListUrlInCurrentView(\CCrmOwnerType::Invoice),
 				'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
 			];
 
@@ -302,7 +307,7 @@ abstract class ItemList extends Base
 					'JS_OPTIONS' => [
 						'targetElement' => static::TOOLBAR_SETTINGS_BUTTON_ID,
 						'content' => Loc::getMessage('CRM_COMPONENT_ITEM_LIST_OLD_INVOICES_TRANSITION_SPOTLIGHT'),
-						'targetVertex' => "middle-center",
+						'targetVertex' => 'middle-center',
 						'autoSave' => true,
 					],
 				];
@@ -355,7 +360,6 @@ abstract class ItemList extends Base
 	protected function getToolbarSettingsItems(): array
 	{
 		$settingsItems = [];
-		$router = Service\Container::getInstance()->getRouter();
 		$userPermissions = Container::getInstance()->getUserPermissions();
 		if ($userPermissions->canWriteConfig())
 		{
@@ -363,7 +367,7 @@ abstract class ItemList extends Base
 			{
 				$settingsItems[] = [
 					'text' => Loc::getMessage('CRM_TYPE_TYPE_SETTINGS'),
-					'href' => $router->getTypeDetailUrl($this->entityTypeId),
+					'href' => $this->router->getTypeDetailUrl($this->entityTypeId),
 					'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
 				];
 			}
@@ -380,7 +384,7 @@ abstract class ItemList extends Base
 			{
 				$settingsItems[] = [
 					'text' => Loc::getMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
-					'href' => $router->getUserFieldListUrl($this->entityTypeId),
+					'href' => $this->router->getUserFieldListUrl($this->entityTypeId),
 					'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
 				];
 			}
@@ -418,6 +422,10 @@ abstract class ItemList extends Base
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (
+				$this->arParams['useCheckboxListForSettingsPopup'] ?? ModuleManager::isModuleInstalled('ui')
+			),
+			'RESTRICTED_FIELDS' => $this->arResult['restrictedFields'] ?? [],
 		];
 	}
 
@@ -454,12 +462,12 @@ abstract class ItemList extends Base
 		{
 			$views[Service\Router::LIST_VIEW_KANBAN] = [
 				'title' => Loc::getMessage('CRM_COMMON_KANBAN'),
-				'url' => Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
+				'url' => $this->router->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
 				'isActive' => false,
 			];
 			$views[Service\Router::LIST_VIEW_LIST] = [
 				'title' => Loc::getMessage('CRM_COMMON_LIST'),
-				'url' => Container::getInstance()->getRouter()->getItemListUrl($this->entityTypeId, $this->getCategoryId()),
+				'url' => $this->router->getItemListUrl($this->entityTypeId, $this->getCategoryId()),
 				'isActive' => true,
 			];
 
@@ -467,7 +475,7 @@ abstract class ItemList extends Base
 			{
 				$views[Service\Router::LIST_VIEW_DEADLINES] = [
 					'title' => Loc::getMessage('CRM_COMMON_DEADLINES'),
-					'url' => Container::getInstance()->getRouter()->getDeadlinesUrl($this->entityTypeId, $this->getCategoryId()),
+					'url' => $this->router->getDeadlinesUrl($this->entityTypeId, $this->getCategoryId()),
 					'isActive' => false,
 				];
 			}
@@ -481,7 +489,7 @@ abstract class ItemList extends Base
 			{
 				$categoryId = $this->factory->createDefaultCategoryIfNotExist()->getId();
 			}
-			$url = Container::getInstance()->getRouter()->getAutomationUrl(
+			$url = $this->router->getAutomationUrl(
 				$this->entityTypeId,
 				$categoryId
 			);
@@ -498,6 +506,17 @@ abstract class ItemList extends Base
 			{
 				$robotView['onclick'] = $dynamicTypesLimit->getShowFeatureJsFunctionString();
 				unset($robotView['url']);
+			}
+			else
+			{
+				$toolsManager = Container::getInstance()->getIntranetToolsManager();
+				if (!$toolsManager->checkRobotsAvailability())
+				{
+					$robotView['onclick'] = htmlspecialcharsbx(
+						AvailabilityManager::getInstance()->getRobotsAvailabilityLock()
+					);
+					unset($robotView['url']);
+				}
 			}
 			$views[] = $robotView;
 		}
@@ -618,7 +637,7 @@ abstract class ItemList extends Base
 			{
 				$menu[] = [
 					'text' => Loc::getMessage('CRM_TYPE_CATEGORY_SETTINGS'),
-					'href' => Container::getInstance()->getRouter()->getCategoryListUrl($this->entityTypeId),
+					'href' => $this->router->getCategoryListUrl($this->entityTypeId),
 				];
 			}
 		}
@@ -630,12 +649,18 @@ abstract class ItemList extends Base
 
 	protected function getAddButtonParameters(bool $isDisabled = false, int $forcedCategoryId = null): array
 	{
-		$link = Service\Container::getInstance()->getRouter()
-			->getItemDetailUrl(
-				$this->entityTypeId,
-				0,
-				$forcedCategoryId ?? $this->getCategoryId(),
-			)
+		$rawLink = $this->router->getItemDetailUrl(
+			$this->entityTypeId,
+			0,
+			$forcedCategoryId ?? $this->getCategoryId(),
+		);
+
+		$analyticsEventBuilder = AddOpenEvent::createDefault($this->entityTypeId);
+		$this->configureAnalyticsEventBuilder($analyticsEventBuilder);
+		$analyticsEventBuilder->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_BUTTON);
+
+		$link = $analyticsEventBuilder
+			->buildUri($rawLink)
 			->getUri()
 		;
 
@@ -697,6 +722,41 @@ abstract class ItemList extends Base
 		return $btnParameters;
 	}
 
+	protected function configureAnalyticsEventBuilder(AbstractBuilder $builder): void
+	{
+		if ($this->isEmbedded())
+		{
+			if (!empty($this->arParams['ANALYTICS']['c_section']) && is_string($this->arParams['ANALYTICS']['c_section']))
+			{
+				$builder->setSection($this->arParams['ANALYTICS']['c_section']);
+			}
+			if (
+				!empty($this->arParams['ANALYTICS']['c_sub_section'])
+				&& is_string($this->arParams['ANALYTICS']['c_sub_section'])
+			)
+			{
+				$builder->setSubSection($this->arParams['ANALYTICS']['c_sub_section']);
+			}
+		}
+		elseif (Integration\IntranetManager::isEntityTypeInCustomSection($this->entityTypeId))
+		{
+			$builder->setSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CUSTOM);
+		}
+		else
+		{
+			/**
+			 * @see Integration\Analytics\Dictionary::SECTION_SMART_INVOICE
+			 * @see Integration\Analytics\Dictionary::SECTION_DYNAMIC
+			 */
+			$builder->setSection(Integration\Analytics\Dictionary::getAnalyticsEntityType($this->entityTypeId) . '_section');
+		}
+
+		if ($this->category && $this->category->getCode())
+		{
+			$builder->setP2WithValueNormalization('category', $this->category->getCode());
+		}
+	}
+
 	protected function isDeadlinesModeSupported(): bool
 	{
 		$supported = [\CCrmOwnerType::SmartInvoice];
@@ -718,5 +778,20 @@ abstract class ItemList extends Base
 			$extras
 		);
 		return (int)$totalCounter->getValue();
+	}
+
+	protected function getTopPanelParameters(): array
+	{
+		$params = parent::getTopPanelParameters();
+
+		$dummyEvent = new AddOpenEvent();
+		$this->configureAnalyticsEventBuilder($dummyEvent);
+
+		$params['ANALYTICS'] = [
+			'c_section' => $dummyEvent->getSection(),
+			'c_sub_section' => $dummyEvent->getSubSection(),
+		];
+
+		return $params;
 	}
 }

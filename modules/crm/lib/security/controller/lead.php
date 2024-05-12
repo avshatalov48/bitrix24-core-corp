@@ -39,7 +39,7 @@ class Lead extends Base
 
 	public function getProgressSteps($permissionEntityType): array
 	{
-		return array_keys(\CCrmStatus::GetStatusList('STATUS'));
+		return $this->controllerQueries->getLeadProgressSteps($permissionEntityType);
 	}
 
 	public function tryParseProgressStep($attribute, &$value): bool
@@ -67,9 +67,4 @@ class Lead extends Base
 	}
 
 	//endregion
-
-	protected static function getEnabledFlagOptionName(): string
-	{
-		return '~CRM_SECURITY_LEAD_CONTROLLER_ENABLED';
-	}
 }

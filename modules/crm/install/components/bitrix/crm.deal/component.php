@@ -314,7 +314,7 @@ if(isset($_GET['redirect_to']))
 	}
 }
 
-if(
+if (
 	$componentPage === 'list'
 	|| $componentPage === 'recur_category'
 	|| $componentPage === 'category'
@@ -322,15 +322,27 @@ if(
 	|| $componentPage === 'calendarcategory'
 	|| $componentPage === 'calendar'
 	|| $componentPage === 'activitycategory'
+	|| $componentPage === 'activity'
 )
 {
 	$categoryID = isset($arResult['VARIABLES']['category_id']) ? (int)$arResult['VARIABLES']['category_id'] : -1;
 	$currentCategoryID = (int)CUserOptions::GetOption('crm', 'current_deal_category', -1);
-	if(($componentPage === 'list' || $componentPage === 'recur_category') && $currentCategoryID >= 0)
+
+	$suitableForSave = ['category', 'kanbancategory', 'calendarcategory', 'activitycategory'];
+	$suitableForReset = ['list', 'recur_category', 'activity'];
+
+	if (
+		$currentCategoryID >= 0
+		&& in_array($componentPage, $suitableForReset, true)
+	)
 	{
 		CUserOptions::DeleteOption('crm', 'current_deal_category');
 	}
-	elseif(($componentPage === 'category' || $componentPage === 'kanbancategory' || $componentPage === 'calendarcategory') && $categoryID >= 0 && $categoryID !== $currentCategoryID)
+	elseif (
+		$categoryID >= 0
+		&& $categoryID !== $currentCategoryID
+		&& in_array($componentPage, $suitableForSave, true)
+	)
 	{
 		CUserOptions::SetOption('crm', 'current_deal_category', $categoryID);
 	}

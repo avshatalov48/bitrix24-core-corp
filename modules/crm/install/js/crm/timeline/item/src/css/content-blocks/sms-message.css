@@ -11,13 +11,13 @@
 	line-height: var(--ui-font-line-height-lg, 1.5);
 	font-weight: var(--ui-font-weight-normal, 400);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	word-break: break-all;
 }
 
 .crm-timeline__item_sms-message>span {
 	position: relative;
 	display: block;
-	padding: 4px 12px
+	padding: 4px 12px;
+	overflow-wrap: break-word;
 }
 
 .crm-timeline__item_sms-message::after {

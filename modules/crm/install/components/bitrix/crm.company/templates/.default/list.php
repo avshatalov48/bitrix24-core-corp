@@ -25,6 +25,11 @@ $pathToList = $categoryId > 0
 	)
 	: $arResult['PATH_TO_COMPANY_LIST'] ?? '';
 
+$analytics = [
+	'c_section' => $isMyCompanyMode ? \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_MYCOMPANY : \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+];
+
 if (!$isSlider)
 {
 	/** @var CMain $APPLICATION */
@@ -53,6 +58,7 @@ if (!$isSlider)
 			'MYCOMPANY_MODE' => $isMyCompanyMode ? 'Y' : 'N',
 			'PATH_TO_COMPANY_WIDGET' => $arResult['PATH_TO_COMPANY_WIDGET'] ?? '',
 			'PATH_TO_COMPANY_PORTRAIT' => $arResult['PATH_TO_COMPANY_PORTRAIT'] ?? '',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -111,6 +117,7 @@ else
 			'TYPE' => 'list',
 			'MYCOMPANY_MODE' => $isMyCompanyMode ? 'Y' : 'N',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+			'ANALYTICS' => $analytics,
 		],
 		$component
 	);
@@ -152,7 +159,8 @@ else
 				'PATH_TO_COMPANY_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'] ?? '',
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 				'MYCOMPANY_MODE' => $isMyCompanyMode ? 'Y' : 'N',
-				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'] ?? null
+				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'] ?? null,
+				'ANALYTICS' => $analytics,
 			],
 			'USE_PADDING' => false,
 			'CLOSE_AFTER_SAVE' => true,

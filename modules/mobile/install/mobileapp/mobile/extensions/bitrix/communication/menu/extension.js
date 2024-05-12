@@ -3,6 +3,7 @@
  */
 jn.define('communication/menu', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { AnalyticsEvent } = require('analytics');
 	const ConnectionTypeSvg = require('assets/communication/menu');
 	const { ImType, PhoneType, EmailType, isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
@@ -331,6 +332,12 @@ jn.define('communication/menu', (require, exports, module) => {
 		createItem(params)
 		{
 			const { type, id: entityId, title: entityTitle = '', connectionType } = params;
+
+			if (!get(this.permissions, [type, 'read'], true))
+			{
+				return null;
+			}
+
 			const itemValue = params[connectionType];
 			if (!itemValue)
 			{
@@ -560,10 +567,15 @@ jn.define('communication/menu', (require, exports, module) => {
 						data: { svgIcon: ENTITY_ICONS[entityTypeName] },
 						onClickCallback: () => {
 							const closeCallback = () => {
+								const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}))
+									.setSubSection('element_card')
+									.setElement('communication_channels_floating_button')
+									.setEvent('entity_add_open');
 								this.customEventEmitter.emit('UI.Fields.Client::select', [
 									{
 										fieldName: name,
 										entityTypeName: entityTypeName.toLowerCase(),
+										analytics,
 									},
 								]);
 							};

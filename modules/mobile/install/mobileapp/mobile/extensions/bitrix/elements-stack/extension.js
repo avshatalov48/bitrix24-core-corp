@@ -2,66 +2,77 @@
  * @module elements-stack
  */
 jn.define('elements-stack', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { Corner } = require('tokens');
+	const { Corner, Color, Indent, IndentTypes } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
 	const { PropTypes } = require('utils/validation');
 
-	const LEFT = 'left';
-	const RIGHT = 'right';
+	const Directions = {
+		left: 'left',
+		right: 'right',
+	};
+
+	const toArray = (value) => {
+		if (!value)
+		{
+			return [];
+		}
+
+		return Array.isArray(value) ? value : [value];
+	};
 
 	/**
 	 * @function ElementsStack
 	 * @param {Object} props
-	 * @param {Array<View>} [props.children]
 	 * @param {string} [props.direction]
 	 * @param {number} [props.offset]
-	 * @param {number} [props.indent]
+	 * @param {number|string} [props.indent]
 	 * @param {number} [props.radius]
 	 * @param {string} [props.fontColor]
 	 * @param {number} [props.fontSize]
 	 * @param {number} [props.maxElements]
+	 * @param {string} [props.backgroundColor]
 	 * @param {boolean} [props.showRest]
+	 * @param {Array<View>} restChildren
 	 * @return View
 	 */
-	const ElementsStack = (props = {}) => {
+	const ElementsStack = (props = {}, ...restChildren) => {
 		const {
 			fontColor,
 			fontSize = 14,
 			showRest = true,
-			children,
-			direction = LEFT,
+			direction = Directions.left,
 			offset = 6,
-			indent = 2,
+			indent = IndentTypes.XS2,
 			maxElements = 999,
 			radius = Corner.circle,
-			backgroundColor = AppTheme.colors.bgContentPrimary,
+			backgroundColor = Color.bgContentPrimary,
 			...restProps
 		} = props;
 
-		const elements = Array.isArray(children) ? children : [children];
+		const elements = toArray(restChildren);
 
 		if (elements.length === 0)
 		{
 			return null;
 		}
 
-		const borderWidth = offset === 0 ? 0 : Number(indent);
+		const isRight = direction.toLowerCase() === Directions.right;
+		const indentWidth = parseInt(indent, 10) || Indent[indent];
+		const calcOffset = offset > 0 ? Number(offset) + indentWidth : 0;
 
-		const getDirectionStyle = ({ element, index }) => {
+		const getDirectionStyle = ({ index }) => {
 			const isFirst = index === 0;
 			const isLast = index === elements.length - 1;
-
 			const directionStyle = {};
 
-			if (direction.toLowerCase() === RIGHT)
+			if (isRight)
 			{
-				directionStyle.marginLeft = isFirst ? 0 : -Number(offset);
+				directionStyle.marginLeft = isFirst ? 0 : -calcOffset;
 				directionStyle.zIndex = -index;
 			}
 			else
 			{
-				directionStyle.marginRight = isLast ? 0 : -Number(offset);
+				directionStyle.marginRight = isLast ? 0 : -calcOffset;
 				directionStyle.zIndex = index;
 			}
 
@@ -81,7 +92,7 @@ jn.define('elements-stack', (require, exports, module) => {
 				View(
 					{
 						style: {
-							borderWidth,
+							borderWidth: indentWidth,
 							borderColor: backgroundColor,
 							borderRadius: radius,
 						},
@@ -91,19 +102,20 @@ jn.define('elements-stack', (require, exports, module) => {
 			);
 		}).filter(Boolean);
 
-		let restElementsCountText = null;
+		const minRestTextMargin = 4;
+		const isShowRestText = showRest && elements.length > maxElements;
 
-		if (showRest && elements.length > Number(maxElements))
-		{
-			restElementsCountText = Text({
-				text: `+${elements.length - maxElements}`,
-				style: {
-					fontSize,
-					fontColor,
-					marginLeft: 4 - indent,
-				},
-			});
-		}
+		const paddingRight = isRight ? 0 : (isShowRestText ? 0 : offset);
+		const marginLeft = isRight ? minRestTextMargin : calcOffset + minRestTextMargin;
+
+		const restElementsCountText = Text({
+			text: `+${elements.length - maxElements}`,
+			style: {
+				fontSize,
+				color: fontColor,
+				marginLeft,
+			},
+		});
 
 		const mainProps = mergeImmutable(
 			restProps,
@@ -111,6 +123,7 @@ jn.define('elements-stack', (require, exports, module) => {
 				style: {
 					alignItems: 'center',
 					flexDirection: 'row',
+					paddingRight,
 				},
 			},
 		);
@@ -118,8 +131,19 @@ jn.define('elements-stack', (require, exports, module) => {
 		return View(
 			mainProps,
 			...getRenderElements(),
-			restElementsCountText,
+			isShowRestText && restElementsCountText,
 		);
+	};
+
+	ElementsStack.defaultProps = {
+		fontSize: 14,
+		showRest: true,
+		direction: Directions.left,
+		offset: 6,
+		indent: 2,
+		maxElements: 999,
+		radius: Corner.circle,
+		backgroundColor: Color.bgContentPrimary,
 	};
 
 	ElementsStack.propTypes = {
@@ -127,7 +151,7 @@ jn.define('elements-stack', (require, exports, module) => {
 			PropTypes.object,
 			PropTypes.arrayOf(PropTypes.object),
 		]),
-		direction: PropTypes.oneOf([RIGHT, LEFT]),
+		direction: PropTypes.oneOf([Directions.right, Directions.left]),
 		offset: PropTypes.number,
 		indent: PropTypes.number,
 		radius: PropTypes.number,
@@ -137,5 +161,5 @@ jn.define('elements-stack', (require, exports, module) => {
 		showRest: PropTypes.bool,
 	};
 
-	module.exports = { ElementsStack };
+	module.exports = { ElementsStack, Directions, DirectionType: 'directions' };
 });

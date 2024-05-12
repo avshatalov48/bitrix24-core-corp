@@ -19,7 +19,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 	const { getFileTypeByExtension } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { RestMethod, SubTitleIconType } = require('im/messenger/const');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		UploadManager,
 		UploaderManagerEvent,
@@ -33,7 +33,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		constructor()
 		{
 			/** @private */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 
 			/** @private */
 			this.isRequestingDiskFolderId = false;
@@ -188,7 +188,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 					const fileData = {
 						id: temporaryFileId,
 						chatId: fileDataObj.chatId || fileDataObj.dialogId,
-						authorId: core.getUserId(),
+						authorId: serviceLocator.get('core').getUserId(),
 						name: fileDataObj.deviceFile.name,
 						type: fileDataObj.deviceFile.type,
 						status: FileStatus.upload,
@@ -238,7 +238,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 			return this.store.dispatch('filesModel/set', {
 				id: messageWithFile.temporaryFileId,
 				chatId: messageWithFile.chatId,
-				authorId: core.getUserId(),
+				authorId: serviceLocator.get('core').getUserId(),
 				name: messageWithFile.file.name,
 				type: getFileTypeByExtension(extension),
 				extension,
@@ -354,7 +354,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				id: taskId,
 				dialogId: this.getDialog().dialogId,
 				chatId: this.getDialog().chatId,
-				authorId: core.getUserId(),
+				authorId: serviceLocator.get('core').getUserId(),
 				name: file.name,
 				type: this.getFileType(file),
 				extension: file.extension,
@@ -444,7 +444,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		 */
 		getCurrentUser()
 		{
-			const userId = core.getUserId();
+			const userId = serviceLocator.get('core').getUserId();
 
 			return this.store.getters['usersModel/getById'](userId);
 		}
@@ -620,8 +620,6 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 
 			return new Promise((resolve, reject) => {
 				const reader = new Reader();
-				reader.readAsBinaryString(file);
-
 				reader.on('loadEnd', (event) => {
 					const previewFile = event.result;
 					resolve(previewFile);
@@ -630,6 +628,8 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				reader.on('error', () => {
 					reject(new Error('FileService.uploadPreview: file read error'));
 				});
+
+				reader.readAsBinaryString(file);
 			});
 		}
 

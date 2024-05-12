@@ -97,6 +97,13 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	function _subscribeEvents2() {
 	  var _this = this;
 	  main_core_events.EventEmitter.subscribe('BiConnector:DashboardSelector.onSelect', function (event) {
+	    main_core.Dom.clean(babelHelpers.classPrivateFieldGet(_this, _frameNode));
+	    BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
+	      container: babelHelpers.classPrivateFieldGet(_this, _frameNode),
+	      isSupersetAvailable: true
+	    });
+	  });
+	  main_core_events.EventEmitter.subscribe('BiConnector:DashboardSelector.onSelectDataLoaded', function (event) {
 	    babelHelpers.classPrivateFieldSet(_this, _embeddedParams, event.data.credentials);
 	    main_core.Dom.clean(babelHelpers.classPrivateFieldGet(_this, _frameNode));
 	    _classPrivateMethodGet(_this, _initFrame, _initFrame2).call(_this, event.data.credentials);

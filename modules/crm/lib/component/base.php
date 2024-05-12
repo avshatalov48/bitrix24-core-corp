@@ -71,6 +71,14 @@ abstract class Base extends \CBitrixComponent implements Errorable
 		return ($this->request->get('IFRAME') === 'Y');
 	}
 
+	protected function isEmbedded(): bool
+	{
+		return (
+			isset($this->arParams['isEmbedded'])
+			&& $this->arParams['isEmbedded']
+		);
+	}
+
 	protected function getApplication(): \CMain
 	{
 		global $APPLICATION;

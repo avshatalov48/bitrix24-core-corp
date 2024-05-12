@@ -1,0 +1,2 @@
+<?php
+$MESS['IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'] = 'Получатель';

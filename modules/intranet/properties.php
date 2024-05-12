@@ -428,7 +428,6 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		<script>// user_selector:
 		var multiPopup<?echo $controlID?>;
 		var singlePopup<?echo $controlID?>;
-		var taskIFramePopup<?echo $controlID?>;
 
 		function onSingleSelect<?echo $controlID?>(arUser)
 		{
@@ -543,7 +542,6 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		<script>// user_selector:
 		var multiPopup<?echo $controlID?>;
 		var singlePopup<?echo $controlID?>;
-		var taskIFramePopup<?echo $controlID?>;
 
 		function onSingleSelect<?echo $controlID?>(arUser)
 		{
@@ -651,7 +649,6 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		<script>// user_selector:
 		var multiPopup<?echo $controlID?>;
 		var singlePopup<?echo $controlID?>;
-		var taskIFramePopup<?echo $controlID?>;
 
 		function onMultipleSelect<?echo $controlID?>(arUsers)
 		{

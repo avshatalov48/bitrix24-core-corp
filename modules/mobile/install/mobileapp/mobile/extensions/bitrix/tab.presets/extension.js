@@ -6,6 +6,7 @@ jn.define('tab.presets', (require, exports, module) => {
 	const getSvg = res.getSvg;
 	const TabPresetUtils = require('tab.presets/utils');
 	const Editor = require('tab/presets/editor');
+	const { Loc } = require('loc');
 
 	class TabPresetsComponent extends LayoutComponent
 	{
@@ -26,7 +27,7 @@ jn.define('tab.presets', (require, exports, module) => {
 				.call(true)
 				.then((result) => this.updateState(result.result, true))
 				.catch((e) => {
-					showError(BX.message('TAB_PRESET_ERROR'), this.shownCache, () => {
+					showError(Loc.getMessage('TAB_PRESET_ERROR'), this.shownCache, () => {
 						// widget.back()
 					});
 				});
@@ -51,7 +52,7 @@ jn.define('tab.presets', (require, exports, module) => {
 				return;
 			}
 			Haptics.impactLight();
-			const { Alert, ButtonType } = require('alert');
+			const { Alert } = require('alert');
 			const onAccept = () => {
 				Haptics.impactLight();
 				state.presets.aboutCurrent = key;
@@ -73,23 +74,22 @@ jn.define('tab.presets', (require, exports, module) => {
 						Haptics.notifyFailure();
 						Notify.showIndicatorError({
 							hideAfter: 1000,
-							text: BX.message('TAB_PRESET_APPLY_ERROR'),
+							text: Loc.getMessage('TAB_PRESET_APPLY_ERROR'),
 						});
 					});
 			};
 
 			Alert.confirm(
-				BX.message('TAB_PRESET_CONFIRM_TITLE'),
-				BX.message('TAB_PRESET_CONFIRM_DESC').replace('#title#', title),
+				Loc.getMessage('TAB_PRESET_CONFIRM_TITLE'),
+				Loc.getMessage('TAB_PRESET_CONFIRM_DESC').replace('#title#', title),
 				[
 					{
 						// type: ButtonType.DESTRUCTIVE,
-						text: BX.message('TAB_PRESET_CONFIRM_CLOSE'),
-						onPress: () => {
-						},
+						text: Loc.getMessage('TAB_PRESET_CONFIRM_CLOSE'),
+						onPress: () => {},
 					},
 					{
-						text: BX.message('TAB_PRESET_CONFIRM_ACCEPT'),
+						text: Loc.getMessage('TAB_PRESET_CONFIRM_ACCEPT'),
 						onPress: onAccept,
 					},
 				],
@@ -139,7 +139,7 @@ jn.define('tab.presets', (require, exports, module) => {
 				},
 				Text({
 					style: { color: AppTheme.colors.base2, fontWeight: '600', fontSize: 18 },
-					text: BX.message('TAB_PRESET_USER_PRESET'),
+					text: Loc.getMessage('TAB_PRESET_USER_PRESET'),
 				}),
 				Image({
 					style: { color: AppTheme.colors.base2, width: 10, height: 16 },
@@ -226,7 +226,7 @@ jn.define('tab.presets', (require, exports, module) => {
 			return View(
 				{ style: res.styles.activeStatus },
 				Text({
-					text: BX.message('TAB_PRESET_CURRENT_LABEL'),
+					text: Loc.getMessage('TAB_PRESET_CURRENT_LABEL'),
 					style: {
 						fontSize: 9,
 						color: AppTheme.colors.baseWhiteFixed,
@@ -308,7 +308,7 @@ jn.define('tab.presets', (require, exports, module) => {
 		{
 			const layout = await PageManager.openWidget('layout', {
 				titleParams: {
-					text: BX.message('TAB_PRESET_USER_PRESET'),
+					text: Loc.getMessage('TAB_PRESET_USER_PRESET'),
 					useLargeTitleMode: true,
 				},
 			});
@@ -326,8 +326,7 @@ jn.define('tab.presets', (require, exports, module) => {
 				textColor: AppTheme.colors.baseWhiteFixed,
 				hideOnTap: true,
 				autoHide: true,
-			}, () => {
-			});
+			}, () => {});
 		}
 		else
 		{

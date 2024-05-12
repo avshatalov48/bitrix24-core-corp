@@ -10,20 +10,38 @@ abstract class Dto implements \JsonSerializable
 {
 	private ?array $casts = null;
 
-	public function __construct(?array $fields = null)
+	public function __construct()
 	{
-		if ($fields !== null)
+		foreach ($this->getProperties() as $property)
 		{
-			$fields = $this->transformKeysOnDecode($fields);
-			$properties = $this->getProperties();
-
-			if (!$this->validate($fields, $properties))
+			$attribute = $property->getCollectionAttribute();
+			if (!$attribute)
 			{
-				throw new InvalidDtoException();
+				continue;
 			}
 
-			$this->initProperties($fields, $properties);
+			Type::validateCollectionByAttributes($property->getValue($this), $attribute);
 		}
+	}
+
+	public static function make(?array $fields = null)
+	{
+		$dto = new static();
+
+		if (is_array($fields))
+		{
+			$fields = $dto->transformKeysOnDecode($fields);
+			$properties = $dto->getProperties();
+
+			if (!$dto->validate($fields, $properties))
+			{
+				throw new InvalidDtoException("Fields of " . $dto::class . " are invalid");
+			}
+
+			$dto->initProperties($fields, $properties);
+		}
+
+		return $dto;
 	}
 
 	/**
@@ -75,6 +93,7 @@ abstract class Dto implements \JsonSerializable
 		{
 			$result[] = new Property($property, $this);
 		}
+
 		return $result;
 	}
 
@@ -142,6 +161,7 @@ abstract class Dto implements \JsonSerializable
 
 	/**
 	 * Method returns map, where key must relate to public property, and value specifies type of this property
+	 * @deprecated use type hints and attribute \Bitrix\Mobile\Dto\Attributes\Collection instead
 	 * @return array<string, Caster> property name => typecaster object
 	 */
 	public function getCasts(): array

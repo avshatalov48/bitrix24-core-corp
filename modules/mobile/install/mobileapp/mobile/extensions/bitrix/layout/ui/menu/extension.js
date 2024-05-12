@@ -170,6 +170,7 @@
 				result.set(action.id, {
 					params: {
 						id: action.id,
+						testId: action.testId,
 						title: action.title,
 						iconUrl: action.iconUrl || '',
 						showTopSeparator: action.showTopSeparator || false,

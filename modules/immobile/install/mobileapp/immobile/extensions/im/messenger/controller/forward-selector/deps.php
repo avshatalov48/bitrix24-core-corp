@@ -2,19 +2,16 @@
 
 return [
 	'extensions' => [
-		'im:messenger/core',
+		'apptheme',
+		'loc',
+		'im:messenger/controller/search/experimental',
+		'im:messenger/lib/converter',
+		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/selector',
-		'im:messenger/lib/ui/base/item',
-		'im:messenger/lib/ui/base/buttons',
-		'im:messenger/lib/element',
-		'im:messenger/lib/ui/base/list',
-		'layout/ui/fields/string',
-		'im:messenger/assets/search',
-		'utils/url',
-		'im:messenger/lib/ui/search/input',
-		'im:messenger/lib/ui/base/loader',
-		'layout/ui/fields/file',
-		'im:chat/selector/chat',
-		'im:messenger/lib/search/adapters/base',
+		'im:messenger/lib/ui/notification'
+	],
+	'bundle' => [
+		'./src/selector',
+		'./src/view',
 	],
 ];

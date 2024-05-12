@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'alert',
 		'utils/random',
 		'utils/object',

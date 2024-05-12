@@ -4,7 +4,6 @@
 jn.define('calendar/event-list-view/layout/event', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { Moment } = require('utils/date');
 	const { shortTime } = require('utils/date/formats');
 	const { DateHelper } = require('calendar/date-helper');
 
@@ -16,15 +15,10 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 	 */
 	const Event = (props) => {
 		const event = props.event;
-		const dateFromMoment = new Moment(event.dateFrom);
-		const dateToMoment = props.isFullDay
-			? new Moment(event.dateTo).add(86_000_000)
-			: new Moment(event.dateTo)
-		;
 		const isSearch = props.isSearch;
 		const hasPassed = isSearch
 			? false
-			: dateToMoment.hasPassed
+			: event.hasPassed(props.isFullDay)
 		;
 
 		return View(
@@ -62,7 +56,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					},
 				},
 				EventInfo(event, hasPassed),
-				EventTime(dateFromMoment, dateToMoment, hasPassed, props),
+				EventTime(event, hasPassed, props),
 			),
 		);
 	};
@@ -140,7 +134,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 			);
 		}
 
-		if (!hasPassed && event.isInvited())
+		if (event.isInvited())
 		{
 			return View(
 				{
@@ -252,13 +246,12 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 	/**
 	 *
-	 * @param {Moment} dateFromMoment
-	 * @param {Moment} dateToMoment
+	 * @param {EventModel} event
 	 * @param {boolean} hasPassed
 	 * @param {EventLayoutProps} props
 	 * @returns {object}
 	 */
-	const EventTime = (dateFromMoment, dateToMoment, hasPassed, props) => {
+	const EventTime = (event, hasPassed, props) => {
 		return View(
 			{
 				style: {
@@ -272,7 +265,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					...timeStyle,
 					opacity: hasPassed ? 0.5 : 1,
 				},
-				text: getTimeFromText(dateFromMoment, dateToMoment, props),
+				text: getTimeFromText(event.getMomentDateFrom(), event.getMomentDateTo(), props),
 				testId: `event_${props.event.id}_time_from`,
 			}),
 			Text({
@@ -281,7 +274,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					marginTop: 3,
 					opacity: hasPassed ? 0.5 : 1,
 				},
-				text: getTimeToText(dateToMoment, props),
+				text: getTimeToText(event.getMomentDateTo(), props),
 				testId: `event_${props.event.id}_time_to`,
 			}),
 		);

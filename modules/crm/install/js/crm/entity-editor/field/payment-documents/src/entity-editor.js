@@ -142,19 +142,41 @@ export class EntityEditorPaymentDocuments
 		return this._docs().length > 0;
 	}
 
+	canAddRealization(): boolean
+	{
+		return this._isUsedInventoryManagement
+			&& !this._isWithOrdersMode
+			&& this._salesOrderRights?.modify;
+	}
+
+	setVisible(visible: boolean): void
+	{
+		const isHidden = this._rootNode.classList.contains('is-hidden');
+
+		if (visible && isHidden)
+		{
+			this._rootNode.classList.remove('is-hidden');
+		}
+		else if (!visible && !isHidden)
+		{
+			this._rootNode.classList.add('is-hidden');
+		}
+	}
+
 	render(): HTMLElement
 	{
 		this._menus.forEach((menu) => menu.destroy());
 		this._rootNode.innerHTML = '';
 		this._setupCurrencyFormat();
+		this._setEmptyState();
 
-		this._rootNode.classList.remove('is-hidden');
 		this._rootNode.append(Tag.render`
 			<div class="crm-entity-widget-content-block-inner-container">
 				<div class="crm-entity-widget-payment">
-					${this._renderTitle()}
+					${this._renderDetail()}
 					${this._renderDocuments()}
 					${this._renderAddDocument()}
+					${this._renderDelimiter()}
 					${this._renderTotalSum()}
 				</div>
 			</div>
@@ -219,13 +241,44 @@ export class EntityEditorPaymentDocuments
 		ajax.runAction('crm.api.entity.fetchPaymentDocuments', data).then(successCallback, errorCallback);
 	}
 
-	_renderTitle(): HTMLElement
+	_renderDetail(): HTMLElement
 	{
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<div class="crm-entity-widget-payment-detail-caption">${this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE_MSGVER_1')}</div>
+				<div class="crm-entity-widget-payment-detail-caption">${this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE_MSGVER_2')}</div>
+				${!this.hasContent() ? this._renderEmptyStateDescription() : ''}
 			</div>
 		`;
+	}
+
+	_renderEmptyStateDescription(): HTMLElement
+	{
+		const description = this.canAddRealization()
+			? Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_EMPTYSTATE_DESCRIPTION_WITH_REALIZATION')
+			: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_EMPTYSTATE_DESCRIPTION');
+
+		return Tag.render`
+			<div class="crm-entity-widget-payment-detail-description">${description}</div>
+		`;
+	}
+
+	_renderDelimiter(): HTMLElement
+	{
+		return Tag.render`<div class="ui-entity-editor-delimiter"></div>`;
+	}
+
+	_setEmptyState(): void
+	{
+		const isSetAsEmpty = this._rootNode.classList.contains('is-empty');
+
+		if (!this.hasContent() && !isSetAsEmpty)
+		{
+			this._rootNode.classList.add('is-empty');
+		}
+		else if (this.hasContent() && isSetAsEmpty)
+		{
+			this._rootNode.classList.remove('is-empty');
+		}
 	}
 
 	_renderDocuments(): HTMLElement[]
@@ -691,8 +744,8 @@ export class EntityEditorPaymentDocuments
 
 		return Tag.render`
 			<div class="crm-entity-widget-payment-add-box">
-				<a href="#" class="crm-entity-widget-payment-add" onclick="${openMenu}">
-					+ ${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT_MSGVER_1')}
+				<a href="#" class="ui-entity-editor-content-add-lnk" onclick="${openMenu}">
+					${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT_MSGVER_2')}
 				</a>
 			</div>
 		`;

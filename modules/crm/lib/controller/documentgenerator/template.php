@@ -38,14 +38,15 @@ class Template extends Base
 	 */
 	public function getFieldsAction(\Bitrix\DocumentGenerator\Template $template, $entityTypeId, $entityId = null, array $values = [])
 	{
-		$providersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
-		if(!isset($providersMap[$entityTypeId]))
+		$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($entityTypeId);
+		if ($provider === null)
 		{
 			$this->errorCollection[] = new Error('No provider for entityTypeId');
+
 			return null;
 		}
 
-		return $this->proxyAction('getFieldsAction', [$template, $providersMap[$entityTypeId], $entityId, $values]);
+		return $this->proxyAction('getFieldsAction', [$template, $provider, $entityId, $values]);
 	}
 
 	/**

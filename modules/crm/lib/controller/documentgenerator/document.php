@@ -137,9 +137,8 @@ class Document extends Base
 		{
 			if(isset($filter['entityTypeId']))
 			{
-				$filter['=provider'] = isset($providersMap[(int)$filter['entityTypeId']])
-					? mb_strtolower($providersMap[(int)$filter['entityTypeId']])
-					: $filter['entityTypeId'];
+				$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider((int)$filter['entityTypeId']);
+				$filter['=provider'] = $provider ? mb_strtolower($provider) : $filter['entityTypeId'];
 
 				unset($filter['entityTypeId']);
 			}
@@ -183,14 +182,15 @@ class Document extends Base
 	 */
 	public function addAction(\Bitrix\DocumentGenerator\Template $template, $entityTypeId, $entityId, array $values = [], $stampsEnabled = 0, array $fields = [])
 	{
-		$providersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
-		if(!isset($providersMap[$entityTypeId]))
+		$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($entityTypeId);
+		if ($provider === null)
 		{
 			$this->errorCollection[] = new Error('No provider for entityTypeId');
+
 			return null;
 		}
 
-		$result = $this->proxyAction('addAction', [$template, $providersMap[$entityTypeId], $entityId, $values, $stampsEnabled, $fields]);
+		$result = $this->proxyAction('addAction', [$template, $provider, $entityId, $values, $stampsEnabled, $fields]);
 		if(is_array($result))
 		{
 			$result['document'] = $this->prepareDocumentData($result['document']);
@@ -297,13 +297,13 @@ class Document extends Base
 			return null;
 		}
 
-		$providersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
-		if(!isset($providersMap[$fields['entityTypeId']]))
+		$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($fields['entityTypeId']);
+		if ($provider === null)
 		{
 			$this->errorCollection[] = new Error('No provider for entityTypeId');
 			return null;
 		}
-		$fields['providerClassName'] = $providersMap[$fields['entityTypeId']];
+		$fields['providerClassName'] = $provider;
 		unset($fields['entityTypeId']);
 
 		$fields['fileId'] = $this->uploadFile($fields['fileContent']);

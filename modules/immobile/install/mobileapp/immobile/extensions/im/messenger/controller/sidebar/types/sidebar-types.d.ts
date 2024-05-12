@@ -3,6 +3,7 @@ import { UsersModelState } from '../../../model/types/users';
 type SidebarViewProps = {
 	isGroupDialog: boolean,
 	isNotes: boolean,
+	isCopilot: boolean,
 	isBot: boolean,
 	headData: {
 		desc: string | null,
@@ -54,6 +55,7 @@ type SidebarProfileCounterState = {
 type SidebarTabViewProps = {
 	dialogId: string | number,
 	isNotes: boolean,
+	isCopilot: boolean,
 }
 
 type SidebarTabViewState = {
@@ -65,6 +67,7 @@ type SidebarTabViewState = {
 type SidebarParticipantsViewProps = {
 	dialogId: string | number,
 	isNotes: boolean,
+	isCopilot: boolean,
 }
 type SidebarParticipantsViewState = {
 	participants: Array<object>,

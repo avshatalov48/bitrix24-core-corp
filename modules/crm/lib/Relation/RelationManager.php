@@ -9,6 +9,7 @@ use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap_Collection;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\Catalog\Contractor\AgentContractRelationStorageStrategy;
 use Bitrix\Crm\Integration\Catalog\Contractor\StoreDocumentRelationStorageStrategy;
 use Bitrix\Crm\Item;
@@ -968,6 +969,11 @@ class RelationManager
 									'PRESERVE_HISTORY' => true,
 									'PARENT_ENTITY_TYPE_ID' => $parentEntityTypeId,
 									'PARENT_ENTITY_ID' => $parentEntityId,
+									'ANALYTICS' => [
+										// we dont know where from this component was opened from - it could be anywhere on portal
+										// 'c_section' => \Bitrix\Crm\Analytics\Builder\Dictionary::getType($parentEntityTypeId) . '_section',
+										'c_sub_section' => Dictionary::SUB_SECTION_DETAILS,
+									],
 								]
 							)
 						]

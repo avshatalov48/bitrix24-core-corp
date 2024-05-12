@@ -2,14 +2,14 @@
 
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
+use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\AjaxJson;
-use Bitrix\DocumentGenerator\Model\TemplateTable;
-use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
+use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Error;
 use Bitrix\Main\Web\Uri;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -750,12 +750,15 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		{
 			return;
 		}
+
+		$userPermissions = Driver::getInstance()->getUserPermissions();
+
 		$actionName = $request->getPost('action_button_' . $this->gridId);
 		if ($actionName === 'delete')
 		{
 			foreach ($request->getPost("ID") as $id)
 			{
-				if (Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
+				if ($userPermissions->canModifyTemplate($id))
 				{
 					TemplateTable::delete($id);
 				}
@@ -769,9 +772,21 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				return;
 			}
 			$templateIds = array_keys($data);
+			\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($templateIds);
+			if (empty($templateIds))
+			{
+				return;
+			}
+
+			$allowedToModifyTemplateIds = array_filter($templateIds, fn(int $id) => $userPermissions->canModifyTemplate($id));
+			if (empty($allowedToModifyTemplateIds))
+			{
+				return;
+			}
+
 			$templates = TemplateTable::getList([
 				'filter' => [
-					'@ID' => $templateIds,
+					'@ID' => $allowedToModifyTemplateIds,
 				],
 			])->fetchCollection();
 			foreach ($templates as $template)
@@ -781,6 +796,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				{
 					continue;
 				}
+
 				$isChanged = false;
 				$sort = (int)($templateData['SORT'] ?? 0);
 				if ($sort > 0)
@@ -794,6 +810,13 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 					$template->setName($name);
 					$isChanged = true;
 				}
+				$active = (string)($templateData['ACTIVE'] ?? '');
+				if ($active === 'Y' || $active === 'N')
+				{
+					$template->setActive($active === 'Y');
+					$isChanged = true;
+				}
+
 				if ($isChanged)
 				{
 					$template->save();

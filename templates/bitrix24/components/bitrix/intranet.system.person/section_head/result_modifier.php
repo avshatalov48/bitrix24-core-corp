@@ -7,12 +7,6 @@ if (!IsModuleInstalled("bitrix24") && CModule::IncludeModule("socialnetwork"))
 	$arResult['CAN_EDIT_USER'] = $arResult['CAN_EDIT_USER'] && CSocNetUser::IsCurrentUserModuleAdmin();
 }
 
-if (IsModuleInstalled("video") && !array_key_exists("PATH_TO_VIDEO_CALL", $arParams))
-{
-	$arParams["~PATH_TO_VIDEO_CALL"] = $arParams["PATH_TO_VIDEO_CALL"] = "/company/personal/video/#USER_ID#/";
-	$arResult["Urls"]["VideoCall"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_VIDEO_CALL"], array("user_id" => $arParams["ID"], "USER_ID" => $arParams["USER"]["ID"], "ID" => $arParams["USER"]["ID"]));
-}
-
 if (!isset($arParams["~USER"]["DETAIL_URL"]))
 {
 	$detailURL = COption::GetOptionString('intranet', 'search_user_url', '/user/#ID#/');

@@ -6,10 +6,8 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 	const { ReactionService } = require('im/messenger/provider/service/classes/message/reaction');
 	const { StatusService } = require('im/messenger/provider/service/classes/message/status');
 	const { ActionService } = require('im/messenger/provider/service/classes/message/action');
-	const { RestMethod } = require('im/messenger/const/rest');
-	const { runAction } = require('im/messenger/lib/rest');
-	const { Logger } = require('im/messenger/lib/logger');
 	const { RichService } = require('im/messenger/provider/service/classes/message/rich');
+	const { PinService } = require('im/messenger/provider/service/classes/message/pin');
 
 	/**
 	 * @class MessageService
@@ -74,6 +72,11 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 			return this.reactionService.remove(reactionId, messageId);
 		}
 
+		setReaction(reactionId, messageId)
+		{
+			return this.reactionService.set(reactionId, messageId);
+		}
+
 		deleteRichLink(messageId, attachId)
 		{
 			return this.richService.deleteRichLink(messageId, attachId);
@@ -100,6 +103,22 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 		}
 
 		/**
+		 * @param {number} messageId
+		 */
+		pinMessage(messageId)
+		{
+			return this.pinService.pinMessage(messageId);
+		}
+
+		/**
+		 * @param {messageId} messageId
+		 */
+		unpinMessage(messageId)
+		{
+			return this.pinService.unpinMessage(messageId);
+		}
+
+		/**
 		 * @private
 		 */
 		initServices()
@@ -114,6 +133,10 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 
 			this.statusService = new StatusService({
 				store: this.store,
+				chatId: this.chatId,
+			});
+
+			this.pinService = new PinService({
 				chatId: this.chatId,
 			});
 

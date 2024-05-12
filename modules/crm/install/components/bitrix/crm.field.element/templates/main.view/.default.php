@@ -48,7 +48,8 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 					$first = true;
 					if (empty($arEntity['items']))
 					{
-						print ($emptyEntityLabels[$entityType] ?? '');
+						$emptyEntityLabel = $emptyEntityLabels[$entityType] ?? '';
+						print "<span class='field_crm_empty_entity_title'>{$emptyEntityLabel}</span>";
 					}
 					else
 					{

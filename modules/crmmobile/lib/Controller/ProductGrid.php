@@ -14,12 +14,12 @@ use Bitrix\CrmMobile\ProductGrid\SummaryQuery;
 use Bitrix\CrmMobile\ProductGrid\ConvertCurrencyQuery;
 use Bitrix\CrmMobile\ProductGrid\CompleteStoresQuery;
 use Bitrix\Main\Engine\ActionFilter;
-use Bitrix\Main\Engine\JsonController;
+use Bitrix\CrmMobile\Controller\BaseJson;
 use Bitrix\Main\Loader;
 
 Loader::requireModule('crmmobile');
 
-class ProductGrid extends JsonController
+class ProductGrid extends BaseJson
 {
 	use PrimaryAutoWiredEntity;
 	use PublicErrorsTrait;
@@ -34,10 +34,7 @@ class ProductGrid extends JsonController
 	protected function getDefaultPreFilters(): array
 	{
 		return [
-			new ActionFilter\Authentication(),
-			new ActionFilter\Csrf(),
-			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
-			new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+			...parent::getDefaultPreFilters(),
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 			new ActionFilter\CloseSession(),
 			new CheckReadPermission(),

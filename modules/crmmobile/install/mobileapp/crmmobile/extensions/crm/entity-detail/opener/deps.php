@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'alert',
+		'analytics',
 		'apptheme',
 		'notify-manager',
 		'feature',
@@ -14,6 +15,7 @@ return [
 		'crm:assets/entity',
 		'crm:loc',
 		'crm:type',
+		'crm:crm-mode',
 		'layout/ui/plan-restriction',
 	],
 	'components' => [

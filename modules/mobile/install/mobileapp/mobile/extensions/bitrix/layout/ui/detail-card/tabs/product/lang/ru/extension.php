@@ -20,5 +20,3 @@ $MESS['CSPL_VALIDATION_ERROR_PHOTO_HAS_ERROR'] = 'Позиция №#NUM# сод
 $MESS['CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE'] = 'Найти по штрихкоду';
 $MESS['CSPL_PRODUCT_NOT_FOUND_BY_BARCODE'] = 'Товар с таким штрихкодом не найден';
 $MESS['CSPL_PRODUCT_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить запись из документа?';
-$MESS['CSPL_PRODUCT_DELETE_CONFIRMATION_OK'] = 'Удалить';
-$MESS['CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL'] = 'Отмена';

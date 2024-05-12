@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Application;
+
 IncludeModuleLangFile(__FILE__);
 
 class CIntranetUtils
@@ -7,6 +9,7 @@ class CIntranetUtils
 	private static array $cache = [];
 
 	private static $SECTIONS_SETTINGS_CACHE = null;
+	private static $SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE = null;
 
 	public static function GetUserDepartments(int $userId)
 	{
@@ -28,15 +31,20 @@ class CIntranetUtils
 	/**
 	 * return null (for wrong department) or array of IDs of immediate sub-departments
 	 */
-	public static function getSubDepartments($departmentId = 0)
+	public static function getSubDepartments($departmentId = 0): null|array
 	{
-		if (self::$SECTIONS_SETTINGS_CACHE === null)
-			self::_GetDeparmentsTree();
+		if (self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE === null)
+		{
+			self::_GetDeparmentsTreeWithoutEmployee();
+		}
 
-		if (isset(self::$SECTIONS_SETTINGS_CACHE['TREE'][$departmentId]))
-			$arDepartmentsIdentifiers = self::$SECTIONS_SETTINGS_CACHE['TREE'][$departmentId];
-		else
+		if (isset(self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$departmentId]))
+		{
+			$arDepartmentsIdentifiers = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$departmentId];
+		} else
+		{
 			$arDepartmentsIdentifiers = null;
+		}
 
 		return ($arDepartmentsIdentifiers);
 	}
@@ -829,20 +837,30 @@ class CIntranetUtils
 		return $name;
 	}
 
-	public static function GetDeparmentsTree($section_id = 0, $bFlat = false)
+	/**
+	 * @param $section_id
+	 * @param $bFlat
+	 * @return array
+	 */
+	public static function GetDeparmentsTree($section_id = 0, $bFlat = false): array
 	{
-		if (null == self::$SECTIONS_SETTINGS_CACHE)
-			self::_GetDeparmentsTree();
+		if (null == self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE)
+		{
+			self::_GetDeparmentsTreeWithoutEmployee();
+		}
 
 		if (!$section_id)
 		{
 			if (!$bFlat)
-				return self::$SECTIONS_SETTINGS_CACHE['TREE'];
-			else
-				return array_keys(self::$SECTIONS_SETTINGS_CACHE['DATA']);
+			{
+				return self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'];
+			} else
+			{
+				return array_keys(self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA']);
+			}
 		}
 
-		$arSections = self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id] ?? null;
+		$arSections = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$section_id] ?? null;
 
 		if (is_array($arSections) && !empty($arSections))
 		{
@@ -984,27 +1002,56 @@ class CIntranetUtils
 		return self::$SECTIONS_SETTINGS_CACHE;
 	}
 
-	public static function GetDepartmentManagerID($section_id)
+	/**
+	 * @return array|null
+	 */
+	public static function GetStructureWithoutEmployees(): array|null
 	{
-		if (null == self::$SECTIONS_SETTINGS_CACHE)
-			self::_GetDeparmentsTree();
+		if (null == self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE)
+		{
+			self::_GetDeparmentsTreeWithoutEmployee();
+		}
 
-		return self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id]['UF_HEAD'];
+		return self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE;
 	}
 
+	/**
+	 * @param $section_id
+	 * @return int
+	 */
+	public static function GetDepartmentManagerID($section_id): null|int
+	{
+		if (null == self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE)
+		{
+			self::_GetDeparmentsTreeWithoutEmployee();
+		}
+
+		return self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id]['UF_HEAD'];
+	}
+
+	/**
+	 * @param $arDepartments
+	 * @param $skipUserId
+	 * @param $bRecursive
+	 * @return array
+	 */
 	public static function GetDepartmentManager($arDepartments, $skipUserId=false, $bRecursive=false)
 	{
 		if(!is_array($arDepartments) || empty($arDepartments))
+		{
 			return array();
+		}
 
-		if (null == self::$SECTIONS_SETTINGS_CACHE)
-			self::_GetDeparmentsTree();
+		if (null == self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE)
+		{
+			self::_GetDeparmentsTreeWithoutEmployee();
+		}
 
 		$arManagers = array();
 		$arManagerIDs = array();
 		foreach ($arDepartments as $section_id)
 		{
-			$arSection = self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id];
+			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id];
 
 			if ($arSection['UF_HEAD'] && $arSection['UF_HEAD'] != $skipUserId)
 			{
@@ -1024,7 +1071,7 @@ class CIntranetUtils
 
 		foreach ($arDepartments as $section_id)
 		{
-			$arSection = self::$SECTIONS_SETTINGS_CACHE['DATA'][$section_id];
+			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id];
 
 			$bFound = $arSection['UF_HEAD']
 				&& $arSection['UF_HEAD'] != $skipUserId
@@ -1170,6 +1217,9 @@ class CIntranetUtils
 		return true;
 	}
 
+	/**
+	 * @deprecated Use Department to get the departmental structure and Employee to get the employees of the department.
+	 */
 	private static function _GetDeparmentsTree()
 	{
 		global $CACHE_MANAGER, $DB;
@@ -1250,6 +1300,70 @@ class CIntranetUtils
 		}
 	}
 
+	/**
+	 * @return void
+	 */
+	private static function _GetDeparmentsTreeWithoutEmployee(): void
+	{
+		self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE = array(
+			'TREE' => array(),
+			'DATA' => array(),
+		);
+
+		$ibDept = COption::GetOptionInt('intranet', 'iblock_structure', false);
+		if ($ibDept <= 0) {
+			return;
+		}
+
+		$cacheDir = '/intranet/structure';
+		$cacheKey = 'intranet|structure3|' . $ibDept;
+		$cache = Application::getInstance()->getCache();
+
+		if ($cache->initCache(30*86400, $cacheKey, $cacheDir))
+		{
+			self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE = $cache->getVars();
+		}
+		else
+		{
+			$cache->startDataCache();
+
+			$taggedCache = Application::getInstance()->getTaggedCache();
+			$taggedCache->startTagCache($cacheDir);
+			$taggedCache->registerTag('intranet_department_structure');
+			$taggedCache->registerTag('iblock_id_' . $ibDept);
+			$taggedCache->endTagCache();
+
+			$dbRes = CIBlockSection::GetList(
+				array("LEFT_MARGIN" => "ASC"),
+				array('IBLOCK_ID' => $ibDept, 'ACTIVE' => 'Y'),
+				false,
+				array('ID', 'NAME', 'IBLOCK_SECTION_ID', 'UF_HEAD', 'SECTION_PAGE_URL', 'DEPTH_LEVEL')
+			);
+
+			while ($arRes = $dbRes->Fetch())
+			{
+				if (empty($arRes['IBLOCK_SECTION_ID']))
+					$arRes['IBLOCK_SECTION_ID'] = 0;
+
+				if (empty(self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']]))
+					self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']] = array();
+
+				self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']][] = $arRes['ID'];
+				self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$arRes['ID']] = array(
+					'ID' => $arRes['ID'],
+					'NAME' => $arRes['NAME'],
+					'IBLOCK_SECTION_ID' => $arRes['IBLOCK_SECTION_ID'],
+					'UF_HEAD' => $arRes['UF_HEAD'],
+					'SECTION_PAGE_URL' => $arRes['SECTION_PAGE_URL'],
+					'DEPTH_LEVEL' => $arRes['DEPTH_LEVEL'],
+					'EMPLOYEES' => array()
+				);
+			}
+
+			$cache->endDataCache(self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE);
+		}
+	}
+
 	public static function getDepartmentColleagues($USER_ID = null, $bRecursive = false, $bSkipSelf = false, $onlyActive = 'Y', $arSelect = null)
 	{
 		global $USER;
@@ -1284,7 +1398,12 @@ class CIntranetUtils
 		));
 	}
 
-	public static function GetSubordinateDepartments($USER_ID = null, $bRecursive = false)
+	/**
+	 * @param $USER_ID
+	 * @param $bRecursive
+	 * @return array
+	 */
+	public static function GetSubordinateDepartments($USER_ID = null, $bRecursive = false): array
 	{
 		global $USER;
 
@@ -1295,10 +1414,12 @@ class CIntranetUtils
 
 		if ($USER_ID)
 		{
-			if (null == self::$SECTIONS_SETTINGS_CACHE)
-				self::_GetDeparmentsTree();
+			if (null == self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE)
+			{
+				self::_GetDeparmentsTreeWithoutEmployee();
+			}
 
-			foreach (self::$SECTIONS_SETTINGS_CACHE['DATA'] as $arSection)
+			foreach (self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'] as $arSection)
 			{
 				if ($arSection['UF_HEAD'] == $USER_ID)
 				{

@@ -992,7 +992,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		{
 			$globalSearchCategories["disk"] = array(
 				"url" => SITE_DIR."company/personal/user/".$USER->GetID()."/disk/path/?apply_filter=Y&with_preset=Y&FIND=",
-				"text" => GetMessage("CT_BST_GLOBAL_SEARCH_DISK")
+				"text" => GetMessage("CT_BST_GLOBAL_SEARCH_DISK_MSGVER_1")
 			);
 		}
 

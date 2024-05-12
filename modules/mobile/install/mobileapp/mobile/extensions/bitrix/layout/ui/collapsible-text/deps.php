@@ -3,8 +3,9 @@
 return [
 	'extensions' => [
 		'loc',
-		'apptheme',
+		'tokens',
 		'bbcode/parser',
 		'type',
+		'utils/string',
 	],
 ];

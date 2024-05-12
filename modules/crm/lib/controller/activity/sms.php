@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Controller\Activity;
 
+use Bitrix\Crm\Activity\Provider\Sms\PlaceholderContext;
+use Bitrix\Crm\Activity\Provider\Sms\PlaceholderManager;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\Item;
@@ -38,7 +40,7 @@ class Sms extends Base
 		return $sender->send();
 	}
 
-	public function getTemplatesAction(string $senderId): array
+	public function getTemplatesAction(string $senderId, array $context = null): array
 	{
 		if (!Loader::includeModule('messageservice'))
 		{
@@ -47,13 +49,60 @@ class Sms extends Base
 			return [];
 		}
 
-		return $this->forward(
+		$result = $this->forward(
 			Sender::class,
 			'getTemplates',
 			[
 				'id' => $senderId,
+				'context' => $context,
 			]
 		);
+
+		$entityCategoryId = $context['entityCategoryId'] ?? null;
+		if (!isset($context['entityTypeId']))
+		{
+			return $result;
+		}
+
+		$placeholderManager = new PlaceholderManager();
+		$ids = [];
+		$templates = $result['templates'] ?? [];
+		foreach ($templates as &$template)
+		{
+			$ids[] = $template['ORIGINAL_ID'];
+		}
+		unset($template);
+
+		$placeholderContext = PlaceholderContext::createInstance($context['entityTypeId'], $entityCategoryId);
+		$filledPlaceholders = $placeholderManager->getPlaceholders($ids, $placeholderContext);
+
+		$result['templates'] = $this->appendTemplateFilledPlaceholders($templates, $filledPlaceholders);
+
+		return $result;
+	}
+
+	private function appendTemplateFilledPlaceholders(array $templates, array $filledPlaceholders): array
+	{
+		foreach ($templates as &$template)
+		{
+			foreach ($filledPlaceholders as $filledPlaceholder)
+			{
+				if ($template['ORIGINAL_ID'] !== (int)$filledPlaceholder['TEMPLATE_ID'])
+				{
+					continue;
+				}
+
+				if (!isset($template['FILLED_PLACEHOLDERS']))
+				{
+					$template['FILLED_PLACEHOLDERS'] = [];
+				}
+
+				$template['FILLED_PLACEHOLDERS'][] = $filledPlaceholder;
+			}
+		}
+		unset($template);
+
+		return $templates;
 	}
 
 	public function getConfigAction(int $entityTypeId, int $entityId): array

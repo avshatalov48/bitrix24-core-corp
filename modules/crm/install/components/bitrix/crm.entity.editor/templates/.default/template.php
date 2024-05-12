@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
@@ -16,6 +20,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  */
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Main;
 
 Main\UI\Extension::load("ui.label");
@@ -44,7 +50,7 @@ if($arResult['REST_USE'])
 	$arResult['REST_PLACEMENT_TAB_CONFIG']['bottom_button_id'] = $restSectionButtonID;
 }
 
-$htmlEditorConfigs = array();
+$htmlEditorConfigs = [];
 $htmlFieldNames = isset($arResult['ENTITY_HTML_FIELD_NAMES']) && is_array($arResult['ENTITY_HTML_FIELD_NAMES'])
 	? $arResult['ENTITY_HTML_FIELD_NAMES']
 	: []
@@ -225,6 +231,13 @@ if(!empty($htmlEditorConfigs))
 					'askBeforeUnloadPage' => false,
 					'useFileDialogs' => false,
 					'controlsMap' => $htmlEditorConfig['controlsMap'],
+					'isCopilotTextEnabledBySettings' => AIManager::isEnabledInGlobalSettings(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE),
+					'copilotParams' => [
+						'moduleId' => 'crm',
+						'contextId' => 'crm_details_comment_editor_' . $htmlEditorConfig['id'],
+						'category' => 'crm_comment_field',
+						'autoHide' => true,
+					],
 				)
 			);
 		?></div><?
@@ -440,6 +453,8 @@ if(!empty($htmlEditorConfigs))
 				payButtonLabel: "<?=GetMessageJS('CRM_ENTITY_EM_BUTTON_PAY')?>",
 				showPayButton: "<?=GetMessageJS('CRM_ENTITY_EM_SHOW_BUTTON_PAY_MSGVER_1')?>",
 				hidePayButton: "<?=GetMessageJS('CRM_ENTITY_EM_HIDE_BUTTON_PAY_MSGVER_1')?>",
+				showPaymentDocuments: "<?=GetMessageJS('CRM_ENTITY_EM_SHOW_PAYMENT_DOCUMENTS')?>",
+				hidePaymentDocuments: "<?=GetMessageJS('CRM_ENTITY_EM_HIDE_PAYMENT_DOCUMENTS')?>",
 			};
 
 			BX.UI.EntityEditorFieldConfigurator.messages =
@@ -905,6 +920,7 @@ if(!empty($htmlEditorConfigs))
 						canUsePull: <?= CUtil::PhpToJSObject(($arResult['CAN_USE_PULL'] ?? 'N') === 'Y') ?>,
 						pullTag: "<?= CUtil::JSEscape($arResult['PULL_TAG'] ?? '') ?>",
 						pullModuleId: "<?= CUtil::JSEscape($arResult['PULL_MODULE_ID'] ?? '') ?>",
+						analyticsConfig: <?= CUtil::PhpToJSObject($arResult['ANALYTICS_CONFIG'] ?? []) ?>,
 					}
 				)
 			);

@@ -19,11 +19,8 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			this.handleOnSave = this.handleOnSave.bind(this);
 			this.handleOnClose = this.handleOnClose.bind(this);
 			this.handleOnRemove = this.handleOnRemove.bind(this);
-			this.handleOnShowOnlyMine = this.handleOnShowOnlyMine.bind(this);
-			this.handleOnHideCompleted = this.handleOnHideCompleted.bind(this);
 			this.handleOnMoveToChecklist = this.handleOnMoveToChecklist.bind(this);
 			this.handleOnCreateChecklist = this.handleOnCreateChecklist.bind(this);
-
 			this.createChecklistsMap(props);
 		}
 
@@ -112,13 +109,14 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 */
 		openChecklist(params)
 		{
-			const { userId } = this.props;
+			const { userId, diskConfig } = this.props;
 			const { checklist } = params;
 			const checklistId = checklist.getId();
 
 			return new Promise((resolve) => {
 				ChecklistWidget.open({
 					userId,
+					diskConfig,
 					inLayout: false,
 					checklists: this.checklistsMap,
 					onSave: this.handleOnSave,
@@ -127,8 +125,6 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 						onRemove: this.handleOnRemove(checklistId),
 						onCreateChecklist: this.handleOnCreateChecklist(checklistId),
 						onMoveToCheckList: this.handleOnMoveToChecklist,
-						onShowOnlyMine: this.handleOnShowOnlyMine(checklistId),
-						onHideCompleted: this.handleOnHideCompleted(checklistId),
 					},
 					...params,
 				}).then((checklistWidget) => {
@@ -154,13 +150,13 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 * @param {object} moveParams
 		 * @param {number[]} [moveParams.moveIds]
 		 * @param {number} [moveParams.toCheckListId]
-		 * @param {number} [moveParams.sourceCheckListId]
+		 * @param {number} [moveParams.sourceChecklistId]
 		 * @param {boolean} [moveParams.open]
 		 * @return {void}
 		 */
 		async handleOnMoveToChecklist(moveParams)
 		{
-			const { moveIds, sourceCheckListId } = moveParams;
+			const { moveIds, sourceChecklistId } = moveParams;
 
 			if (moveIds.length === 0)
 			{
@@ -178,13 +174,13 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 				toCheckListId = checklist.getId();
 			}
 
-			this.moveToChecklist({ moveIds, toCheckListId, sourceCheckListId });
+			this.moveToChecklist({ moveIds, toCheckListId, sourceChecklistId });
 
 			return async () => {
 				const { checklistWidget } = await this.openChecklist({
 					checklist,
 					focusedItemId: moveIds[0],
-					parentWidget: this.getParentWidgetByChecklistId(sourceCheckListId),
+					parentWidget: this.getParentWidgetByChecklistId(sourceChecklistId),
 				}).catch(console.error);
 
 				checklistWidget.handleOnChange();
@@ -194,12 +190,12 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		/**
 		 * @param {number[]} moveIds
 		 * @param {number} toCheckListId
-		 * @param {number} sourceCheckListId
+		 * @param {number} sourceChecklistId
 		 */
-		moveToChecklist({ moveIds, toCheckListId, sourceCheckListId })
+		moveToChecklist({ moveIds, toCheckListId, sourceChecklistId })
 		{
-			const viewChecklist = this.getViewChecklistComponent(sourceCheckListId);
-			const sourceChecklist = this.checklistsMap.get(sourceCheckListId);
+			const viewChecklist = this.getViewChecklistComponent(sourceChecklistId);
+			const sourceChecklist = this.checklistsMap.get(sourceChecklistId);
 			const receivingChecklist = this.checklistsMap.get(toCheckListId);
 
 			const removeItems = [];
@@ -214,7 +210,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			});
 
 			removeItems.forEach((item) => {
-				viewChecklist.handleOnRemoveItem(item);
+				viewChecklist.handleOnRemoveItem({ item });
 			});
 		}
 
@@ -345,22 +341,6 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 				this.closeChecklistWidget(checklistId);
 				this.deleteChecklist(checklistId);
 				this.handleOnSave();
-			};
-		}
-
-		handleOnHideCompleted(checklistId)
-		{
-			return (selected) => {
-				const checklist = this.getViewChecklistComponent(checklistId);
-				checklist.reload({ hideCompleted: selected, onlyMy: false });
-			};
-		}
-
-		handleOnShowOnlyMine(checklistId)
-		{
-			return (selected) => {
-				const checklist = this.getViewChecklistComponent(checklistId);
-				checklist.reload({ onlyMy: selected, hideCompleted: false });
 			};
 		}
 	}

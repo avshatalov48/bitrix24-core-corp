@@ -3,7 +3,6 @@ namespace Bitrix\Crm\Automation;
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Bizproc;
-use Bitrix\Crm\Automation\Target;
 use Bitrix\Crm\Automation\Trigger\BaseTrigger;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Integration\Sign;
@@ -73,12 +72,6 @@ class Factory
 	public static function isAutomationAvailable($entityTypeId, $ignoreLicense = false)
 	{
 		if (!Helper::isBizprocEnabled() || !static::isSupported($entityTypeId))
-		{
-			return false;
-		}
-
-		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
-		if (!$toolsManager->checkRobotsAvailability())
 		{
 			return false;
 		}
@@ -464,10 +457,8 @@ class Factory
 					Trigger\Sign\InitiatorSignedTrigger::className(),
 					Trigger\Sign\OtherMemberSignedTrigger::className(),
 					Trigger\Sign\AllMembersSignedTrigger::className(),
-					Trigger\Sign\B2e\SigningStartedTrigger::className(),
-					Trigger\Sign\B2e\SigningDoneTrigger::className(),
-					Trigger\Sign\B2e\SigningStoppedTrigger::className(),
-					Trigger\Sign\B2e\CoordinationAndFillingTrigger::className(),
+					Trigger\Sign\B2e\CoordinationTrigger::className(),
+					Trigger\Sign\B2e\FillingTrigger::className(),
 					Trigger\Sign\B2e\SigningTrigger::className(),
 					Trigger\Sign\B2e\CompletedTrigger::className(),
 					Trigger\AppTrigger::className(),

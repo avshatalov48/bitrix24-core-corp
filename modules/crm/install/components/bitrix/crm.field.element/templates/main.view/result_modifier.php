@@ -83,6 +83,11 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				)
 			];
 		}
+
+		if (empty($arResult['value']['LEAD']['items']))
+		{
+			$emptyEntityLabels['LEAD'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+		}
 	}
 
 	$arResult['value']['CONTACT']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_CONTACT');
@@ -134,7 +139,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 		if (empty($arResult['value']['CONTACT']['items']))
 		{
-			$emptyEntityLabels['CONTACT'] =  Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+			$emptyEntityLabels['CONTACT'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
 		}
 	}
 
@@ -165,6 +170,11 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'CO_' . $companyId,
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $companyId),
 			];
+		}
+
+		if (empty($arResult['value']['COMPANY']['items']))
+		{
+			$emptyEntityLabels['COMPANY'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
 		}
 	}
 
@@ -197,6 +207,11 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $dealId),
 			];
 		}
+
+		if (empty($arResult['value']['DEAL']['items']))
+		{
+			$emptyEntityLabels['DEAL'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+		}
 	}
 
 	$arResult['value']['ORDER']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_ORDER');
@@ -225,6 +240,11 @@ if(is_array($arResult['value']) && count($arResult['value']))
 					$order['ID']
 				),
 			];
+		}
+
+		if (empty($arResult['value']['ORDER']['items']))
+		{
+			$emptyEntityLabels['ORDER'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
 		}
 	}
 
@@ -272,6 +292,11 @@ if(is_array($arResult['value']) && count($arResult['value']))
 					'ENTITY_TITLE' => $item->getHeading(),
 					'ENTITY_LINK' => Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $itemId),
 				];
+			}
+
+			if (empty($arResult['value'][$entityTypeName]['items']))
+			{
+				$emptyEntityLabels[$entityTypeName] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/index.php");
-$APPLICATION->SetTitle(GetMessage("TITLE")/*"Çàäà÷è"*/);
+$APPLICATION->SetTitle(GetMessage("TITLE")/*"Ð—Ð°Ð´Ð°Ñ‡Ð¸"*/);
 ?><?$APPLICATION->IncludeComponent(
 	"bitrix:crm.activity.task.list",
 	"",

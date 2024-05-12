@@ -1,5 +1,7 @@
-import {Type, Validation, Loc, Dom, Event} from "main.core";
+import { Type, Validation, Loc, Dom, Event, Tag } from 'main.core';
 import {EventEmitter} from "main.core.events";
+import {Popup} from 'main.popup';
+import { CreateButton, CancelButton } from 'ui.buttons';
 
 export class Submit extends EventEmitter
 {
@@ -199,17 +201,61 @@ export class Submit extends EventEmitter
 
 	submitIntegrator()
 	{
-		const integratorForm = this.parent.contentBlocks["integrator"].querySelector("form");
+		this.getIntegratorConfirmPopup().show();
+	}
 
+	getIntegratorConfirmPopup(): Popup
+	{
+		const integratorForm = this.parent.contentBlocks.integrator.querySelector('form');
 		const obRequestData = {
-			"integrator_email": integratorForm["integrator_email"].value,
+			integrator_email: integratorForm.integrator_email.value,
 		};
-
 		const analyticsLabel = {
-			"INVITATION_TYPE": "integrator"
+			INVITATION_TYPE: 'integrator',
 		};
 
-		this.sendAction("inviteIntegrator", obRequestData, analyticsLabel);
+		const message = Tag.render`
+			<div class="invite-integrator-confirm-message">
+				${Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_DESCRIPTION')}
+			</div>
+		`;
+		const moreLink = message.querySelector('span');
+		Event.bind(moreLink, 'click', () => {
+			top.BX.Helper.show('redirect=detail&code=20682986');
+		});
+
+		const popup = new Popup({
+			id: 'integrator-confirm-invitation-popup',
+			maxWidth: 500,
+			closeIcon: false,
+			overlay: true,
+			contentPadding: 10,
+			titleBar: Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_TITLE'),
+			content: message,
+			offsetLeft : 100,
+			buttons: [
+				new CreateButton({
+					text: Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_YES'),
+					onclick: () => {
+						popup.close();
+						this.sendAction('inviteIntegrator', obRequestData, analyticsLabel);
+					},
+				}),
+				new CancelButton({
+					text: Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_INTEGRATOR_BUTTON_NO'),
+					onclick: () => {
+						popup.close();
+					},
+				}),
+			],
+			events: {
+				onClose: () => {
+					popup.destroy();
+				},
+			},
+		});
+
+		return popup;
 	}
 
 	submitMassInvite()

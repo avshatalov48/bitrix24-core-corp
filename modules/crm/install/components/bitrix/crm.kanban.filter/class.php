@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 use Bitrix\Crm\Filter\HeaderSections;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Crm\Integration\IntranetManager;
 
 class CrmKanbanFilterComponent extends \CBitrixComponent
@@ -58,6 +59,9 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		$filterParams = [
 			'LIMITS' => null,
 			'SHOW_AUTOMATION_VIEW' => $showAutomationView,
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$this->arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? ModuleManager::isModuleInstalled('ui')
+			),
 		];
 
 		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();

@@ -108,6 +108,19 @@ class Deal extends Entity
 		return implode("\n", [$parentFieldsRestrictions, $dealFieldsRestrictions]);
 	}
 
+	public function getFieldsRestrictions(): array
+	{
+		$parentFieldsRestrictions = parent::getFieldsRestrictions();
+
+		$dealFieldsRestrictions = $this->dealFieldRestrictionManager->getFilterFields(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
+
+		return [...$parentFieldsRestrictions, ...$dealFieldsRestrictions];
+	}
+
 	protected function getFilter(): Filter\Filter
 	{
 		if(!$this->filter)
@@ -355,7 +368,8 @@ class Deal extends Entity
 
 		return [
 			'GET_LIST' => $path . '&action=list',
-			'GET_FIELD' => $path . '&action=field'
+			'GET_FIELD' => $path . '&action=field',
+			'GET_FIELDS' => $path . '&action=fields',
 		];
 	}
 
@@ -443,7 +457,10 @@ class Deal extends Entity
 		return $fields;
 	}
 
-	protected function prepareFieldsSections(array $configuration): array
+	/**
+	 * @internal
+	 */
+	public function prepareFieldsSections(array $configuration): array
 	{
 		$sections = parent::prepareFieldsSections($configuration);
 
@@ -451,13 +468,15 @@ class Deal extends Entity
 			'name' => 'contact_fields',
 			'title' => Loc::getMessage('CRM_KANBAN_FIELD_SECTION_CONTACTS'),
 			'type' => 'section',
-			'elementsRule' => '^CONTACT\_' // js RegExp
+			'elementsRule' => '/^CONTACT\_/',
+			'viewTypes' => ['view'],
 		];
 		$companySection = [
 			'name' => 'company_fields',
 			'title' => Loc::getMessage('CRM_KANBAN_FIELD_SECTION_COMPANIES'),
 			'type' => 'section',
-			'elementsRule' => '^COMPANY\_' // js RegExp
+			'elementsRule' => '/^COMPANY\_/',
+			'viewTypes' => ['view'],
 		];
 		if (ClientDataProvider::getPriorityEntityTypeId() === \CCrmOwnerType::Contact)
 		{

@@ -2,7 +2,6 @@
  * @module utils/phone
  */
 jn.define('utils/phone', (require, exports, module) => {
-
 	const { phoneUtils } = require('native/phonenumber');
 	const { stringify } = require('utils/string');
 	const storageKey = 'PhoneDefaultCountryCode';
@@ -51,6 +50,31 @@ jn.define('utils/phone', (require, exports, module) => {
 	};
 
 	/**
+	 * Checks string is phone number
+	 * Supported formats:
+	 * +79999999999
+	 * 89999999999
+	 * +1 555-555-5555
+	 * +7 (495) 123-45-67
+	 * 495 123-4567
+	 * 495 123 4567
+	 * 495-123-4567
+	 * 495.123.4567
+	 * @param {String} phoneNumber
+	 * @returns {Boolean}
+	 */
+	const isPhoneNumber = (phoneNumber) => {
+		const phone = stringify(phoneNumber);
+		if (phone === '')
+		{
+			return false;
+		}
+		const pattern = /^\+?\d{1,3}?[\s.-]?\(?\d{1,3}?\)?(?:[\s.-]?\d{1,4}){2}[\s.-]?\d{1,9}$/;
+
+		return pattern.test(phone);
+	};
+
+	/**
 	 * Getting the default country code from the server to format the phone number
 	 * @returns {Promise}
 	 */
@@ -79,5 +103,5 @@ jn.define('utils/phone', (require, exports, module) => {
 
 	fetchDefaultCountryCode();
 
-	module.exports = { getMainDefaultCountryCode, getFormattedNumber, getCountryCode };
+	module.exports = { getMainDefaultCountryCode, getFormattedNumber, getCountryCode, isPhoneNumber };
 });

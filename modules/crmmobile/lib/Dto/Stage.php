@@ -2,19 +2,12 @@
 
 namespace Bitrix\CrmMobile\Dto;
 
-use Bitrix\Mobile\Dto\Type;
+use Bitrix\Mobile\Dto\Attributes\Collection;
 
 final class Stage extends \Bitrix\Mobile\UI\Kanban\Dto\Stage
 {
 	public string $semantics;
 
-	/** @var Tunnel[] */
+	#[Collection(Tunnel::class)]
 	public array $tunnels = [];
-
-	public function getCasts(): array
-	{
-		return [
-			'tunnels' => Type::collection(Tunnel::class),
-		];
-	}
 }

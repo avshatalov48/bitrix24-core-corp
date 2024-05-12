@@ -23,6 +23,7 @@ use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Type\Document\EntityType;
 use Bitrix\Sign\Type\DocumentStatus;
 use Bitrix\Sign\Type\Member\Role;
+use Bitrix\Sign\Service\Sign\DocumentService;
 
 final class SignB2eDocument extends Activity
 {
@@ -32,6 +33,7 @@ final class SignB2eDocument extends Activity
 	private ?DocumentRepository $documentRepository = null;
 	private ?MemberRepository $memberRepository = null;
 	private ?MemberCollection $members = null;
+	private DocumentService $documentService;
 
 	private const MAX_USER_IN_LINE = 3;
 
@@ -41,6 +43,7 @@ final class SignB2eDocument extends Activity
 		{
 			$this->documentRepository = \Bitrix\Sign\Service\Container::instance()->getDocumentRepository();
 			$this->memberRepository = \Bitrix\Sign\Service\Container::instance()->getMemberRepository();
+			$this->documentService = \Bitrix\Sign\Service\Container::instance()->getDocumentService();
 		}
 
 		parent::__construct($context, $model);
@@ -106,6 +109,22 @@ final class SignB2eDocument extends Activity
 		;
 	}
 
+	private function getShowSigningCancelAction(): ?Layout\Action
+	{
+		$action = null;
+
+		if (\Bitrix\Crm\Activity\Provider\SignB2eDocument::isActive())
+		{
+			$signDocument = $this->getSignDocument();
+			$action = new Layout\Action\JsEvent($this->getType() . ':ShowSigningCancel');
+			$action->addActionParamString('documentUid', $signDocument->uid)
+				->addActionParamString('buttonId', 'signingCancel')
+			;
+		}
+
+		return $action;
+	}
+
 	private function getDocumentBlock(): Layout\Body\ContentBlock\ContentBlockWithTitle
 	{
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
@@ -143,29 +162,44 @@ final class SignB2eDocument extends Activity
 	public function getButtons(): ?array
 	{
 		$signDocument = $this->getSignDocument();
-
 		$buttons = [];
-
-		$inProcess = in_array($signDocument->status, [DocumentStatus::NEW, DocumentStatus::UPLOADED, DocumentStatus::READY,]);
 
 		if ($signDocument)
 		{
-			$buttons['signingProcess'] = (new Layout\Footer\Button(
-				Loc::getMessage('CRM_SIGN_B2E_ACTIVITY_SIGNING_PROCESS'),
-				!$inProcess ? Layout\Footer\Button::TYPE_PRIMARY : Layout\Footer\Button::TYPE_SECONDARY))
-				->setAction($this->getShowSigningProcessAction());
-		}
+			$inProcess = in_array($signDocument->status, [DocumentStatus::NEW, DocumentStatus::UPLOADED, DocumentStatus::READY,]);
 
-		if ($signDocument && $inProcess)
-		{
-			$action = (new Layout\Action\JsEvent($this->getType() . ':Modify'))
-				->addActionParamInt('documentId', $this->getDocumentId());
-			$action->addActionParamString('documentUid', $signDocument->uid);
+			if ($inProcess === false)
+			{
+				$buttons['signingProcess'] = (new Layout\Footer\Button(
+					Loc::getMessage('CRM_SIGN_B2E_ACTIVITY_SIGNING_PROCESS'),
+					!$inProcess ? Layout\Footer\Button::TYPE_PRIMARY : Layout\Footer\Button::TYPE_SECONDARY))
+					->setAction($this->getShowSigningProcessAction());
+			}
+			if (
+				$signDocument->status === DocumentStatus::SIGNING
+				&& method_exists($this->documentService, 'isCurrentUserCanEditDocument')
+				&& $this->documentService->isCurrentUserCanEditDocument($signDocument)
+			)
+			{
+				$buttons['signingCancel'] = (new Layout\Footer\Button(
+					Loc::getMessage('CRM_SIGN_B2E_ACTIVITY_SIGNING_CANCEL'),
+					Layout\Footer\Button::TYPE_SECONDARY)
+				)->setAction($this->getShowSigningCancelAction());
+			}
 
-			$buttons['edit'] = (new Layout\Footer\Button(
-				Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_MODIFY'),
-				Layout\Footer\Button::TYPE_PRIMARY,
-			))->setAction($action);
+			if ($inProcess)
+			{
+				$action = (new Layout\Action\JsEvent($this->getType() . ':Modify'))
+					->addActionParamInt('documentId', $this->getDocumentId())
+				;
+
+				$action->addActionParamString('documentUid', $signDocument->uid);
+
+				$buttons['edit'] = (new Layout\Footer\Button(
+					Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_MODIFY'),
+					Layout\Footer\Button::TYPE_PRIMARY,
+				))->setAction($action);
+			}
 		}
 
 		return $buttons;

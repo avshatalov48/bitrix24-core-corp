@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Timeline;
 
+use Bitrix\CrmMobile\Controller\BaseJson;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadMyCompanyPermission;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
@@ -14,10 +15,9 @@ use Bitrix\Crm\Service\Timeline\Repository;
 use Bitrix\CrmMobile\Controller\PrimaryAutoWiredEntity;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
-use Bitrix\Main\Engine\JsonController;
 use Bitrix\Main\Type\DateTime;
 
-abstract class Controller extends JsonController
+abstract class Controller extends BaseJson
 {
 	use PrimaryAutoWiredEntity;
 
@@ -57,6 +57,7 @@ abstract class Controller extends JsonController
 	protected function getDefaultPreFilters(): array
 	{
 		return [
+			...parent::getDefaultPreFilters(),
 			new ActionFilter\Authentication(),
 			new ActionFilter\Csrf(),
 			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),

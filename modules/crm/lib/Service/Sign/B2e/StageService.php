@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Sign\B2e;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ORM\Data\AddResult;
@@ -35,6 +36,63 @@ final class StageService
 		$result = StatusTable::query()->whereIn('STATUS_ID', $stages)->fetchAll();
 
 		return count($result) === count($stages);
+	}
+
+	public function removeByStage(string $stage, int $documentCategoryId): bool
+	{
+		$status = Container::getInstance()->getSignB2eStatusService()->makeName($documentCategoryId, $stage);
+		$result = false;
+		$stage = StatusTable::query()
+			->where('ENTITY_ID', $this->getStageEntityId($documentCategoryId))
+			->where('STATUS_ID', $status)
+			->setLimit(1)
+			->fetchObject()
+		;
+		if ($stage)
+		{
+			$deleteResult = $stage->delete();
+			$result = $deleteResult->isSuccess();
+		}
+
+		return $result;
+	}
+
+	public function getByStage(string $stage, int $documentCategoryId): ?array
+	{
+		$status = Container::getInstance()->getSignB2eStatusService()->makeName($documentCategoryId, $stage);
+		$result = null;
+		$stage = StatusTable::query()
+			->where('ENTITY_ID', $this->getStageEntityId($documentCategoryId))
+			->where('STATUS_ID', $status)
+			->setLimit(1)
+			->fetchObject()
+		;
+		if ($stage)
+		{
+			$result = [
+				'ID' => $stage->getId(),
+				'SORT' => $stage->getSort()
+			];
+		}
+
+		return $result;
+	}
+
+	public function removeByStatusId(string $status): bool
+	{
+		$result = false;
+		$stage = StatusTable::query()
+			->where('STATUS_ID', $status)
+			->setLimit(1)
+			->fetchObject()
+		;
+		if ($stage)
+		{
+			$deleteResult = $stage->delete();
+			$result = $deleteResult->isSuccess();
+		}
+
+		return $result;
 	}
 
 	public function removeStagesByEntityId(string $entityId): bool

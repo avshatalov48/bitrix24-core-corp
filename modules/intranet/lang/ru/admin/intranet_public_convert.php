@@ -12,7 +12,7 @@ $MESS["INTRANET_PUBLIC_CONVERT_DESC2"] = "<ul>
 </ul>";
 $MESS["INTRANET_PUBLIC_CONVERT_OPTIONS_TITLE"] = "Запустите конвертацию прямо сейчас";
 $MESS["INTRANET_PUBLIC_CONVERT_OPTIONS_DESC"] = "(для воможности восстановления старой структуры, рекомендуем вам сделать резервную копию публичных страниц)";
-$MESS["INTRANET_PUBLIC_CONVERT_SECTIONS"] = "Разделы (будут созданы разделы \"Время и отчеты\", \"Календарь\", \"Бизнес-процессы\", \"Диск\")";
+$MESS["INTRANET_PUBLIC_CONVERT_SECTIONS_MSGVER_1"] = "Разделы (будут созданы разделы \"Время и отчеты\", \"Календарь\", \"Бизнес-процессы\", \"Диск\")";
 $MESS["INTRANET_PUBLIC_CONVERT_INDEX"] = "Возможность делать главной страницей любой раздел (страница index.php будет перезаписана, а живая лента скопируется в папку /stream/)";
 $MESS["INTRANET_PUBLIC_CONVERT_TAB"] = "Конвертация";
 $MESS["INTRANET_PUBLIC_CONVERT_TAB_TITLE"] = "Настройка конвертации";

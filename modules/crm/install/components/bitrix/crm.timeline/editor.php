@@ -7,6 +7,9 @@
  * Use BX.ajax.runAction("crm.api.timeline.loadEditor", { data: { $id: 0, name: "" } }) for loading timeline comment editor
  */
 
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\EventHandler;
+
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 global $APPLICATION;
 
@@ -108,7 +111,7 @@ $APPLICATION->includeComponent(
 			'setFocusAfterShow' => true,
 			'askBeforeUnloadPage' => false,
 			'useFileDialogs' => false,
-			'controlsMap' => array(
+			'controlsMap' => [
 				array('id' => 'Bold',  'compact' => true, 'sort' => 10),
 				array('id' => 'Italic',  'compact' => true, 'sort' => 20),
 				array('id' => 'Underline',  'compact' => true, 'sort' => 30),
@@ -131,7 +134,14 @@ $APPLICATION->includeComponent(
 				array('separator' => true, 'compact' => false, 'sort' => 200),
 				array('id' => 'BbCode',  'compact' => true, 'sort' => 220),
 				array('id' => 'More',  'compact' => true, 'sort' => 230),
-			),
+			],
+			'isCopilotTextEnabledBySettings' => AIManager::isEnabledInGlobalSettings(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE),
+			'copilotParams' => [
+				'moduleId' => 'crm',
+				'contextId' => 'crm_timeline_comment_editor_' . $id,
+				'category' => 'crm_activity',
+				'autoHide' => true,
+			],
 		),
 		"USE_CLIENT_DATABASE" => "Y",
 		"FILES" => Array(

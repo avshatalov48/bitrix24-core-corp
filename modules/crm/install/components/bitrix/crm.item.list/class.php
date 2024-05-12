@@ -6,6 +6,7 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Filter\FieldsTransform;
 use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Restriction\ItemsMutator;
@@ -154,7 +155,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
 			'smartActivityNotificationSupported' => $this->factory->isSmartActivityNotificationSupported(),
 			'isIframe' => $this->isIframe(),
-			'isEmbedded' => ($this->arParams['isEmbedded'] ?? false) === true,
+			'isEmbedded' => $this->isEmbedded(),
 			'pingSettings' => (new TodoPingSettingsProvider($this->entityTypeId, $categoryId))->fetchAll(),
 		];
 		if (
@@ -172,11 +173,13 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
 		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
 
-		$this->arResult['RESTRICTED_FIELDS_ENGINE'] = $this->fieldRestrictionManager->fetchRestrictedFieldsEngine(
+		$params = [
 			$this->getGridId() ?? '',
 			[],
 			$this->filter
-		);
+		];
+		$this->arResult['restrictedFieldsEngine'] = $this->fieldRestrictionManager->fetchRestrictedFieldsEngine(...$params);
+		$this->arResult['restrictedFields'] = $this->fieldRestrictionManager->getFilterFields(...$params);
 
 		$this->includeComponentTemplate();
 	}
@@ -308,6 +311,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			0,
 			$this->getCategoryId()
 		);
+		$grid['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] = true;
 		$grid['SHOW_ROW_CHECKBOXES'] = $canDelete;
 		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = $canDelete;
 		$grid['SHOW_ACTION_PANEL'] = $canDelete;
@@ -335,8 +339,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		{
 			$entityTypeDescription = $this->factory->getEntityDescription();
 
-			$url = Container::getInstance()
-				->getRouter()
+			$url = $this->router
 				->getItemDetailUrl(
 					$this->entityTypeId,
 					0,
@@ -745,7 +748,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 		$userPermissions = Container::getInstance()->getUserPermissions();
 
-		$itemDetailUrl = Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId());
+		$itemDetailUrl = $this->router->getItemDetailUrl($this->entityTypeId, $item->getId());
 		$actions = [
 			[
 				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_SHOW'),
@@ -769,9 +772,14 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			$copyUrl->addParams([
 				'copy' => '1',
 			]);
+
+			$analyticsEventBuilder = CopyOpenEvent::createDefault($this->entityTypeId);
+			$this->configureAnalyticsEventBuilder($analyticsEventBuilder);
+			$analyticsEventBuilder->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU);
+
 			$actions[] = [
 				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
-				'HREF' => $copyUrl,
+				'HREF' => $analyticsEventBuilder->buildUri($copyUrl),
 			];
 		}
 		if ($userPermissions->canDeleteItem($item))
@@ -932,7 +940,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 		if ($this->isColumnVisible(Item::FIELD_NAME_TITLE) && !$this->isExportMode())
 		{
-			$detailUrl = htmlspecialcharsbx(Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId()));
+			$detailUrl = htmlspecialcharsbx($this->router->getItemDetailUrl($this->entityTypeId, $item->getId()));
 			$columns[Item::FIELD_NAME_TITLE] = '<a href="'.$detailUrl.'">'.htmlspecialcharsbx($item->getHeading()).'</a>';
 		}
 	}
@@ -1008,6 +1016,16 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getListViewType(): string
 	{
 		return Router::LIST_VIEW_LIST;
+	}
+
+	protected function configureAnalyticsEventBuilder(Integration\Analytics\Builder\AbstractBuilder $builder): void
+	{
+		parent::configureAnalyticsEventBuilder($builder);
+
+		if (!$this->isEmbedded())
+		{
+			$builder->setSubSection(Integration\Analytics\Dictionary::SUB_SECTION_LIST);
+		}
 	}
 
 	protected function getToolbarSettingsItems(): array

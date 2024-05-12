@@ -106,7 +106,7 @@ class CrmDocumentViewComponent extends ViewComponent
 		}
 		if (!$result->isSuccess())
 		{
-			if ($this->arResult['isTransformationError'] !== true)
+			if (($this->arResult['isTransformationError'] ?? false) !== true)
 			{
 				$this->arResult['ERRORS'] = $result->getErrorMessages();
 			}

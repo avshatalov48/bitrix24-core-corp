@@ -2,8 +2,8 @@
 
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\BIConnector\Integration\Superset\Stepper\DashboardOwner;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -78,6 +78,11 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_CONTROLLER');
 			$this->arResult['TOOLS_AVAILABLE'] = false;
 			$this->arResult['HELPER_CODE'] = 'limit_BI_off';
+		}
+
+		if (!DashboardOwner::isFinished())
+		{
+			DashboardOwner::bind(60);
 		}
 
 		$this->includeComponentTemplate($template);

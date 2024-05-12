@@ -306,7 +306,12 @@ class CCrmCompanyDetailsComponent
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
-									'ADD_EVENT_NAME' => 'CrmCreateDealFromCompany'
+									'ADD_EVENT_NAME' => 'CrmCreateDealFromCompany',
+									'ANALYTICS' => [
+										// we dont know where from this component was opened from - it could be anywhere on portal
+										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+									],
 								], 'crm.deal.list')
 							]
 						]
@@ -344,6 +349,11 @@ class CCrmCompanyDetailsComponent
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromCompany',
+									'ANALYTICS' => [
+										// we dont know where from this component was opened from - it could be anywhere on portal
+										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+									],
 								], 'crm.quote.list'),
 							],
 						],
@@ -392,6 +402,11 @@ class CCrmCompanyDetailsComponent
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromCompany',
+									'ANALYTICS' => [
+										// we dont know where from this component was opened from - it could be anywhere on portal
+										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+									],
 								], 'crm.invoice.list'),
 							],
 						],
@@ -438,6 +453,11 @@ class CCrmCompanyDetailsComponent
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateOrderFromCompany',
 									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
+									'ANALYTICS' => [
+										// we dont know where from this component was opened from - it could be anywhere on portal
+										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+									],
 								], 'crm.order.list')
 							)
 						)
@@ -445,36 +465,57 @@ class CCrmCompanyDetailsComponent
 				}
 				if (CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
 				{
-					$this->arResult['TABS'][] = array(
+					$bpTab = [
 						'id' => 'tab_bizproc',
 						'name' => Loc::getMessage('CRM_COMPANY_TAB_BIZPROC'),
 						'loader' => array(
-							'serviceUrl' => '/bitrix/components/bitrix/bizproc.document/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+							'serviceUrl' => '/bitrix/components/bitrix/bizproc.document/lazyload.ajax.php?&site=' . SITE_ID . '&' . bitrix_sessid_get(),
 							'componentData' => array(
 								'template' => 'frame',
 								'params' => array(
 									'MODULE_ID' => 'crm',
 									'ENTITY' => 'CCrmDocumentCompany',
 									'DOCUMENT_TYPE' => 'COMPANY',
-									'DOCUMENT_ID' => 'COMPANY_'.$this->entityID
-								)
-							)
-						)
-					);
-					$this->arResult['BIZPROC_STARTER_DATA'] = array(
-						'templates' => CBPDocument::getTemplatesForStart(
-							$this->userID,
-							array('crm', 'CCrmDocumentCompany', 'COMPANY'),
-							array('crm', 'CCrmDocumentCompany', 'COMPANY_'.$this->entityID),
-							[
-								'DocumentStates' => []
-							]
+									'DOCUMENT_ID' => 'COMPANY_' . $this->entityID,
+								),
+							),
 						),
-						'moduleId' => 'crm',
-						'entity' => 'CCrmDocumentCompany',
-						'documentType' => 'COMPANY',
-						'documentId' => 'COMPANY_'.$this->entityID
-					);
+					];
+
+					$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+					if (!$toolsManager->checkBizprocAvailability())
+					{
+						$bpTab['availabilityLock'] = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+							->getBizprocAvailabilityLock()
+						;
+						unset($bpTab['loader']);
+					}
+
+					$this->arResult['TABS'][] = $bpTab;
+
+					if (isset($bpTab['availabilityLock']))
+					{
+						$this->arResult['BIZPROC_STARTER_DATA'] = [
+							'availabilityLock' => $bpTab['availabilityLock'],
+						];
+					}
+					else
+					{
+						$this->arResult['BIZPROC_STARTER_DATA'] = [
+							'templates' => CBPDocument::getTemplatesForStart(
+								$this->userID,
+								['crm', 'CCrmDocumentCompany', 'COMPANY'],
+								['crm', 'CCrmDocumentCompany', 'COMPANY_' . $this->entityID],
+								[
+									'DocumentStates' => [],
+								]
+							),
+							'moduleId' => 'crm',
+							'entity' => 'CCrmDocumentCompany',
+							'documentType' => 'COMPANY',
+							'documentId' => 'COMPANY_' . $this->entityID,
+						];
+					}
 				}
 				$this->arResult['TABS'][] = array(
 					'id' => 'tab_tree',

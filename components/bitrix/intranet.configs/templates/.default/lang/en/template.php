@@ -11,7 +11,7 @@ $MESS["CONFIG_ADD_LOGO_DELETE"] = "Delete Logo";
 $MESS["CONFIG_ADD_LOGO_DELETE_CONFIRM"] = "Are you sure you want to delete the logo?";
 $MESS["CONFIG_ALLOW_INVITE_USERS"] = "Allow everyone to invite new users to this Bitrix24 account";
 $MESS["CONFIG_ALLOW_NEW_USER_LF"] = "Notify about new hires in Activity Stream";
-$MESS["CONFIG_ALLOW_SEARCH_NETWORK"] = "Allow searching for Open Channels on Bitrix24.Network";
+$MESS["CONFIG_ALLOW_SEARCH_NETWORK_MSGVER_1"] = "Allow searching for Open Channels on Bitrix24 Network";
 $MESS["CONFIG_ALLOW_SELF_REGISTER"] = "Allow quick registration";
 $MESS["CONFIG_ALLOW_TOALL"] = "Allow \"All users\" as option in Activity Stream";
 $MESS["CONFIG_BUY_TARIFF_BY_ALL_MSGVER_1"] = "Enable all users to purchase upgrades and extensions for current Bitrix24 plan";
@@ -40,9 +40,9 @@ $MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TEXT"] = "Enjoy even more useful Bitrix24 fe
 + Recover any previous document version from history<br/><br/>
 <a href=\"https://www.bitrix24.com/pro/drive.php\" target='_blank'>Learn more</a><br/><br/>
 Advanced Drive is available in \"Standard\" plan and higher.";
-$MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE"] = "Available only in extended Bitrix24.Drive";
+$MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE_MSGVER_1"] = "Available only in the advanced Bitrix24 Drive";
 $MESS["CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT"] = "Available on selected commercial plans";
-$MESS["CONFIG_DISK_LOCK_POPUP_TEXT"] = "Advanced Drive features:
+$MESS["CONFIG_DISK_LOCK_POPUP_TEXT_MSGVER_1"] = "Advanced Drive features:
 
 <br/><br/>
 - Lock files to prevent others from being able to edit documents you are currently working.
@@ -51,9 +51,9 @@ $MESS["CONFIG_DISK_LOCK_POPUP_TEXT"] = "Advanced Drive features:
 <br/><br/>
 <a href=\"https://www.bitrix24.com/pro/drive.php\" target='_blank'>Learn More</a>
 <br/><br/>
-Advanced Bitrix24.Drive features are available in commercial subscriptions starting with the Bitrix24 Standard plan.
+Advanced Drive features are available in commercial subscriptions starting with the Bitrix24 Standard plan.
 ";
-$MESS["CONFIG_DISK_LOCK_POPUP_TITLE"] = "Available only in advanced Bitrix24 Drive";
+$MESS["CONFIG_DISK_LOCK_POPUP_TITLE"] = "Available only in the advanced Bitrix24 Drive";
 $MESS["CONFIG_DISK_OBJECT_LOCK_ENABLED"] = "Allow document locking";
 $MESS["CONFIG_DISK_TRANSFORM_FILES_ON_OPEN"] = "Convert file as soon as it is opened";
 $MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Max. entries in document history.";
@@ -123,14 +123,14 @@ $MESS["CONFIG_NAME_GOOGLE_API_KEY_HINT"] = "A Google API key is required to use 
 $MESS["CONFIG_NAME_MAP_PROVIDER_SETTINGS"] = "#PROVIDER# provider settings";
 $MESS["CONFIG_NETWORK_AVAILABLE"] = "Allow users of my Bitrix24 communicate in global Bitrix24 Network";
 $MESS["CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED"] = "This feature will be available once the administrator has confirmed the account.";
-$MESS["CONFIG_NETWORK_AVAILABLE_TEXT_NEW"] = "Communication in Bitrix24.Network is available to commercial Bitrix24 users only.<br/><br/>
-Here are the advantages of connecting Bitrix24.Network:<br/>
+$MESS["CONFIG_NETWORK_AVAILABLE_TEXT_NEW_MSGVER_1"] = "Communication within the Bitrix24 Network is available to commercial Bitrix24 users only.<br/><br/>
+Here are the advantages of connecting to the Network:<br/>
 <ul>
 <li>All your business contacts and partners are connected in one network</li>
 <li>Fast and convenient communications with customers and external users</li>
 <li>Seamless communications between users in different Bitrix24 accounts</li>
 </ul>
-<b>All Bitrix24.Network tools are available starting with Bitrix24 Plus at #PRICE# a month.</b>";
+<b>All Network tools are available starting with Bitrix24 Plus at #PRICE# a month.</b>";
 $MESS["CONFIG_NETWORK_AVAILABLE_TITLE"] = "Available only in commercial plans of Bitrix24";
 $MESS["CONFIG_ORGANIZATION"] = "Type of your organization";
 $MESS["CONFIG_ORGANIZATION_DEF"] = "Company and employees";

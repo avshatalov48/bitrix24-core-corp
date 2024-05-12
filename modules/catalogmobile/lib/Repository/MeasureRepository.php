@@ -59,7 +59,7 @@ final class MeasureRepository
 
 			foreach ($measuresCollection as $code => $measure)
 			{
-				$measureItem = new Measure([
+				$measureItem = Measure::make([
 					'id' => (int)$measure['ID'],
 					'code' => $code,
 					'name' => $measure['SYMBOL_RUS'] ?? $measure['SYMBOL_INTL'],

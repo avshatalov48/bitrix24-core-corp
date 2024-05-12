@@ -665,7 +665,7 @@
 		if (tabId === "commentTab")
 		{
 			switchTab(tabId);
-			return; //do not remove this line to avoid call TextPanel.21ง	1Q12ง	1HQW()
+			return; //do not remove this line to avoid call TextPanel.21ยง	1Q12ยง	1HQW()
 		}
 		BX.addCustomEvent(window, 'OnUCFormBeforeSubmit', hideEmptyBlock);
 

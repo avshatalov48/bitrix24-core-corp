@@ -107,7 +107,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DraftSetStateData, DraftSetStateActions>} payload
 			 */
 			setState: (state, payload) => {
 				const {
@@ -120,7 +120,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DraftAddData, DraftAddActions>} payload
 			 */
 			add: (state, payload) => {
 				const {
@@ -136,7 +136,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DraftUpdateData, DraftUpdateActions>} payload
 			 */
 			update: (state, payload) => {
 				const {
@@ -152,7 +152,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DraftDeleteData, DraftDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
 				const {
@@ -170,6 +170,7 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 	/**
 	 *
 	 * @param {DraftModelState} fields
+	 * @return {Partial<DraftModelState>}
 	 */
 	function validate(fields)
 	{

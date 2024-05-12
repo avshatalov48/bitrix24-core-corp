@@ -185,7 +185,6 @@ final class Feedback
 			return ['', ''];
 		}
 
-		// todo check with 'clouds'. it seems that cloud file is being downloaded, but need to check
 		$fileArray = StorageManager::makeFileArray($storageElementId, $storageTypeId);;
 		if (!is_array($fileArray) || empty($fileArray['tmp_name']))
 		{

@@ -6,6 +6,11 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 	const { dateTime, bigCross } = require('assets/common');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { longDate, longTime } = require('utils/date/formats');
+	const { PropTypes } = require('utils/validation');
+	const DatePickerType = {
+		DATE: 'date',
+		DATETIME: 'datetime',
+	};
 
 	/**
 	 * @class DateTimeField
@@ -21,7 +26,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 		{
 			const config = super.getConfig();
 			const enableTime = BX.prop.getBoolean(config, 'enableTime', true);
-			const defaultDatePickerType = enableTime ? 'datetime' : 'date';
+			const defaultDatePickerType = enableTime ? DatePickerType.DATETIME : DatePickerType.DATE;
 			const defaultDateFormat = enableTime ? `${longDate()} ${longTime()}` : longDate();
 
 			return {
@@ -108,7 +113,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 		{
 			return Text({
 				style: this.styles.emptyValue,
-				text: this.getReadOnlyEmptyValue(),
+				text: this.getEmptyText(),
 			});
 		}
 
@@ -125,7 +130,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 				},
 				Text({
 					style: this.styles.value,
-					text: this.getFormattedDate(),
+					text: this.getDisplayedValue(),
 				}),
 			);
 		}
@@ -141,7 +146,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 				return Text({
 					style: this.styles.emptyValue,
-					text: this.getEditableEmptyValue(),
+					text: this.getEmptyText(),
 				});
 			}
 
@@ -152,14 +157,18 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 				},
 				Text({
 					style: this.styles.value,
-					text: this.getFormattedDate(),
+					text: this.getDisplayedValue(),
 				}),
 			);
 		}
 
-		getEditableEmptyValue()
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getDefaultEmptyEditableValue()
 		{
-			return this.props.emptyValue || BX.message('FIELDS_DATE_CHOOSE_DATE');
+			return BX.message('FIELDS_DATE_CHOOSE_DATE');
 		}
 
 		/**
@@ -193,13 +202,18 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
-		getFormattedDate()
+		/**
+		 * @public
+		 * @return {*|string}
+		 */
+		getDisplayedValue()
 		{
 			return this.getDateString(this.getValue());
 		}
 
 		getDateString(date)
 		{
+			// eslint-disable-next-line no-undef
 			return BX.type.isNumber(date) ? DateFormatter.getDateString(date, this.getConfig().dateFormat) : '';
 		}
 
@@ -322,18 +336,65 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 		prepareValueToCopy()
 		{
-			return this.getFormattedDate();
+			return this.getDisplayedValue();
 		}
 
-		getForcedTextValue()
+		/**
+		 * @public
+		 * @return {{icon: string}}
+		 */
+		getLeftIcon()
 		{
-			return this.props.forcedTextValue;
+			return {
+				icon: 'calendar2',
+			};
 		}
 	}
+
+	DateTimeField.propTypes = {
+		...BaseField.propTypes,
+		config: PropTypes.shape({
+			// base field props
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			// datetime field props
+			enableTime: PropTypes.bool,
+			datePickerType: PropTypes.oneOf(Object.values(DatePickerType)),
+			dateFormat: PropTypes.string,
+			defaultListTitle: PropTypes.string,
+			checkTimezoneOffset: PropTypes.bool,
+			items: PropTypes.array, // menu items for date picker
+		}),
+	};
+
+	DateTimeField.defaultProps = {
+		...BaseField.defaultProps,
+		showEditIcon: true,
+		config: {
+			...BaseField.defaultProps.config,
+			enableTime: true,
+			datePickerType: DatePickerType.DATETIME,
+			dateFormat: `${longDate()} ${longTime()}`,
+			defaultListTitle: '',
+			checkTimezoneOffset: false,
+			items: [],
+		},
+	};
 
 	module.exports = {
 		DateTimeType: 'datetime',
 		DateTimeFieldClass: DateTimeField,
 		DateTimeField: (props) => new DateTimeField(props),
+		DatePickerType,
 	};
 });

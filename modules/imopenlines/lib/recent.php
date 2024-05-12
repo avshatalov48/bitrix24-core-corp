@@ -217,7 +217,7 @@ class Recent
 		$rows = static::fillCounters($rows, $userId);
 		$rows = static::fillFiles($rows);
 
-		return static::fillLastMessageStatuses($rows, $userId);
+		return static::fillLastMessageStatuses($rows);
 	}
 
 	private static function fillCounters(array $rows, int $userId): array
@@ -239,23 +239,12 @@ class Recent
 		return $rows;
 	}
 
-	private static function fillLastMessageStatuses(array $rows, int $userId): array
+	private static function fillLastMessageStatuses(array $rows): array
 	{
-		$messageIds = [];
-
-		foreach ($rows as $row)
-		{
-			if (isset($row['MESSAGE_AUTHOR_ID']) && (int)$row['MESSAGE_AUTHOR_ID'] === $userId)
-			{
-				$messageIds[] = (int)$row['MESSAGE_ID'];
-			}
-		}
-
-		$messageStatuses = (new ViewedService($userId))->getMessageStatuses($messageIds);
-
 		foreach ($rows as $key => $row)
 		{
-			$rows[$key]['CHAT_LAST_MESSAGE_STATUS'] = $messageStatuses[(int)($row['MESSAGE_ID'] ?? 0)] ?? \IM_MESSAGE_STATUS_RECEIVED;
+			$boolStatus = $row['CHAT_LAST_MESSAGE_STATUS_BOOL'] ?? 'N';
+			$rows[$key]['CHAT_LAST_MESSAGE_STATUS'] = $boolStatus === 'Y' ? \IM_MESSAGE_STATUS_DELIVERED : \IM_MESSAGE_STATUS_RECEIVED;
 		}
 
 		return $rows;
@@ -338,6 +327,7 @@ class Recent
 			'LINES_STATUS' => 'SESSION.STATUS',
 			'LINES_DATE_CREATE' => 'SESSION.DATE_CREATE',
 			'HAS_REMINDER' => 'HAS_REMINDER',
+			'CHAT_LAST_MESSAGE_STATUS_BOOL' => 'MESSAGE.NOTIFY_READ',
 		];
 
 		return $shortInfoFields;

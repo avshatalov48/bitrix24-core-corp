@@ -132,7 +132,7 @@ class ProductGridQuery extends Query
 	private function fetchVatRates(): array
 	{
 		$vatRates = \CCrmTax::GetVatRateInfos();
-		return array_map(static fn ($fields) => new VatRate($fields), $vatRates);
+		return array_map(static fn($fields) => VatRate::make($fields), $vatRates);
 	}
 
 	private function isEntityEditable(): bool

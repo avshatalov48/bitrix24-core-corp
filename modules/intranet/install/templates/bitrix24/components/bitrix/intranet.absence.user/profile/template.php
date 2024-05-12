@@ -73,7 +73,7 @@ foreach ($arResult['ENTRIES'] as $key => $arEntry)
 	$finishDateForDiff = date('y:d:m', $finishAbsence);
 	$title = htmlspecialcharsbx($arEntry['TITLE']);
 
-	if ($startAbsence > $now && (date('d', $startAbsence) !== date('d', $now)))
+	if ($startAbsence > $now && ($startDateForDiff !== $nowDateForDiff))
 	{
 		$formatsForNextDaysAbsences = formatUserAbsenceDate($startAbsence, $finishAbsence, $now);
 
@@ -195,13 +195,13 @@ $dayForFinish = date("d", $maxFinish);
 			)
 			{
 				$formatsForAssociationAbsences = formatUserAbsenceDate($minStart, $maxFinish, $now);
-				echo Loc::getMessage('INTR_IAU_TPL_FROM')
-					. ' '
-					. FormatDate($formatsForAssociationAbsences['start'], $minStart)
-					. ' '
-					. Loc::getMessage('INTR_IAU_TPL_TO')
-					. ' '
-					. FormatDate($formatsForAssociationAbsences['finish'], $maxFinish)
+				echo Loc::getMessage(
+					'INTRANET_ABSENCE_USER_DATE_RANGE',
+					[
+						'#DATE_ABSENCE_START#' => FormatDate($formatsForAssociationAbsences['start'], $minStart),
+						'#DATE_ABSENCE_END#' => FormatDate($formatsForAssociationAbsences['finish'], $maxFinish),
+					]
+					)
 					. ' '
 					. $reasonResult
 					. '<br>'
@@ -225,13 +225,13 @@ $dayForFinish = date("d", $maxFinish);
 			}
 			elseif (($diff === NUMBER_SECONDS_DAY) && ($formTimeForStart === START_DAY_TIME))
 			{
-				echo Loc::getMessage('INTR_IAU_TPL_FROM')
-					. ' '
-					. FormatDate($formShortDate, $minStart)
-					. ' '
-					. Loc::getMessage('INTR_IAU_TPL_TO')
-					. ' '
-					. FormatDate($formShortDate, $maxFinish)
+				echo Loc::getMessage(
+						'INTRANET_ABSENCE_USER_DATE_RANGE',
+						[
+							'#DATE_ABSENCE_START#' => FormatDate($formShortDate, $minStart),
+							'#DATE_ABSENCE_END#' => FormatDate($formShortDate, $maxFinish),
+						]
+					)
 					. ' '
 					. $reasonResult
 					. '<br>'

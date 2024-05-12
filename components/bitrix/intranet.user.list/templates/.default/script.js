@@ -40,13 +40,20 @@
 
 		addTask: function(userId)
 		{
-			if (BX.type.isNotEmptyObject(taskIFramePopup))
+			let pathToTaskAdd = `/company/personal/user/${userId}/tasks/task/edit/0/`;
+			pathToTaskAdd = BX.Uri.addParam(pathToTaskAdd, {
+				RESPONSIBLE_ID: userId,
+				ta_sec: 'user',
+				ta_el: 'context_menu',
+			});
+
+			if (BX.SidePanel)
 			{
-				taskIFramePopup.add({
-					RESPONSIBLE_ID: userId,
-					ta_sec: 'user',
-					ta_el: 'context_menu',
-				});
+				BX.SidePanel.Instance.open(pathToTaskAdd);
+			}
+			else
+			{
+				window.top.location.href = pathToTaskAdd;
 			}
 		},
 

@@ -2,7 +2,7 @@
  * @module im/messenger/provider/service/reaction
  */
 jn.define('im/messenger/provider/service/reaction', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RestMethod } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { runAction } = require('im/messenger/lib/rest');
@@ -29,7 +29,7 @@ jn.define('im/messenger/provider/service/reaction', (require, exports, module) =
 		{
 			const data = await this.loadReactions(reactionType, lastId);
 
-			void core.getStore().dispatch('usersModel/set', data.users);
+			void serviceLocator.get('core').getStore().dispatch('usersModel/set', data.users);
 
 			const reactionViewerUsers = data.reactions.map((reactionData) => {
 				const user = data.users.find((userData) => userData.id === reactionData.userId);

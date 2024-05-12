@@ -147,7 +147,7 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 		}
 
 		$companyId = \Bitrix\Crm\Requisite\EntityLink::getDefaultMyCompanyId();
-		$company = new Requisite\CompanyList(['=ID' => $companyId], ['DATE_CREATE' => 'DESC']);
+		$company = new Requisite\CompanyList(['=ID' => $companyId], ['DATE_CREATE' => 'DESC'], ['ID'], ['ID', 'ENTITY_ID']);
 
 		if ($companyId)
 		{
@@ -236,6 +236,7 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 		if ($this->isBitrix24)
 		{
+			$arParams['IS_RENAMEABLE'] = Bitrix24\Domain::getCurrent()->isRenameable() && $this->user->isAdmin();
 			$arParams['IS_FREE_LICENSE'] = \CBitrix24::isFreeLicense();
 			$arParams['HOLDING'] = [
 				'isHolding' => $this->isHolding,

@@ -9,11 +9,6 @@ class Compatible extends Crm\Security\Controller
 {
 	protected $cachedAttrs = [];
 
-	public static function isEnabled(): bool
-	{
-		return true;
-	}
-
 	public function isPermissionEntityTypeSupported($entityType): bool
 	{
 		return true;

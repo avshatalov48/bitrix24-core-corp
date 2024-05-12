@@ -472,19 +472,15 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	const inlineSymbol = Symbol('inline');
 	const voidSymbol = Symbol('void');
-	const formatNames = ['b', 'u', 'i', 's'];
 	class BBCodeElementNode extends BBCodeNode {
 	  constructor(options = {}) {
 	    super(options);
 	    this.attributes = {};
 	    this.value = '';
-	    this[inlineSymbol] = false;
 	    this[voidSymbol] = false;
 	    privateMap.get(this).type = BBCodeNode.ELEMENT_NODE;
 	    const tagScheme = this.getTagScheme();
-	    this[inlineSymbol] = tagScheme.isInline();
 	    this[voidSymbol] = tagScheme.isVoid();
 	    this.setValue(options.value);
 	    this.setAttributes(options.attributes);
@@ -496,7 +492,6 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    if (scheme.isAllowedTag(this.getName())) {
 	      super.setScheme(scheme);
 	      const tagScheme = this.getTagScheme();
-	      this[inlineSymbol] = tagScheme.isInline();
 	      this[voidSymbol] = tagScheme.isVoid();
 	    } else {
 	      super.setScheme(scheme);
@@ -508,14 +503,9 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      resolved: [],
 	      unresolved: []
 	    };
-	    const tagScheme = this.getTagScheme();
-	    const allowedChildren = tagScheme.getAllowedChildren();
-	    if (allowedChildren.length === 0) {
-	      filteredChildren.resolved = children;
-	      return filteredChildren;
-	    }
+	    const scheme = this.getScheme();
 	    children.forEach(child => {
-	      if (allowedChildren.includes(child.getName()) || allowedChildren.includes('#inline') && child.getType() === BBCodeNode.ELEMENT_NODE && child.isInline() || allowedChildren.includes('#block') && child.getType() === BBCodeNode.ELEMENT_NODE && child.isInline() === false || allowedChildren.includes('#void') && child.getType() === BBCodeNode.ELEMENT_NODE && child.isVoid() || allowedChildren.includes('#format') && formatNames.includes(child.getName())) {
+	      if (scheme.isChildAllowed(this, child)) {
 	        filteredChildren.resolved.push(child);
 	      } else {
 	        filteredChildren.unresolved.push(child);
@@ -544,9 +534,6 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	  isVoid() {
 	    return this[voidSymbol];
-	  }
-	  isInline() {
-	    return this[inlineSymbol];
 	  }
 	  setAttributes(attributes) {
 	    if (Type.isPlainObject(attributes)) {
@@ -668,7 +655,6 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    return this.getScheme().createElement({
 	      name: this.getName(),
 	      void: this.isVoid(),
-	      inline: this.isInline(),
 	      value: this.getValue(),
 	      attributes: {
 	        ...this.getAttributes()
@@ -735,8 +721,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      ...super.toJSON(),
 	      value: this.getValue(),
 	      attributes: this.getAttributes(),
-	      void: this.isVoid(),
-	      inline: this.isInline()
+	      void: this.isVoid()
 	    };
 	  }
 	}
@@ -940,18 +925,24 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
+	const resolvedNamesSymbol = Symbol('@resolvedNames');
 	class BBCodeNodeScheme {
 	  constructor(options) {
 	    this.name = [];
+	    this.group = [];
 	    this.stringifier = null;
 	    this.serializer = null;
+	    this.allowedIn = [];
+	    this[resolvedNamesSymbol] = [];
 	    if (!Type.isPlainObject(options)) {
 	      throw new TypeError('options is not a object');
 	    }
 	    if (!Type.isArrayFilled(this.name) && !Type.isArrayFilled(options.name) && !Type.isStringFilled(options.name)) {
 	      throw new TypeError('options.name is not specified');
 	    }
+	    this.setGroup(options.group);
 	    this.setName(options.name);
+	    this.setAllowedIn(options.allowedIn);
 	    this.setStringifier(options.stringify);
 	    this.setSerializer(options.serialize);
 	  }
@@ -971,6 +962,22 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      return !names.includes(name);
 	    }));
 	  }
+	  setGroup(name) {
+	    if (Type.isStringFilled(name)) {
+	      this.group = [name];
+	    }
+	    if (Type.isArrayFilled(name)) {
+	      this.group = name;
+	    }
+	  }
+	  removeGroup(...groups) {
+	    this.setGroup(this.getGroup().filter(group => {
+	      return !groups.includes(group);
+	    }));
+	  }
+	  getGroup() {
+	    return [...this.group];
+	  }
 	  setStringifier(stringifier) {
 	    if (Type.isFunction(stringifier) || Type.isNull(stringifier)) {
 	      this.stringifier = stringifier;
@@ -987,16 +994,29 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  getSerializer() {
 	    return this.serializer;
 	  }
+	  getResolvedNames() {
+	    return [...this.getName(), ...this.getGroup()];
+	  }
+	  setAllowedIn(allowedParents) {
+	    if (Type.isArray(allowedParents)) {
+	      this.allowedIn = [...allowedParents];
+	    }
+	  }
+	  getAllowedIn() {
+	    return [...this.allowedIn];
+	  }
+	  isAllowedIn(tagName) {
+	    const allowedIn = this.getAllowedIn();
+	    return !Type.isArrayFilled(allowedIn) || Type.isArrayFilled(allowedIn) && allowedIn.includes(tagName);
+	  }
 	}
 
 	class BBCodeTagScheme extends BBCodeNodeScheme {
 	  constructor(options) {
 	    super(options);
-	    this.inline = false;
 	    this.void = false;
 	    this.childConverter = null;
 	    this.allowedChildren = [];
-	    this.setInline(options.inline);
 	    this.setVoid(options.void);
 	    this.setChildConverter(options.convertChild);
 	    this.setAllowedChildren(options.allowedChildren);
@@ -1016,20 +1036,15 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    })();
 	    const isAllowNewlineAfterClosingTag = (() => {
 	      const nextSibling = node.getNextSibling();
-	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === BBCodeNode.ELEMENT_NODE && !nextSibling.isInline());
+	      return nextSibling && nextSibling.getName() !== '#linebreak' && !(nextSibling.getType() === BBCodeNode.ELEMENT_NODE && !nextSibling.getTagScheme().getGroup().includes('#inline'));
 	    })();
 	    const openingTag = node.getOpeningTag();
 	    const content = node.getContent();
 	    const closingTag = node.getClosingTag();
 	    return [isAllowNewlineBeforeOpeningTag ? '\n' : '', openingTag, isAllowNewlineAfterOpeningTag ? '\n' : '', content, isAllowNewlineBeforeClosingTag ? '\n' : '', closingTag, isAllowNewlineAfterClosingTag ? '\n' : ''].join('');
 	  }
-	  setInline(value) {
-	    if (Type.isBoolean(value)) {
-	      this.inline = value;
-	    }
-	  }
-	  isInline() {
-	    return this.inline;
+	  setName(name) {
+	    super.setName(name);
 	  }
 	  setVoid(value) {
 	    if (Type.isBoolean(value)) {
@@ -1038,6 +1053,14 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	  isVoid() {
 	    return this.void;
+	  }
+	  setFormat(value) {
+	    if (Type.isBoolean(value)) {
+	      this.format = value;
+	    }
+	  }
+	  isFormat() {
+	    return this.format;
 	  }
 	  setChildConverter(converter) {
 	    if (Type.isFunction(converter) || Type.isNull(converter)) {
@@ -1053,13 +1076,26 @@ jn.define('bbcode/model', (require, exports, module) => {
 	    }
 	  }
 	  getAllowedChildren() {
-	    return [...this.allowedChildren];
+	    return this.allowedChildren;
+	  }
+	  isChildAllowed(tagName) {
+	    const allowedChildren = this.getAllowedChildren();
+	    return !Type.isArrayFilled(allowedChildren) || Type.isArrayFilled(allowedChildren) && allowedChildren.includes(tagName);
 	  }
 	}
 
 	class BBCodeScheme {
 	  static isNodeScheme(value) {
 	    return value instanceof BBCodeNodeScheme;
+	  }
+	  static getTagName(node) {
+	    if (Type.isString(node)) {
+	      return node;
+	    }
+	    if (Type.isObject(node) && node instanceof BBCodeNode) {
+	      return node.getName();
+	    }
+	    return null;
 	  }
 	  constructor(options = {}) {
 	    this.tagSchemes = [];
@@ -1105,10 +1141,14 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  getTagSchemes() {
 	    return [...this.tagSchemes];
 	  }
-	  getTagScheme(tagName) {
-	    return this.getTagSchemes().find(scheme => {
-	      return scheme.getName().includes(String(tagName).toLowerCase());
-	    });
+	  getTagScheme(node) {
+	    const tagName = BBCodeScheme.getTagName(node);
+	    if (Type.isString(tagName)) {
+	      return this.getTagSchemes().find(scheme => {
+	        return scheme.getName().includes(tagName.toLowerCase());
+	      });
+	    }
+	    return null;
 	  }
 	  setOutputTagCase(tagCase) {
 	    if (!Type.isNil(tagCase)) {
@@ -1140,9 +1180,85 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      return tagScheme.getName();
 	    });
 	  }
-	  isAllowedTag(tagName) {
+	  isAllowedTag(node) {
 	    const allowedTags = this.getAllowedTags();
+	    const tagName = BBCodeScheme.getTagName(node);
 	    return allowedTags.includes(String(tagName).toLowerCase());
+	  }
+	  isVoid(node) {
+	    const tagScheme = this.getTagScheme(node);
+	    if (tagScheme) {
+	      return tagScheme.isVoid();
+	    }
+	    return false;
+	  }
+	  isElement(node) {
+	    return node && node.getType() === BBCodeNode.ELEMENT_NODE;
+	  }
+	  isRoot(node) {
+	    return node && node.getName() === '#root';
+	  }
+	  isFragment(node) {
+	    return node && node.getName() === '#fragment';
+	  }
+	  isAnyText(node) {
+	    return node && node.getType() === BBCodeNode.TEXT_NODE;
+	  }
+	  isText(node) {
+	    return node && node.getName() === '#text';
+	  }
+	  isNewLine(node) {
+	    return node && node.getName() === '#linebreak';
+	  }
+	  isTab(node) {
+	    return node && node.getName() === '#tab';
+	  }
+	  getParentChildMap() {
+	    const tagSchemes = this.getTagSchemes();
+	    const map = new Map();
+	    tagSchemes.forEach(tagScheme => {
+	      const groups = tagScheme.getGroup();
+	      const schemeNames = [...tagScheme.getName(), ...groups, ...(tagScheme.isVoid() ? ['#void'] : [])];
+	      const allowedChildren = tagScheme.getAllowedChildren();
+	      const allowedIn = tagScheme.getAllowedIn();
+	      schemeNames.forEach(name => {
+	        if (!map.has(name)) {
+	          map.set(name, {
+	            allowedChildren: new Set(),
+	            allowedIn: new Set(),
+	            aliases: new Set()
+	          });
+	        }
+	        const entry = map.get(name);
+	        const newEntry = {
+	          allowedChildren: new Set([...entry.allowedChildren, ...allowedChildren]),
+	          allowedIn: new Set([...entry.allowedIn, ...allowedIn]),
+	          aliases: new Set([name, ...groups, ...(tagScheme.isVoid() ? ['#void'] : [])])
+	        };
+	        map.set(name, newEntry);
+	      });
+	    });
+	    return map;
+	  }
+	  isChildAllowed(parent, child) {
+	    const parentName = BBCodeScheme.getTagName(parent);
+	    const childName = BBCodeScheme.getTagName(child);
+	    if (Type.isStringFilled(parentName) && Type.isStringFilled(childName)) {
+	      if (parentName === '#fragment') {
+	        return true;
+	      }
+	      const parentChildMap = this.getParentChildMap();
+	      const parentMap = parentChildMap.get(parentName);
+	      const childMap = parentChildMap.get(childName);
+	      if (Type.isPlainObject(parentMap) && Type.isPlainObject(childMap)) {
+	        return (parentMap.allowedChildren.size === 0 || [...childMap.aliases].some(name => {
+	          return parentMap.allowedChildren.has(name);
+	        })) && (childMap.allowedIn.size === 0 || [...parentMap.aliases].some(name => {
+	          return childMap.allowedIn.has(name);
+	        }));
+	      }
+	    }
+	    return false;
 	  }
 	  createRoot(options = {}) {
 	    return new BBCodeRootNode({
@@ -1228,13 +1344,20 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  }
 	}
 
-	class BBCodeNewLineScheme extends BBCodeNodeScheme {}
+	class BBCodeNewLineScheme extends BBCodeNodeScheme {
+	  constructor(options = {}) {
+	    super({
+	      ...options,
+	      name: ['#linebreak']
+	    });
+	  }
+	}
 
 	class BBCodeTabScheme extends BBCodeNodeScheme {
 	  constructor(options) {
 	    super({
 	      ...options,
-	      name: ['tab']
+	      name: ['#tab']
 	    });
 	  }
 	}
@@ -1243,93 +1366,101 @@ jn.define('bbcode/model', (require, exports, module) => {
 	  constructor(options = {}) {
 	    super({
 	      tagSchemes: [new BBCodeTagScheme({
-	        name: ['b', 'i', 'u', 's', 'span'],
-	        inline: true,
+	        name: ['b', 'u', 'i', 's'],
+	        group: ['#inline', '#format'],
+	        allowedChildren: ['#text', '#linebreak', '#inline']
+	      }), new BBCodeTagScheme({
+	        name: ['span'],
+	        group: ['#inline'],
 	        allowedChildren: ['#text', '#linebreak', '#inline']
 	      }), new BBCodeTagScheme({
 	        name: ['img'],
-	        inline: true,
+	        group: ['#inline'],
 	        allowedChildren: ['#text']
 	      }), new BBCodeTagScheme({
 	        name: ['url'],
-	        inline: true,
+	        group: ['#inline'],
 	        allowedChildren: ['#text', '#format']
 	      }), new BBCodeTagScheme({
 	        name: 'p',
-	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline', 'disk', 'video'],
-	        stringify: BBCodeTagScheme.defaultBlockStringifier
+	        group: ['#block'],
+	        allowedChildren: ['#text', '#linebreak', '#inline'],
+	        stringify: BBCodeTagScheme.defaultBlockStringifier,
+	        allowedIn: ['#root', '#shadowRoot']
 	      }), new BBCodeTagScheme({
 	        name: 'list',
-	        inline: false,
+	        group: ['#block'],
 	        allowedChildren: ['*'],
-	        stringify: BBCodeTagScheme.defaultBlockStringifier
+	        stringify: BBCodeTagScheme.defaultBlockStringifier,
+	        allowedIn: ['#root', '#shadowRoot']
 	      }), new BBCodeTagScheme({
 	        name: ['*'],
-	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline', 'list'],
+	        allowedChildren: ['#text', '#linebreak', '#inline'],
 	        stringify: node => {
 	          const openingTag = node.getOpeningTag();
 	          const content = node.getContent().trim();
 	          return `${openingTag}${content}`;
-	        }
-	      }), new BBCodeTagScheme({
-	        name: ['ul'],
-	        inline: false,
-	        allowedChildren: ['li']
-	      }), new BBCodeTagScheme({
-	        name: ['ol'],
-	        inline: false,
-	        allowedChildren: ['li']
-	      }), new BBCodeTagScheme({
-	        name: ['li'],
-	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline', 'ul', 'ol']
+	        },
+	        allowedIn: ['list']
 	      }), new BBCodeTagScheme({
 	        name: 'table',
-	        inline: false,
+	        group: ['#block'],
 	        allowedChildren: ['tr'],
-	        stringify: BBCodeTagScheme.defaultBlockStringifier
+	        stringify: BBCodeTagScheme.defaultBlockStringifier,
+	        allowedIn: ['#root', 'quote', 'spoiler']
 	      }), new BBCodeTagScheme({
 	        name: 'tr',
-	        inline: false,
-	        allowedChildren: ['th', 'td']
+	        allowedChildren: ['th', 'td'],
+	        allowedIn: ['table']
 	      }), new BBCodeTagScheme({
 	        name: ['th', 'td'],
-	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline']
+	        group: ['#shadowRoot'],
+	        allowedChildren: ['#text', '#linebreak', '#inline', '#block'],
+	        allowedIn: ['tr']
 	      }), new BBCodeTagScheme({
 	        name: 'quote',
-	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline', 'quote']
+	        group: ['#block', '#shadowRoot'],
+	        allowedChildren: ['#text', '#linebreak', '#inline', '#block'],
+	        allowedIn: ['#root', '#shadowRoot']
 	      }), new BBCodeTagScheme({
 	        name: 'code',
-	        inline: false,
+	        group: ['#block'],
 	        stringify: BBCodeTagScheme.defaultBlockStringifier,
 	        convertChild: (child, scheme) => {
 	          if (['#linebreak', '#tab', '#text'].includes(child.getName())) {
 	            return child;
 	          }
 	          return scheme.createText(child.toString());
-	        }
+	        },
+	        allowedIn: ['#root', '#shadowRoot']
 	      }), new BBCodeTagScheme({
 	        name: 'video',
-	        inline: false,
-	        allowedChildren: ['#text']
+	        group: ['#block'],
+	        allowedChildren: ['#text'],
+	        allowedIn: ['#root', '#shadowRoot']
 	      }), new BBCodeTagScheme({
 	        name: 'spoiler',
-	        inline: false,
-	        allowedChildren: ['#text', '#linebreak', '#inline', 'p', 'quote', 'code', 'table', 'disk', 'video', 'spoiler', 'list']
+	        group: ['#block', '#shadowRoot'],
+	        allowedChildren: ['#text', '#linebreak', '#inline', '#block'],
+	        allowedIn: ['#root', '#shadowRoot']
 	      }), new BBCodeTagScheme({
 	        name: ['user', 'project', 'department'],
-	        inline: true,
+	        group: ['#inline', '#mention'],
 	        allowedChildren: ['#text', '#format']
 	      }), new BBCodeTagScheme({
 	        name: 'disk',
+	        group: ['#inline'],
 	        void: true
 	      }), new BBCodeTagScheme({
-	        name: ['#root', '#fragment']
-	      }), new BBCodeTabScheme({
+	        name: ['#root']
+	      }), new BBCodeTagScheme({
+	        name: ['#fragment']
+	      }), new BBCodeTagScheme({
+	        name: ['#text']
+	      }), new BBCodeTagScheme({
+	        name: ['#linebreak']
+	      }), new BBCodeTagScheme({
+	        name: ['#tab'],
 	        stringify: () => {
 	          return '';
 	        }

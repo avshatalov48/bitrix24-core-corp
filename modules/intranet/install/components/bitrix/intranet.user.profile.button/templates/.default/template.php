@@ -19,11 +19,7 @@ Main\UI\Extension::load([
 	'ui.icons.b24',
 	'sidepanel',
 	'ui.hint',
-	'qrcode',
-	'ui.qrauthorization',
 	'ui.fonts.opensans',
-	'ui.avatar-editor',
-	'avatar_editor',
 ]);
 
 $this->setFrameMode(true);

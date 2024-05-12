@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/background-cache',
 		'im:messenger/lib/params',

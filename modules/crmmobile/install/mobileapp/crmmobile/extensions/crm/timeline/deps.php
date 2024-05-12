@@ -8,14 +8,14 @@ return [
 		'layout/ui/widget-header-button',
 		'layout/ui/snackbar-text',
 		'layout/ui/timeline/components/divider',
+		'layout/ui/text-editor',
+		'layout/ui/textarea',
 		'selector/widget/factory',
 
 		'crm:timeline/ui/date-divider',
 		'crm:timeline/ui/banner',
 		'crm:timeline/ui/reminder',
 		'crm:timeline/ui/sticky-date',
-		'crm:timeline/ui/text-editor',
-		'crm:timeline/ui/textarea',
 		'crm:timeline/ui/toolbar',
 		'crm:timeline/ui/expand-text-button',
 
@@ -30,6 +30,7 @@ return [
 		'crm:timeline/stream',
 		'crm:timeline/scheduler',
 		'crm:document/details',
+
 		'tasks:task',
 		'loc',
 		'utils/prop',

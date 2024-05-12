@@ -40,6 +40,11 @@ class UserField extends BaseLinkedEntitiesField
 	 */
 	protected function getPreparedValue($elementId, string $prefix)
 	{
+		if (!is_scalar($elementId))
+		{
+			return '';
+		}
+
 		$linkedEntitiesValues = $this->getLinkedEntitiesValues();
 		$user = $linkedEntitiesValues[$elementId] ?? null;
 

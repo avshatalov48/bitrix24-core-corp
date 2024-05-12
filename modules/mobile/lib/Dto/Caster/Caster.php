@@ -36,6 +36,11 @@ abstract class Caster
 	 */
 	public function cast($value)
 	{
+		if ($this->isNullable && $value === null)
+		{
+			return $value;
+		}
+
 		if ($this->isCollection())
 		{
 			$result = [];
@@ -54,11 +59,6 @@ abstract class Caster
 				}
 			}
 			return $result;
-		}
-
-		if ($this->isNullable && $value === null)
-		{
-			return $value;
 		}
 
 		return $this->castSingleValue($value);

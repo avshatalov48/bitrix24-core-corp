@@ -1,10 +1,11 @@
-import { ajax as Ajax, Event, Reflection, Tag, Text, Type, Uri } from "main.core";
-import { Popup } from "main.popup";
-import { Button } from 'ui.buttons';
+import { Conversion } from 'crm.conversion';
+import { Dictionary } from 'crm.integration.analytics';
+import type { ItemDetailsComponentParams } from 'crm.item-details-component';
+import { ItemDetailsComponent } from 'crm.item-details-component';
+import { ajax as Ajax, Reflection, Tag, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import type { ItemDetailsComponentParams } from "crm.item-details-component";
-import { ItemDetailsComponent } from "crm.item-details-component";
-import { Conversion } from "crm.conversion";
+import { Popup } from 'main.popup';
+import { Button } from 'ui.buttons';
 
 const printWindowWidth = 900;
 const printWindowHeight = 600;
@@ -115,8 +116,8 @@ class QuoteDetailsComponent extends ItemDetailsComponent
 
 		if (this.conversionSettings.lockScript)
 		{
-			schemeSelector.subscribe('SchemeSelector:onSchemeSelected', this.conversionSettings.lockScript);
-			schemeSelector.subscribe('SchemeSelector:onContainerClick', this.conversionSettings.lockScript);
+			schemeSelector.subscribe('onSchemeSelected', this.conversionSettings.lockScript);
+			schemeSelector.subscribe('onContainerClick', this.conversionSettings.lockScript);
 
 			EventEmitter.subscribe('CrmCreateDealFromQuote', this.conversionSettings.lockScript);
 			EventEmitter.subscribe('CrmCreateInvoiceFromQuote', this.conversionSettings.lockScript);
@@ -134,6 +135,8 @@ class QuoteDetailsComponent extends ItemDetailsComponent
 				}
 
 				converter.getConfig().updateFromSchemeItem(schemeItem);
+
+				converter.setAnalyticsElement(Dictionary.ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
 
 				converter.convert(this.id);
 			};

@@ -53,7 +53,7 @@ class Helper
 
 			\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 			Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
-			?><script type="text/javascript">
+			?><script>
 			BX.ready(
 				function()
 				{

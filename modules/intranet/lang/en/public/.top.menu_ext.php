@@ -37,6 +37,7 @@ $MESS["TOP_MENU_PHOTO"] = "Photos";
 $MESS["TOP_MENU_SERVICES"] = "Services";
 $MESS["TOP_MENU_SHOP"] = "Online Stores";
 $MESS["TOP_MENU_SIGN"] = "Bitrix24.Sign";
+$MESS["TOP_MENU_SIGN_B2E"] = "e-Signature for HR";
 $MESS["TOP_MENU_SITES"] = "Sites";
 $MESS["TOP_MENU_SITES_AND_STORES"] = "Sites and stores";
 $MESS["TOP_MENU_SPACES"] = "Spaces";

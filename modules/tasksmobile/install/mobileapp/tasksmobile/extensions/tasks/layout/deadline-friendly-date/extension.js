@@ -7,7 +7,7 @@ jn.define('tasks/layout/deadline-friendly-date', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { CalendarSettings } = require('tasks/task/calendar');
 	const { Moment } = require('utils/date');
-	const { dayMonth, longDate } = require('utils/date/formats');
+	const { dayMonth, longDate, shortTime } = require('utils/date/formats');
 
 	/**
 	 * @class DeadlineFriendlyDate
@@ -37,7 +37,7 @@ jn.define('tasks/layout/deadline-friendly-date', (require, exports, module) => {
 
 			if (newDate.getTime() !== this.moment.date.getTime())
 			{
-				return this.moment.format('HH:mm');
+				return this.moment.format(shortTime);
 			}
 
 			return '';

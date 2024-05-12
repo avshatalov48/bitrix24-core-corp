@@ -6,6 +6,7 @@ jn.define('crm/timeline/services/responsible-selector', (require, exports, modul
 	const { Type } = require('type');
 	const AppTheme = require('apptheme');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class ResponsibleSelector
@@ -15,7 +16,11 @@ jn.define('crm/timeline/services/responsible-selector', (require, exports, modul
 		static show({ layout, ...restProps })
 		{
 			const self = new ResponsibleSelector(restProps);
-			void self.selector.show({}, layout);
+			void self.selector
+				.show({}, layout)
+				.then((widget) => {
+					self.layout = widget;
+				});
 		}
 
 		/**
@@ -29,6 +34,7 @@ jn.define('crm/timeline/services/responsible-selector', (require, exports, modul
 			this.onSelectorHidden = onSelectorHidden;
 			this.responsibleId = responsibleId;
 			this.selector = null;
+			this.layout = null;
 
 			this.onClose = this.onClose.bind(this);
 			this.onViewHidden = this.onViewHidden.bind(this);
@@ -49,7 +55,10 @@ jn.define('crm/timeline/services/responsible-selector', (require, exports, modul
 				{
 					provider: {},
 					createOptions: {
-						enableCreation: false,
+						enableCreation: true,
+						closeAfterCreation: true,
+						analytics: new AnalyticsEvent().setSection('crm'),
+						getParentLayout: () => this.layout,
 					},
 					initSelectedIds,
 					allowMultipleSelection: false,

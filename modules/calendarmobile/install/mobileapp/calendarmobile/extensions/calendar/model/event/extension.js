@@ -2,7 +2,7 @@
  * @module calendar/model/event
  */
 jn.define('calendar/model/event', (require, exports, module) => {
-	const { DateHelper } = require('calendar/date-helper');
+	const { DateHelper, Moment } = require('calendar/date-helper');
 
 	/**
 	 * @class EventModel
@@ -164,6 +164,27 @@ jn.define('calendar/model/event', (require, exports, module) => {
 		isRecurrence()
 		{
 			return Boolean(this.getRecurrenceRule());
+		}
+
+		hasPassed(isFullDayParam = null)
+		{
+			const isFullDay = isFullDayParam ?? this.isFullDay();
+			const dateToMoment = isFullDay
+				? new Moment(this.dateTo).add(86_000_000)
+				: new Moment(this.dateTo)
+			;
+
+			return dateToMoment.hasPassed;
+		}
+
+		getMomentDateFrom()
+		{
+			return new Moment(this.dateFrom);
+		}
+
+		getMomentDateTo()
+		{
+			return new Moment(this.dateTo);
 		}
 	}
 

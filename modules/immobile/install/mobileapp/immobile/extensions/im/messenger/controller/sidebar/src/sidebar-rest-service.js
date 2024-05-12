@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-rest-service', (require, expo
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class SidebarRestService
@@ -15,7 +15,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-rest-service', (require, expo
 		constructor(dialogId)
 		{
 			this.dialogId = dialogId;
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		/**
@@ -58,6 +58,17 @@ jn.define('im/messenger/controller/sidebar/sidebar-rest-service', (require, expo
 								dialogId: this.dialogId,
 								participants: data.map((user) => user.id),
 								lastLoadParticipantId: data[data.length - 1].id,
+							});
+						}
+
+						if (Array.isArray(data) && data.length === 0)
+						{
+							this.store.dispatch('dialoguesModel/update', {
+								dialogId: this.dialogId,
+								fields: {
+									participants: [],
+									lastLoadParticipantId: 0,
+								},
 							});
 						}
 

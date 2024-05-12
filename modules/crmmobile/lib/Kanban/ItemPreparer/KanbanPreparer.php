@@ -63,12 +63,12 @@ final class KanbanPreparer extends Base
 				$config['titleIcon']['before']['uri'] = $field['icon']['url'];
 			}
 
-			$dtoField = new Field([
+			$dtoField = Field::make([
 				'name' => $field['code'],
 				'title' => $field['title'],
 				'type' => $field['type'],
-				'value' =>  $field['value'],
-				'config' =>  $config,
+				'value' => $field['value'],
+				'config' => $config,
 				'multiple' => $field['isMultiple'],
 			]);
 
@@ -82,7 +82,7 @@ final class KanbanPreparer extends Base
 	protected function prepareBadges(array $item = [], array $params = []): array
 	{
 		$badges = ($item['badges'] ?? []);
-		return array_map(static fn(array $badge): Badge => new Badge($badge), $badges);
+		return array_map(static fn(array $badge): Badge => Badge::make($badge), $badges);
 	}
 
 	protected function getItemReturn(array $item): bool

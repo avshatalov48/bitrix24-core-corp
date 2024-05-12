@@ -22,7 +22,7 @@ use \Bitrix\ImOpenLines\Config;
 	'ui.fonts.opensans',
 ]);
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.message({
 			LM_ADD: '<?=GetMessageJS('IMOL_CONFIG_EDIT_LM_ADD')?>',

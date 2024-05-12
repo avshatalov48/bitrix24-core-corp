@@ -118,6 +118,7 @@ abstract class EntityProvider extends BaseProvider
 			'hidden' => !$canReadItem,
 			'tabs' => $this->getTabsNames(),
 			'customData' => [
+				'id' => (string)$entityId,
 				'entityInfo' => $entityInfo,
 			],
 		]);

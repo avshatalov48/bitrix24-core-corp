@@ -53,79 +53,17 @@ class QuoteConversionWizard extends EntityConversionWizard
 
 			$resultData = $converter->getResultData();
 
-			if (isset($resultData[\CCrmOwnerType::DealName]))
-			{
-				if ($this->isMobileContext)
-				{
-					$this->redirectUrl = "/mobile/crm/deal/?page=view&deal_id=" . $resultData[\CCrmOwnerType::DealName];
-				}
-				else
-				{
-					$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(
-						\CCrmOwnerType::Deal,
-						$resultData[\CCrmOwnerType::DealName],
-						false,
-						['ENABLE_SLIDER' => $this->enableSlider]
-					);
-				}
-			}
-			elseif (isset($resultData[\CCrmOwnerType::InvoiceName]))
-			{
-				if ($this->isMobileContext)
-				{
-					$this->redirectUrl = "/mobile/crm/invoice/?page=view&invoice_id="
-						. $resultData[\CCrmOwnerType::InvoiceName];
-				}
-				else
-				{
-					$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Invoice,
-						$resultData[\CCrmOwnerType::InvoiceName], false);
-				}
-			}
+			$this->redirectUrl = (string)$this->getRedirectUrlByResultData($resultData);
 			$result = true;
 		}
 		catch (EntityConversionException $e)
 		{
 			$this->exception = $e;
-			if ($e->getTargetType() === EntityConversionException::TARG_DST)
-			{
-				if ($this->isMobileContext)
-				{
-					switch ($e->getDestinationEntityTypeID())
-					{
-						case (\CCrmOwnerType::Invoice):
-						{
-							$this->redirectUrl = "/mobile/crm/invoice/?page=edit&" . self::QUERY_PARAM_SRC_ID . "="
-								. $converter->getEntityID();
-							break;
-						}
-						case (\CCrmOwnerType::Quote):
-						{
-							$this->redirectUrl = "/mobile/crm/quote/?page=edit&" . self::QUERY_PARAM_SRC_ID . "="
-								. $converter->getEntityID();
-							break;
-						}
-					}
-				}
-				else
-				{
-					$config = $converter->getConfig();
-					$options = [
-						'ENTITY_SETTINGS' => $config->getEntityInitData($e->getDestinationEntityTypeID()),
-						'ENABLE_SLIDER' => $this->enableSlider,
-					];
 
-					$this->redirectUrl = \CCrmUrlUtil::AddUrlParams(
-						\CCrmOwnerType::GetEntityEditPath(
-							$e->getDestinationEntityTypeID(),
-							0,
-							false,
-							$options
-						),
-						[self::QUERY_PARAM_SRC_ID => $converter->getEntityID()]
-					);
-				}
-			}
+			$uri = $this->getRedirectUrlByConversionException($e)?->addParams([
+				self::QUERY_PARAM_SRC_ID => $converter->getEntityID(),
+			]);
+			$this->redirectUrl = (string)$uri;
 		}
 		catch (\Exception $e)
 		{

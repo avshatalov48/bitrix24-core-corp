@@ -3,10 +3,13 @@
  */
 jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, module) => {
 	const { Type } = require('type');
+	const { Uuid } = require('utils/uuid');
+	const { isEqual } = require('utils/object');
+	const { EntityReady } = require('entity-ready');
 
-	const { core } = require('im/messenger/core');
-	const { RestMethod } = require('im/messenger/const');
-	const { UserManager } = require('im/messenger/lib/user-manager');
+	const { RestMethod, ComponentCode, EventType } = require('im/messenger/const');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sync-service');
@@ -29,27 +32,18 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			return this.instance;
 		}
 
-		constructor()
-		{
-			this.store = core.getStore();
-
-			this.userManager = new UserManager(this.store);
-
-			this.dialogRepository = core.getRepository().dialog;
-			this.userRepository = core.getRepository().user;
-			this.fileRepository = core.getRepository().file;
-			this.reactionRepository = core.getRepository().reaction;
-			this.messageRepository = core.getRepository().message;
-		}
-
-		async loadPage({ fromDate, fromId })
+		async loadPage({ fromDate, fromId, fromServerDate })
 		{
 			const syncListOptions = {
 				filter: {},
 				limit: 500,
 			};
 
-			if (Type.isNumber(fromId))
+			if (Type.isStringFilled(fromServerDate))
+			{
+				syncListOptions.filter.lastDate = fromServerDate;
+			}
+			else if (Type.isNumber(fromId))
 			{
 				syncListOptions.filter.lastId = fromId;
 			}
@@ -60,6 +54,7 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 
 			try
 			{
+				logger.log('RestMethod.imV2SyncList request data:', syncListOptions);
 				const result = await runAction(RestMethod.imV2SyncList, { data: syncListOptions });
 
 				return await this.handleSyncList(result);
@@ -76,205 +71,87 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 
 		/**
 		 * @param {SyncListResult} result
-		 * @return {Promise<{hasMore: boolean, lastId: number}>}
+		 * @return Promise{{hasMore: boolean, lastId: number, lastServerDate: string}}
 		 */
 		async handleSyncList(result)
 		{
 			logger.info('RestMethod.imV2SyncList result: ', result);
 
-			try
-			{
-				await this.updateDatabase(result);
-				await this.updateModels(result);
-			}
-			catch (error)
-			{
-				logger.error('LoadService.handleSyncList error: ', error);
-			}
-
-			return {
-				hasMore: result.hasMore,
-				lastId: result.lastId,
-			};
-		}
-
-		/**
-		 * @private
-		 * @param {SyncListResult} syncListResult
-		 * @return Promise
-		 */
-		async updateDatabase(syncListResult)
-		{
-			const {
-				messages,
-				addedChats,
-				addedRecent,
-				completeDeletedMessages,
-				deletedChats,
-			} = syncListResult;
-
-			const {
-				users,
-				files,
-				reactions,
-			} = messages;
-
-			const messagesToSave = messages.messages;
-
-			if (Type.isArrayFilled(users))
-			{
-				await this.userRepository.saveFromRest(users);
-			}
-
-			if (Type.isArrayFilled(addedChats))
-			{
-				// TODO: refactor when the dialogId will be in addedChats
-				const addedRecentChatIds = {};
-				addedRecent.forEach((recentItem) => {
-					addedRecentChatIds[recentItem.chat_id] = recentItem.id;
-				});
-
-				const addedChatsWithDialogIds = [];
-				addedChats.forEach((chat) => {
-					const chatId = chat.id;
-					const dialogId = chat.dialogId;
-					if (chatId && !dialogId)
-					{
-						// eslint-disable-next-line no-param-reassign
-						chat.dialogId = addedRecentChatIds[chatId];
-					}
-
-					addedChatsWithDialogIds.push(chat);
-				});
-
-				await this.dialogRepository.saveFromRest(addedChatsWithDialogIds);
-			}
-
-			if (Type.isArrayFilled(files))
-			{
-				await this.fileRepository.saveFromRest(files);
-			}
-
-			if (Type.isArrayFilled(reactions))
-			{
-				await this.reactionRepository.saveFromRest(reactions);
-			}
-
-			if (Type.isArrayFilled(messagesToSave))
-			{
-				await this.messageRepository.saveFromRest(messagesToSave);
-			}
-
-			const deletedChatsIdList = Object.values(deletedChats);
-			if (Type.isArrayFilled(deletedChatsIdList))
-			{
-				await this.dialogRepository.deleteByChatIdList(deletedChatsIdList);
-				await this.messageRepository.deleteByChatIdList(deletedChatsIdList);
-			}
-
-			const completeDeletedMessageIdList = Object.values(completeDeletedMessages);
-			if (Type.isArrayFilled(completeDeletedMessageIdList))
-			{
-				await this.messageRepository.deleteByIdList(completeDeletedMessageIdList);
-			}
-		}
-
-		/**
-		 * @private
-		 * @param {SyncListResult} syncListResult
-		 * @return Promise
-		 */
-		async updateModels(syncListResult)
-		{
-			const {
-				messages,
-				addedChats,
-				addedRecent,
-				completeDeletedMessages,
-			} = syncListResult;
-
-			const {
-				users,
-				files,
-				reactions,
-			} = messages;
-
-			const messagesToSave = messages.messages;
-
-			const usersPromise = this.store.dispatch('usersModel/set', users);
-
-			// TODO: refactor when the dialogId will be in addedChats
-			const addedRecentChatIds = {};
-			addedRecent.forEach((recentItem) => {
-				addedRecentChatIds[recentItem.chat_id] = recentItem.id;
+			let resolveSyncListPromise;
+			let rejectSyncListPromise;
+			const syncListPromise = new Promise((resolve, reject) => {
+				resolveSyncListPromise = resolve;
+				rejectSyncListPromise = reject;
 			});
 
-			const dialogs = addedChats.map((chat) => {
-				const dialog = chat;
-				const chatId = dialog.id;
-				const dialogId = dialog.dialogId;
-				if (chatId && !dialogId)
-				{
-					// eslint-disable-next-line no-param-reassign
-					chat.dialogId = addedRecentChatIds[chatId];
-				}
-
-				return dialog;
-			});
-
-			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', dialogs);
-			const filesPromise = this.store.dispatch('filesModel/set', files);
-			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
-				reactions,
-			});
-
-			await Promise.all([
-				usersPromise,
-				dialoguesPromise,
-				filesPromise,
-				reactionPromise,
-			]);
-
-			const openChatIdList = this.getOpenChatsToAddMessages();
-			if (!Type.isArrayFilled(openChatIdList))
-			{
-				return Promise.resolve();
-			}
-
-			const openChatsMessages = messagesToSave.filter((message) => {
-				return openChatIdList.includes(message.chat_id);
-			});
-
-			const completeDeletedMessageIdList = Object.values(completeDeletedMessages);
-			const messagesPromise = [
-				this.store.dispatch('messagesModel/setChatCollection', {
-					messages: openChatsMessages,
-				}),
-				this.store.dispatch('messagesModel/deleteByIdList', {
-					idList: completeDeletedMessageIdList,
-				}),
+			const messengerRequestResultSavedUuid = `${ComponentCode.imMessenger}-${Uuid.getV4()}`;
+			const expectedRequestResultSavedIdList = [
+				messengerRequestResultSavedUuid,
 			];
 
-			return Promise.all(messagesPromise);
+			const copilotRequestResultSavedUuid = `${ComponentCode.imCopilotMessenger}-${Uuid.getV4()}`;
+			const shouldAwaitCopilot = Feature.isCopilotAvailable && this.isEntityReady('copilot-messenger');
+			if (shouldAwaitCopilot)
+			{
+				expectedRequestResultSavedIdList.push(copilotRequestResultSavedUuid);
+			}
+
+			const requestResultSavedIdList = [];
+			const fillCompleteHandler = (data) => {
+				const {
+					uuid,
+					error,
+				} = data;
+				logger.log('SyncService received a response from SyncFiller', uuid, data);
+
+				requestResultSavedIdList.push(uuid);
+				if (error)
+				{
+					rejectSyncListPromise(error);
+
+					return;
+				}
+
+				if (isEqual(expectedRequestResultSavedIdList.sort(), requestResultSavedIdList.sort()))
+				{
+					BX.removeCustomEvent(EventType.sync.requestResultSaved, fillCompleteHandler);
+
+					resolveSyncListPromise({
+						hasMore: result.hasMore,
+						lastId: result.lastId,
+						lastServerDate: result.lastServerDate,
+					});
+				}
+			};
+
+			BX.addCustomEvent(EventType.sync.requestResultSaved, fillCompleteHandler);
+
+			MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+				uuid: messengerRequestResultSavedUuid,
+				result,
+			}, ComponentCode.imMessenger);
+
+			if (shouldAwaitCopilot)
+			{
+				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+					uuid: copilotRequestResultSavedUuid,
+					result,
+				}, ComponentCode.imCopilotMessenger);
+			}
+
+			logger.log('SyncService waits for a response from SyncFillers', expectedRequestResultSavedIdList);
+
+			return syncListPromise;
 		}
 
-		/**
-		 * @private
-		 * @return Number[]
-		 */
-		getOpenChatsToAddMessages()
+		isEntityReady(entityId)
 		{
-			const openDialogs = this.store.getters['applicationModel/getOpenDialogs']();
-			const openChats = this.store.getters['dialoguesModel/getByIdList'](openDialogs);
-			const openChatIdList = [];
-			openChats.forEach((chat) => {
-				if (chat.inited && chat.hasNextPage === false)
-				{
-					openChatIdList.push(chat.chatId);
-				}
-			});
+			if (Type.isFunction(EntityReady.isReady))
+			{
+				return EntityReady.isReady(entityId);
+			}
 
-			return openChatIdList;
+			return EntityReady.readyEntitiesCollection.has(entityId);
 		}
 	}
 

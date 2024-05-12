@@ -3480,6 +3480,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 
 		return isStaticType || isDynamicType;
 	};
+	BX.CrmEntityType.isDefinedByName = function(typeName)
+	{
+		return BX.CrmEntityType.isDefined(BX.CrmEntityType.resolveId(typeName));
+	};
 	BX.CrmEntityType.resolveName = function(typeId)
 	{
 		if(!BX.type.isNumber(typeId))
@@ -9741,7 +9745,6 @@ if(typeof(BX.CrmEntityConverter) === "undefined")
 								title: manager ? manager.getMessage("checkErrorTitle") : null,
 								helpData: { text: manager.getMessage("checkErrorHelp"), code: manager.getMessage("checkErrorHelpArticleCode") },
 								fieldNames: Object.keys(checkErrors),
-								initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
 								context: BX.prop.getObject(data, "CONTEXT", null)
 							}
 						);
@@ -13617,6 +13620,8 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 		isLeadEnabled: true,
 		existActiveLeads: false,
 
+		manager: null,
+
 		init: function (params)
 		{
 			this.existActiveLeads = false;
@@ -13686,9 +13691,10 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 
 		convertLead : function()
 		{
-			var manager = BX.Crm.BatchConversionManager.create(
+			this.manager = BX.Crm.BatchConversionManager.create(
 				'simpleCrmConvert',
 				{
+					entityTypeId: BX.CrmEntityType.enumeration.lead,
 					gridId: 'simpleCrmConvert',
 					serviceUrl: "/bitrix/components/bitrix/crm.lead.list/list.ajax.php?sessid=" + BX.bitrix_sessid(),
 					container: "crmLeadConverterWrapper",
@@ -13700,22 +13706,25 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 						summaryCaption: this.message["CRM_LEAD_BATCH_CONVERSION_COMPLETED"],
 						summarySucceeded: this.message["CRM_LEAD_BATCH_CONVERSION_COUNT_SUCCEEDED"],
 						summaryFailed: this.message["CRM_LEAD_BATCH_CONVERSION_COUNT_FAILED"]
+					},
+					analytics: {
+						c_element: 'crm_mode_change_popup',
 					}
 				}
 			);
 			var config = BX.CrmLeadConversionScheme.createConfig(BX.CrmLeadConversionScheme.dealcontactcompany);
 			config.contact.initData = { defaultName: this.message["CRM_LEAD_BATCH_CONVERSION_NO_NAME"] };
-			manager.setConfig(config);
-			manager.setFilter({ "=STATUS_SEMANTIC_ID": "P" });
-			manager.enableConfigCheck(false);
-			manager.enableUserFieldCheck(false);
+			this.manager.setConfig(config);
+			this.manager.setFilter({ "=STATUS_SEMANTIC_ID": "P" });
+			this.manager.enableConfigCheck(false);
+			this.manager.enableUserFieldCheck(false);
 			BX.addCustomEvent(window, "BX.Crm.BatchConversionManager:onProcessComplete", function(){
 				this.sendAjax("convertCompleted");
 			}.bind(this));
 			BX.addCustomEvent(window, "BX.Crm.BatchConversionManager:onStop", function(){
 				BX.PopupWindowManager.getCurrentPopup().destroy();
 			}.bind(this));
-			manager.execute();
+			this.manager.execute();
 		},
 
 		confirmLeadConvert: function ()
@@ -13731,9 +13740,8 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 						text : this.message["CRM_TYPE_CONTINUE"],
 						id: 'continue',
 						color: BX.UI.Button.Color.SUCCESS,
-						events : { click : function()
+						events : { click : function(convertButton)
 						{
-							var convertButton = BX.PopupWindowManager.getPopupById('confirmLeadConvert').getButton('continue');
 							if (convertButton.isWaiting())
 							{
 								//double click protection
@@ -13756,10 +13764,17 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 					new BX.UI.Button({
 						text : this.message["CRM_TYPE_CANCEL"],
 						color: BX.UI.Button.Color.LINK,
-						events: { click : function()
-						{
-							this.getContext().close();
-						}}
+						events: {
+							click : (cancelButton) => {
+								if (this.manager)
+								{
+									this.manager.stop();
+									this.manager = null;
+								}
+
+								cancelButton.getContext().close();
+							},
+						},
 					})
 				],
 				content: '<div id="crmLeadConverterWrapper" style="margin-bottom: 6px;"></div><div style="width:420px;">' + this.message["CRM_LEAD_CONVERT_TEXT"] + '</div>'

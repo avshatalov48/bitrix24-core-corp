@@ -4,7 +4,7 @@
 jn.define('alert/src/confirm-closing', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { PropTypes } = require('utils/validation');
-	const { ConfirmNavigator } = require('alert/confirm');
+	const { ConfirmNavigator, ButtonType } = require('alert/confirm');
 
 	/**
 	 * @function confirmClosing
@@ -15,26 +15,34 @@ jn.define('alert/src/confirm-closing', (require, exports, module) => {
 	 * @param {function} [props.onClose]
 	 */
 	const confirmClosing = (props = {}) => {
-		const { title, description, onSave, onClose } = props;
+		const {
+			title = Loc.getMessage('ALERT_CONFIRM_CLOSING_TITLE'),
+			description = Loc.getMessage('ALERT_CONFIRM_CLOSING_DESCRIPTION'),
+			onSave = () => {},
+			onClose = () => {},
+			onCancel = () => {},
+			hasSaveAndClose = true,
+		} = props;
 		const confirm = new ConfirmNavigator({
-			title: title || Loc.getMessage('ALERT_CONFIRM_CLOSING_TITLE'),
-			description: description || Loc.getMessage('ALERT_CONFIRM_CLOSING_DESCRIPTION'),
+			title,
+			description,
 			buttons: [
-				{
+				hasSaveAndClose && {
 					text: Loc.getMessage('ALERT_CONFIRM_CLOSING_SAVE'),
-					type: 'default',
+					type: ButtonType.DEFAULT,
 					onPress: onSave,
 				},
 				{
 					text: Loc.getMessage('ALERT_CONFIRM_CLOSING_DISCARD'),
-					type: 'destructive',
+					type: ButtonType.DESTRUCTIVE,
 					onPress: onClose,
 				},
 				{
 					text: Loc.getMessage('ALERT_CONFIRM_CLOSING_CONTINUE'),
-					type: 'cancel',
+					type: ButtonType.CANCEL,
+					onPress: onCancel,
 				},
-			],
+			].filter(Boolean),
 		});
 
 		confirm.open();
@@ -45,6 +53,8 @@ jn.define('alert/src/confirm-closing', (require, exports, module) => {
 		description: PropTypes.string,
 		onSave: PropTypes.func,
 		onClose: PropTypes.func,
+		onCancel: PropTypes.func,
+		hasSaveAndClose: PropTypes.bool,
 	};
 
 	module.exports = { confirmClosing };

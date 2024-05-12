@@ -170,7 +170,7 @@ if ($error || $errorCode)
 	);
 
 	$result = $httpRequest->getPost('result');
-	if (is_array($result['files']))
+	if (is_array($result) && isset($result['files']) && is_array($result['files']))
 	{
 		foreach ($result['files'] as $key => $fileName)
 		{
@@ -197,7 +197,11 @@ if ($finish)
 	$files = [];
 	$command->updateStatus(Command::STATUS_UPLOAD);
 	$result = $httpRequest->getPost('result');
-	if (!is_array($result['files']))
+	if (!is_array($result))
+	{
+		$result = [];
+	}
+	if (!isset($result['files']) || !is_array($result['files']))
 	{
 		$result['files'] = [];
 	}

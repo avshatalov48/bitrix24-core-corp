@@ -1,11 +1,13 @@
-/* eslint-disable */
-import { Action } from "../../action";
-import { Browser, Runtime } from "main.core";
+import { CopilotTextarea, Events as CopilotTextareaEvents } from 'crm.ai.copilot-textarea';
+import { Browser, Loc, Runtime, Text, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+
+import { Action } from '../../action';
 import { Button } from '../layout/button';
 import { ButtonState } from '../enums/button-state';
 import { ButtonType } from '../enums/button-type';
-import { EditableDescriptionHeight } from "../enums/editable-description-height";
-import { EditableDescriptionBackgroundColor } from "../enums/editable-description-background-color";
+import { EditableDescriptionHeight } from '../enums/editable-description-height';
+import { EditableDescriptionBackgroundColor } from '../enums/editable-description-background-color';
 
 export const EditableDescription = {
 	components: {
@@ -36,10 +38,16 @@ export const EditableDescription = {
 			type: String,
 			required: false,
 			default: '',
-		}
+		},
+		copilotSettings: {
+			type: Array,
+			required: false,
+			default: [],
+		},
 	},
 
-	data() {
+	data(): Object
+	{
 		return {
 			value: this.text,
 			oldValue: this.text,
@@ -47,27 +55,36 @@ export const EditableDescription = {
 			isSaving: false,
 			isLongText: false,
 			isCollapsed: false,
+			isCopilotEnabled: Type.isPlainObject(this.copilotSettings),
+			placeholderText: Loc.getMessage(
+				Type.isPlainObject(this.copilotSettings)
+					? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT'
+					: 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER',
+			),
 		};
 	},
 
-	inject: ['isReadOnly', 'isLogMessage'],
+	inject: [
+		'isReadOnly',
+		'isLogMessage',
+	],
 
 	computed: {
-		className()
+		className(): Array
 		{
 			return [
 				'crm-timeline__editable-text',
-				[`${this.heightClassnameModifier}`, `${this.bgColorClassnameModifier}`],
+				[String(this.heightClassnameModifier), String(this.bgColorClassnameModifier)],
 				{
-				'--is-read-only': this.isLogMessage,
-				'--is-edit': this.isEdit,
-				'--is-long': this.isLongText,
-				'--is-expanded': this.isCollapsed || !this.isLongText,
-				}
-			]
+					'--is-read-only': this.isLogMessage,
+					'--is-edit': this.isEdit,
+					'--is-long': this.isLongText,
+					'--is-expanded': this.isCollapsed || !this.isLongText,
+				},
+			];
 		},
 
-		heightClassnameModifier()
+		heightClassnameModifier(): string
 		{
 			switch (this.height)
 			{
@@ -77,40 +94,40 @@ export const EditableDescription = {
 			}
 		},
 
-		bgColorClassnameModifier()
+		bgColorClassnameModifier(): ?string
 		{
 			switch (this.backgroundColor)
 			{
 				case EditableDescriptionBackgroundColor.YELLOW: return '--bg-color-yellow';
 				case EditableDescriptionBackgroundColor.WHITE: return '--bg-color-white';
 				default: return '';
-			};
+			}
 		},
 
-		isEditable()
+		isEditable(): boolean
 		{
 			return this.editable && this.saveAction && !this.isReadOnly;
 		},
 
-		saveTextButtonProps()
+		saveTextButtonProps(): Object
 		{
 			return {
 				state: this.saveTextButtonState,
 				type: ButtonType.PRIMARY,
 				title: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE'),
-			}
+			};
 		},
 
-		cancelEditingButtonProps()
+		cancelEditingButtonProps(): Object
 		{
 			return {
 				type: ButtonType.LIGHT,
 				title: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL'),
 				state: this.isSaving ? ButtonState.DISABLED : ButtonState.DEFAULT,
-			}
+			};
 		},
 
-		saveTextButtonState()
+		saveTextButtonState(): string
 		{
 			const trimValue = this.value.trim();
 
@@ -127,61 +144,76 @@ export const EditableDescription = {
 			return ButtonState.DEFAULT;
 		},
 
-		expandButtonText()
+		expandButtonText(): string
 		{
 			return this.isCollapsed
 				? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE_MSGVER_1')
 				: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW_MSGVER_1');
 		},
 
-		isEditButtonVisible(): Boolean
+		isEditButtonVisible(): boolean
 		{
 			return !(this.isReadOnly || this.isEdit);
 		},
 	},
 
 	methods: {
-		startEditing() {
+		startEditing(): void
+		{
+			this.destroyCopilot();
+
 			this.isEdit = true;
 			this.isCollapsed = true;
 			this.$nextTick(() => {
 				const textarea = this.$refs.textarea;
+
+				this.createCopilot(textarea);
 				this.adjustHeight(textarea);
+
 				textarea.focus();
 			});
 
 			this.emitEvent('EditableDescription:StartEdit');
 		},
 
-		emitEvent(eventName: string)
+		emitEvent(eventName: string): void
 		{
 			const action = new Action({
 				type: 'jsEvent',
-				value: eventName
+				value: eventName,
 			});
+
 			action.execute(this);
 		},
 
-		adjustHeight(elem) {
+		adjustHeight(elem): void
+		{
 			elem.style.height = 0;
-			elem.style.height = (elem.scrollHeight)+"px";
+			elem.style.height = `${elem.scrollHeight}px`;
 		},
 
-		onPressEnter(event) {
+		onPressEnter(event): void
+		{
 			if (
-				event.ctrlKey === true ||
-				( Browser.isMac() && (event.metaKey === true || event.altKey === true) )
+				event.ctrlKey === true
+				|| (Browser.isMac() && (event.metaKey === true || event.altKey === true))
 			)
 			{
 				this.saveText();
 			}
 		},
 
-		saveText() {
-			if (this.saveTextButtonState === ButtonState.DISABLED || this.saveTextButtonState === ButtonState.LOADING || !this.isEdit)
+		saveText(): void
+		{
+			if (
+				this.saveTextButtonState === ButtonState.DISABLED
+				|| this.saveTextButtonState === ButtonState.LOADING
+				|| !this.isEdit
+			)
 			{
 				return;
 			}
+
 			if (this.value.trim() === this.oldValue)
 			{
 				this.isEdit = false;
@@ -191,6 +223,7 @@ export const EditableDescription = {
 			this.isSaving = true;
 			const encodedTrimText = this.value.trim();
 
+			// eslint-disable-next-line promise/catch-or-return
 			this.executeSaveAction(encodedTrimText).then(() => {
 				this.isEdit = false;
 				this.oldValue = encodedTrimText;
@@ -204,7 +237,8 @@ export const EditableDescription = {
 			});
 		},
 
-		executeSaveAction(text: string): void {
+		executeSaveAction(text: string): ?Promise
+		{
 			if (!this.saveAction)
 			{
 				return;
@@ -223,10 +257,12 @@ export const EditableDescription = {
 
 			const action = new Action(actionDescription);
 
+			// eslint-disable-next-line consistent-return
 			return action.execute(this);
 		},
 
-		cancelEditing() {
+		cancelEditing(): void
+		{
 			if (!this.isEdit || this.isSaving)
 			{
 				return;
@@ -237,7 +273,8 @@ export const EditableDescription = {
 			this.emitEvent('EditableDescription:FinishEdit');
 		},
 
-		clearText() {
+		clearText(): void
+		{
 			if (this.isSaving)
 			{
 				return;
@@ -246,22 +283,34 @@ export const EditableDescription = {
 			this.$refs.textarea.focus();
 		},
 
-		toggleIsCollapsed() {
+		toggleIsCollapsed(): void
+		{
 			this.isCollapsed = !this.isCollapsed;
 		},
 
-		checkIsLongText() {
+		checkIsLongText(): boolean
+		{
 			const textBlock = this.$refs.text;
-			if (!textBlock) return false;
+			if (!textBlock)
+			{
+				return false;
+			}
+
 			const textBlockMaxHeightStyle = window.getComputedStyle(textBlock).getPropertyValue('--crm-timeline__editable-text_max-height');
 			const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
 			const parentComputedStyles = this.$refs.rootElement ? window.getComputedStyle(this.$refs.rootElement) : {};
-			const parentHeight = this.$refs.rootElement?.offsetHeight -  parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
+
+			// eslint-disable-next-line no-unsafe-optional-chaining
+			const parentHeight = this.$refs.rootElement?.offsetHeight
+				- parseFloat(parentComputedStyles.paddingTop)
+				- parseFloat(parentComputedStyles.paddingBottom)
+			;
 
 			return parentHeight > textBlockMaxHeight;
 		},
 
-		isInViewport(): boolean {
+		isInViewport(): boolean
+		{
 			const rect = this.$el.getBoundingClientRect();
 
 			return (
@@ -271,10 +320,45 @@ export const EditableDescription = {
 				&& rect.right <= (window.innerWidth || document.documentElement.clientWidth)
 			);
 		},
+
+		onCopilotTextareaValueChange(event: BaseEvent): void
+		{
+			const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
+			const id = event.getData().id;
+
+			if (this.isEdit && copilotId === id)
+			{
+				this.value = event.getData().value;
+			}
+		},
+
+		createCopilot(textarea: HTMLElement): void
+		{
+			if (this.isCopilotEnabled)
+			{
+				this.copilotTextarea = new CopilotTextarea({
+					id: Text.getRandom(),
+					target: textarea,
+					copilotParams: this.copilotSettings,
+				});
+
+				EventEmitter.subscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+			}
+		},
+
+		destroyCopilot(): void
+		{
+			if (this.isCopilotEnabled)
+			{
+				EventEmitter.unsubscribe(CopilotTextareaEvents.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
+				delete this.copilotTextarea;
+			}
+		},
 	},
 
 	watch: {
-		text(newTextValue) {
+		text(newTextValue): void
+		{
 			// update text from push
 			this.value = newTextValue;
 			this.oldValue = newTextValue;
@@ -283,14 +367,20 @@ export const EditableDescription = {
 			});
 		},
 
-		value() {
-			if (!this.isEdit) return;
+		value(): void
+		{
+			if (!this.isEdit)
+			{
+				return;
+			}
+
 			this.$nextTick(() => {
 				this.adjustHeight(this.$refs.textarea);
 			});
 		},
 
-		isCollapsed(isCollapsed) {
+		isCollapsed(isCollapsed): void
+		{
 			if (isCollapsed === false && this.isInViewport() === false)
 			{
 				requestAnimationFrame(() => {
@@ -303,10 +393,16 @@ export const EditableDescription = {
 		},
 	},
 
-	mounted() {
+	mounted(): void
+	{
 		this.$nextTick(() => {
 			this.isLongText = this.checkIsLongText();
 		});
+	},
+
+	beforeUnmount(): void
+	{
+		this.destroyCopilot();
 	},
 
 	template: `
@@ -335,7 +431,7 @@ export const EditableDescription = {
 							ref="textarea"
 							v-model="value"
 							:disabled="!isEdit || isSaving"
-							:placeholder="$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER')"
+							:placeholder="placeholderText"
 							@keydown.esc="cancelEditing"
 							@keydown.enter="onPressEnter"
 							class="crm-timeline__editable-text_text"
@@ -382,5 +478,5 @@ export const EditableDescription = {
 				</button>
 			</div>
 		</div>
-	`
+	`,
 };

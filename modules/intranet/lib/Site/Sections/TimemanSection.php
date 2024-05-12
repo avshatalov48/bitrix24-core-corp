@@ -30,7 +30,6 @@ class TimemanSection
 			static::getWorkReport(),
 			static::getSchedules(),
 			static::getMonitorReport(),
-			static::getBitrix24Time(),
 			static::getMeetings(),
 			static::getAbsence(),
 			static::getPermissions(),
@@ -127,43 +126,6 @@ class TimemanSection
 				'onclick' => $onclick,
 			],
 		];
-	}
-
-	public static function getBitrix24Time(): array
-	{
-		$available = static::isBitrix24TimeAvailable();
-
-		return [
-			'id' => 'bitrix24_time',
-			'title' => Loc::getMessage('TIMEMAN_SECTION_BITRIX24_TIME_ITEM_TITLE'),
-			'available' => $available,
-			'url' => static::isBitrix24() ? '/timeman/bitrix24time.php' : SITE_DIR . 'timeman/b24time.php',
-			'menuData' => [
-				'menu_item_id' => self::MENU_ITEMS_ID['bitrix24_time'],
-			],
-		];
-	}
-
-	public static function isBitrix24TimeAvailable()
-	{
-		//return Loader::includeModule('faceid') && FaceId::isClosed();
-
-		if (Loader::includeModule('faceid'))
-		{
-			$last = \Bitrix\Faceid\TrackingWorkdayTable::query()
-				->addSelect('DATE')
-				->addOrder('ID', 'DESC')
-				->setCacheTtl(3600)
-				->setLimit(1)
-				->fetch();
-
-			if (!empty($last['DATE']) && (time() - $last['DATE']->getTimestamp()) < 3600*24*120)
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	public static function getMonitorReport(): array

@@ -261,21 +261,72 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 			if(this._selector)
 			{
 				this._selector.release();
+				this._selector = null;
 			}
 
-			this._selector = BX.CrmLeadConversionSchemeSelector.create(
-				this.prepareControlId("conv_scheme_selector"),
+			this._selector = this._tryCreateSelectorViaConversionExtension();
+
+			if (!this._selector)
+			{
+				this._selector = BX.CrmLeadConversionSchemeSelector.create(
+					this.prepareControlId("conv_scheme_selector"),
+					{
+						typeId: this.getSetting("typeId", BX.CrmLeadConversionType.general),
+						entityId: this._entityId,
+						scheme: this._schemeData["schemeName"],
+						containerId: this.prepareControlId("success_btn_inner_wrapper"),
+						labelId: this.prepareControlId("success_btn"),
+						buttonId: this.prepareControlId("success_btn_menu"),
+						originUrl: this._schemeData["originUrl"],
+						enableHint: false
+					}
+				);
+			}
+		},
+		/**
+		 * @private
+		 */
+		_tryCreateSelectorViaConversionExtension: function()
+		{
+			if (
+				!BX.Reflection.getClass('BX.Crm.Conversion.Manager')
+				|| !BX.Reflection.getClass('BX.Crm.Conversion.SchemeSelector')
+				|| !BX.Reflection.getClass('BX.Crm.Integration.Analytics.Dictionary')
+			)
+			{
+				return null;
+			}
+
+			const converterId = this.getSetting('converterId', null);
+			if (!converterId)
+			{
+				return null;
+			}
+
+			const converter = BX.Crm.Conversion.Manager.Instance.getConverter(converterId);
+			if (!converter)
+			{
+				console.error(`converter with id ${converterId} not found`);
+
+				return null;
+			}
+
+			const schemeSelector = new BX.Crm.Conversion.SchemeSelector(
+				converter,
 				{
-					typeId: this.getSetting("typeId", BX.CrmLeadConversionType.general),
 					entityId: this._entityId,
-					scheme: this._schemeData["schemeName"],
-					containerId: this.prepareControlId("success_btn_inner_wrapper"),
-					labelId: this.prepareControlId("success_btn"),
-					buttonId: this.prepareControlId("success_btn_menu"),
-					originUrl: this._schemeData["originUrl"],
-					enableHint: false
-				}
+					containerId: this.prepareControlId('success_btn_inner_wrapper'),
+					labelId: this.prepareControlId('success_btn'),
+					buttonId: this.prepareControlId('success_btn_menu'),
+					analytics: {
+						c_element: BX.Crm.Integration.Analytics.Dictionary.ELEMENT_TERMINATION_CONTROL,
+					},
+				},
 			);
+
+			schemeSelector.enableAutoConversion();
+
+			return schemeSelector;
 		},
 		onDialogClose: function(sender)
 		{
@@ -1162,7 +1213,8 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 							entityId: this._entityId,
 							conversionScheme: this.getSetting("conversionScheme", null),
 							canConvert: this.getSetting("canConvert", true),
-							typeId: this.getSetting("conversionTypeId", BX.CrmLeadConversionType.general)
+							typeId: this.getSetting("conversionTypeId", BX.CrmLeadConversionType.general),
+							converterId: this.getSetting('converterId', null),
 						}
 					)
 				);

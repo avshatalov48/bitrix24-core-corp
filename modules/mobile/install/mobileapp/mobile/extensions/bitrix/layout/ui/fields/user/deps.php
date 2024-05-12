@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'analytics',
+		'loc',
 		'apptheme',
 		'user/profile',
 		'assets/common',
@@ -9,6 +11,8 @@ return [
 		'layout/ui/user-list',
 		'layout/ui/user/empty-avatar',
 		'selector/recipient',
-		'selector/widget/factory'
+		'selector/widget/factory',
+		'utils/type',
+		'utils/phone',
 	],
 ];

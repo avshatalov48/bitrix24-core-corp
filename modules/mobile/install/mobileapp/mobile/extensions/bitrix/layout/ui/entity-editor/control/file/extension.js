@@ -41,7 +41,10 @@ jn.define('layout/ui/entity-editor/control/file', (require, exports, module) => 
 		{
 			const controller = this.schemeElement.getDataParam('controller', {});
 
-			const controllerOptions = {};
+			const controllerOptions = {
+				fieldName: this.getId(),
+			};
+
 			const controllerOptionNames = this.schemeElement.getDataParam('controllerOptionNames', {});
 			Object.keys(controllerOptionNames).forEach((optionName) => {
 				controllerOptions[optionName] = this.model.getField(controllerOptionNames[optionName], null);

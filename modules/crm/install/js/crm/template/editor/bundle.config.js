@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/editor.js',
+	input: 'src/index.js',
 	output: 'dist/editor.bundle.js',
 	namespace: 'BX.Crm.Template',
 };

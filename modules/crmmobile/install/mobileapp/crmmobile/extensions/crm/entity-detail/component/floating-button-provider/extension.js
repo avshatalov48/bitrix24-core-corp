@@ -10,6 +10,7 @@ jn.define('crm/entity-detail/component/floating-button-provider', (require, expo
 	const { get } = require('utils/object');
 	const { getActionToConversion } = require('crm/entity-actions/conversion');
 	const { TimelineSchedulerDocumentProvider } = require('crm/timeline/scheduler/providers/document');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @returns {*[]}
@@ -52,16 +53,24 @@ jn.define('crm/entity-detail/component/floating-button-provider', (require, expo
 					return canUseConversion(entityTypeId);
 				},
 				position: 400,
-				preActionHandler: (detailCard) => onAction({
-					uid: detailCard.getUid(),
-					entityId: detailCard.getEntityId(),
-					entityTypeId: detailCard.getEntityTypeId(),
-					onFinishConverted: () => {
-						detailCard.emitEntityUpdate('update');
+				preActionHandler: (detailCard) => {
+					const analytics = new AnalyticsEvent(detailCard.getAnalyticsParams())
+						.setEvent('entity_convert')
+						.setSubSection('element_card')
+						.setElement('add_floating_button');
 
-						return detailCard.reloadTabs();
-					},
-				}),
+					return onAction({
+						uid: detailCard.getUid(),
+						entityId: detailCard.getEntityId(),
+						entityTypeId: detailCard.getEntityTypeId(),
+						onFinishConverted: () => {
+							detailCard.emitEntityUpdate('update');
+
+							return detailCard.reloadTabs();
+						},
+						analytics,
+					});
+				},
 				actionHandler: (detailCard, result) => new Promise(() => {
 					result.forEach(({ value: conversion }) => {
 						if (!isAvailableConversion)

@@ -2,7 +2,7 @@
  * @module im/messenger/lib/permission-manager/chat-permission
  */
 jn.define('im/messenger/lib/permission-manager/chat-permission', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UserRole, DialogActionType, DialogType } = require('im/messenger/const');
@@ -15,9 +15,9 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		}
 
 		/**
-		 * @desc check is can call by dialog data ( use id dialog "chat#" or dialog state object )
+		 * @desc check is can call by dialog data (use id dialog "chat#" or dialog state object)
 		 * @param {DialoguesModelState|string} dialogData
-		 * @param {boolean} [verbose=false] - prop for verbose response, returns object with key
+		 * @param {boolean} [verbose=false] - prop for verbose response, returns an object with a key
 		 * @return {boolean|object}
 		 */
 		isCanCall(dialogData, verbose = false)
@@ -32,7 +32,8 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			const isMoreOne = this.dialogData.userCounter > 1;
 			const isLimit = this.dialogData.userCounter > userLimit;
 			const isEntityType = this.isCanCallByEntityType(this.dialogData.entityType);
-			const isCanCall = isHTTPS && isMoreOne && !isLimit && isEntityType;
+			const isDialogType = this.isCanCallByDialogType(this.dialogData.type);
+			const isCanCall = isHTTPS && isMoreOne && !isLimit && isEntityType && isDialogType;
 
 			if (verbose)
 			{
@@ -42,6 +43,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 					isMoreOne,
 					isLimit,
 					isEntityType,
+					isDialogType,
 				};
 			}
 
@@ -271,7 +273,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		{
 			if (Type.isString(dialogData))
 			{
-				this.store = core.getStore();
+				this.store = serviceLocator.get('core').getStore();
 				const dialogState = this.store.getters['dialoguesModel/getById'](dialogData);
 
 				if (Type.isUndefined(dialogState))
@@ -341,6 +343,16 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			}
 
 			return userChatOptions.DEFAULT.CALL;
+		}
+
+		/**
+		 * @desc check is can call by dialog type ( chat )
+		 * @param {string} type
+		 * @return {boolean}
+		 */
+		isCanCallByDialogType(type)
+		{
+			return type !== DialogType.copilot;
 		}
 
 		/**

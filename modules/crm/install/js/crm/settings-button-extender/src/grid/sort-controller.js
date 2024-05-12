@@ -118,20 +118,19 @@ export class SortController
 		return new Promise((resolve, reject) => {
 			if (!this.#isColumnExists(column))
 			{
-				reject(`Column ${column} does not exists`);
+				reject(new Error(`Column ${column} does not exists`));
+
 				return;
 			}
 
 			if (this.#isColumnShowed(column))
 			{
-				reject(`Column ${column} is showed already`);
+				reject(new Error(`Column ${column} is showed already`));
+
 				return;
 			}
 
-			const settingsWindowCheckbox: ?BX.Grid.SettingsWindowColumn = this.#grid.getSettingsWindow().getItems().find(
-				(checkbox: BX.Grid.SettingsWindowColumn) => checkbox.getId() === column,
-			);
-			settingsWindowCheckbox?.select();
+			this.#grid.getSettingsWindow().select(column);
 
 			const showedColumns = this.#getShowedColumnList();
 			showedColumns.push(column);

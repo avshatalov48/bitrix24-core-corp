@@ -290,8 +290,8 @@ class MobileWebComponent extends \CBitrixComponent
 		$content = $indexFileEntry->getContents();
 		$injectionRules = [
 			"css" => "<link type=\"text/css\" href=\"bundle://#PATH#\" rel=\"stylesheet\" />",
-			"js" => "<script type=\"text/javascript\" src=\"bundle://#PATH#\"></script>",
-			"langs" => "<script type=\"text/javascript\" src=\"bundle://#PATH#\"></script>"
+			"js" => "<script src=\"bundle://#PATH#\"></script>",
+			"langs" => "<script src=\"bundle://#PATH#\"></script>"
 		];
 		$injectionContent = [];
 		$injectionContent["timestamp"] = time();

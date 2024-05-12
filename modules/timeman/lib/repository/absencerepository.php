@@ -30,18 +30,17 @@ class AbsenceRepository
 			{
 				$userTimeAbsStart = null;
 				$userTimeAbsEnd = null;
-				$activeFromTimestamp = MakeTimeStamp($absenceItem['DATE_ACTIVE_FROM']);
-				if ($activeFromTimestamp)
+
+				if (isset($absenceItem['DATE_ACTIVE_FROM']))
 				{
-					$activeFromTimestamp = $activeFromTimestamp - TimeHelper::getInstance()->getUserToServerOffset();
-					$userTimeAbsStart = \DateTime::createFromFormat('U', $activeFromTimestamp);
+					$userTimeAbsStart = \Bitrix\Main\Type\DateTime::createFromUserTime($absenceItem['DATE_ACTIVE_FROM']);
+
 				}
-				$activeToTimestamp = MakeTimeStamp($absenceItem['DATE_ACTIVE_TO']);
-				if ($activeToTimestamp)
+				if (isset($absenceItem['DATE_ACTIVE_TO']))
 				{
-					$activeToTimestamp = $activeToTimestamp - TimeHelper::getInstance()->getUserToServerOffset();
-					$userTimeAbsEnd = \DateTime::createFromFormat('U', $activeToTimestamp);
+					$userTimeAbsEnd = \Bitrix\Main\Type\DateTime::createFromUserTime($absenceItem['DATE_ACTIVE_TO']);
 				}
+
 				$absenceData[$userId][$index]['tm_absStartDateTime'] = $userTimeAbsStart;
 				$absenceData[$userId][$index]['tm_absEndDateTime'] = $userTimeAbsEnd;
 			}

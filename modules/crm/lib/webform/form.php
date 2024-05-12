@@ -1543,6 +1543,7 @@ class Form
 				];
 				if ($productId && ($productData = \CCrmProduct::GetByID($productId)))
 				{
+					$product['TYPE'] = $productData['TYPE'];
 					$product['VAT_INCLUDED'] = $productData['VAT_INCLUDED'];
 					if ($productData['VAT_ID'])
 					{

@@ -7,6 +7,7 @@ return [
 		'haptics',
 		'animation',
 		'alert',
+		'loc',
 	],
 
 	'bundle' => [

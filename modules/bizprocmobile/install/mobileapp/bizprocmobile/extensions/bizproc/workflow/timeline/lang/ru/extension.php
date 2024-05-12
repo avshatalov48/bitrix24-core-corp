@@ -18,3 +18,4 @@ $MESS['BPMOBILE_WORKFLOW_TIMELINE_EXTENDED_TASK_STATUS_DECLINED'] = 'Откло�
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_COMPLETED'] = 'ПРОЦЕСС ЗАВЕРШЕН';
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_TIME_LIMIT_EXCEEDED'] = 'Задание заняло больше времени, чем планировалось. Можно оптимизировать процесс, чтобы сократить время выполнения';
 $MESS['BPMOBILE_WORKFLOW_TIMELINE_MORE_TASKS'] = 'Ещё задания';
+$MESS['BPMOBILE_WORKFLOW_TIMELINE_DOCUMENT_NOT_FOUND'] = 'Документ не найден';

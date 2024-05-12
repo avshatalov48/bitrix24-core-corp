@@ -18,16 +18,17 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 		addIconToShortText(config)
 		{
 			let {
-				text
+				text,
 			} = config;
 			const {
 				attach,
 				files,
+				showFilePrefix = true,
 			} = config;
 
 			if (Type.isArray(files) && files.length > 0)
 			{
-				text = this.getTextForFile(text, files);
+				text = this.getTextForFile(text, files, showFilePrefix);
 			}
 			else if (
 				attach === true
@@ -55,22 +56,22 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_IMAGE')}]`;
 		},
 
-		getTextForFile(text, files)
+		getTextForFile(text, files, showFilePrefix)
 		{
 			if (Type.isArray(files) && files.length > 0)
 			{
 				const [ firstFile ] = files;
-				text = this.getEmojiTextForFile(text, firstFile);
+				text = this.getEmojiTextForFile(text, firstFile, showFilePrefix);
 			}
 			else if (files === true)
 			{
-				text = this.getEmojiTextForFileType(text, FileEmojiType.file);
+				text = this.getEmojiTextForFileType(text, FileEmojiType.file, showFilePrefix);
 			}
 
 			return text;
 		},
 
-		getEmojiTextForFile(text, file)
+		getEmojiTextForFile(text, file, showFilePrefix = true)
 		{
 			const withText = text.replace(/(\s|\n)/gi, '').length > 0;
 
@@ -82,15 +83,15 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 
 			if (file.type === FileType.image)
 			{
-				return this.getEmojiTextForFileType(text, FileEmojiType.image);
+				return this.getEmojiTextForFileType(text, FileEmojiType.image, showFilePrefix);
 			}
 			else if (file.type === FileType.audio)
 			{
-				return this.getEmojiTextForFileType(text, FileEmojiType.audio);
+				return this.getEmojiTextForFileType(text, FileEmojiType.audio, showFilePrefix);
 			}
 			else if (file.type === FileType.video)
 			{
-				return this.getEmojiTextForFileType(text, FileEmojiType.video);
+				return this.getEmojiTextForFileType(text, FileEmojiType.video, showFilePrefix);
 			}
 			else
 			{
@@ -109,7 +110,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			}
 		},
 
-		getEmojiTextForFileType(text, type = FileEmojiType.file)
+		getEmojiTextForFileType(text, type = FileEmojiType.file, showFilePrefix = true)
 		{
 			let result = text;
 			const emoji = false;//Utils.text.getEmoji(type);
@@ -122,7 +123,10 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 			}
 			else
 			{
-				result = `${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE')}: ${iconText} ${text}`;
+				result = showFilePrefix
+					? `${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE')}: ${iconText} ${text}`
+					: `${iconText} ${text}`
+				;
 			}
 
 			return result.trim();

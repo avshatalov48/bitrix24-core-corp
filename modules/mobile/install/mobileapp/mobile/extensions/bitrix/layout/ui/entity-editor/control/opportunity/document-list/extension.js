@@ -2,7 +2,7 @@
  * @module layout/ui/entity-editor/control/opportunity/document-list
  */
 jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require, exports, module) => {
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
@@ -10,6 +10,9 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	const { Feature } = require('feature');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 	const { PaymentPayOpener } = require('crm/terminal/entity/payment-pay-opener');
+	const { Notify } = require('notify');
+	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
+	const { TypeId } = require('crm/type');
 
 	/**
 	 * @class DocumentList
@@ -31,6 +34,14 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			this.updateDocuments = this.updateDocuments.bind(this);
 			this.documentMenu = null;
 			this.isUsedInventoryManagement = props.isUsedInventoryManagement;
+			this.resendParams = props.resendParams;
+		}
+
+		canAddRealization()
+		{
+			return this.props.isUsedInventoryManagement
+				&& !this.props.modeWithOrders
+				&& this.props.salesOrderRights.modify;
 		}
 
 		componentDidMount()
@@ -49,11 +60,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction('crmmobile.EntityDetails.getEntityTotalAmount', {
-						json: {
-							entityTypeId: this.props.entityTypeId,
-							entityId: this.props.entityId,
-						},
-					})
+					json: {
+						entityTypeId: this.props.entityTypeId,
+						entityId: this.props.entityId,
+					},
+				})
 					.then((response) => {
 						this.setState({
 							totalAmount: response.data.totalAmount,
@@ -69,11 +80,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 		{
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction('crmmobile.EntityDetails.getEntityDocuments', {
-						json: {
-							entityTypeId: this.props.entityTypeId,
-							entityId: this.props.entityId,
-						},
-					})
+					json: {
+						entityTypeId: this.props.entityTypeId,
+						entityId: this.props.entityId,
+					},
+				})
 					.then((response) => {
 						this.setState({
 							documents: response.data.documents,
@@ -94,6 +105,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					clickable: false,
 				},
 				this.renderTitle(),
+				this.renderEmptyStateDescription(),
 				...this.state.documents.map((document) => this.renderDocumentItem(document)),
 				this.renderAddDocumentButton(),
 				this.renderSeparator(),
@@ -107,8 +119,28 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				{},
 				Text({
 					style: styles.documentsTitle,
-					text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_TITLE')
+					text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_TITLE_MSGVER_1')
 						.toLocaleUpperCase(env.languageId),
+				}),
+			);
+		}
+
+		renderEmptyStateDescription()
+		{
+			if (this.state.documents.length > 0)
+			{
+				return View();
+			}
+
+			let description = this.canAddRealization()
+				? Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_EMPTYSTATE_DESCRIPTION_WITH_REALIZATION')
+				: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DEAL_EMPTYSTATE_DESCRIPTION');
+
+			return View(
+				{},
+				Text({
+					style: styles.documentsEmptyStateDescription,
+					text: description,
 				}),
 			);
 		}
@@ -413,11 +445,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			});
 
 			BX.ajax.runAction('crmmobile.Document.Payment.setPaid', {
-					data: {
-						documentId: document.ID,
-						value: strPaid,
-					},
-				})
+				data: {
+					documentId: document.ID,
+					value: strPaid,
+				},
+			})
 				.then(() => {
 					const params = {
 						entityTypeId: this.props.entityTypeId,
@@ -465,11 +497,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				}
 
 				BX.ajax.runAction(actionName, {
-						data: {
-							documentId: document.ID,
-							value: strShipped,
-						},
-					})
+					data: {
+						documentId: document.ID,
+						value: strShipped,
+					},
+				})
 					.then(() => {
 						const params = {
 							entityTypeId: this.props.entityTypeId,
@@ -532,8 +564,8 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			this.setState({ documents: filteredDocuments });
 
 			BX.ajax.runAction(action, {
-					data: data,
-				})
+				data,
+			})
 				.then(() => {
 					const params = {
 						entityTypeId: this.props.entityTypeId,
@@ -545,7 +577,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				})
 				.catch((response) => {
 					this.setState(
-						{ documents: documents },
+						{ documents },
 						() => handleErrors(response),
 					);
 				});
@@ -568,7 +600,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 							svgIcon: svgIcons.menuSendLink,
 						},
 						onClickCallback: () => {
-							this.documentMenu.close(() => this.openSendMessageStep(document));
+							this.documentMenu.close(() => this.onClickSendMessageButton(document));
 						},
 					});
 				}
@@ -617,20 +649,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					},
 					isDisabled: document.PAID === 'Y',
 					onClickCallback: () => this.documentMenu.close(() => {
-						Alert.confirm(
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_PAYMENT'),
-							[
-								{
-									text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_PAYMENT_MENU_DELETE'),
-									type: 'destructive',
-									onPress: () => this.deleteDocument(document),
-								},
-								{
-									type: 'cancel',
-								},
-							],
-						);
+						confirmDestructiveAction({
+							title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
+							description: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_PAYMENT'),
+							onDestruct: () => this.deleteDocument(document),
+						});
 					}),
 					onDisableClick: () => {
 						Notify.showUniqueMessage(
@@ -663,20 +686,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					},
 					isDisabled: document.DEDUCTED === 'Y',
 					onClickCallback: () => this.documentMenu.close(() => {
-						Alert.confirm(
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_SHIPMENT'),
-							[
-								{
-									text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_SHIPMENT_MENU_DELETE'),
-									type: 'destructive',
-									onPress: () => this.deleteDocument(document),
-								},
-								{
-									type: 'cancel',
-								},
-							],
-						);
+						confirmDestructiveAction({
+							title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
+							description: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_SHIPMENT'),
+							onDestruct: () => this.deleteDocument(document),
+						});
 					}),
 					onDisableClick: () => {
 						Notify.showUniqueMessage(
@@ -739,20 +753,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 					},
 					isDisabled: document.DEDUCTED === 'Y' || !this.props.salesOrderRights.delete,
 					onClickCallback: () => this.documentMenu.close(() => {
-						Alert.confirm(
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_REALIZATION'),
-							[
-								{
-									text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_DELETE'),
-									type: 'destructive',
-									onPress: () => this.deleteDocument(document),
-								},
-								{
-									type: 'cancel',
-								},
-							],
-						);
+						confirmDestructiveAction({
+							title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
+							description: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_REALIZATION'),
+							onDestruct: () => this.deleteDocument(document),
+						});
 					}),
 					onDisableClick: () => {
 						Notify.showUniqueMessage(
@@ -769,7 +774,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			return actions;
 		}
 
-		openSendMessageStep(document)
+		onClickSendMessageButton(document)
 		{
 			if (!Feature.isReceivePaymentSupported())
 			{
@@ -778,6 +783,28 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				return;
 			}
 
+			if (this.resendParams.entityHasContact && !this.resendParams.contactHasPhone)
+			{
+				const multiFieldDrawer = new MultiFieldDrawer({
+					entityTypeId: TypeId.Contact,
+					entityId: this.resendParams.contactId,
+					fields: [MultiFieldType.PHONE],
+					onSuccess: () => this.openSendMessageStep(document),
+					warningBlock: {
+						description: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_PAYMENT_PHONE_DRAWER_WARNING_TEXT'),
+					},
+				});
+
+				multiFieldDrawer.show();
+			}
+			else
+			{
+				this.openSendMessageStep(document);
+			}
+		}
+
+		openSendMessageStep(document)
+		{
 			const backdropParams = {
 				swipeAllowed: false,
 				forceDismissOnSwipeDown: false,
@@ -789,6 +816,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			};
 
 			const componentParams = {
+				entityHasContact: this.resendParams.entityHasContact,
 				entityId: this.props.entityId,
 				entityTypeId: this.props.entityTypeId,
 				mode: 'payment',
@@ -820,18 +848,9 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						this.getCreationDocumentContextMenu().show();
 					},
 				},
-				Image({
-					style: styles.plusIcon,
-					svg: {
-						content: svgIcons.documentAddPlus,
-					},
-				}),
 				Text({
-					style: {
-						fontSize: 13,
-						color: AppTheme.colors.base2,
-					},
-					text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD'),
+					style: styles.addDocumentButtonText,
+					text: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD_MSGVER_1'),
 				}),
 			);
 		}
@@ -869,11 +888,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 				);
 			}
 
-			if (
-				this.props.isUsedInventoryManagement
-				&& !this.props.modeWithOrders
-				&& this.props.salesOrderRights.modify
-			)
+			if (this.canAddRealization())
 			{
 				actions.push(
 					{
@@ -913,7 +928,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			const menu = new ContextMenu({
 				params: {
-					title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD'),
+					title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_ADD_MSGVER_1'),
 				},
 				actions,
 			});
@@ -1068,6 +1083,11 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			marginTop: 16,
 			marginBottom: 14,
 		},
+		documentsEmptyStateDescription: {
+			fontSize: 13,
+			color: AppTheme.colors.base4,
+			marginBottom: 10,
+		},
 		documentItem: {
 			flexDirection: 'row',
 			justifyContent: 'space-between',
@@ -1121,6 +1141,15 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			height: 16,
 			marginTop: 5,
 			marginBottom: 14,
+		},
+		addDocumentButtonText: {
+			fontSize: 13,
+			color: AppTheme.colors.accentMainLinks,
+			borderBottomWidth: 1,
+			borderBottomColor: AppTheme.colors.accentMainLinks,
+			borderStyle: 'dash',
+			borderDashSegmentLength: 3,
+			borderDashGapLength: 3,
 		},
 		plusIcon: {
 			width: 9,

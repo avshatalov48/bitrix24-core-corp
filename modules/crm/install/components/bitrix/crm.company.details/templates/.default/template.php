@@ -5,7 +5,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\NamingHelper;
 
 /** @var array $arParams */
@@ -55,6 +54,9 @@ $APPLICATION->IncludeComponent(
 		'TYPE' => 'details',
 		'SCRIPTS' => [
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
+		],
+		'ANALYTICS' => [
+			'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 		],
 	],
 	$component

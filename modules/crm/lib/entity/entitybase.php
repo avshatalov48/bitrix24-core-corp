@@ -3,10 +3,12 @@ namespace Bitrix\Crm\Entity;
 
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Filter\Factory;
-use Bitrix\Crm\Security\QueryBuilder\Options;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
+use Bitrix\Crm\Security\QueryBuilder\QueryBuilderOptions;
 use Bitrix\Crm\Security\QueryBuilder\Result;
 use Bitrix\Main;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Main\Entity\ReferenceField;
 
 abstract class EntityBase
 {
@@ -95,16 +97,16 @@ abstract class EntityBase
 		if ($enablePermissionCheck)
 		{
 			$userPermissions = $params['userPermissions'] ?? \CCrmPerms::GetCurrentUserPermissions();
-			$builderOptions = (new Options())
-				->setNeedReturnRawQuery(true)
-			;
+
+			$optionsBuilder = new OptionsBuilder(new Result\RawQueryResult());
+
 			if ($categories)
 			{
-				$builderOptions->setSkipCheckOtherEntityTypes(true);
+				$optionsBuilder->setSkipCheckOtherEntityTypes(true);
 			}
 			$builderResult = $this->buildPermissionSqlForCategories(
 				$userPermissions->GetUserID(),
-				$builderOptions,
+				$optionsBuilder->build(),
 				$categories ?? [0]
 			);
 		}
@@ -113,9 +115,10 @@ abstract class EntityBase
 
 		if ($enablePermissionCheck && !$builderResult->hasAccess()) // Access denied
 		{
-			return $cache[$cacheKey];
+			return [];
 		}
 		elseif (
+			// obtain IDs directly from permission table
 			$enablePermissionCheck
 			&& $builderResult->hasRestrictions() // need to check permissions
 			&& (empty($filter) || $isOnlyCategoryFilter)  // filter is suitable
@@ -141,7 +144,21 @@ abstract class EntityBase
 
 		if ($enablePermissionCheck && $builderResult->hasRestrictions())
 		{
-			$query->addFilter('@ID', $builderResult->getSqlExpression());
+			if ($builderResult->isOrmConditionSupport())
+			{
+				$query->registerRuntimeField('permission',
+					new ReferenceField(
+						'ENTITY',
+						$builderResult->getEntity(),
+						$builderResult->getOrmConditions(),
+						['join_type' => 'INNER']
+					)
+				);
+			}
+			else
+			{
+				$query->addFilter('@ID', $builderResult->getSqlExpression());
+			}
 		}
 
 		$dbResult = $query->exec();
@@ -365,13 +382,17 @@ abstract class EntityBase
 
 	private function getTopIdsFromPermissions(\CCrmPerms $userPermissions, $limit, $sortOrder = 'asc', array $categories = [0]): array
 	{
-		$builderOptions = (new Options())
-			->setRawQueryOrder((string)$sortOrder)
-			->setRawQueryLimit((int)$limit)
-			->setNeedReturnRawQuery(true)
-			->setUseRawQueryDistinct($limit > 1)
-		;
-		$builderResult = $this->buildPermissionSqlForCategories($userPermissions->GetUserID(), $builderOptions, $categories);
+		$optionBuilder = new OptionsBuilder(new Result\RawQueryResult(
+			order: (string)$sortOrder,
+			limit: (int)$limit,
+			useDistinct: $limit > 1
+		));
+
+		$builderResult = $this->buildPermissionSqlForCategories(
+			$userPermissions->GetUserID(),
+			$optionBuilder->build(),
+			$categories
+		);
 
 		if (!$builderResult->hasRestrictions())
 		{
@@ -388,7 +409,11 @@ abstract class EntityBase
 		return $result;
 	}
 
-	private function buildPermissionSqlForCategories(int $userId, Options $builderOptions, ?array $categoryIds = null): Result
+	private function buildPermissionSqlForCategories(
+		int $userId,
+		QueryBuilderOptions $builderOptions,
+		?array $categoryIds = null
+	): Result
 	{
 		$permEntityTypeHelper = new PermissionEntityTypeHelper($this->getEntityTypeID());
 

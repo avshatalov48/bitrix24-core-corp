@@ -4,7 +4,7 @@ namespace Bitrix\Crm\Security\QueryBuilder;
 
 use Bitrix\Main\ArgumentOutOfRangeException;
 
-class Options
+class Options implements OptionsInterface
 {
 	private $operations = [
 		\Bitrix\Crm\Service\UserPermissions::OPERATION_READ,
@@ -106,7 +106,7 @@ class Options
 		return $this;
 	}
 
-	public function getLimitByIds(): array
+	public function getLimitByIds(): ?array
 	{
 		return $this->limitByIds;
 	}

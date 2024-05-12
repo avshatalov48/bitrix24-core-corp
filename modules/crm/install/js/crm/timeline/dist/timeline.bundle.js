@@ -5886,7 +5886,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            files: typeof params.FILE_ID === 'object' && params.FILE_ID.length > 0
 	          });
 	        }
-	        this._messageTextNode.innerHTML = text;
+	        this._messageTextNode.innerText = text;
 	      }
 	      //endregion
 

@@ -2,6 +2,7 @@
  * @module im/messenger/lib/ui/base/buttons/icon-button
  */
 jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, module) => {
+	/* global View */
 	const { withPressed } = require('utils/color');
 	const AppTheme = require('apptheme');
 
@@ -37,6 +38,16 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 			const backgroundColor = this.props.style?.backgroundColor || AppTheme.colors.bgContentPrimary;
 			const borderColor = this.props.disable ? AppTheme.colors.base7 : this.props.style?.border?.color;
 			const backgroundColorChange = this.props.disable ? backgroundColor : withPressed(backgroundColor);
+			const textStyle = {
+				alignSelf: 'center',
+				color: AppTheme.colors.accentMainPrimaryalt,
+				fontSize: 12,
+				fontWeight: 500,
+				marginBottom: 12,
+				...this.props.style?.text,
+			};
+
+			textStyle.color = this.props.disable ? AppTheme.colors.base6 : textStyle.color;
 
 			return View(
 				{
@@ -65,13 +76,7 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 				Text(
 					{
 						text: this.props.text || '',
-						style: this.props.style?.text || {
-							alignSelf: 'center',
-							color: this.props.disable ? AppTheme.colors.base6 : AppTheme.colors.accentMainPrimaryalt,
-							fontSize: 12,
-							fontWeight: 500,
-							marginBottom: 12,
-						},
+						style: textStyle,
 					},
 				),
 			);

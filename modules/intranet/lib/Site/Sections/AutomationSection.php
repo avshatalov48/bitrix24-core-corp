@@ -326,12 +326,13 @@ class AutomationSection
 
 		foreach ($elements as $elementTypeId)
 		{
+			$supportedTypeId = $elementTypeId;
 			if ($elementTypeId === \CCrmOwnerType::Contact || $elementTypeId === \CCrmOwnerType::Company)
 			{
-				$elementTypeId = \CCrmOwnerType::Deal;
+				$supportedTypeId = \CCrmOwnerType::Deal;
 			}
 
-			if (Crm\Automation\Factory::isSupported($elementTypeId))
+			if (Crm\Automation\Factory::isSupported($supportedTypeId))
 			{
 				$items[] = [
 					'TEXT' => \CCrmOwnerType::GetCategoryCaption($elementTypeId),

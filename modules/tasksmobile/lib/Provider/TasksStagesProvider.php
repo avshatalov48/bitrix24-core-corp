@@ -82,7 +82,7 @@ final class TasksStagesProvider
 
 		foreach ($tasks as $task)
 		{
-			$result[] = new TaskStageDto([
+			$result[] = TaskStageDto::make([
 				'taskId' => (int)$task['ID'],
 				'stageId' => $this->stageId,
 				'userId' => $this->userId,
@@ -104,7 +104,7 @@ final class TasksStagesProvider
 
 		foreach ($tasks as $task)
 		{
-			$result[] = new TaskStageDto([
+			$result[] = TaskStageDto::make([
 				'taskId' => (int)$task['ID'],
 				'stageId' => (int)$task['STAGE_ID'],
 				'userId' => $this->userId,
@@ -141,7 +141,7 @@ final class TasksStagesProvider
 		]);
 		while ($row = $rows->fetch())
 		{
-			$result[] = new TaskStageDto([
+			$result[] = TaskStageDto::make([
 				'taskId' => (int)$row['TASK_ID'],
 				'stageId' => (int)$row['STAGE_ID'],
 				'userId' => $this->userId,
@@ -212,7 +212,7 @@ final class TasksStagesProvider
 				$stageId = $periods[self::PERIOD_NO_DEADLINE];
 			}
 
-			$result[] = new TaskStageDto([
+			$result[] = TaskStageDto::make([
 				'taskId' => (int)$task['ID'],
 				'stageId' => (int)$stageId,
 				'userId' => $this->userId,

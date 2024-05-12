@@ -8,10 +8,12 @@ jn.define('analytics-label', (require, exports, module) => {
 	class AnalyticsLabel
 	{
 		/**
-		 * @param {object} analyticsLabel
+		 * @param {object} analytics
 		 */
-		static send(analyticsLabel)
+		static send(analytics)
 		{
+			const analyticsLabel = { ...analytics };
+
 			analyticsLabel.platform = Application.getPlatform();
 
 			if (Application.isBeta())

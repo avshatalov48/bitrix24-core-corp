@@ -1,3 +1,5 @@
+import {PayloadData} from "./base";
+
 export enum FileType
 {
 	image = 'image',
@@ -45,6 +47,7 @@ export type FilesModelState = {
 export type FilesModelActions =
 	'filesModel/setState'
 	| 'filesModel/set'
+	| 'filesModel/setFromLocalDatabase'
 	| 'filesModel/updateWithId'
 	| 'filesModel/delete'
 
@@ -54,3 +57,39 @@ export type FilesModelMutation =
 	| 'filesModel/update'
 	| 'filesModel/updateWithId'
 	| 'filesModel/delete'
+
+
+export type FilesSetStateActions = 'setState';
+export interface FilesSetStateData extends PayloadData
+{
+	collection: Record<number, FilesModelState>;
+}
+
+
+export type FilesAddActions = 'set';
+export interface FilesAddData extends PayloadData
+{
+	fileList: Array<FilesModelState>;
+}
+
+
+export type FilesUpdateActions = 'set';
+export interface FilesUpdateData extends PayloadData
+{
+	fileList: Array< Partial<FilesModelState> >;
+}
+
+
+export type FilesUpdateWithIdActions = 'updateWithId';
+export interface FilesUpdateWithIdData extends PayloadData
+{
+	id: number;
+	fields: Partial<FilesModelState>
+}
+
+
+export type FilesDeleteActions = 'delete';
+export interface FilesDeleteData extends PayloadData
+{
+	id: number;
+}

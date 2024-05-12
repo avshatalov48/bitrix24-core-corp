@@ -7,6 +7,7 @@ return [
 		'im:messenger/view/base',
 		'im:messenger/const',
 		'im:messenger/lib/params',
-		'intranet/invite',
+		'intranet/invite-opener',
+		'analytics',
 	],
 ];

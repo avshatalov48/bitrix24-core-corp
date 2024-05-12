@@ -251,6 +251,10 @@
 	padding: 15px 18px;
 }
 
+.timeman-report-container .main-grid-ear-left {
+	margin-left: 0;
+}
+
 .timeman-filter-wrap {
 	margin-right: 58px;
 }

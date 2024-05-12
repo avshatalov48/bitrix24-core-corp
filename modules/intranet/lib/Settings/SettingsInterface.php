@@ -14,5 +14,5 @@ interface SettingsInterface
 	public function get(): self;
 	public function toArray(): array;
 	public function set(array $data): self;
-	public function hasAccess(User $user, string $fieldName): bool;
+	public function find(string $query): array;
 }

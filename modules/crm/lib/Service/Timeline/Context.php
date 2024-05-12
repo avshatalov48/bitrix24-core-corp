@@ -50,6 +50,11 @@ class Context
 		return $this->getIdentifier()->getEntityId();
 	}
 
+	public function getEntityCategoryId(): ?int
+	{
+		return $this->getIdentifier()->getCategoryId();
+	}
+
 	public function getUserId(): int
 	{
 		return $this->userId;

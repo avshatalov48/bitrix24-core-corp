@@ -16,7 +16,6 @@ use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
@@ -724,14 +723,16 @@ if ($isBizProcInstalled)
 $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Contact);
 
 //region Check and fill fields restriction
-$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
+$params = [
 	$arResult['GRID_ID'] ?? '',
 	$arResult['HEADERS'] ?? [],
 	$entityFilter ?? null
-);
+];
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(...$params);
+$arResult['RESTRICTED_FIELDS'] = $fieldRestrictionManager->getFilterFields(...$params);
 //endregion
 
-// list all filds for export
+// list all fields for export
 $exportAllFieldsList = array();
 if ($isInExportMode && $isStExportAllFields)
 {
@@ -1075,6 +1076,13 @@ foreach ($arFilter as $k => $v)
 	}
 	elseif($k === 'COMPANY_TITLE')
 	{
+		// The 'false' value in this filter indicates that it should be used to check for "not filled" and does
+		// not require any conversion. It should function similarly to the "filled" value with !COMPANY_TITLE === false.
+		if ($v === false)
+		{
+			continue;
+		}
+
 		//Rename field for support of multiple company bindings. See \CCrmContact::__AfterPrepareSql
 		$arFilter['ASSOCIATED_COMPANY_TITLE'] = $arFilter['COMPANY_TITLE'];
 		unset($arFilter['COMPANY_TITLE']);
@@ -2323,10 +2331,30 @@ foreach($arResult['CONTACT'] as &$arContact)
 		);
 	}
 
-	$arContact['PATH_TO_CONTACT_COPY'] =  CHTTP::urlAddParams(
-		$arContact['PATH_TO_CONTACT_EDIT'],
-		array('copy' => 1)
-	);
+	$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Contact)
+		->setSection(
+			!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+				? $arParams['ANALYTICS']['c_section']
+				: null
+		)
+		->setSubSection(
+			!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+				? $arParams['ANALYTICS']['c_sub_section']
+				: null
+		)
+		->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+	;
+	if ($category && $category->getCode())
+	{
+		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+	}
+	$arContact['PATH_TO_CONTACT_COPY'] = $analyticsEventBuilder
+		->buildUri($arContact['PATH_TO_CONTACT_EDIT'])
+		->addParams([
+			'copy' => 1,
+		])
+		->getUri()
+	;
 
 	$arContact['PATH_TO_CONTACT_DELETE'] =  CHTTP::urlAddParams(
 		$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_CONTACT_LIST'],
@@ -2754,10 +2782,6 @@ if (is_array($arResult['CONTACT_ID']) && !empty($arResult['CONTACT_ID']))
 
 if (!$isInExportMode)
 {
-	$arResult['ANALYTIC_TRACKER'] = array(
-		'lead_enabled' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isEnabled() ? 'Y' : 'N'
-	);
-
 	$arResult['NEED_FOR_REBUILD_DUP_INDEX'] =
 		$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] =
 		$arResult['NEED_FOR_REBUILD_CONTACT_ATTRS'] =

@@ -3,10 +3,10 @@
  */
 jn.define('im/messenger/controller/reaction-viewer/controller', (require, exports, module) => {
 	const { ReactionViewerView } = require('im/messenger/controller/reaction-viewer/view');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ReactionService } = require('im/messenger/provider/service');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
@@ -39,7 +39,7 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 
 		constructor(messageId, reactionType, parentLayout)
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			/** @type {PageManager} */
 			this.parentLayout = parentLayout;
 			this.reactionService = new ReactionService(messageId);
@@ -175,7 +175,7 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 					avatar: imageUrl,
 					color: imageColor,
 				},
-			});
+			}, ComponentCode.imMessenger);
 		}
 	}
 

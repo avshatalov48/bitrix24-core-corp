@@ -4,5 +4,8 @@ export type EditorOptions = {
 	entityTypeId: number,
 	entityId: number,
 	categoryId?: number,
-	placeHolderMaskRe?: RegExp,
+	onSelect: () => {},
+	onDeselect?: () => {},
+	canUseFieldsDialog?: boolean,
+	canUseFieldValueInput?: boolean,
 };

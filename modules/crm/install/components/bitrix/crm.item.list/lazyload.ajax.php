@@ -26,9 +26,11 @@ if (!CModule::IncludeModule('crm') || !CCrmSecurityHelper::IsAuthorized() || !ch
 	die();
 }
 
-$entityTypeId = (int)Application::getInstance()->getContext()->getRequest()->get('entityTypeId');
-$parentEntityTypeId = (int)Application::getInstance()->getContext()->getRequest()->get('parentEntityTypeId');
-$parentEntityId = (int)Application::getInstance()->getContext()->getRequest()->get('parentEntityId');
+$request = Application::getInstance()->getContext()->getRequest();
+
+$entityTypeId = (int)$request->get('entityTypeId');
+$parentEntityTypeId = (int)$request->get('parentEntityTypeId');
+$parentEntityId = (int)$request->get('parentEntityId');
 
 if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId) || $parentEntityTypeId <= 0 || $parentEntityId <= 0)
 {
@@ -38,6 +40,23 @@ if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId) || $parentEnti
 if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($parentEntityTypeId, $parentEntityId))
 {
 	die();
+}
+
+$unsignedParameters = [];
+if (
+	is_array($request->get('PARAMS'))
+	&& !empty($request->get('PARAMS')['signedParameters'])
+	&& is_string($request->get('PARAMS')['signedParameters'])
+)
+{
+	$unsignedParameters = Container::getInstance()->getRouter()->unsignChildrenItemsComponentParams(
+		$entityTypeId,
+		$request->get('PARAMS')['signedParameters'],
+	);
+	if (!is_array($unsignedParameters))
+	{
+		$unsignedParameters = [];
+	}
 }
 
 global $APPLICATION;
@@ -56,7 +75,7 @@ $APPLICATION->IncludeComponent('bitrix:crm.item.list',
 			$parentEntityId
 		),
 		'isEmbedded' => true,
-	],
+	] + $unsignedParameters,
 	false,
 	[
 		'HIDE_ICONS' => 'Y',

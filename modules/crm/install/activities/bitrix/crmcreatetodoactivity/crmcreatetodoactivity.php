@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Bizproc;
 
 class CBPCrmCreateToDoActivity extends CBPActivity
 {
@@ -63,7 +64,9 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 
 		if ($this->workflow->isDebug())
 		{
-			$this->writeDebugInfo($this->getDebugInfo());
+			$this->writeDebugInfo($this->getDebugInfo([
+				'Deadline' => $deadline,
+			]));
 		}
 
 		$saveResult = $todo->save();
@@ -97,9 +100,10 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 	private function getDeadline($userId): \Bitrix\Main\Type\DateTime
 	{
 		$offset = $userId ? CTimeZone::GetOffset($userId, true) : 0;
-		$ts = \MakeTimeStamp((string)$this->Deadline) ?: time();
+		$ts = CBPHelper::makeTimestamp($this->Deadline) ?: time();
+		$dt = new Bizproc\BaseType\Value\DateTime($ts, $offset);
 
-		return \Bitrix\Main\Type\DateTime::createFromTimestamp($ts - $offset);
+		return $dt->toSystemObject();
 	}
 
 	public static function ValidateProperties($testProperties = [], CBPWorkflowTemplateUser $user = null)

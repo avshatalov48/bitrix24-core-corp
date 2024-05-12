@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/chat/participant', (require, exports, module) => {
 	const { Type } = require('type');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { UserRole } = require('im/messenger/const');
@@ -18,7 +18,7 @@ jn.define('im/messenger/provider/service/classes/chat/participant', (require, ex
 		 */
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		/**

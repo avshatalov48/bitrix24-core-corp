@@ -58,7 +58,7 @@ class Grid
 	private $urlManager;
 	private $dateTimeFrom;
 	private $dateTimeTo;
-	/** @var Main\Type\Date[] */
+	/** @var Main\Type\DateTime[] */
 	private $periodDateTimes = [];
 	private $fromToDates = [];
 	private $currentUserDate;
@@ -357,7 +357,7 @@ class Grid
 		$range = Ranges::getPeriod($this->getDateTimeFrom(), $this->getDateTimeTo());
 		foreach ($range as $date)
 		{
-			$this->periodDateTimes[$date->format($this->dateTimeFormat)] = Main\Type\Date::createFromPhp($date);
+			$this->periodDateTimes[$date->format($this->dateTimeFormat)] = Main\Type\DateTime::createFromPhp($date);
 		}
 
 		$this->periodSize = sizeof($this->periodDateTimes);
@@ -365,11 +365,11 @@ class Grid
 		$this->periodDatesFormatted = array_keys($this->periodDateTimes);
 
 		$this->periodPrev = array_map(function ($date) {
-			return Main\Type\Date::createFromTimestamp($date->getTimestamp());
+			return Main\Type\DateTime::createFromTimestamp($date->getTimestamp());
 		}, $this->periodShift($this->periodDateTimes, $this->periodType, true));
 
 		$this->periodNext = array_map(function ($date) {
-			return Main\Type\Date::createFromTimestamp($date->getTimestamp());
+			return Main\Type\DateTime::createFromTimestamp($date->getTimestamp());
 		}, $this->periodShift($this->periodDateTimes, $this->periodType, false));
 	}
 
@@ -1338,8 +1338,11 @@ class Grid
 		foreach ($absenceUserData as $absIndex => $absenceItem)
 		{
 			$absItem = [];
-			/*-*/
-			if ($absenceItem['tm_absStartDateTime'] instanceof \DateTime && $absenceItem['tm_absStartFormatted'] === null)
+
+			$absenceItem['tm_absStartFormatted'] = ($absenceItem['tm_absStartFormatted'] ?? null);
+			$absenceItem['tm_absEndFormatted'] = ($absenceItem['tm_absEndFormatted'] ?? null);
+
+			if ($absenceItem['tm_absStartDateTime'] instanceof \Bitrix\Main\Type\DateTime && $absenceItem['tm_absStartFormatted'] === null)
 			{
 				$absenceData[$user['ID']][$absIndex]['tm_absStartFormatted'] = '';
 				$startDateTime = clone $absenceItem['tm_absStartDateTime'];
@@ -1350,7 +1353,7 @@ class Grid
 					$absenceData[$user['ID']][$absIndex]['tm_absStartFormatted'] = $absenceItem['tm_absStartFormatted'];
 				}
 			}
-			if ($absenceItem['tm_absEndDateTime'] instanceof \DateTime && $absenceItem['tm_absEndFormatted'] === null)
+			if ($absenceItem['tm_absEndDateTime'] instanceof \Bitrix\Main\Type\DateTime && $absenceItem['tm_absEndFormatted'] === null)
 			{
 				$absenceData[$user['ID']][$absIndex]['tm_absEndFormatted'] = '';
 				$endDateTime = clone $absenceItem['tm_absEndDateTime'];
@@ -1361,7 +1364,10 @@ class Grid
 					$absenceData[$user['ID']][$absIndex]['tm_absEndFormatted'] = $absenceItem['tm_absEndFormatted'];
 				}
 			}
-			if ($absenceItem['tm_absStartFormatted'] === $periodDateFormatted && $absenceItem['tm_absEndFormatted'] === $periodDateFormatted)
+			if (
+				$absenceItem['tm_absStartFormatted'] === $periodDateFormatted
+				&& $absenceItem['tm_absEndFormatted'] === $periodDateFormatted
+			)
 			{
 				$absItem['ABSENCE_PART'] = 'full';
 			}

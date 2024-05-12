@@ -11,7 +11,7 @@ jn.define('im/messenger/lib/utils/user', (require, exports, module) => {
 	{
 		/**
 		 *
-		 * @param {UsersModelState} userData
+		 * @param {?UsersModelState} userData
 		 * @param {boolean} [fullLastSeenText=false]
 		 * @param {boolean} [fullLastSeenTextByNow=false]
 		 * @return {string}

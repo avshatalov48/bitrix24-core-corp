@@ -7,7 +7,6 @@ use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Entity\FieldDataProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
-use Bitrix\Crm\Integration\AI\Analytics;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\MultipleFieldFillPayload;
 use Bitrix\Crm\Integration\AI\Dto\SingleFieldFillPayload;
@@ -16,6 +15,9 @@ use Bitrix\Crm\Integration\AI\JobRepository;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Result;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\ExtractFieldsEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
@@ -407,11 +409,19 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			$activityId = self::getParentActivityId($result);
 			if ($atListOneFieldIsApplied)
 			{
-				self::sendAnalyticsWrapper($activityId, Analytics::STATUS_SUCCESS_FIELDS);
+				self::sendCallParsingAnalyticsEvent(
+					$activityId,
+					Dictionary::STATUS_SUCCESS_FIELDS,
+					$result->isManualLaunch(),
+				);
 			}
 			elseif ($commentFieldIsApplied)
 			{
-				self::sendAnalyticsWrapper($activityId, Analytics::STATUS_SUCCESS_COMMENT);
+				self::sendCallParsingAnalyticsEvent(
+					$activityId,
+					Dictionary::STATUS_SUCCESS_COMMENT,
+					$result->isManualLaunch(),
+				);
 			}
 
 			$saveResult = JobRepository::getInstance()->updateFillItemFieldsFromCallTranscriptionResult($result);
@@ -552,12 +562,12 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 
 				self::syncBadges($activityId, Badge\Type\AiCallFieldsFillingResult::ERROR_PROCESS_VALUE);
 			}
-			
+
 			self::notifyTimelinesAboutActivityUpdate($activityId);
 
 			if ($withSendAnalytics)
 			{
-				self::sendAnalyticsWrapper($activityId, Analytics::STATUS_ERROR_GPT);
+				self::sendCallParsingAnalyticsEvent($activityId, Dictionary::STATUS_ERROR_GPT, $result->isManualLaunch());
 			}
 		}
 	}
@@ -670,5 +680,10 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			self::syncBadges($activityId);
 			self::notifyTimelinesAboutActivityUpdate($activityId, true);
 		}
+	}
+
+	protected static function getJobFinishEventBuilder(): AIBaseEvent
+	{
+		return new ExtractFieldsEvent();
 	}
 }

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/user-add/view', (require, exports, module) => {
 	const { MultiSelector } = require('im/messenger/lib/ui/selector');
-	const { UserSearchController } = require('im/messenger/controller/search');
+	const { UserSearchController, CopilotSearchController } = require('im/messenger/controller/search');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
 
 	class UserAddView extends LayoutComponent
@@ -31,7 +31,14 @@ jn.define('im/messenger/controller/user-add/view', (require, exports, module) =>
 				onClick: () => props.callback.onClickRightBtn(),
 			});
 
-			this.searchController = new UserSearchController(this.selector);
+			if (props.isCopilotDialog)
+			{
+				this.searchController = new CopilotSearchController(this.selector);
+			}
+			else
+			{
+				this.searchController = new UserSearchController(this.selector);
+			}
 		}
 
 		render() {

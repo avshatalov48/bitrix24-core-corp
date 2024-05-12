@@ -3,6 +3,7 @@
 namespace Bitrix\Intranet\Settings;
 
 use Bitrix\Intranet\Binding\Marketplace;
+use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
@@ -10,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Config\Option;
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 
 class GdprSettings extends AbstractSettings
 {
@@ -114,10 +116,22 @@ class GdprSettings extends AbstractSettings
 
 		$data = [];
 
-		$data['companyTitle'] = Option::get('bitrix24', 'gdpr_legal_name');
-		$data['contactName'] = Option::get('bitrix24', 'gdpr_contact_name');
-		$data['notificationEmail'] = Option::get('bitrix24', 'gdpr_notification_email');
-		$data['date'] = Option::get('bitrix24', 'gdpr_date', '');
+		$data['companyTitle'] = [
+			'value' => Option::get('bitrix24', 'gdpr_legal_name'),
+			'label' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
+		];
+		$data['contactName'] = [
+			'value' => Option::get('bitrix24', 'gdpr_contact_name'),
+			'label' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CONTACT_NAME'),
+		];
+		$data['notificationEmail'] = [
+			'value' => Option::get('bitrix24', 'gdpr_notification_email'),
+			'label' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL'),
+		];
+		$data['date'] = [
+			'value' => Option::get('bitrix24', 'gdpr_date', ''),
+			'label' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATE'),
+		];
 
 		if (empty($data['date']))
 		{
@@ -128,6 +142,13 @@ class GdprSettings extends AbstractSettings
 		$data['dpaLink'] = $this->getDpaLink();
 		$data['marketDirectory'] = Marketplace::getMainDirectory();
 
+		$data['sectionGdpr'] = new Section(
+			'settings-gdpr-section-gdpr',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_GDPR'),
+			'ui-icon-set --document',
+			canCollapse: false,
+		);
+
 		return new static($data);
 	}
 
@@ -137,5 +158,23 @@ class GdprSettings extends AbstractSettings
 		$domain = isset($areaConfig) ? $areaConfig['DEFAULT_DOMAIN'] : '.bitrix24.com';
 
 		return 'https://www' . $domain . '/upload/DPA/BitrixDPA.pdf';
+	}
+
+	public function find(string $query): array
+	{
+		$index = [];
+		if (static::isGdprAvailable())
+		{
+			$index['settings-gdpr-section-gdpr'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_GDPR');
+		}
+
+		$searchEngine = SearchEngine::initWithDefaultFormatter($index + [
+			'companyTitle' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
+			'contactName' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CONTACT_NAME'),
+			'notificationEmail' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL'),
+			'date' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATE')
+		]);
+
+		return $searchEngine->find($query);
 	}
 }

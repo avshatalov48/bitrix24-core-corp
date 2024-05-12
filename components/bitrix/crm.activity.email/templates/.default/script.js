@@ -894,19 +894,18 @@
 
 	};
 
-	const updateSignatureNodeId = function (self, template, formId, newSignatureNodeId)
+	const updateSignatureNodeId = function(self, template, formId, newSignatureNodeId)
 	{
-		const signatureId = formId + '_signature_';
-		const regExp = new RegExp(signatureId + '\\w+(?=")', 'gi');
-		if(regExp.test(template))
+		const crmSignaturePattern = '"main_mail_form+\\w+_signature_+\\w+"';
+		const regExp = new RegExp(crmSignaturePattern, 'gi');
+		if (regExp.test(template))
 		{
 			self.hasTemplateSignature = true;
-			return template.replace(regExp, newSignatureNodeId);
+
+			return template.replace(regExp, `"${newSignatureNodeId}"`);
 		}
-		else
-		{
-			return template;
-		}
+
+		return template;
 	};
 
 	BXCrmActivityEmail.prototype.templateMenu = function (ownerType, ownerId, selector)

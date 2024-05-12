@@ -26,7 +26,7 @@ abstract class BaseLinkedEntitiesField extends Field
 		$fieldType = $this->getType();
 		foreach ((array)$fieldValue as $value)
 		{
-			if ($value === '' || $value <= 0)
+			if (!is_scalar($value) || $value === '' || $value <= 0)
 			{
 				continue;
 			}

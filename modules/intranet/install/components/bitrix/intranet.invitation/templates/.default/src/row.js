@@ -85,7 +85,6 @@ export class Row
 
 			Event.bind(closeIcon, 'click', (event) => {
 				event.preventDefault();
-				node.value = "";
 
 				if (Type.isDomNode(node.parentNode))
 				{

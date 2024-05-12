@@ -2,10 +2,9 @@
  * @module crm/timeline/controllers/activity
  */
 jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { TimelineBaseController } = require('crm/controllers/base');
 	const { ActivityViewer } = require('crm/timeline/services/activity-viewer');
-	const { Alert, ButtonType } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 
 	const SupportedActions = {
 		DELETE: 'Activity:Delete',
@@ -59,20 +58,11 @@ jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
 
 			if (confirmationText)
 			{
-				Alert.confirm(
-					'',
-					confirmationText,
-					[
-						{
-							text: Loc.getMessage('CRM_TIMELINE_CONFIRM_REMOVE'),
-							type: ButtonType.DESTRUCTIVE,
-							onPress: () => this.executeDeleteAction(data),
-						},
-						{
-							type: ButtonType.CANCEL,
-						},
-					],
-				);
+				confirmDestructiveAction({
+					title: '',
+					description: confirmationText,
+					onDestruct: () => this.executeDeleteAction(data),
+				});
 			}
 			else
 			{

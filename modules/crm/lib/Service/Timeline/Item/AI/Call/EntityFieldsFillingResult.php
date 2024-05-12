@@ -40,8 +40,7 @@ final class EntityFieldsFillingResult extends Base
 						->addActionParamInt('mergeUuid', $this->getJobResult()?->getJobId())
 						->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 						// analytic metrics
-						->addActionParamString('crmMode', $this->getContext()->getCurrentCrmMode())
-						->addActionParamString('callId', $this->getAssociatedEntityModel()?->get('CALL_INFO')['CALL_ID'])
+						->addActionParamInt('activityId', $this->getActivityId())
 						->setAnimation(Action\Animation::disableBlock())
 				)
 				->setScopeWeb()
@@ -60,9 +59,6 @@ final class EntityFieldsFillingResult extends Base
 				->addActionParamInt('activityId', $this->getActivityId())
 				->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 				->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-				// analytic metrics
-				->addActionParamString('crmMode', $this->getContext()->getCurrentCrmMode())
-				->addActionParamString('callId', $this->getAssociatedEntityModel()?->get('CALL_INFO')['CALL_ID'])
 			;
 		}
 

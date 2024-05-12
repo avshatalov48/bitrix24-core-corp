@@ -193,16 +193,6 @@ $arComponentParameters = array(
 	),
 );
 
-if (IsModuleInstalled("video"))
-{
-	$arComponentParameters["PARAMETERS"]["PATH_TO_VIDEO_CALL"] = array(
-			"NAME" => GetMessage("INTR_COMP_IS_PARAM_PATH_TO_VIDEO_CALL"),
-			"TYPE" => "STRING",
-			"DEFAULT" => "/company/personal/video/#USER_ID#/",
-			"PARENT" => "ADDITIONAL_SETTINGS",
-		); 
-}
-
 //in intranet:structure.list not implement pagination in grouping, so do not always show the number of records per page
 if(($arCurrentValues['DEFAULT_VIEW'] == 'list' && $arCurrentValues['LIST_VIEW'] != 'group') || ($arCurrentValues['DEFAULT_VIEW'] == 'table' && $arCurrentValues['TABLE_VIEW'] != 'group_table'))
 {

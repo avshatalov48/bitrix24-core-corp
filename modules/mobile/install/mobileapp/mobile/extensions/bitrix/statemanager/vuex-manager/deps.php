@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'utils/uuid',
 		'utils/logger',
 		'statemanager/vuex',

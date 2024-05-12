@@ -9,6 +9,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			paused: 'onAppPaused',
 			active: 'onAppActive',
 			failRestoreConnection: 'failRestoreConnection',
+			changeStatus: 'changeStatus',
 		},
 		view: {
 			close: 'onViewRemoved',
@@ -84,6 +85,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageMenuActionTap: 'messageMenuActionTap',
 			messageFileDownloadTap: 'messageFileDownloadTap',
 			messageFileUploadCancelTap: 'messageFileUploadCancelTap',
+			messageButtonTap: 'messageButtonTap',
+			copilotFootnoteTap: 'copilotFootnoteTap',
 			urlTap: 'urlTap',
 			imageTap: 'imageTap',
 			audioTap: 'audioTap',
@@ -127,6 +130,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			chatJoinButton: {
 				tap: 'tap',
 			},
+			pinPanel: {
+				itemTap: 'itemTap',
+				buttonTap: 'buttonTap',
+			},
 		},
 		/** Integration (other components events) */
 		chatDialog: {
@@ -148,6 +155,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			chat: {
 				change: 'ImMobile.Messenger.Settings.Chat:change',
 			},
+		},
+		sync: {
+			requestResultReceived: 'requestResultReceived',
+			requestResultSaved: 'requestResultSaved',
 		},
 	});
 

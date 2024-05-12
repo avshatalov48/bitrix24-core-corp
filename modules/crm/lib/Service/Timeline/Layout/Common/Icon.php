@@ -49,7 +49,10 @@ class Icon
 	public const TASK_VIEWED_COMMENT = 'task-viewed-comment';
 	public const TASK_ACTIVITY = 'task-activity';
 	public const AI_COPILOT = 'ai-copilot';
-
+	public const RESTORATION = 'restoration';
+	public const ARROW_UP = 'arrow-up';
+	public const ARROW_DOWN = 'arrow-down';
+	public const VISIT = 'visit';
 	//endregion
 
 	public static function getSystemIcons(): array

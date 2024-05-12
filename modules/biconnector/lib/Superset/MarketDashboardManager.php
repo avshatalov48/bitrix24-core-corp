@@ -4,6 +4,8 @@ namespace Bitrix\BIConnector\Superset;
 
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
+use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Superset\UI\DashboardManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
@@ -67,8 +69,17 @@ final class MarketDashboardManager
 
 		$result = new Result();
 		$response = $this->integrator->importDashboard($filePath, $appCode);
+
 		if ($response->hasErrors())
 		{
+			if (self::isSystemAppByAppCode($appCode))
+			{
+				MarketDashboardLogger::logErrors($response->getErrors(),[
+					'message' => 'System dashboard installation error',
+					'code' => $appCode,
+				]);
+			}
+
 			$this->handleUnsuccessfulInstall($appCode);
 			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
 
@@ -76,7 +87,7 @@ final class MarketDashboardManager
 		}
 
 		$type = SupersetDashboardTable::DASHBOARD_TYPE_MARKET;
-		if ($this->isSystemAppByAppCode($appCode))
+		if (self::isSystemAppByAppCode($appCode))
 		{
 			$type = SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM;
 		}
@@ -95,7 +106,7 @@ final class MarketDashboardManager
 			->fetchObject()
 		;
 
-		if (!$dashboard)
+		if (empty($dashboard))
 		{
 			$dashboard = SupersetDashboardTable::createObject();
 		}
@@ -109,6 +120,8 @@ final class MarketDashboardManager
 			$this->integrator->deleteDashboard([$dashboard->getExternalId()]);
 		}
 
+		$isDashboardExists = $dashboard->getExternalId() > 0;
+
 		$dashboard
 			->setExternalId((int)$externalDashboard['id'])
 			->setTitle($externalDashboard['dashboard_title'])
@@ -119,6 +132,17 @@ final class MarketDashboardManager
 		;
 
 		DashboardManager::notifyDashboardStatus($dashboard->getId(), SupersetDashboardTable::DASHBOARD_STATUS_READY);
+
+		if ($type === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+		{
+			$logMessage = $isDashboardExists
+				? 'System dashboard was successfully updated'
+				: 'System dashboard was successfully installed'
+			;
+			MarketDashboardLogger::logInfo($logMessage, ['code' => $appCode]);
+
+			SystemDashboardManager::notifyUserDashboardModification($dashboard, $isDashboardExists);
+		}
 
 		return $result;
 	}
@@ -171,7 +195,7 @@ final class MarketDashboardManager
 			'filter' => ['=ID' => $appId],
 		]);
 		$appCode = $appRow['CODE'];
-		if (!$this->isSystemAppByAppCode($appCode))
+		if (!self::isSystemAppByAppCode($appCode))
 		{
 			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_DATASET_IMPORT')));
 
@@ -181,18 +205,33 @@ final class MarketDashboardManager
 		$response = $this->integrator->importDataset($filePath);
 		if ($response->hasErrors())
 		{
+			if (self::isSystemAppByAppCode($appCode))
+			{
+				MarketDashboardLogger::logErrors($response->getErrors(), [
+					'message' => 'System dataset installation error',
+					'code' => $appCode,
+				]);
+			}
+
 			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
+
+			return $result;
+		}
+
+		if (self::isSystemAppByAppCode($appCode))
+		{
+			MarketDashboardLogger::logInfo('System dataset was successfully installed', ['code' => $appCode]);
 		}
 
 		return $result;
 	}
 
-	private function isSystemAppByAppCode(string $appCode): bool
+	public static function isSystemAppByAppCode(string $appCode): bool
 	{
 		return preg_match('/^bitrix\.bic_/', $appCode);
 	}
 
-	private function isDatasetAppByAppCode(string $appCode): bool
+	public static function isDatasetAppByAppCode(string $appCode): bool
 	{
 		return preg_match('/^bitrix\.bic_datasets_/', $appCode);
 	}
@@ -208,14 +247,14 @@ final class MarketDashboardManager
 			return $result;
 		}
 
-		if ($this->isDatasetAppByAppCode($appRow['CODE']))
+		if (self::isDatasetAppByAppCode($appRow['CODE']))
 		{
 			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_DATASETS')));
 
 			return $result;
 		}
 
-		if ($this->isSystemAppByAppCode($appRow['CODE']))
+		if (self::isSystemAppByAppCode($appRow['CODE']))
 		{
 			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_SYSTEM_DASHBOARD')));
 
@@ -288,13 +327,15 @@ final class MarketDashboardManager
 
 	public function installInitialDashboards(): Result
 	{
+		MarketDashboardLogger::logInfo('Start installing initial dashboards');
+
 		$result = new Result();
 
 		$appList = $this->getSystemApps();
 		$systemAppCodes = array_column($appList, 'CODE');
 		foreach ($systemAppCodes as $code)
 		{
-			if ($this->isDatasetAppByAppCode($code))
+			if (self::isDatasetAppByAppCode($code))
 			{
 				$installResult = $this->installApplication($code);
 				if (!$installResult->isSuccess())
@@ -307,8 +348,8 @@ final class MarketDashboardManager
 		foreach ($systemAppCodes as $code)
 		{
 			if (
-				!$this->isSystemAppByAppCode($code)
-				|| $this->isDatasetAppByAppCode($code)
+				!self::isSystemAppByAppCode($code)
+				|| self::isDatasetAppByAppCode($code)
 			)
 			{
 				continue;
@@ -322,10 +363,11 @@ final class MarketDashboardManager
 				'limit' => 1,
 			])->fetch();
 
-			if (!isset($row['EXTERNAL_ID']))
+			if ($row && !isset($row['EXTERNAL_ID']))
 			{
 				$installResult = $this->installApplication($code);
 				$dashboard = SupersetDashboardTable::getByPrimary($row['ID'])->fetchObject();
+
 				if (!$installResult->isSuccess())
 				{
 					$result->addErrors($installResult->getErrors());
@@ -404,8 +446,8 @@ final class MarketDashboardManager
 		foreach ($this->getSystemApps() as $systemApp)
 		{
 			if (
-				!$this->isDatasetAppByAppCode($systemApp['CODE'])
-				&& $this->isSystemAppByAppCode($systemApp['CODE'])
+				!self::isDatasetAppByAppCode($systemApp['CODE'])
+				&& self::isSystemAppByAppCode($systemApp['CODE'])
 			)
 			{
 				$systemDashboardApps[] = $systemApp;

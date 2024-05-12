@@ -17,6 +17,7 @@ jn.define('tasks/dashboard/src/pull', (require, exports, module) => {
 			this.onPullCallback = data.onPullCallback;
 
 			this.shouldReloadDynamically = data.shouldReloadDynamically ?? true;
+			this.isTabsMode = data.isTabsMode;
 
 			this.getPullConfig = this.getPullConfig.bind(this);
 		}
@@ -35,6 +36,11 @@ jn.define('tasks/dashboard/src/pull', (require, exports, module) => {
 				moduleId: 'tasks',
 				callback: this.processPullEvent.bind(this),
 			});
+
+			if (this.isTabsMode)
+			{
+				BX.postComponentEvent('tasks.dashboard:pullSubscribed', [], 'tasks.tabs');
+			}
 		}
 
 		processPullEvent(data)

@@ -53,32 +53,82 @@ export class SettingsWidgetLoader
 		const container = popup.getPopup().getPopupContainer();
 
 		Dom.clean(container);
-		Dom.addClass(container, 'intranet-settings-widget__container');
+		Dom.addClass(container, 'intranet-widget-skeleton__wrap');
 
-		if (this.#isBitrix24 && !this.#isAdmin)
+		Dom.append(this.getHeaderSkeleton(), container);
+
+		if (this.#isRequisite)
 		{
-			Dom.append(Tag.render`<div class="intranet-settings-widget__skeleton-not-admin"></div>`, container);
+			Dom.append(this.getItemSkeleton(), container);
 		}
-		else if (this.#isBitrix24 && this.#isRequisite)
+
+		if (this.#isAdmin)
 		{
-			Dom.append(Tag.render`<div class="intranet-settings-widget__skeleton"></div>`, container);
+			Dom.append(this.getSplitItemSkeleton(), container);
 		}
-		else if (this.#isBitrix24 && !this.#isRequisite)
+
+		if (this.#isBitrix24)
 		{
-			Dom.append(Tag.render`<div class="intranet-settings-widget__skeleton-no-requisite"></div>`, container);
+			Dom.append(this.getItemSkeleton(), container);
 		}
-		else if (!this.#isBitrix24 && this.#isRequisite)
-		{
-			Dom.append(Tag.render`<div class="intranet-settings-widget__skeleton-no-holding"></div>`, container);
-		}
-		else
-		{
-			Dom.append(Tag.render`<div class="intranet-settings-widget__skeleton-no-requisite-holding"></div>`, container);
-		}
+
+		Dom.append(this.getItemSkeleton(), container);
+		Dom.append(this.getFooterSkeleton(), container);
 
 		this.#popup = popup;
 
 		return popup;
+	}
+
+	getHeaderSkeleton(): HTMLElement
+	{
+		return Tag.render`
+			<div class="intranet-widget-skeleton__header">
+				<div style="max-width: 95px; height: 8px;" class="intranet-widget-skeleton__line"></div>
+			</div>
+		`;
+	}
+
+	getItemSkeleton(): HTMLElement
+	{
+		return Tag.render`
+			<div class="intranet-widget-skeleton__row">
+				<div class="intranet-widget-skeleton__item">
+					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
+					<div style="max-width: 130px;" class="intranet-widget-skeleton__line"></div>
+					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
+				</div>
+			</div>
+		`;
+	}
+
+	getSplitItemSkeleton(): HTMLElement
+	{
+		return  Tag.render`
+			<div class="intranet-widget-skeleton__row">
+				<div class="intranet-widget-skeleton__item">
+					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
+					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
+					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
+				</div>
+				<div class="intranet-widget-skeleton__item">
+					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
+					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
+					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
+				</div>
+			</div>
+		`;
+	}
+
+	getFooterSkeleton(): HTMLElement
+	{
+		return Tag.render`
+			<div class="intranet-widget-skeleton__footer">
+				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
+				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
+				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
+			</div>
+		`;
 	}
 
 	#load(): Promise

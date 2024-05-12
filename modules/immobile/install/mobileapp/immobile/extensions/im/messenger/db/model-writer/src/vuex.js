@@ -10,6 +10,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 	const { MessageWriter } = require('im/messenger/db/model-writer/vuex/message');
 	const { TempMessageWriter } = require('im/messenger/db/model-writer/vuex/temp-message');
 	const { QueueWriter } = require('im/messenger/db/model-writer/vuex/queue');
+	const { PinMessageWriter } = require('im/messenger/db/model-writer/vuex/pin-message');
 
 	class VuexModelWriter
 	{
@@ -50,6 +51,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 			this.messageWriter = new MessageWriter(writerOptions);
 			this.tempMessageWriter = new TempMessageWriter(writerOptions);
 			this.queueWriter = new QueueWriter(writerOptions);
+			this.pinMessageWriter = new PinMessageWriter(writerOptions);
 		}
 	}
 

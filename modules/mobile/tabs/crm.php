@@ -39,6 +39,11 @@ class Crm implements Tabable
 			return false;
 		}
 
+		if (Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser())
+		{
+			return false;
+		}
+
 		return \CCrmPerms::IsAccessEnabled();
 	}
 

@@ -2,6 +2,9 @@
  * @module im/messenger/cache/draft
  */
 jn.define('im/messenger/cache/draft', (require, exports, module) => {
+	const {
+		CacheName,
+	} = require('im/messenger/const');
 	const { Cache } = require('im/messenger/cache/base');
 
 	/**
@@ -12,7 +15,7 @@ jn.define('im/messenger/cache/draft', (require, exports, module) => {
 		constructor()
 		{
 			super({
-				name: 'draft',
+				name: CacheName.draft,
 			});
 		}
 	}

@@ -5,6 +5,7 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { UserField, UserFieldMode } = require('layout/ui/fields/user');
+	const { AnalyticsEvent } = require('analytics');
 
 	class Accomplices extends LayoutComponent
 	{
@@ -88,6 +89,7 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 					style: (this.props.style || {}),
 				},
 				UserField({
+					analytics: new AnalyticsEvent().setSection('task'),
 					readOnly: this.state.readOnly,
 					showEditIcon: true,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_ACCOMPLICES'),

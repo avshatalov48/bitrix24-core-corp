@@ -61,8 +61,8 @@ class ProblemSerializer
 			if (is_array($record))
 			{
 				$this->dateTimeToString($record);
+				$activities[] = array_values($record);
 			}
-			$activities[] = array_values($record);
 		}
 
 		return $activities;

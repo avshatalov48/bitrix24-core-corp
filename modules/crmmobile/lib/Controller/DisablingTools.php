@@ -5,12 +5,12 @@ namespace Bitrix\CrmMobile\Controller;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 use Bitrix\Crm\Integration\Intranet\ToolsManager;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
-use Bitrix\Main\Engine\Controller;
+use Bitrix\CrmMobile\Controller\Base;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Request;
 
-class DisablingTools extends Controller
+class DisablingTools extends Base
 {
 	private ToolsManager $toolsManager;
 

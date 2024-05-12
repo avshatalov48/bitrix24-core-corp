@@ -10,6 +10,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		CallActivity,
 		Modification,
 		OpenlineChat,
+		VisitActivity,
 	} = require('crm/timeline/item/custom-types');
 
 	/**
@@ -28,6 +29,8 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'Document',
 		'RestLog',
 		'Conversion',
+		'Restoration',
+		'ElementCompletion',
 		'Activity:Email',
 		'ContactList',
 		'EmailActivitySuccessfullyDelivered',
@@ -66,6 +69,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'StoreDocumentRealization:Modification',
 		'StoreDocumentRealization:Creation',
 		'StoreDocumentConduction:Modification',
+		'Activity:Visit',
 	];
 
 	if (TimelineSchedulerCommentProvider.isSupported())
@@ -81,6 +85,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		Modification,
 		'Activity:Call': CallActivity,
 		'Activity:OpenLine': OpenlineChat,
+		'Activity:Visit': VisitActivity,
 	};
 
 	/**

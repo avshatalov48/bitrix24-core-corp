@@ -100,10 +100,18 @@ $this->addExternalCss(SITE_TEMPLATE_PATH."/css/employee.css");
 		<noindex>
 		<div class="search-advanced">
 			<div class="search-advanced-result">
-				<?if(is_object($arResult["NAV_RESULT"])):?>
-					<div class="search-result"><?echo GetMessage("CT_BSP_FOUND")?>: <?echo $arResult["NAV_RESULT"]->SelectedRowsCount()?></div>
-				<?endif;?>
-				<?
+				<?php if(is_object($arResult["NAV_RESULT"])):?>
+					<div class="search-result">
+						<?php
+						echo GetMessage("CT_BSP_FOUND_MSGVER_1",
+						[
+							"#AMOUNT#" => $arResult["NAV_RESULT"]->SelectedRowsCount()
+						]
+						)
+						?>
+					</div>
+				<?php endif; ?>
+				<?php
 				$arWhere = array();
 
 				if(!empty($arResult["TAGS_CHAIN"]))
@@ -368,7 +376,7 @@ $this->addExternalCss(SITE_TEMPLATE_PATH."/css/employee.css");
 			</div>
 		<?endif;?>
 	<?else:?>
-		<?ShowNote(GetMessage("CT_BSP_NOTHING_TO_FOUND"));?>
+		<?php ShowNote(GetMessage("CT_BSP_NOTHING_TO_FOUND_MSGVER_1")); ?>
 	<?endif;?>
 
 	</div>

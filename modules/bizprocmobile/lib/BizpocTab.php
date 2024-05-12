@@ -30,6 +30,11 @@ class BizpocTab implements Tabable
 			return false;
 		}
 
+		if (Loader::includeModule('extranet') && !\CExtranet::isIntranetUser())
+		{
+			return false;
+		}
+
 		return \CBPRuntime::isFeatureEnabled();
 	}
 

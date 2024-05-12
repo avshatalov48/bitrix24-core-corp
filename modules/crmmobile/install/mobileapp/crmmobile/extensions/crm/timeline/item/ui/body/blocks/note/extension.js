@@ -4,11 +4,11 @@
 jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) => {
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineItemUserAvatar } = require('crm/timeline/item/ui/user-avatar');
-	const { TimelineTextEditor } = require('crm/timeline/ui/text-editor');
-	const { AppTheme } = require('apptheme/extended');
+	const { TextEditor } = require('layout/ui/text-editor');
+	const { EditableTextBlock } = require('layout/ui/editable-text-block');
+	const { Color } = require('tokens');
 	const { Loc } = require('loc');
-	const { Alert, ButtonType } = require('alert');
-	const { largePen } = require('assets/common');
+	const { confirmDestructiveAction } = require('alert');
 
 	/**
 	 * @class TimelineItemBodyNoteBlock
@@ -19,12 +19,11 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 		{
 			super(...props);
 
-			const text = typeof this.props.text === 'string' ? this.props.text.trim() : '';
+			this.text = typeof this.props.text === 'string' ? this.props.text.trim() : '';
 
-			this.initiallyFilled = text.length > 0;
+			this.initiallyFilled = this.text.length > 0;
 
 			this.state = {
-				text,
 				expanded: false,
 			};
 
@@ -35,7 +34,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 		{
 			const text = typeof props.text === 'string' ? props.text.trim() : '';
 			this.initiallyFilled = text.length > 0;
-			this.state.text = text;
+			this.text = text;
 		}
 
 		componentDidMount()
@@ -61,12 +60,12 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 				{
 					style: {
 						paddingHorizontal: 1,
-						display: this.state.text.length > 0 ? 'flex' : 'none',
+						display: this.text.length > 0 ? 'flex' : 'none',
 					},
 				},
 				Shadow(
 					{
-						color: AppTheme.colors.shadowPrimary,
+						color: Color.shadowPrimary,
 						radius: 2,
 						offset: {
 							y: 2,
@@ -78,7 +77,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 					View(
 						{
 							style: {
-								backgroundColor: AppTheme.colors.accentSoftOrange1,
+								backgroundColor: Color.accentSoftOrange1,
 								flexDirection: 'row',
 							},
 						},
@@ -89,120 +88,73 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 								testId: 'TimelineItemBodyNoteUserAvatar',
 							}),
 						),
-						View(
+						new EditableTextBlock(
 							{
-								style: {
-									flexGrow: 1,
-									paddingVertical: 12,
+								value: this.text,
+								onSave: (text) => this.onSave(text),
+								onBeforeSave: (editor) => this.onBeforeSave(editor),
+								externalStyles: {
+									paddingLeft: 0,
+									borderWidth: 0,
+									borderRadius: 0,
+									paddingTop: 14,
 									flex: 1,
 								},
-								onClick: () => this.toggleExpanded(),
-								onLongClick: () => this.openEditor(),
+								textProps: this.getTextParams(),
+								editorProps: this.getEditorParams(),
+								editIconTestId: 'TimelineItemBodyNoteEditIcon',
 							},
-							this.renderText(),
 						),
-						this.renderEditIcon(),
 					),
 				),
 			);
 		}
 
-		renderEditIcon()
+		getTextParams()
 		{
-			if (this.isReadonly)
-			{
-				return null;
-			}
-
-			return View(
-				{},
-				View(
-					{
-						testId: 'TimelineItemBodyNoteEditIcon',
-						onClick: () => this.openEditor(),
-						style: {
-							paddingHorizontal: 16,
-							paddingVertical: 14,
-						},
-					},
-					Image({
-						tintColor: AppTheme.colors.base3,
-						svg: {
-							content: largePen(),
-						},
-						style: {
-							width: 18,
-							height: 18,
-						},
-					}),
-				),
-			);
-		}
-
-		renderText()
-		{
-			return BBCodeText({
+			return {
 				testId: 'TimelineItemBodyNoteText',
-				value: this.prepareTextToRender(this.state.text),
 				style: {
 					fontSize: 14,
 					fontWeight: '400',
-					color: AppTheme.colors.base1,
+					color: Color.base1,
 				},
-			});
+				containerStyle: {
+					flexGrow: 1,
+					paddingRight: 40,
+				},
+				maxLettersCount: this.getMaxLettersCount(),
+				maxEntersCount: this.getMaxEntersCount(),
+				bbCodeMode: true,
+			};
 		}
 
-		prepareTextToRender(text)
+		getEditorParams()
 		{
-			const maxLettersCount = this.getMaxLettersCount();
-			if (this.state.expanded || text.length <= maxLettersCount)
-			{
-				return text;
-			}
-
-			return `${text.slice(0, maxLettersCount).trim()}... [color=${AppTheme.colors.base3}]${Loc.getMessage('M_CRM_TIMELINE_VIEW_MORE')}[/color]`;
+			return {
+				title: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_TITLE_MSGVER_1'),
+				placeholder: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_PLACEHOLDER_MSGVER_1'),
+				required: !this.initiallyFilled,
+			};
 		}
 
 		openEditor()
 		{
-			TimelineTextEditor.open({
+			TextEditor.open({
 				title: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_TITLE_MSGVER_1'),
-				text: this.state.text,
+				text: this.text,
 				required: !this.initiallyFilled,
 				placeholder: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_PLACEHOLDER_MSGVER_1'),
-				onBeforeSave: (editor) => new Promise((resolve, reject) => {
-					const text = editor.value.trim();
-					if (text.length === 0 && this.initiallyFilled)
-					{
-						return Alert.confirm(
-							'',
-							this.props.deleteConfirmationText,
-							[
-								{
-									type: ButtonType.CANCEL,
-									onPress: reject,
-								},
-								{
-									text: Loc.getMessage('CRM_TIMELINE_CONFIRM_REMOVE'),
-									type: ButtonType.DESTRUCTIVE,
-									onPress: resolve,
-								},
-							],
-						);
-					}
-
-					resolve();
-				}),
+				onBeforeSave: (editor) => this.onBeforeSave(editor),
 				onSave: (text) => this.onSave(text),
 			});
 		}
 
 		onSave(text)
 		{
-			text = text.trim();
-			this.state.text = text;
+			this.text = text.trim();
 
-			if (text.length > 0)
+			if (this.text.length > 0)
 			{
 				this.emitSaveAction();
 			}
@@ -212,15 +164,37 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 			}
 		}
 
+		onBeforeSave(editor)
+		{
+			return new Promise((resolve, reject) => {
+				const text = editor.value.trim();
+				if (text.length === 0 && this.initiallyFilled)
+				{
+					confirmDestructiveAction({
+						title: '',
+						description: this.props.deleteConfirmationText,
+						onDestruct: () => resolve(),
+						onCancel: () => reject(),
+					});
+				}
+				else
+				{
+					resolve();
+				}
+			});
+		}
+
 		emitSaveAction()
 		{
 			if (this.props.saveNoteAction)
 			{
-				const { actionParams } = this.props.saveNoteAction;
-				actionParams.text = this.state.text;
-				this.emitAction({
-					...this.props.saveNoteAction,
-					actionParams,
+				this.setState({}, () => {
+					const { actionParams } = this.props.saveNoteAction;
+					actionParams.text = this.text;
+					this.emitAction({
+						...this.props.saveNoteAction,
+						actionParams,
+					});
 				});
 			}
 		}
@@ -233,14 +207,6 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 			}
 		}
 
-		toggleExpanded()
-		{
-			if (this.state.text.length > this.getMaxLettersCount())
-			{
-				this.setState({ expanded: !this.state.expanded });
-			}
-		}
-
 		getMaxLettersCount()
 		{
 			if (this.model.hasLowPriority)
@@ -249,6 +215,16 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 			}
 
 			return 330;
+		}
+
+		getMaxEntersCount()
+		{
+			if (this.model.hasLowPriority)
+			{
+				return 1;
+			}
+
+			return 4;
 		}
 	}
 

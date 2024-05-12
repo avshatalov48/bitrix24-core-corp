@@ -8,10 +8,13 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Format\RequisiteAddressFormatter;
 use Bitrix\Crm\Integration\Landing\RequisitesLanding;
+use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Intranet\Settings\Requisite\CompanyList;
 use Bitrix\Intranet\Settings\Requisite\PresetList;
 use Bitrix\Intranet\Settings\Requisite\RequisiteList;
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 class RequisiteSettings extends AbstractSettings
@@ -51,8 +54,15 @@ class RequisiteSettings extends AbstractSettings
 			return new static();
 		}
 
+		$data['sectionRequisite'] = new Section(
+			'settings-requisite-section-company_requisite',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_REQUISITE'),
+			'ui-icon-set --suitcase',
+			canCollapse: false
+		);
+
 		$filter['=IS_MY_COMPANY'] = 'Y';
-		$companyList = new CompanyList($filter, ['DATE_CREATE' => 'DESC']);
+		$companyList = new CompanyList($filter, ['DATE_CREATE' => 'DESC'], ['ID', 'TITLE']);
 		$data['COMPANY'] = $companyList->toArray();
 
 		$fieldTitles = [];
@@ -263,6 +273,15 @@ class RequisiteSettings extends AbstractSettings
 		}
 
 		return $result;
+	}
+
+	public function find(string $query): array
+	{
+		$searchEngine = SearchEngine::initWithDefaultFormatter([
+			'settings-requisite-section-company_requisite' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_REQUISITE'),
+		]);
+
+		return $searchEngine->find($query);
 	}
 }
 

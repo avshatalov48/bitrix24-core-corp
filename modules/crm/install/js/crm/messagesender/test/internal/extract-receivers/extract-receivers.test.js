@@ -22,7 +22,7 @@ const entityData = {
 					},
 					"VALUE_FORMATTED": "+7 999 222-11-33",
 					"COMPLEX_ID": "PHONE_WORK",
-					"COMPLEX_NAME": "Рабочий"
+					"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 				},
 				{
 					"ID": "2019",
@@ -33,7 +33,7 @@ const entityData = {
 					},
 					"VALUE_FORMATTED": "+7 922 111-55-22",
 					"COMPLEX_ID": "PHONE_MAILING",
-					"COMPLEX_NAME": "Для рассылок"
+					"COMPLEX_NAME": "Р”Р»СЏ СЂР°СЃСЃС‹Р»РѕРє"
 				}
 			],
 			"3_3260": [
@@ -46,7 +46,7 @@ const entityData = {
 					},
 					"VALUE_FORMATTED": "+7 999 111-22-33",
 					"COMPLEX_ID": "PHONE_WORK",
-					"COMPLEX_NAME": "Рабочий"
+					"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 				}
 			]
 		},
@@ -61,7 +61,7 @@ const entityData = {
 					},
 					"VALUE_FORMATTED": "mail@example.com",
 					"COMPLEX_ID": "EMAIL_WORK",
-					"COMPLEX_NAME": "Рабочий"
+					"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 				}
 			],
 			"3_3260": [
@@ -74,7 +74,7 @@ const entityData = {
 					},
 					"VALUE_FORMATTED": "mail@example.com",
 					"COMPLEX_ID": "EMAIL_WORK",
-					"COMPLEX_NAME": "Рабочий"
+					"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 				}
 			]
 		}
@@ -85,12 +85,12 @@ const entityData = {
 				"id": "1010",
 				"type": "company",
 				"typeName": "COMPANY",
-				"typeNameTitle": "Компания",
+				"typeNameTitle": "РљРѕРјРїР°РЅРёСЏ",
 				"place": "company",
 				"hidden": false,
-				"title": "Компания #1010",
+				"title": "РљРѕРјРїР°РЅРёСЏ #1010",
 				"url": "/crm/company/details/1010/",
-				"desc": "Клиент, Информационные технологии",
+				"desc": "РљР»РёРµРЅС‚, РРЅС„РѕСЂРјР°С†РёРѕРЅРЅС‹Рµ С‚РµС…РЅРѕР»РѕРіРёРё",
 				"image": "",
 				"permissions": {
 					"canUpdate": true
@@ -110,7 +110,7 @@ const entityData = {
 							},
 							"VALUE_FORMATTED": "+7 999 222-11-33",
 							"COMPLEX_ID": "PHONE_WORK",
-							"COMPLEX_NAME": "Рабочий"
+							"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 						},
 						{
 							"ID": "2019",
@@ -124,7 +124,7 @@ const entityData = {
 							},
 							"VALUE_FORMATTED": "+7 922 111-55-22",
 							"COMPLEX_ID": "PHONE_MAILING",
-							"COMPLEX_NAME": "Для рассылок"
+							"COMPLEX_NAME": "Р”Р»СЏ СЂР°СЃСЃС‹Р»РѕРє"
 						},
 						{
 							"ID": "2020",
@@ -138,7 +138,7 @@ const entityData = {
 							},
 							"VALUE_FORMATTED": "mail@example.com",
 							"COMPLEX_ID": "EMAIL_WORK",
-							"COMPLEX_NAME": "Рабочий"
+							"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 						}
 					],
 					"requisiteData": [],
@@ -151,10 +151,10 @@ const entityData = {
 				"id": "3260",
 				"type": "contact",
 				"typeName": "CONTACT",
-				"typeNameTitle": "Контакт",
+				"typeNameTitle": "РљРѕРЅС‚Р°РєС‚",
 				"place": "contact",
 				"hidden": false,
-				"title": "Контакт #3260",
+				"title": "РљРѕРЅС‚Р°РєС‚ #3260",
 				"url": "/crm/contact/details/3260/",
 				"desc": "",
 				"image": "",
@@ -165,7 +165,7 @@ const entityData = {
 				"advancedInfo": {
 					"contactType": {
 						"id": "CLIENT",
-						"name": "Клиенты"
+						"name": "РљР»РёРµРЅС‚С‹"
 					},
 					"multiFields": [
 						{
@@ -180,7 +180,7 @@ const entityData = {
 							},
 							"VALUE_FORMATTED": "+7 999 111-22-33",
 							"COMPLEX_ID": "PHONE_WORK",
-							"COMPLEX_NAME": "Рабочий"
+							"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 						},
 						{
 							"ID": "2017",
@@ -194,7 +194,7 @@ const entityData = {
 							},
 							"VALUE_FORMATTED": "mail@example.com",
 							"COMPLEX_ID": "EMAIL_WORK",
-							"COMPLEX_NAME": "Рабочий"
+							"COMPLEX_NAME": "Р Р°Р±РѕС‡РёР№"
 						}
 					],
 					"bindings": {
@@ -220,7 +220,7 @@ const receivers = [
 			valueFormatted: '+7 999 222-11-33',
 		},
 		{
-			title: 'Компания #1010',
+			title: 'РљРѕРјРїР°РЅРёСЏ #1010',
 		}
 	),
 	new Receiver(
@@ -234,7 +234,7 @@ const receivers = [
 			valueFormatted: '+7 922 111-55-22',
 		},
 		{
-			title: 'Компания #1010',
+			title: 'РљРѕРјРїР°РЅРёСЏ #1010',
 		}
 	),
 	new Receiver(
@@ -248,7 +248,7 @@ const receivers = [
 			valueFormatted: '+7 999 111-22-33',
 		},
 		{
-			title: 'Контакт #3260',
+			title: 'РљРѕРЅС‚Р°РєС‚ #3260',
 		},
 	),
 	new Receiver(
@@ -262,7 +262,7 @@ const receivers = [
 			valueFormatted: 'mail@example.com',
 		},
 		{
-			title: 'Компания #1010',
+			title: 'РљРѕРјРїР°РЅРёСЏ #1010',
 		}
 	),
 	new Receiver(
@@ -276,7 +276,7 @@ const receivers = [
 			valueFormatted: 'mail@example.com',
 		},
 		{
-			title: 'Контакт #3260',
+			title: 'РљРѕРЅС‚Р°РєС‚ #3260',
 		}
 	)
 ];

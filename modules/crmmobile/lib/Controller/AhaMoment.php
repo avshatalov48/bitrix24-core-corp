@@ -4,9 +4,9 @@ namespace Bitrix\CrmMobile\Controller;
 
 use Bitrix\CrmMobile\AhaMoments\Factory;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
-use Bitrix\Main\Engine\Controller;
+use Bitrix\CrmMobile\Controller\Base;
 
-class AhaMoment extends Controller
+class AhaMoment extends Base
 {
 	public function configureActions(): array
 	{

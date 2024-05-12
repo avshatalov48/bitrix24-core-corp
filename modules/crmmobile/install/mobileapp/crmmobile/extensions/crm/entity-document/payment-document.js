@@ -21,6 +21,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 	const { PaymentPayOpener } = require('crm/terminal/entity/payment-pay-opener');
 	const { getFormattedNumber } = require('utils/phone');
 	const { InfoHelper } = require('layout/ui/info-helper');
+	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
 
 	const PRODUCTS_FOR_LOADER_COUNT = 4;
 
@@ -48,6 +49,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 			this.uid = props.uid;
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			this.isTerminalToolEnabled = props.isTerminalToolEnabled ?? true;
+			this.resendParams = props.resendParams ?? {};
 
 			this.loadDocumentData();
 		}
@@ -132,7 +134,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 								name: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_SEND'),
 								type: 'text',
 								color: AppTheme.colors.accentMainLinks,
-								callback: () => this.openSendMessageStep(),
+								callback: () => this.onClickSendMessageButton(),
 							});
 						}
 
@@ -171,7 +173,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 			});
 		}
 
-		openSendMessageStep()
+		onClickSendMessageButton()
 		{
 			this.layoutWidget.close(() => {
 				if (!Feature.isReceivePaymentSupported())
@@ -181,38 +183,61 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 					return;
 				}
 
-				const backdropParams = {
-					swipeAllowed: false,
-					forceDismissOnSwipeDown: false,
-					horizontalSwipeAllowed: false,
-					bounceEnable: true,
-					showOnTop: true,
-					topPosition: 60,
-					navigationBarColor: AppTheme.colors.bgSecondary,
-					helpUrl: helpdesk.getArticleUrl('17567646'),
-				};
+				if (this.resendParams.entityHasContact && !this.resendParams.contactHasPhone)
+				{
+					const multiFieldDrawer = new MultiFieldDrawer({
+						entityTypeId: TypeId.Contact,
+						entityId: this.resendParams.contactId,
+						fields: [MultiFieldType.PHONE],
+						onSuccess: this.openSendMessageStep.bind(this),
+						warningBlock: {
+							description: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_PAYMENT_PHONE_DRAWER_WARNING_TEXT'),
+						},
+					});
 
-				const componentParams = {
-					entityId: this.entityId,
-					entityTypeId: this.entityTypeId,
-					mode: 'payment',
-					uid: this.uid,
-					resendMessageMode: true,
-					paymentId: this.id,
-				};
+					multiFieldDrawer.show();
+				}
+				else
+				{
+					this.openSendMessageStep();
+				}
+			});
+		}
 
-				ComponentHelper.openLayout({
-					name: 'crm:salescenter.receive.payment',
-					object: 'layout',
-					widgetParams: {
-						objectName: 'layout',
-						title: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_RESEND_LINK'),
-						modal: true,
-						backgroundColor: AppTheme.colors.bgPrimary,
-						backdrop: backdropParams,
-					},
-					componentParams,
-				});
+		openSendMessageStep()
+		{
+			const backdropParams = {
+				swipeAllowed: false,
+				forceDismissOnSwipeDown: false,
+				horizontalSwipeAllowed: false,
+				bounceEnable: true,
+				showOnTop: true,
+				topPosition: 60,
+				navigationBarColor: AppTheme.colors.bgSecondary,
+				helpUrl: helpdesk.getArticleUrl('17567646'),
+			};
+
+			const componentParams = {
+				entityId: this.entityId,
+				entityTypeId: this.entityTypeId,
+				mode: 'payment',
+				uid: this.uid,
+				resendMessageMode: true,
+				paymentId: this.id,
+				entityHasContact: this.resendParams.entityHasContact,
+			};
+
+			ComponentHelper.openLayout({
+				name: 'crm:salescenter.receive.payment',
+				object: 'layout',
+				widgetParams: {
+					objectName: 'layout',
+					title: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_RESEND_LINK'),
+					modal: true,
+					backgroundColor: AppTheme.colors.bgPrimary,
+					backdrop: backdropParams,
+				},
+				componentParams,
 			});
 		}
 

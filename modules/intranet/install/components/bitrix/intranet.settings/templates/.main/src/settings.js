@@ -1,5 +1,7 @@
 import { ajax, Http, Event, Runtime } from 'main.core';
+import { HelpMessage } from 'ui.section';
 import { Analytic } from './analytic';
+import { Navigation } from './navigation';
 import { ToolsPage } from './pages/tools-page';
 import { EmployeePage } from './pages/employee-page';
 import { RequisitePage } from './pages/requisite-page';
@@ -14,9 +16,11 @@ import { Type, Dom, Loc } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { PageManager } from './page-manager';
-import { BaseSettingsElement, ErrorCollection, BaseSettingVisitor,
-	RecursiveFilteringVisitor, AscendingOpeningVisitor, BaseSettingsPage } from 'ui.form-elements.field';
-import { Searcher } from './searcher';
+import { BaseSettingsElement, ErrorCollection, BaseSettingsPage } from 'ui.form-elements.field';
+import { Searcher } from './search-engine/searcher';
+import { Renderer } from './search-engine/renderer';
+import { ServerDataSource } from './search-engine/server-data-source';
+import { Permission } from './permission';
 
 import './css/style.css';
 import './css/main_search_field.css';
@@ -24,15 +28,16 @@ import './css/main_search_field.css';
 export class Settings extends BaseSettingsElement
 {
 	#basePage: string;
-	#currentPage: ?BaseSettingsPage;
 	isChanged: boolean = false;
 	#menuNode: ?HTMLElement;
 	#settingsNode: ?HTMLElement;
 	#contentNode: ?HTMLElement;
-	#searcher: Searcher;
 	#pageManager: ?PageManager;
 	#cancelMessageBox: ?MessageBox;
 	#analytic: Analytic;
+	#navigator: Navigation;
+	#permission: Permission;
+	#pagesPermission;
 
 	constructor(params)
 	{
@@ -67,21 +72,8 @@ export class Settings extends BaseSettingsElement
 		this.#settingsNode = Type.isDomNode(params.settingsNode) ? params.settingsNode : null;
 		this.#contentNode = Type.isDomNode(params.contentNode) ? params.contentNode : null;
 		this.#basePage = Type.isString(params.basePage) ? params.basePage : '';
-
-		if (this.#menuNode)
-		{
-			this.#menuNode.querySelectorAll('li.ui-sidepanel-menu-item a')
-				.forEach(item => {
-					item.addEventListener('click', (event) => {
-						this.show(item.dataset.type);
-					});
-				});
-		}
-
-		if (params.searchNode)
-		{
-			Event.bind(params.searchNode, 'focus', this.#onClickSearchInput.bind(this, params.searchNode));
-		}
+		this.#permission = params.permission instanceof Permission ? params.permission : new Permission();
+		this.#pagesPermission = params.pagesPermission;
 
 		if (this.#settingsNode)
 		{
@@ -104,11 +96,38 @@ export class Settings extends BaseSettingsElement
 			toolsMenuItem.hideSubmenu();
 			toolsMenuItem.setDefaultToggleButtonName();
 		}
+
+		this.#navigator = new Navigation(this);
+
+		if (this.#menuNode)
+		{
+			this.#menuNode.querySelectorAll('li.ui-sidepanel-menu-item a.ui-sidepanel-menu-link')
+				.forEach(item => {
+					const helpPopup = new HelpMessage(
+						item.dataset.type + '_help-msg',
+						item,
+						Loc.getMessage('INTRANET_SETTINGS_PERMISSION_MSG')
+					);
+					helpPopup.getPopup().setWidth(275);
+					const page = this.getNavigator().getPageByType(item.dataset.type);
+					item.addEventListener('click', (event) => {
+						if (page?.getPermission()?.canRead())
+						{
+							this.show(item.dataset.type);
+						}
+						else
+						{
+							helpPopup.show();
+						}
+					});
+				});
+		}
 	}
 
 	registerPage(page: BaseSettingsPage): BaseSettingsPage
 	{
 		page.setParentElement(this);
+		page.setPermission(new Permission(this.#pagesPermission[page.getType()] ?? null))
 		page.subscribe('change', this.#onEventChangeData.bind(this))
 			.subscribe('fetch', this.#onEventFetchPage.bind(this))
 		;
@@ -117,45 +136,48 @@ export class Settings extends BaseSettingsElement
 		return page;
 	}
 
-	getPageByType(type: string): ?BaseSettingsPage
+	getCurrentPage(): ?BaseSettingsPage
 	{
-		return this.getChildrenElements().find((page: BaseSettingsPage) => {
-			return page.getType() === type;
-		});
+		return this.getNavigator().getCurrentPage();
 	}
 
-	show(type: string): void
+	getNavigator(): Navigation
+	{
+		return this.#navigator
+	}
+
+	show(type: string, option?: string): void
 	{
 		if (!Type.isDomNode(this.#contentNode))
 		{
 			console.log('Not found settings container');
 			return;
 		}
-
-		const nextPage = this.getPageByType(type);
-		if (!(nextPage instanceof BaseSettingsPage))
-		{
-			console.log('Not found "' + type + '" page');
-			return;
-		}
-
-		if (nextPage === this.#currentPage)
+		if (!this.#permission.canRead())
 		{
 			return;
 		}
+		const nextPage = this.getNavigator().getPageByType(type);
 
-		Dom.hide(this.#currentPage?.getPage());
-		if (Type.isNil(nextPage.getPage().parentNode))
+		if (this.getCurrentPage() === nextPage)
 		{
-			Dom.append(nextPage.getPage(), this.#contentNode);
+			return;
+		}
+
+		this.getNavigator().changePage(nextPage);
+		Dom.hide(this.getNavigator().getPrevPage()?.getPage());
+		if (Type.isNil(this.getNavigator().getCurrentPage().getPage().parentNode))
+		{
+			Dom.append(this.getNavigator().getCurrentPage().getPage(), this.#contentNode);
 		}
 		else
 		{
-			Dom.show(nextPage.getPage());
+			Dom.show(this.getNavigator().getCurrentPage().getPage());
 		}
-		this.#currentPage = nextPage;
+		this.activateMenuItem(type);
+
 		this.#analytic.addEventChangePage(type);
-		this.#updatePageTypeToAddressBar();
+		this.getNavigator().updateAddressBar();
 		EventEmitter.emit(
 			EventEmitter.GLOBAL_TARGET,
 			'BX.Intranet.Settings:onAfterShowPage', {
@@ -163,6 +185,26 @@ export class Settings extends BaseSettingsElement
 				page: nextPage,
 			},
 		);
+
+		if (Type.isString(option) && option !== '')
+		{
+			EventEmitter.subscribeOnce(
+				EventEmitter.GLOBAL_TARGET,
+				'BX.Intranet.Settings:onPageComplete',
+				() => {
+					console.log(option);
+					this.getNavigator().moveTo(nextPage, option);
+				}
+			);
+		}
+	}
+
+	activateMenuItem(type: string)
+	{
+		const menuItem = BX.UI.DropdownMenuItem.getItemByNode(
+			this.#menuNode.querySelector(`a.ui-sidepanel-menu-link[data-type="${type}"]`)
+		);
+		menuItem && menuItem.setActiveHandler();
 	}
 
 	#getPageManager(): PageManager
@@ -177,15 +219,6 @@ export class Settings extends BaseSettingsElement
 	#onEventFetchPage(event: BaseEvent): Promise
 	{
 		return this.#getPageManager().fetchPage(event.getTarget());
-	}
-
-	#updatePageTypeToAddressBar()
-	{
-		let url = new URL(window.location.href);
-		url.searchParams.set('page', this.#currentPage?.getType());
-		url.searchParams.delete('IFRAME');
-		url.searchParams.delete('IFRAME_TYPE');
-		top.window.history.replaceState(null, '', url.toString());
 	}
 
 	#onSliderCloseHandler(event: BaseEvent)
@@ -263,6 +296,10 @@ export class Settings extends BaseSettingsElement
 
 	#onEventChangeData(event)
 	{
+		if (!this.#permission.canEdit())
+		{
+			return;
+		}
 		this.isChanged = true;
 		BX.UI.ButtonPanel.show();
 	}
@@ -303,16 +340,7 @@ export class Settings extends BaseSettingsElement
 		});
 
 		let pageType = this.#selectPageForError(errorCollection);
-		this.#activeMenuItem(pageType);
-	}
-
-	#activeMenuItem(type: string)
-	{
-		let itemNode = document.querySelector('li a[data-type="' + type + '"]');
-		if (itemNode)
-		{
-			itemNode.dispatchEvent(new window.Event('click'));
-		}
+		this.show(pageType);
 	}
 
 	#prepareErrorCollection(rawErrors): Object
@@ -359,167 +387,6 @@ export class Settings extends BaseSettingsElement
 			return pageType;
 		}
 	}
-
-	#onClickSearchInput(node: HTMLInputElement, event: Event)
-	{
-		Event.unbindAll(node);
-
-		if (!this.#searcher)
-		{
-			this.#searcher = new Searcher({node});
-			this.openFoundSections = Runtime.debounce(this.openFoundSections, 1000, this);
-
-			this
-				.#getPageManager()
-				.fetchUnfetchedPages()
-				.then(() => {
-					this.#searcher.subscribe('fastSearch', this.#markFoundText.bind(this));
-					this.#searcher.subscribe('clearSearch', this.#clearFoundText.bind(this));
-					if (this.#searcher.getValue().length > 0)
-					{
-						this.#markFoundText(new BaseEvent({data: {current: this.#searcher.getValue()}}))
-					}
-				}, () => {
-				})
-				.finally(() => {
-				})
-			;
-
-		}
-	}
-
-	#markFoundText(event: BaseEvent)
-	{
-		const searchText = event.getData().current.toLowerCase();
-
-		const foundPages = this.getChildrenElements().filter((page: BaseSettingsPage) => {
-			const menuNode = this.#menuNode
-				.querySelector('li.ui-sidepanel-menu-item a[data-type="' + page.getType() + '"]')
-				.closest('li.ui-sidepanel-menu-item')
-			;
-
-			removeMarkTag(page.getPage());
-
-			if (page.getPage().innerText.toLowerCase().indexOf(searchText) >= 0)
-			{
-				Dom.addClass(menuNode, '--found');
-				addMarkTag(page.getPage(), searchText);
-				return true;
-			}
-
-			Dom.removeClass(menuNode, '--found');
-
-			return false;
-		});
-
-		if (foundPages.length > 0)
-		{
-			this.openFoundSections(foundPages);
-		}
-	}
-
-	#clearFoundText(event: BaseEvent)
-	{
-		this.getChildrenElements().forEach((page: BaseSettingsPage) => {
-			const menuNode = this.#menuNode
-				.querySelector('li.ui-sidepanel-menu-item a[data-type="' + page.getType() + '"]')
-				.closest('li.ui-sidepanel-menu-item')
-			;
-			removeMarkTag(page.getPage());
-			Dom.removeClass(menuNode, '--found');
-		});
-	}
-
-	openFoundSections(pages)
-	{
-		pages.forEach(
-			(baseSettingsElement) =>
-			{
-				RecursiveFilteringVisitor.startFrom(
-					baseSettingsElement,
-					(element) => element.render().querySelector('mark') instanceof HTMLElement
-				).forEach((element) => AscendingOpeningVisitor.startFrom(element));
-			})
-		;
-	}
-}
-
-function revertMarkTag(properlyMark: HTMLElement)
-{
-	if (properlyMark.sourceNode)
-	{
-		properlyMark.beforeMark && properlyMark.beforeMark.parentNode ? properlyMark.beforeMark.parentNode.removeChild(properlyMark.beforeMark) : '';
-		properlyMark.afterMark && properlyMark.afterMark.parentNode ? properlyMark.afterMark.parentNode.removeChild(properlyMark.afterMark) : '';
-
-		properlyMark.parentNode.replaceChild(properlyMark.sourceNode, properlyMark);
-
-		delete properlyMark.beforeMark;
-		delete properlyMark.afterMark;
-		delete properlyMark.sourceNode;
-	}
-}
-
-function removeMarkTag(node)
-{
-	node.querySelectorAll('mark')
-		.forEach((markNode) => {
-			revertMarkTag(markNode);
-		})
-	;
-}
-
-function addMarkTag(node, searchText): void
-{
-	if (!(node instanceof HTMLElement))
-	{
-		if (node instanceof Text)
-		{
-			const startIndex = node.data.toLowerCase().indexOf(searchText);
-			if (startIndex >= 0)
-			{
-				const value = node.data;
-				const nextSibling = node.nextSibling;
-				const finishIndex = startIndex + searchText.length;
-				const parentNode = node.parentNode;
-
-				parentNode.removeChild(node);
-
-				const properlyMark = document.createElement('MARK');
-				properlyMark.innerText = value.substring(startIndex, finishIndex);
-				properlyMark.sourceNode = node;
-				properlyMark.beforeMark = null;
-				properlyMark.afterMark = null;
-
-				if (startIndex > 0)
-				{
-					const beforeMark = new window.Text(value.substring(0, startIndex));
-					nextSibling ? parentNode.insertBefore(beforeMark, nextSibling) : parentNode.appendChild(beforeMark);
-					properlyMark.beforeMark = beforeMark;
-				}
-
-				nextSibling ? parentNode.insertBefore(properlyMark, nextSibling) : parentNode.appendChild(properlyMark);
-
-				if (finishIndex < value.length)
-				{
-					const afterMark =  new window.Text(value.substring(finishIndex, value.length));
-					nextSibling ? parentNode.insertBefore(afterMark, nextSibling) : parentNode.appendChild(afterMark);
-					properlyMark.afterMark = afterMark;
-				}
-			}
-		}
-
-		return;
-	}
-
-	node.childNodes.forEach((child)  => {
-		if (
-			child instanceof HTMLElement && child.innerText.toLowerCase().indexOf(searchText) >= 0
-			|| child.data && child.data.toLowerCase().indexOf(searchText) >= 0
-		)
-		{
-			addMarkTag(child, searchText);
-		}
-	});
 }
 
 export {
@@ -531,5 +398,9 @@ export {
 	ConfigurationPage,
 	SchedulePage,
 	GdprPage,
-	SecurityPage
+	SecurityPage,
+	Renderer,
+	Searcher,
+	ServerDataSource,
+	Permission,
 };

@@ -118,7 +118,7 @@ abstract class BaseProduct
 			$storeToAmount = (float)($productStoreInfo[$productId][$storeToId]['AMOUNT'] ?? 0);
 		}
 
-		$record = new DocumentProductRecord([
+		$record = DocumentProductRecord::make([
 			'id' => 'unsaved_' . Random::getString(8) . '_' . $productId,
 			'documentId' => $documentId,
 			'productId' => $productId,

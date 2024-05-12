@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'utils/object',
 		'im:chat/selector/chat',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/controller/dialog-list',
 		'im:messenger/lib/logger',

@@ -1,13 +1,13 @@
 <?php
 $phrasesConfig = [
-	'encoding' => 'ISO-8859-1',
+	'encoding' => 'utf-8',
 	'lang' => 'de',
 	'phrases' => [
 		'CRM_REQUISITE_FIXED_PRESET_COMPANY_DE_TITLE' => 'Organisation',
-		'CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL_DE_TITLE' => 'Selbstständig',
+		'CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL_DE_TITLE' => 'SelbststĞ´ndig',
 		'CRM_REQUISITE_FIXED_PRESET_LEGALENTITY_DE_TITLE' => 'Unternehmen',
-		'CRM_REQUISITE_FIXED_PRESET_PERSON_DE_TITLE' => 'Natürliche Person',
-		'CRM_REQUISITE_ENTITY_RQ_NAME_DE_FIELD' => 'Vollständiger Name',
+		'CRM_REQUISITE_FIXED_PRESET_PERSON_DE_TITLE' => 'NatÑŒrliche Person',
+		'CRM_REQUISITE_ENTITY_RQ_NAME_DE_FIELD' => 'VollstĞ´ndiger Name',
 		'CRM_REQUISITE_ENTITY_RQ_FIRST_NAME_DE_FIELD' => 'Vorname',
 		'CRM_REQUISITE_ENTITY_RQ_LAST_NAME_DE_FIELD' => 'Name',
 		'CRM_REQUISITE_ENTITY_RQ_COMPANY_NAME_DE_FIELD' => 'Name des Unternehmens',

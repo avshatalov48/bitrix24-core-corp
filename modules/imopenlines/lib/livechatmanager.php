@@ -421,7 +421,7 @@ class LiveChatManager
 			return false;
 		}
 
-		$codeWidget = '<script type="text/javascript">'.$jsData."</script>";
+		$codeWidget = '<script>'.$jsData."</script>";
 
 		return $codeWidget;
 	}

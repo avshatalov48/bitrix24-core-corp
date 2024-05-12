@@ -110,6 +110,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Base;
 	}();
 
+	/**
+	 * @memberOf BX.Crm.AI.Call
+	 */
 	var Summary = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Summary, _Base);
 	  function Summary() {
@@ -134,6 +137,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Summary;
 	}(Base);
 
+	/**
+	 * @memberOf BX.Crm.AI.Call
+	 */
 	var Transcription = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Transcription, _Base);
 	  function Transcription() {

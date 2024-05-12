@@ -375,7 +375,8 @@ if ($isBitrix24Cloud)
 								"MAX_LEVEL" => "1",
 								"USE_EXT" => "Y",
 								"DELAY" => "N",
-								"ALLOW_MULTI_SELECT" => "N"
+								"ALLOW_MULTI_SELECT" => "N",
+								"ADD_ADMIN_PANEL_BUTTONS" => "N",
 							],
 							false
 						);
@@ -673,223 +674,6 @@ if ($isBitrix24Cloud)
 								</tr>
 							</table>
 
-							<table style="display: none" id="bx-composite-sn-spaces-loader" class="im-bar-mode workarea-transparent bx-layout-inner-inner-table composite-mode'.$bodyClass.'">
-								<colgroup><col class="bx-layout-inner-inner-cont"></colgroup>
-								<tr>
-									<td class="bx-layout-inner-inner-cont">
-										<div id="workarea" class="workarea">
-											<div id="workarea-content" class="skeleton__sn-space_workarea-content">
-												<div class="skeleton__sn-spaces'.$spacesListMode.'">
-													<div class="skeleton__sn-spaces_list">
-														<div class="skeleton__sn-spaces_list-header">
-															<div class="skeleton__title-block_text --sn-spaces_list-title"></div>
-															<div class="skeleton__sn-spaces_list-header-btn"></div>
-															<div class="skeleton__sn-spaces_list-header-btn"></div>
-														</div>
-
-														<div class="skeleton__sn-spaces_list-content">
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-															<div class="skeleton__sn-spaces_list-item">
-																<div class="skeleton__sn-spaces_icon"></div>
-																<div class="skeleton__sn-spaces_list-item-info">
-																	<div class="skeleton__sn-spaces_list-item-text --title"></div>
-																	<div class="skeleton__sn-spaces_list-item-text"></div>
-																</div>
-															</div>
-														</div>
-													</div>
-
-													<div class="skeleton__sn-spaces_navigation">
-														<div class="skeleton__sn-spaces_icon"></div>
-														<div class="skeleton__sn-spaces_navigation-element --one"></div>
-														<div class="skeleton__sn-spaces_navigation-element --two"></div>
-														<div class="skeleton__sn-spaces_navigation-element --three"></div>
-														<div class="skeleton__sn-spaces_navigation-element --four"></div>
-														<div class="skeleton__sn-spaces_navigation-element --five"></div>
-													</div>
-
-													<div class="skeleton__sn-spaces_content">
-														<div class="skeleton__sn-spaces_toolbar">
-															<div class="skeleton__sn-spaces_toolbar-btn --main"></div>
-															<div class="skeleton__sn-spaces_toolbar-btn --search"></div>
-															<div class="skeleton__sn-spaces_toolbar-btn --view"></div>
-															<div class="skeleton__sn-spaces_toolbar-btn"></div>
-														</div>
-
-														<div class="skeleton__white-bg-element skeleton__feed-item">
-															<div class="skeleton__feed-item_user-icon"></div>
-															<div class="skeleton__feed-item_content">
-																<div class="skeleton__feed-item_main">
-																	<div class="skeleton__feed-item_text --name"></div>
-																	<div class="skeleton__feed-item_date"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text --short"></div>
-																</div>
-																<div class="skeleton__feed-item_nav">
-																	<div class="skeleton__feed-item_nav-line --one"></div>
-																	<div class="skeleton__feed-item_nav-line --two"></div>
-																	<div class="skeleton__feed-item_nav-line --three"></div>
-																	<div class="skeleton__feed-item_nav-line --four"></div>
-																</div>
-																<div class="skeleton__feed-item_like">
-																	<div class="skeleton__feed-item_like-icon"></div>
-																	<div class="skeleton__feed-item_like-name"></div>
-																</div>
-																<div class="skeleton__feed-item_comment">
-																	<div class="skeleton__feed-item_comment-icon"></div>
-																	<div class="skeleton__feed-item_comment-block">
-																		<div class="skeleton__feed-item_comment-text"></div>
-																	</div>
-																</div>
-															</div>
-														</div>
-														<div class="skeleton__white-bg-element skeleton__feed-item">
-															<div class="skeleton__feed-item_user-icon"></div>
-															<div class="skeleton__feed-item_content">
-																<div class="skeleton__feed-item_main">
-																	<div class="skeleton__feed-item_text --name"></div>
-																	<div class="skeleton__feed-item_date"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text --short"></div>
-																</div>
-																<div class="skeleton__feed-item_nav">
-																	<div class="skeleton__feed-item_nav-line --one"></div>
-																	<div class="skeleton__feed-item_nav-line --two"></div>
-																	<div class="skeleton__feed-item_nav-line --three"></div>
-																	<div class="skeleton__feed-item_nav-line --four"></div>
-																</div>
-																<div class="skeleton__feed-item_like">
-																	<div class="skeleton__feed-item_like-icon"></div>
-																	<div class="skeleton__feed-item_like-name"></div>
-																</div>
-																<div class="skeleton__feed-item_comment">
-																	<div class="skeleton__feed-item_comment-icon"></div>
-																	<div class="skeleton__feed-item_comment-block">
-																		<div class="skeleton__feed-item_comment-text"></div>
-																	</div>
-																</div>
-															</div>
-														</div>
-														<div class="skeleton__white-bg-element skeleton__feed-item">
-															<div class="skeleton__feed-item_user-icon"></div>
-															<div class="skeleton__feed-item_content">
-																<div class="skeleton__feed-item_main">
-																	<div class="skeleton__feed-item_text --name"></div>
-																	<div class="skeleton__feed-item_date"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text"></div>
-																	<div class="skeleton__feed-item_text --short"></div>
-																</div>
-																<div class="skeleton__feed-item_nav">
-																	<div class="skeleton__feed-item_nav-line --one"></div>
-																	<div class="skeleton__feed-item_nav-line --two"></div>
-																	<div class="skeleton__feed-item_nav-line --three"></div>
-																	<div class="skeleton__feed-item_nav-line --four"></div>
-																</div>
-																<div class="skeleton__feed-item_like">
-																	<div class="skeleton__feed-item_like-icon"></div>
-																	<div class="skeleton__feed-item_like-name"></div>
-																</div>
-																<div class="skeleton__feed-item_comment">
-																	<div class="skeleton__feed-item_comment-icon"></div>
-																	<div class="skeleton__feed-item_comment-block">
-																		<div class="skeleton__feed-item_comment-text"></div>
-																	</div>
-																</div>
-															</div>
-														</div>
-													</div>
-												</div>
-												
-											</div>
-										</div>
-									</td>
-								</tr>
-							</table>
 							<script type="text/javascript">
 								const page = window.location.pathname;
 								if (page == \'/stream/\' || page == \'/stream/index.php\' || page == \'/index.php\')
@@ -897,11 +681,11 @@ if ($isBitrix24Cloud)
 									let compositeLoader = BX(\'bx-composite-start-page-loader\');
 									compositeLoader.style.display= \'\'; 
 								}
-                                else if (page.includes("spaces"))
-								{
-									let compositeLoader = BX(\'bx-composite-sn-spaces-loader\');
-									compositeLoader.style.display= \'\'; 
-								}
+                                // else if (page.includes("spaces"))
+								// {
+								// 	let compositeLoader = BX(\'bx-composite-sn-spaces-loader\');
+								// 	compositeLoader.style.display= \'\'; 
+								// }
 								else
 								{
 									let compositeLoader = BX(\'bx-composite-all-page-loader\');
@@ -935,7 +719,8 @@ if ($isBitrix24Cloud)
 													"MAX_LEVEL" => "3",
 													"USE_EXT" => "Y",
 													"DELAY" => "N",
-													"ALLOW_MULTI_SELECT" => "N"
+													"ALLOW_MULTI_SELECT" => "N",
+													"ADD_ADMIN_PANEL_BUTTONS" => "N",
 												],
 												false
 											);

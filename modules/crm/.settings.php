@@ -395,6 +395,9 @@ return array(
 			'crm.terminal.payment' => [
 				'className' => \Bitrix\Crm\Service\Sale\Terminal\PaymentService::class,
 			],
+			'crm.summary.summaryFactory' => [
+				'className' => \Bitrix\Crm\Summary\SummaryFactory::class,
+			],
 		],
 		'readonly' => true,
 	],

@@ -179,7 +179,6 @@ class User
 		}
 		$this->currentUser = CurrentUser::get();
 		$this->userId = $userId;
-		$this->fields = null;
 	}
 
 	public function isIntranet(): bool

@@ -114,13 +114,6 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 					'partial' => true,
 				]
 			),
-			'ACTIVITY_COUNTER' => $this->createField(
-				'ACTIVITY_COUNTER',
-				[
-					'type' => 'list',
-					'partial' => true
-				]
-			),
 			'COMMUNICATION_TYPE' => $this->createField(
 				'COMMUNICATION_TYPE',
 				[
@@ -222,15 +215,26 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 			),
 		];
 
-		if ($this->isActivityResponsibleEnabled())
+		if (!$this->settings->isMyCompanyMode())
 		{
-			$result['ACTIVITY_RESPONSIBLE_IDS'] = $this->createField(
-				'ACTIVITY_RESPONSIBLE_IDS',
+			$result['ACTIVITY_COUNTER'] = $this->createField(
+				'ACTIVITY_COUNTER',
 				[
-					'type' => 'entity_selector',
-					'partial' => true,
+					'type' => 'list',
+					'partial' => true
 				]
 			);
+
+			if ($this->isActivityResponsibleEnabled())
+			{
+				$result['ACTIVITY_RESPONSIBLE_IDS'] = $this->createField(
+					'ACTIVITY_RESPONSIBLE_IDS',
+					[
+						'type' => 'entity_selector',
+						'partial' => true,
+					]
+				);
+			}
 		}
 
 		if($this->settings->checkFlag(CompanySettings::FLAG_ENABLE_ADDRESS))
@@ -453,7 +457,7 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 				]
 			);
 		}
-		elseif($fieldID === 'ACTIVITY_COUNTER')
+		elseif($fieldID === 'ACTIVITY_COUNTER' && !$this->settings->isMyCompanyMode())
 		{
 			return EntityCounterType::getListFilterInfo(
 				array('params' => array('multiple' => 'Y')),

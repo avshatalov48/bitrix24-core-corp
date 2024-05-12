@@ -88,6 +88,8 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		$this->arResult['CONVERSION_SCHEME'] = isset($this->arParams['~CONVERSION_SCHEME'])
 			? $this->arParams['~CONVERSION_SCHEME'] : array();
 
+		$this->arResult['CONVERTER_ID'] = $this->arParams['~CONVERTER_ID'] ?? null;
+
 		$this->arResult['MESSAGES'] = $this->arParams['MESSAGES'] ?? [];
 
 		$this->isPermitted = \Bitrix\Crm\Security\EntityAuthorization::checkReadPermission(

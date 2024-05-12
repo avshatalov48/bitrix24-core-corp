@@ -11,7 +11,7 @@ return [
 		'assets/common',
 		'layout/ui/friendly-date',
 		'layout/ui/floating-button',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/provider/rest',
 		'im:messenger/assets/common',

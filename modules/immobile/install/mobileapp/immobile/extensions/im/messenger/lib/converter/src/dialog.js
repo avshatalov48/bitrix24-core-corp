@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		FileType,
 		DialogType,
@@ -21,6 +21,9 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 		FileMessage,
 		SystemTextMessage,
 		UnsupportedMessage,
+		CopilotPromtMessage,
+		CopilotErrorMessage,
+		CopilotMessage,
 	} = require('im/messenger/lib/element');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 
@@ -40,15 +43,9 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return [];
 			}
 
-			const options = {};
-
 			const chatId = modelMessageList[0].chatId;
-			const dialog = core.getStore().getters['dialoguesModel/getByChatId'](chatId);
-			if (dialog.type === DialogType.user)
-			{
-				options.showUsername = false;
-				options.showAvatar = false;
-			}
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](chatId);
+			const options = DialogConverter.prepareOptionsForMessage(dialog);
 
 			return modelMessageList.map((modelMessage) => DialogConverter.createMessage(modelMessage, options));
 		}
@@ -72,12 +69,30 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return new DeletedMessage(modelMessage, options);
 			}
 
+			if (modelMessage.params?.componentId === 'ChatCopilotCreationMessage')
+			{
+				return new CopilotPromtMessage(modelMessage, options);
+			}
+
+			if (
+				modelMessage.params?.COMPONENT_PARAMS?.copilotError
+				|| modelMessage.params?.COMPONENT_PARAMS?.COPILOT_ERROR // TODO delete after fix on back
+			)
+			{
+				return new CopilotErrorMessage(modelMessage, options);
+			}
+
+			if (modelMessage.params?.componentId === 'CopilotMessage')
+			{
+				return new CopilotMessage(modelMessage, options);
+			}
+
 			const isMessageWithFile = modelMessage.files[0];
 			/** @type {FilesModelState || null} */
 			let file = null;
 			if (isMessageWithFile)
 			{
-				file = core.getStore().getters['filesModel/getById'](modelMessage.files[0]);
+				file = serviceLocator.get('core').getStore().getters['filesModel/getById'](modelMessage.files[0]);
 			}
 
 			if (isMessageWithFile && file && file.type === FileType.image)
@@ -134,7 +149,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 		static createRecentMessage(dialogId)
 		{
-			const recentItem = core.getStore().getters['recentModel/getById'](dialogId);
+			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
 			if (!recentItem || !recentItem.message || !recentItem.message.text)
 			{
 				return null;
@@ -241,6 +256,30 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			const text = messageText.replaceAll(regExp, '');
 
 			return text.replaceAll(/\s/g, '').length === 0;
+		}
+
+		/**
+		 *
+		 * @param {DialoguesModelState} dialog
+		 * @return {CreateMessageOptions}
+		 */
+		static prepareOptionsForMessage(dialog)
+		{
+			/** @type {CreateMessageOptions} */
+			const options = {};
+			if (dialog.type === DialogType.user)
+			{
+				options.showUsername = false;
+				options.showAvatar = false;
+			}
+
+			if (dialog.type === DialogType.copilot)
+			{
+				options.showReaction = false;
+				options.canBeQuoted = false;
+			}
+
+			return options;
 		}
 	}
 

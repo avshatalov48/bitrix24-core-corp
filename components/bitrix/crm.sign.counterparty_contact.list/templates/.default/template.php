@@ -1,8 +1,8 @@
 <?php
 
-use Bitrix\Main\UI\Extension;
 use Bitrix\Crm\Component\EntityList\GridId;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -68,6 +68,10 @@ else
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 			'TYPE' => 'list',
 			'IN_SLIDER' => $component->isIframeMode() ? 'Y' : 'N',
+			'ANALYTICS' => [
+				'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_SMART_DOCUMENT_CONTACT,
+				'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+			],
 		],
 		$component
 	);
@@ -83,6 +87,10 @@ else
 					->getDefaultSuffix($arResult['CATEGORY_ID']),
 				'PATH_TO_CONTACT_LIST' => $arResult['PATH_TO_LIST'],
 				'CRM_CUSTOM_PAGE_TITLE' => Loc::getMessage('CRM_SIGN_COUNTERPARTY_CONTACT_LIST_TITLE'),
+				'ANALYTICS' => [
+					'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_SMART_DOCUMENT_CONTACT,
+					'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+				],
 			],
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',

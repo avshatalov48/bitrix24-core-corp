@@ -12,6 +12,8 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 	const { ReactionTable } = require('im/messenger/db/table/reaction');
 	const { QueueTable } = require('im/messenger/db/table/queue');
 	const { SmileTable } = require('im/messenger/db/table/smile');
+	const { LinkPinTable } = require('im/messenger/db/table/link-pin');
+	const { LinkPinMessageTable } = require('im/messenger/db/table/link-pin-message');
 
 	module.exports = {
 		OptionTable,
@@ -24,5 +26,7 @@ jn.define('im/messenger/db/table', (require, exports, module) => {
 		ReactionTable,
 		QueueTable,
 		SmileTable,
+		LinkPinTable,
+		LinkPinMessageTable,
 	};
 });

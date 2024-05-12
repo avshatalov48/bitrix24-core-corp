@@ -1,3 +1,6 @@
+import {PayloadData} from "./base";
+import {DialogId} from "../../types/common";
+
 export enum DraftType {
 	text = 'text',
 	reply = 'reply',
@@ -6,7 +9,7 @@ export enum DraftType {
 }
 
 export type DraftModelState = {
-	dialogId: string | number,
+	dialogId: DialogId,
 	messageId: number,
 	messageType: 'text' | 'audio' | 'image',
 	type: DraftType,
@@ -28,3 +31,33 @@ export type DraftModelMutation =
 	| 'draftModel/setState'
 	| 'draftModel/update'
 	| 'draftModel/delete'
+
+
+export type DraftSetStateActions = 'setState';
+export interface DraftSetStateData extends PayloadData
+{
+	collection: Record<DialogId, DraftModelState>;
+}
+
+
+export type DraftAddActions = 'set';
+export interface DraftAddData extends PayloadData
+{
+	dialogId: DialogId;
+	fields: DraftModelState;
+}
+
+
+export type DraftUpdateActions = 'set';
+export interface DraftUpdateData extends PayloadData
+{
+	dialogId: DialogId;
+	fields: Partial<DraftModelState>;
+}
+
+
+export type DraftDeleteActions = 'delete';
+export interface DraftDeleteData extends PayloadData
+{
+	dialogId: DialogId;
+}

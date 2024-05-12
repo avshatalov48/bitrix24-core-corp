@@ -5,6 +5,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
 	const icons = require('assets/icons');
+	const { OutlineIconTypes } = require('assets/icons/types');
 	const { mergeImmutable } = require('utils/object');
 	const DEFAULT_ICON_SIZE = {
 		width: 20,
@@ -15,16 +16,18 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	 * @function IconView
 	 * @params {object} props
 	 * @params {string} [props.icon]
-	 * @params {string} [props.iconColor]
-	 * @params {object | number} [props.iconSize]
-	 * @params {number} [props.iconSize.height]
-	 * @params {number} [props.iconSize.width]
+	 * @params {string} [props.color]
+	 * @params {object | number} [props.size]
+	 * @params {number} [props.size.height]
+	 * @params {number} [props.size.width]
 	 * @params {boolean} [props.disabled]
 	 * @return Image
 	 */
 	const IconView = (props = {}) => {
 		const {
 			icon = null,
+			color = null,
+			size = null,
 			iconSize = null,
 			iconParams = {},
 			disabled = false,
@@ -32,7 +35,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 		} = props;
 
 		let {
-			iconColor = null,
+			iconColor = color,
 		} = props;
 
 		let iconContent = null;
@@ -57,14 +60,15 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 
 		let iconStyle = DEFAULT_ICON_SIZE;
 
-		if (iconSize)
+		if (size || iconSize)
 		{
-			const getBoxSize = (size) => ({
-				width: size,
-				height: size,
+			const iconViewSize = size || iconSize;
+			const getBoxSize = (boxSize) => ({
+				width: boxSize,
+				height: boxSize,
 			});
 
-			iconStyle = typeof iconSize === 'number' ? getBoxSize(iconSize) : iconSize;
+			iconStyle = typeof iconViewSize === 'number' ? getBoxSize(iconViewSize) : iconViewSize;
 		}
 
 		const iconProps = { style: iconStyle };
@@ -86,9 +90,9 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 
 	IconView.propTypes = {
 		icon: PropTypes.string.isRequired,
+		color: PropTypes.string,
 		disabled: PropTypes.bool,
-		iconColor: PropTypes.string,
-		iconSize: PropTypes.oneOfType([
+		size: PropTypes.oneOfType([
 			PropTypes.number,
 			PropTypes.exact({
 				height: PropTypes.number,
@@ -98,5 +102,16 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 		iconParams: PropTypes.object,
 	};
 
-	module.exports = { IconView };
+	IconView.defaultProps = {
+		icon: OutlineIconTypes.attach1,
+		disabled: false,
+	};
+
+	module.exports = {
+		IconView,
+		StorybookComponent: IconView,
+		iconTypes: {
+			outline: OutlineIconTypes,
+		},
+	};
 });

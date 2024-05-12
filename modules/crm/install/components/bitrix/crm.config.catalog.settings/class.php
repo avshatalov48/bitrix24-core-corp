@@ -3,8 +3,12 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\CatalogIblockTable;
+use Bitrix\Catalog\Component\BaseForm;
 use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\Product\Store\CostPriceCalculator;
+use Bitrix\Catalog\v2\IoC\ServiceContainer;
+use Bitrix\Catalog\VatTable;
 use Bitrix\Crm\Integration\Sale\Reservation;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
@@ -17,6 +21,7 @@ use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\Localization\Loc;
 
 class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllerable
 {
@@ -84,6 +89,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 	 * @param array $values
 	 * @return AjaxJson
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\Access\Exception\UnknownActionException
 	 */
 	public function saveAction(array $values): AjaxJson
 	{
@@ -91,6 +97,14 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 		if (!is_null($errorResponse))
 		{
 			return $errorResponse;
+		}
+
+		if (
+			isset($values['defaultProductVatId'])
+			&& !$this->updateDefaultVat((int)$values['defaultProductVatId'])
+		)
+		{
+			return $this->respondError('Error saving VAT');
 		}
 
 		if (is_array($values['reservationSettings']))
@@ -198,6 +212,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 	private function getResult(): array
 	{
 		$accessController = AccessController::getCurrent();
+		$defaultProductVatId = $this->getDefaultProductVatId() ?? BaseForm::NOT_SELECTED_VAT_ID_VALUE;
 
 		return [
 			'isStoreControlUsed' => \Bitrix\Catalog\Config\State::isEnabledInventoryManagement(),
@@ -214,6 +229,8 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 			'defaultProductVatIncluded' => Option::get('catalog', self::OPTION_DEFAULT_PRODUCT_VAT_INCLUDED) === 'Y',
 			'configCatalogSource' => \Bitrix\Main\Context::getCurrent()->getRequest()->get('configCatalogSource'),
 			'checkRightsOnDecreaseStoreAmount' => CheckRightsOnDecreaseStoreAmount::isEnabled(),
+			'vats' => $this->getVats(),
+			'defaultProductVatId' => $defaultProductVatId,
 			'hasAccessToCatalogSettings' => $accessController->check(ActionDictionary::ACTION_CATALOG_SETTINGS_ACCESS),
 			'hasAccessToReservationSettings' => $accessController->check(ActionDictionary::ACTION_RESERVED_SETTINGS_ACCESS),
 			'hasAccessToInventoryManagmentSettings' => $accessController->check(ActionDictionary::ACTION_RESERVED_SETTINGS_ACCESS),
@@ -371,5 +388,93 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 		}
 
 		return 'en';
+	}
+
+	/**
+	 * Returns the default VAT ID from the default product catalog.
+	 *
+	 * @return int|null
+	 */
+	private function getDefaultProductVatId(): ?int {
+		$defaultProductCatalogId = \Bitrix\Crm\Product\Catalog::getDefaultId();
+
+		if (!$defaultProductCatalogId)
+		{
+			return null;
+		}
+
+		$defaultProductCatalogInfo = ServiceContainer::getIblockInfo($defaultProductCatalogId);
+
+		return $defaultProductCatalogInfo?->getVatId();
+	}
+
+	/**
+	 * Returns a list of active VAT rates [ID, NAME].
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function getVats(): array {
+		$vatList = [];
+		$vatList[] = [
+			'ID' => BaseForm::NOT_SELECTED_VAT_ID_VALUE,
+			'NAME' => Loc::getMessage("CRM_CONFIG_CATALOG_SETTINGS_VAT_NOT_SELECTED"),
+		];
+
+		$iterator = VatTable::getList([
+			'select' => [
+				'ID',
+				'NAME',
+			],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'NAME' => 'ASC',
+			]
+		]);
+
+		while ($row = $iterator->fetch())
+		{
+			$vatList[] = [
+				'ID' => $row['ID'],
+				'NAME' => htmlspecialcharsbx($row['NAME']),
+			];
+		}
+
+		unset($row, $iterator);
+
+		return $vatList;
+	}
+
+	/**
+	 * Update the default VAT in the database.
+	 *
+	 * @param int $defaultProductVatId
+	 * @return bool
+	 * @throws \Bitrix\Main\Access\Exception\UnknownActionException
+	 */
+	private function updateDefaultVat(int $defaultProductVatId): bool
+	{
+		try {
+			$defaultProductCatalogId = \Bitrix\Crm\Product\Catalog::getDefaultId();
+			$updateResult = CatalogIblockTable::update(
+				$defaultProductCatalogId,
+				[
+					'VAT_ID' => $defaultProductVatId,
+				]
+			);
+		} catch (Exception) {
+			return false;
+		}
+
+		if (!$updateResult->isSuccess()) {
+			return false;
+		}
+
+		return true;
 	}
 }

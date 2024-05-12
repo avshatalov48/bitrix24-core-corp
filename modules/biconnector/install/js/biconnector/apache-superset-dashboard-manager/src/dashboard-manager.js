@@ -2,7 +2,6 @@ import { ajax as Ajax, Loc, Tag, Text, Type, Uri } from 'main.core';
 import { Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { LoginPopup } from './login-popup';
 import 'sidepanel';
 
 export type SourceDashboardInfo = {
@@ -20,15 +19,8 @@ type DashboardInfo = {
 	sourceDashboardInfo?: SourceDashboardInfo,
 };
 
-type UserCredentials = {
-	login: string,
-	password: string,
-}
-
 export class DashboardManager
 {
-	userCredentials: UserCredentials = null;
-
 	static DASHBOARD_STATUS_LOAD = 'L';
 	static DASHBOARD_STATUS_READY = 'R';
 	static DASHBOARD_STATUS_FAILED = 'F';
@@ -165,38 +157,22 @@ export class DashboardManager
 	): void
 	{
 		const popupType = 'popup_login';
-		this.getUserCredentials()
-			.then((user: UserCredentials) => {
-				EventEmitter.emit('BiConnector:DashboardManager.onUserCredentialsLoaded');
-				const props = {
-					login: user.login,
-					password: user.password,
-					link: dashboardInfo.editLink,
-					onOpen: () => {
-						onCompleteProcessing(popupType);
-					},
-					onClose: () => {
-						onCloseProcessing(popupType);
-					},
-				};
 
-				if (dashboardInfo.sourceDashboardInfo)
+		this.getEditUrl(dashboardInfo)
+			.then((response) => {
+				onCompleteProcessing(popupType);
+				if (response)
 				{
-					props.sourceDashboard = dashboardInfo.sourceDashboardInfo;
+					window.open(response, '_blank').focus();
 				}
-
-				const popup = new LoginPopup(props);
-				popup.show();
 			})
 			.catch(() => {
 				onFailProcessing(popupType);
-				BX.UI.Notification.Center.notify({
-					content: BX.util.htmlspecialchars(
-						Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_GET_CREDENTIALS_ERROR'),
-					),
-				});
+				window.open(dashboardInfo.editLink, '_blank').focus();
 			})
-		;
+			.finally(() => {
+				onCloseProcessing();
+			});
 	}
 
 	duplicateDashboard(dashboardId: number | string): Promise
@@ -242,41 +218,21 @@ export class DashboardManager
 			});
 	}
 
-	getUserCredentials(): Promise<UserCredentials>
-	{
-		if (this.userCredentials !== null)
-		{
-			return new Promise((resolve) => {
-				resolve(this.userCredentials);
-			});
-		}
-
-		return new Promise((resolve, reject) => {
-			Ajax.runAction('biconnector.supersetUser.get')
-				.then((response) => {
-					const data = response.data;
-					if (data.user)
-					{
-						this.userCredentials = data.user;
-						resolve(data.user);
-					}
-					else
-					{
-						reject(new Error('Request login data sends invalid response format'));
-					}
-				})
-				.catch((e) => {
-					reject(e);
-				})
-			;
-		});
-	}
-
 	deleteDashboard(dashboardId): Promise
 	{
 		return Ajax.runAction('biconnector.dashboard.delete', {
 			data: {
 				id: dashboardId,
+			},
+		});
+	}
+
+	renameDashboard(dashboardId: number, title: string): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.rename', {
+			data: {
+				id: dashboardId,
+				title: title,
 			},
 		});
 	}
@@ -338,6 +294,30 @@ export class DashboardManager
 	{
 		return Ajax.runAction('biconnector.dashboard.createEmptyDashboard', {
 			data: {},
+		});
+	}
+
+	getEditUrl(dashboardInfo: DashboardInfo): Promise
+	{
+		return new Promise((resolve, reject) => {
+			Ajax.runAction(
+				'biconnector.dashboard.getEditUrl',
+				{
+					data: {
+						editUrl: dashboardInfo.editLink,
+					},
+				},
+			)
+				.then((response) => {
+					const data = response.data;
+					if (data)
+					{
+						resolve(data);
+					}
+				})
+				.catch((e) => {
+					reject(e);
+				});
 		});
 	}
 }

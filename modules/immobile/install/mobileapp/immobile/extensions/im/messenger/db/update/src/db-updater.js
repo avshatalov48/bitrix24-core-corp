@@ -64,6 +64,51 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 
 			return false;
 		}
+
+		async isIndexExists(tableName, columnName)
+		{
+			const indexName = await this.getIndexName(tableName, columnName);
+
+			return Type.isStringFilled(indexName);
+		}
+
+		async getIndexName(tableName, columnName)
+		{
+			const result = await this.executeSql({
+				query: `SELECT name FROM sqlite_master WHERE type = 'index' AND sql LIKE '%${tableName}%' and sql LIKE '%${columnName}%';`,
+			});
+
+			if (Type.isArrayFilled(result.rows) && Type.isStringFilled(result.rows[0][0]))
+			{
+				return result.rows[0][0];
+			}
+
+			return null;
+		}
+
+		async createIndex(tableName, columnName, unique)
+		{
+			const indexType = (Type.isBoolean(unique) && unique === true) ? 'UNIQUE' : '';
+
+			return this.executeSql({
+				query: `CREATE ${indexType} INDEX IF NOT EXISTS ${columnName}_${tableName}_idx ON ${tableName}(${columnName})`,
+			});
+		}
+
+		async dropIndex(tableName, columnName)
+		{
+			const indexName = await this.getIndexName(tableName, columnName);
+			if (Type.isStringFilled(indexName))
+			{
+				await this.executeSql({
+					query: `DROP INDEX ${indexName};`,
+				});
+
+				return true;
+			}
+
+			return false;
+		}
 	}
 
 	module.exports = {

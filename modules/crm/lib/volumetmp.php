@@ -79,12 +79,14 @@ class VolumeTmpTable extends Crm\VolumeTable
 	public static function dropTemporally()
 	{
 		$connection = Main\Application::getConnection();
-
-		$tmpName = self::getTableName();
-
-		if ($connection->isTableExists($tmpName))
+		$tableName = $connection->getSqlHelper()->quote(self::getTableName());
+		if ($connection instanceof \Bitrix\Main\DB\PgsqlConnection)
 		{
-			$connection->query('DROP TABLE '. $tmpName);
+			$connection->queryExecute("DROP TABLE IF EXISTS {$tableName}");
+		}
+		else
+		{
+			$connection->queryExecute("DROP TEMPORARY TABLE IF EXISTS {$tableName}");
 		}
 	}
 
@@ -92,13 +94,22 @@ class VolumeTmpTable extends Crm\VolumeTable
 	 * Creates database structure
 	 * @return void
 	 */
-	public static function createTemporally()
+	public static function createTemporally(): void
 	{
 		$connection = Main\Application::getConnection();
 		$tmpName = self::getTableName();
 		if (!$connection->isTableExists($tmpName))
 		{
-			$connection->query('CREATE TEMPORARY TABLE IF NOT EXISTS '.$tmpName.' LIKE '.Crm\VolumeTable::getTableName());
+			$tmpName = $connection->getSqlHelper()->quote($tmpName);
+			$sourceName = $connection->getSqlHelper()->quote(Crm\VolumeTable::getTableName());
+			if ($connection instanceof \Bitrix\Main\DB\PgsqlConnection)
+			{
+				$connection->queryExecute("CREATE TEMPORARY TABLE IF NOT EXISTS {$tmpName} LIKE ({$sourceName} INCLUDING DEFAULTS INCLUDING IDENTITY)");
+			}
+			else
+			{
+				$connection->queryExecute("CREATE TEMPORARY TABLE IF NOT EXISTS {$tmpName} LIKE {$sourceName}");
+			}
 		}
 	}
 
@@ -106,7 +117,7 @@ class VolumeTmpTable extends Crm\VolumeTable
 	 * Checks data base structure
 	 * @return bool
 	 */
-	public static function checkTemporally()
+	public static function checkTemporally(): bool
 	{
 		$connection = Main\Application::getConnection();
 		return $connection->isTableExists(self::getTableName());
@@ -116,7 +127,7 @@ class VolumeTmpTable extends Crm\VolumeTable
 	 * Removes all data
 	 * @return void
 	 */
-	public static function clearTemporally()
+	public static function clearTemporally(): void
 	{
 		$connection = Main\Application::getConnection();
 		$tmpName = self::getTableName();

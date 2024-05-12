@@ -19,6 +19,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\Translation;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
+use CCrmEntitySelectorHelper;
 use CCrmFieldInfoAttr;
 use CCrmInstantEditorHelper;
 use CCrmOwnerType;
@@ -641,7 +642,11 @@ class EntityRequisite
 		$id = $result->isSuccess() ? (int)$result->getId() : 0;
 		if ($id > 0)
 		{
-			$entityTypeId = isset($fields['ENTITY_TYPE_ID']) ? (int)$fields['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
+			$entityTypeId =
+				isset($fields['ENTITY_TYPE_ID'])
+					? (int)$fields['ENTITY_TYPE_ID']
+					: CCrmOwnerType::Undefined
+			;
 			$entityId = isset($fields['ENTITY_ID']) ? (int)$fields['ENTITY_ID'] : 0;
 
 			if (is_array($addresses))
@@ -693,6 +698,9 @@ class EntityRequisite
 					[FieldCategory::REQUISITE]
 				);
 				//endregion Register volatile duplicate criterion fields
+
+
+				CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity($entityTypeId, $entityId);
 			}
 
 			//region Send event
@@ -1249,6 +1257,8 @@ class EntityRequisite
 			}
 		}
 
+		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(CCrmOwnerType::Requisite, $id);
+
 		//region Send event
 		if ($result->isSuccess())
 		{
@@ -1288,8 +1298,11 @@ class EntityRequisite
 				}
 			}
 		}
-		if ($result->isSuccess()
-			&& \CCrmOwnerType::IsDefined($entityInfo['ENTITY_TYPE_ID']) && $entityInfo['ENTITY_ID'] > 0)
+		if (
+			$result->isSuccess()
+			&& \CCrmOwnerType::IsDefined($entityInfo['ENTITY_TYPE_ID'])
+			&& $entityInfo['ENTITY_ID'] > 0
+		)
 		{
 			DuplicateRequisiteCriterion::RegisterByEntity($entityInfo['ENTITY_TYPE_ID'], $entityInfo['ENTITY_ID']);
 
@@ -1301,6 +1314,8 @@ class EntityRequisite
 			);
 			//endregion Register volatile duplicate criterion fields
 		}
+
+		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(CCrmOwnerType::Requisite, $id);
 
 		//region Send event
 		if ($result->isSuccess())

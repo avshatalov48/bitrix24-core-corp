@@ -191,7 +191,16 @@ jn.define('crm/document/context-menu', (require, exports, module) => {
 
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
-			EntityDetailOpener.open(payload, widgetParams, this.props.layoutWidget);
+			EntityDetailOpener.open({
+				payload,
+				widgetParams,
+				parentWidget: this.props.layoutWidget,
+				/* analytics: {
+					c_section: 'document',
+					c_sub_section: 'top-menu',
+					c_element: 'company-details',
+				}, */
+			});
 		}
 	}
 

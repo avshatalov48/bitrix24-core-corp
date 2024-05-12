@@ -9,12 +9,10 @@ return [
 	'css' => 'dist/apache-superset-dashboard-manager.bundle.css',
 	'js' => 'dist/apache-superset-dashboard-manager.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'main.core',
 		'main.popup',
 		'ui.buttons',
-		'ui.icon-set.main',
-		'ui.design-tokens',
+		'main.core.events',
 		'sidepanel',
 	],
 	'skip_core' => false,

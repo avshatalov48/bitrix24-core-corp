@@ -2,11 +2,12 @@
  * @module im/messenger/controller/user-add
  */
 jn.define('im/messenger/controller/user-add', (require, exports, module) => {
-	const { Loc } = require('loc');
+	/* global ChatUtils */
 	const { Type } = require('type');
+	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { core } = require('im/messenger/core');
-	const { EventType, RestMethod } = require('im/messenger/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { EventType, RestMethod, ComponentCode } = require('im/messenger/const');
 	const { ChatTitle } = require('im/messenger/lib/element');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -25,6 +26,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		 * @param {string} [options.loadingTextRightBtn]
 		 * @param {Function} [options.callback.onAddUser]
 		 * @param {object} [options.widgetOptions.mediumPositionPercent]
+		 * @param {Function?} [options.usersCustomFilter]
 		 * @param {LayoutComponent} [parentLayout]
 		 * @static
 		 */
@@ -45,7 +47,9 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			this.options = options;
 			this.isChatCreate = createChat;
 			this.parentLayout = parentLayout;
-			this.store = core.getStore();
+			/** @type {ChatApplication} core */
+			this.core = serviceLocator.get('core');
+			this.store = this.core.getMessengerStore();
 			this.setControls();
 
 			this.onClickRightBtn = this.onClickRightBtn.bind(this);
@@ -73,9 +77,13 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			if (Type.isArrayFilled(recentUserList))
 			{
 				recentUserList.forEach((recentUserChat) => {
-					recentUserListIndex[recentUserChat.user.id] = true;
+					const userStateModel = this.store.getters['usersModel/getById'](recentUserChat.id);
+					if (userStateModel)
+					{
+						recentUserListIndex[recentUserChat.id] = true;
 
-					userItems.push(recentUserChat.user);
+						userItems.push(userStateModel);
+					}
 				});
 			}
 
@@ -92,10 +100,17 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				});
 			}
 
+			const usersCustomFilter = this.options.usersCustomFilter;
+
 			return userItems.filter((user) => {
 				if (user.id === MessengerParams.getUserId())
 				{
 					return false;
+				}
+
+				if (usersCustomFilter)
+				{
+					return usersCustomFilter(user);
 				}
 
 				if (user.connector)
@@ -172,6 +187,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				callback: {
 					onClickRightBtn: this.onClickRightBtn,
 				},
+				isCopilotDialog: this.options.isCopilotDialog,
 			});
 		}
 
@@ -234,7 +250,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 							() => {
 								MessengerEmitter.emit(EventType.messenger.openDialog, {
 									dialogId: `chat${chatId}`,
-								});
+								}, ComponentCode.imMessenger);
 							},
 							500,
 						);
@@ -248,7 +264,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 
 						this.widget.close();
 					}
-				});
+				}).catch((err) => Logger.error('UserAdd.Rest.imChatAdd.catch:', err));
 			});
 		}
 	}

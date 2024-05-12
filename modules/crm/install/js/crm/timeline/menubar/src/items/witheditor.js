@@ -1,5 +1,4 @@
-import {Dom} from "main.core";
-import Item from "../item";
+import Item from '../item';
 
 /** @memberof BX.Crm.Timeline.MenuBar */
 
@@ -9,6 +8,7 @@ export default class WithEditor extends Item
 	{
 		this._ownerTypeId = this.getEntityTypeId();
 		this._ownerId = this.getEntityId();
+		this._ownerCategoryId = this.getEntityCategoryId();
 
 		this._ghostInput = null;
 

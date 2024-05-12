@@ -40,7 +40,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<MessagesStoreData, MessagesStoreActions>} mutation.payload
 		 */
 		addRouter(mutation)
 		{
@@ -80,11 +80,12 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			this.repository.message.saveFromModel(messageList);
+			this.repository.message.saveFromModel(messageList)
+				.catch((error) => Logger.error('MessageWriter.addRouter.saveFromModel.catch:', error));
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<MessagesUpdateData, MessagesUpdateActions>} mutation.payload
 		 */
 		updateRouter(mutation)
 		{
@@ -120,11 +121,12 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			this.repository.message.saveFromModel([message]);
+			this.repository.message.saveFromModel([message])
+				.catch((error) => Logger.error('MessageWriter.updateRouter.saveFromModel.catch:', error));
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<MessagesUpdateWithIdData, MessagesUpdateWithIdActions>} mutation.payload
 		 */
 		updateWithIdRouter(mutation)
 		{
@@ -157,11 +159,12 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			this.repository.message.saveFromModel([message]);
+			this.repository.message.saveFromModel([message])
+				.catch((error) => Logger.error('MessageWriter.updateWithIdRouter.saveFromModel.catch:', error));
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<MessagesDeleteData, MessagesDeleteActions>} mutation.payload
 		 */
 		deleteRouter(mutation)
 		{
@@ -189,7 +192,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<MessagesDeleteByChatIdData, MessagesDeleteByChatIdActions>} mutation.payload
 		 */
 		deleteByChatIdRouter(mutation)
 		{

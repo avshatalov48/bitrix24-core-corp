@@ -94,11 +94,11 @@ body {
 .menu-user-action.menu-user-accounts:before {background-position: -20px -105px}
 .menu-user-action.menu-user-help:before {background-position: -20px -62px}
 .menu-user-action.menu-user-logout:before {background-position: -24px -22px}
-.menu-user-action.menu-user-timeman-status-start:before {background-position: -147px -22px} 	/* начало дня */
-.menu-user-action.menu-user-timeman-status-completed:before {background-position: -147px -44px}	/* завершения дня */
-.menu-user-action.menu-user-timeman-status-paused:before {background-position: -147px -65px}		/* перерыв */
-.menu-user-action.menu-user-timeman-status-opened:before {background-position: -147px -86px}	/* в работе */
-.menu-user-action.menu-user-timeman-status-expired:before {background-position: -147px -106px}	/* не закрыт день */
+.menu-user-action.menu-user-timeman-status-start:before {background-position: -147px -22px} 	/* РЅР°С‡Р°Р»Рѕ РґРЅСЏ */
+.menu-user-action.menu-user-timeman-status-completed:before {background-position: -147px -44px}	/* Р·Р°РІРµСЂС€РµРЅРёСЏ РґРЅСЏ */
+.menu-user-action.menu-user-timeman-status-paused:before {background-position: -147px -65px}		/* РїРµСЂРµСЂС‹РІ */
+.menu-user-action.menu-user-timeman-status-opened:before {background-position: -147px -86px}	/* РІ СЂР°Р±РѕС‚Рµ */
+.menu-user-action.menu-user-timeman-status-expired:before {background-position: -147px -106px}	/* РЅРµ Р·Р°РєСЂС‹С‚ РґРµРЅСЊ */
 .menu-user-action.menu-user-timeman span {display: none;}
 .menu-user-action.menu-user-timeman.menu-user-timeman-status-start span.menu-user-timeman-status-title-start,
 .menu-user-action.menu-user-timeman.menu-user-timeman-status-completed span.menu-user-timeman-status-title-completed,

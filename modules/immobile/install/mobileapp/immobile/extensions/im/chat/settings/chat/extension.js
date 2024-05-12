@@ -40,11 +40,11 @@
 			return new Promise((resolve) => {
 				BX.ajax.runAction('immobile.api.Settings.get')
 					.then((result) => {
+						console.log('immobile.api.Settings.get');
 						resolve(result.data);
 					})
 					.catch((error) => {
 						console.error('immobile.api.Settings.get', error);
-
 						resolve({});
 					})
 				;
@@ -64,21 +64,25 @@
 			});
 
 			const settings = await this.loadSettingsPromise;
+
 			const isBetaAvailable = settings.IS_BETA_AVAILABLE === true;
 			const isChatM1Enabled = settings.IS_CHAT_M1_ENABLED === true;
 
 			let chatBetaOption = null;
 			if (isBetaAvailable)
 			{
+				const items = [];
 				const chatBetaEnableSwitch = FormItem
 					.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE_V2'))
 					.setValue(this.values.chatBetaEnable)
 				;
+				items.push(chatBetaEnableSwitch);
 
 				if (typeof chatBetaEnableSwitch.setTestId === 'function')
 				{
 					chatBetaEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_BETA_ENABLE');
 				}
+
 				// // TODO this setting may need to be reverted
 				// const bitrixCallDevEnableSwitch = FormItem.create(
 				// 	'bitrixCallDevEnable',
@@ -91,11 +95,10 @@
 				// if (typeof bitrixCallDevEnableSwitch.setTestId === 'function')
 				// {
 				// 	bitrixCallDevEnableSwitch.setTestId('CHAT_SETTINGS_CALL_DEV_ENABLE');
-				// }
 
 				chatBetaOption = FormSection
 					.create('chatBeta', BX.message('SE_CHAT_BETA_TITLE_V2'))
-					.addItems([chatBetaEnableSwitch])
+					.addItems(items)
 				;
 			}
 

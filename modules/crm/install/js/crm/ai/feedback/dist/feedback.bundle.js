@@ -1,2 +1,110 @@
-this.BX=this.BX||{},this.BX.Crm=this.BX.Crm||{},this.BX.Crm.AI=this.BX.Crm.AI||{},function(e,t,s,n){"use strict";function c(e){return new Promise((s,n)=>{t.ajax.runAction("crm.timeline.ai.wasFeedbackSent",{data:{mergeUuid:e}}).then(({data:e})=>{t.Type.isBoolean(e)?s(e):s(!1)}).catch((...e)=>n(...e))})}function a(e,n,c,a){t.ajax.runAction("crm.timeline.ai.sendFeedback",{data:{mergeUuid:e}}).then(()=>{t.Type.isStringFilled(n)&&t.Type.isStringFilled(c)&&t.Type.isStringFilled(a)&&s.sendData({event:"call_parsing",tool:"AI",category:"crm_operations",type:"manual",c_section:"crm",c_element:"feedback_send",c_sub_section:n,p1:c,p2:a,status:"success"})}).catch(({errors:e})=>console.error("Error sending feedback",e))}function o(e,t,n,c){return new Promise(o=>{const r=i({onOk:()=>{a(e,t,n,c),r.close(),o()},onCancel:()=>{r.close(),s.sendData({event:"call_parsing",tool:"AI",category:"crm_operations",type:"manual",c_section:"crm",c_element:"feedback_refused",c_sub_section:t,p1:n,p2:c,status:"success"}),o()}});r.show()})}function i(e){const s=`\n\t\t<div class="bx-crm-ai-feedback-popup-content">\n\t\t\t<div class="bx-crm-ai-feedback-popup-content__icon"></div>\n\t\t\t<div class="bx-crm-ai-feedback-popup-content__text">\n\t\t\t\t${t.Loc.getMessage("CRM_AI_FEEDBACK_POPUP_TEXT")}\n\t\t\t</div>\n\t\t</div>\n\t`;return n.MessageBox.create({title:t.Loc.getMessage("CRM_AI_FEEDBACK_POPUP_TITLE"),message:s,okCaption:t.Loc.getMessage("CRM_AI_FEEDBACK_POPUP_BUTTON_SHARE"),cancelCaption:t.Loc.getMessage("CRM_AI_FEEDBACK_POPUP_BUTTON_ANOTHER_TIME"),buttons:BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,...e})}e.showSendFeedbackPopupIfFeedbackWasNeverSent=function(e,t,s,n){return c(e).then(c=>c?Promise.resolve():o(e,t,s,n))},e.wasFeedbackSent=c,e.sendFeedback=a,e.showSendFeedbackPopup=o,e.createFeedbackMessageBox=i}(this.BX.Crm.AI.Feedback=this.BX.Crm.AI.Feedback||{},BX,BX.UI.Analytics,BX.UI.Dialogs);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Crm = this.BX.Crm || {};
+this.BX.Crm.AI = this.BX.Crm.AI || {};
+(function (exports,crm_integration_analytics,main_core,ui_analytics,ui_dialogs_messagebox) {
+	'use strict';
+
+	/**
+	 * @memberof BX.Crm.AI.Feedback
+	 */
+	function showSendFeedbackPopupIfFeedbackWasNeverSent(mergeUuid, ownerType, callId) {
+	  return wasFeedbackSent(mergeUuid).then(wasSent => {
+	    if (!wasSent) {
+	      return showSendFeedbackPopup(mergeUuid, ownerType, callId);
+	    }
+
+	    // eslint-disable-next-line promise/no-return-wrap
+	    return Promise.resolve();
+	  });
+	}
+
+	/**
+	 * @memberof BX.Crm.AI.Feedback
+	 */
+	function wasFeedbackSent(mergeUuid) {
+	  // Ajax.runAction returns BX.Promise. I think it's not okay to return it from an exported function
+	  return new Promise((resolve, reject) => {
+	    main_core.ajax.runAction('crm.timeline.ai.wasFeedbackSent', {
+	      data: {
+	        mergeUuid
+	      }
+	    }).then(({
+	      data
+	    }) => {
+	      if (main_core.Type.isBoolean(data)) {
+	        resolve(data);
+	      } else {
+	        resolve(false);
+	      }
+	    })
+	    // eslint-disable-next-line prefer-promise-reject-errors
+	    .catch((...args) => reject(...args));
+	  });
+	}
+
+	/**
+	 * @memberof BX.Crm.AI.Feedback
+	 */
+	function sendFeedback(mergeUuid, ownerType, activityId) {
+	  main_core.ajax.runAction('crm.timeline.ai.sendFeedback', {
+	    data: {
+	      mergeUuid
+	    }
+	  }).then(() => {
+	    ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_SEND).buildData());
+	  }).catch(({
+	    errors
+	  }) => console.error('Error sending feedback', errors));
+	}
+
+	/**
+	 * @memberof BX.Crm.AI.Feedback
+	 */
+	function showSendFeedbackPopup(mergeUuid, ownerType, activityId) {
+	  return new Promise(resolve => {
+	    const messageBox = createFeedbackMessageBox({
+	      onOk: () => {
+	        sendFeedback(mergeUuid, ownerType, activityId);
+	        messageBox.close();
+	        resolve();
+	      },
+	      onCancel: () => {
+	        messageBox.close();
+	        ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_REFUSED).buildData());
+	        resolve();
+	      }
+	    });
+	    messageBox.show();
+	  });
+	}
+	/**
+	 * @memberof BX.Crm.AI.Feedback
+	 */
+	function createFeedbackMessageBox(options) {
+	  const message = `
+		<div class="bx-crm-ai-feedback-popup-content">
+			<div class="bx-crm-ai-feedback-popup-content__icon"></div>
+			<div class="bx-crm-ai-feedback-popup-content__text">
+				${main_core.Loc.getMessage('CRM_AI_FEEDBACK_POPUP_TEXT')}
+			</div>
+		</div>
+	`;
+	  return ui_dialogs_messagebox.MessageBox.create({
+	    title: main_core.Loc.getMessage('CRM_AI_FEEDBACK_POPUP_TITLE'),
+	    message,
+	    okCaption: main_core.Loc.getMessage('CRM_AI_FEEDBACK_POPUP_BUTTON_SHARE'),
+	    cancelCaption: main_core.Loc.getMessage('CRM_AI_FEEDBACK_POPUP_BUTTON_ANOTHER_TIME'),
+	    buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+	    ...options
+	  });
+	}
+
+	exports.showSendFeedbackPopupIfFeedbackWasNeverSent = showSendFeedbackPopupIfFeedbackWasNeverSent;
+	exports.wasFeedbackSent = wasFeedbackSent;
+	exports.sendFeedback = sendFeedback;
+	exports.showSendFeedbackPopup = showSendFeedbackPopup;
+	exports.createFeedbackMessageBox = createFeedbackMessageBox;
+
+}((this.BX.Crm.AI.Feedback = this.BX.Crm.AI.Feedback || {}),BX.Crm.Integration.Analytics,BX,BX.UI.Analytics,BX.UI.Dialogs));
 //# sourceMappingURL=feedback.bundle.js.map

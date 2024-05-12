@@ -6,12 +6,12 @@ use Bitrix\Crm\Item;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use \Bitrix\Crm\Settings\Mode;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Engine\Controller;
+use Bitrix\CrmMobile\Controller\Base;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Crm\Conversion\ConversionManager;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 
-class Conversion extends Controller
+class Conversion extends Base
 {
 	public function configureActions(): array
 	{

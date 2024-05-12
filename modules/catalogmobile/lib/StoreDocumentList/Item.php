@@ -82,10 +82,10 @@ class Item
 
 	protected function buildItemDto(array $data): DocumentListItem
 	{
-		$item = new DocumentListItem([
+		$item = DocumentListItem::make([
 			'id' => $data['id'],
 		]);
-		$item->data = new DocumentListItemData($data);
+		$item->data = DocumentListItemData::make($data);
 		return $item;
 	}
 

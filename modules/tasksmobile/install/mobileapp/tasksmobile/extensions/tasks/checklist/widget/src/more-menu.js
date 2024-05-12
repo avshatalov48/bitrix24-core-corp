@@ -4,7 +4,7 @@
 jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { PropTypes } = require('utils/validation');
-	const { outline: { plus, trashCan, newsfeed, onlyMine, hideDone } } = require('assets/icons');
+	const { outline: { plus, trashCan, onlyMine, hideDone } } = require('assets/icons');
 	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const ACTION_IDS = {
@@ -21,9 +21,29 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 		{
 			super(props);
 
+			this.initState(props);
+		}
+
+		componentWillReceiveProps(props)
+		{
+			this.initState(props);
+		}
+
+		initState(props)
+		{
 			this.state = {
-				selectedId: null,
+				onlyMine: props.onlyMine,
+				hideCompleted: props.hideCompleted,
 			};
+		}
+
+		reload(params)
+		{
+			return new Promise((resolve) => {
+				this.setState(params, () => {
+					resolve(this.state);
+				});
+			});
 		}
 
 		show(parentWidget)
@@ -35,20 +55,19 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 		createMenu()
 		{
 			return new ContextMenu({
+				testId: 'checklist_more_menu',
 				actions: this.getAction(),
 			});
 		}
 
-		selectedAction(action, actionId)
+		selectedAction({ state, action })
 		{
-			const { selectedId: stateSelectedId } = this.state;
-
-			const isSelected = stateSelectedId === actionId;
-			const selectedId = isSelected ? null : actionId;
-
-			this.setState({ selectedId }, () => {
-				action(Boolean(selectedId));
-			});
+			this.setState(
+				state,
+				() => {
+					action(state);
+				},
+			);
 		}
 
 		getAction()
@@ -57,15 +76,15 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 				onCreateChecklist,
 				onHideCompleted,
 				onShowOnlyMine,
-				onChangeSort,
 				onRemove,
 			} = this.props;
 
-			const { selectedId: stateSelectedId } = this.state;
+			const { hideCompleted: hideCompletedState, onlyMine: onlyMineState } = this.state;
 
 			return [
 				{
 					id: 'create-checklist',
+					testId: 'create-checklist',
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_CREATE_CHECKLIST'),
 					onClickCallback: () => {
 						this.menu.close(onCreateChecklist);
@@ -76,37 +95,46 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 				},
 				{
 					id: ACTION_IDS.hideCompleted,
+					testId: ACTION_IDS.hideCompleted,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_HIDE_COMPLETED'),
 					onClickCallback: () => {
-						this.selectedAction(onHideCompleted, ACTION_IDS.hideCompleted);
+						this.selectedAction({
+							state: { hideCompleted: !hideCompletedState },
+							action: onHideCompleted,
+						});
 					},
-					isSelected: stateSelectedId === ACTION_IDS.hideCompleted,
+					isSelected: hideCompletedState,
 					data: {
 						svgIcon: hideDone(),
 					},
 				},
 				{
 					id: 'show-only-mine',
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_ONLY_MINE'),
+					testId: 'show-only-mine',
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_ONLY_MINE_MSGVER_1'),
 					onClickCallback: () => {
-						this.selectedAction(onShowOnlyMine, ACTION_IDS.onlyMine);
+						this.selectedAction({
+							state: { onlyMine: !onlyMineState },
+							action: onShowOnlyMine,
+						});
 					},
-					isSelected: stateSelectedId === ACTION_IDS.onlyMine,
+					isSelected: onlyMineState,
 					data: {
 						svgIcon: onlyMine(),
 					},
 				},
-				{
-					id: 'change-sort',
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_CHANGE_SORT'),
-					isDisabled: true,
-					onClickCallback: onChangeSort,
-					data: {
-						svgIcon: newsfeed(),
-					},
-				},
+				// {
+				// 	id: 'change-sort',
+				// 	title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_CHANGE_SORT'),
+				// 	isDisabled: true,
+				// 	onClickCallback: onChangeSort,
+				// 	data: {
+				// 		svgIcon: newsfeed(),
+				// 	},
+				// },
 				{
 					id: 'remove',
+					testId: 'remove',
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_REMOVE'),
 					isDestructive: true,
 					onClickCallback: () => {

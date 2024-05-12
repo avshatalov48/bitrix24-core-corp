@@ -58,6 +58,7 @@ class Document
 	protected $selectFields = [];
 	protected $isCheckAccess = false;
 	protected $userId;
+	protected ?string $placeholderForFieldEmptyValue = null;
 
 	/**
 	 * Document constructor.
@@ -94,22 +95,22 @@ class Document
 	{
 		$fields = $template->getFields();
 		$body = $template->getBody();
-		if(!$body && $data['FILE_ID'] > 0)
+		if (!$body)
 		{
-			$bodyClassName = $template->getBodyClassName();
-			$body = new $bodyClassName(FileTable::getContent($data['FILE_ID']));
+			$body = static::getBodyInstance($template, $data);
 		}
-		if(!$body)
+
+		if (!$body)
 		{
 			return null;
 		}
 
-		$documentClassName = Driver::getInstance()->getDocumentClassName();
+		$documentClassName = static::getDocumentClassName();
 		/** @var static $document */
 		$document = new $documentClassName($body, $fields, $data, $value);
 		$document->setTemplate($template);
 		$document->setProductsTableVariant($template->PRODUCTS_TABLE_VARIANT ?? '');
-		if($template->WITH_STAMPS === 'Y')
+		if ($template->WITH_STAMPS === 'Y')
 		{
 			$document->enableStamps(true);
 		}
@@ -163,6 +164,13 @@ class Document
 		}
 
 		return null;
+	}
+
+	public function setPlaceholderForFieldEmptyValue(?string $placeholderForFieldEmptyValue): Document
+	{
+		$this->placeholderForFieldEmptyValue = $placeholderForFieldEmptyValue;
+
+		return $this;
 	}
 
 	/**
@@ -350,7 +358,9 @@ class Document
 				'number' => $this->getNumber(),
 				'id' => $this->ID,
 				'createTime' => $this->getCreateTime(),
+				'createdBy' => $this->CREATED_BY,
 				'updateTime' => $this->getUpdateTime(),
+				'updatedBy' => $this->UPDATED_BY,
 				'stampsEnabled' => $this->isStampsEnabled(),
 				'isTransformationError' => false,
 				'value' => $this->getValue(Template::MAIN_PROVIDER_PLACEHOLDER),
@@ -846,6 +856,18 @@ class Document
 					}
 				}
 			}
+
+			if ($this->placeholderForFieldEmptyValue)
+			{
+				foreach ($values as $fieldName => $value)
+				{
+					if ($value === null || $value === '')
+					{
+						$values[$fieldName] = $this->placeholderForFieldEmptyValue;
+					}
+				}
+			}
+
 			$bodyResult = $this->body->setValues($values)->setFields($this->fields)->process();
 			if($bodyResult->isSuccess())
 			{
@@ -1758,5 +1780,23 @@ class Document
 			'DocumentNumber' => 'this.DOCUMENT.DOCUMENT_NUMBER',
 			'DocumentCreateTime' => 'this.DOCUMENT.DOCUMENT_CREATE_TIME',
 		];
+	}
+
+	protected static function getBodyInstance(Template $template, array $data = []): ?Body
+	{
+		$fileId = (int)($data['FILE_ID'] ?? 0);
+		if ($fileId > 0)
+		{
+			$bodyClassName = $template->getBodyClassName();
+
+			return new $bodyClassName(FileTable::getContent($fileId));
+		}
+
+		return null;
+	}
+
+	protected static function getDocumentClassName(): string
+	{
+		return Driver::getInstance()->getDocumentClassName();
 	}
 }

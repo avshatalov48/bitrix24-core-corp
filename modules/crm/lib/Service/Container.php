@@ -15,6 +15,7 @@ use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Service\Sale\Shipment\ProductService;
 use Bitrix\Crm\Service\Sale\Terminal\PaymentService;
+use Bitrix\Crm\Summary\SummaryFactory;
 use Bitrix\Crm\Service\Sign\B2e\ItemService;
 use Bitrix\Crm\Service\Sign\B2e\LanguageService;
 use Bitrix\Crm\Service\Sign\B2e\StageService;
@@ -573,6 +574,11 @@ class Container
 	public function getTerminalPaymentService(): PaymentService
 	{
 		return ServiceLocator::getInstance()->get('crm.terminal.payment');
+	}
+
+	public function getSummaryFactory(): SummaryFactory
+	{
+		return ServiceLocator::getInstance()->get('crm.summary.summaryFactory');
 	}
 
 	public function getSignB2eTypeService(): TypeService

@@ -8,9 +8,17 @@ use Bitrix\Crm\Security\AccessAttribute\Manager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ORM\Entity;
 
 abstract class Base extends Crm\Security\Controller
 {
+	protected ControllerQueries $controllerQueries;
+
+	public function __construct()
+	{
+		$this->controllerQueries = ControllerQueries::getInstance();
+	}
+
 	protected $cachedAttrs = [];
 
 	public function isEntityTypeSupported(int $entityTypeId): bool
@@ -284,10 +292,6 @@ abstract class Base extends Crm\Security\Controller
 		{
 			throw new ArgumentException('Entity ID must be greater than zero.', 'entityId');
 		}
-		if ($options)
-		{
-			$this->registerByCompatibleController($permissionEntityType, $entityId, $options);
-		}
 
 		$fields = $this->getFields($entityId, $options);
 		if (!is_array($fields))
@@ -316,7 +320,6 @@ abstract class Base extends Crm\Security\Controller
 		{
 			throw new ArgumentException('Entity ID must be greater than zero.', 'entityId');
 		}
-		$this->unregisterByCompatibleController($permissionEntityType, $entityId);
 
 		$entityType = \CCrmOwnerType::ResolveName($this->getEntityTypeId());
 
@@ -349,95 +352,29 @@ abstract class Base extends Crm\Security\Controller
 
 	public function getTableName(): string
 	{
+		$entity = $this->getEntity();
+
+		return $entity->getDBTableName();
+	}
+
+	public function getEntity(): Entity
+	{
 		$entityTypeName = \CCrmOwnerType::ResolveName($this->getEntityTypeId());
 
-		return Manager::getEntity($entityTypeName)->getDBTableName();
+		return Manager::getEntity($entityTypeName);
 	}
 
-	protected abstract static function getEnabledFlagOptionName(): string;
-
-	public static function isEnabled(): bool
-	{
-		$name = static::getEnabledFlagOptionName();
-		if ($name === '')
-		{
-			return false;
-		}
-
-		return (Option::get('crm', $name, 'Y') === 'Y');
-	}
-
+	/**
+	 * @deprecated left for backward compatibility
+	 * The "controller enabled" mechanic has been completely removed and is no longer relevant.
+	 */
 	public static function setEnabled(bool $enabled): void
 	{
-		$name = static::getEnabledFlagOptionName();
-		if ($name === '')
-		{
-			return;
-		}
 
-
-		if ($enabled === self::isEnabled())
-		{
-			return;
-		}
-
-		if ($enabled)
-		{
-			Option::delete('crm', ['name' => $name]);
-		}
-		else
-		{
-			Option::set('crm', $name, 'N');
-		}
 	}
 
 	public function getQueryBuilder(): QueryBuilder
 	{
-		return new QueryBuilder\ControllerBased($this);
-	}
-
-	/**
-	 * Save attributes by compatible controller
-	 *
-	 * @param string $permissionEntityType
-	 * @param int $entityId
-	 * @param RegisterOptions|null $options
-	 * @throws \Bitrix\Main\NotSupportedException
-	 */
-	protected function registerByCompatibleController(string $permissionEntityType, int $entityId, ?RegisterOptions $options): void
-	{
-		$controller = Crm\Security\Manager::getCompatibleController();
-		$controller->register($permissionEntityType, $entityId, $options);
-	}
-
-	/**
-	 * Remove attributes by compatible controller
-	 *
-	 * @param string $permissionEntityType
-	 * @param int $entityId
-	 * @param RegisterOptions|null $options
-	 * @throws \Bitrix\Main\NotSupportedException
-	 */
-	protected function unregisterByCompatibleController(string $permissionEntityType, int $entityId): void
-	{
-		$controller = Crm\Security\Manager::getCompatibleController();
-		$controller->unregister($permissionEntityType, $entityId);
-	}
-
-	private function makeObserversAttributes(array $observerIds, array $ownerAttributes): array
-	{
-		$observerIds = array_unique($observerIds);
-		$observerAttributes = [];
-		foreach ($observerIds as $obsId)
-		{
-			if ($obsId === (int) $ownerAttributes['USER_ID'])
-			{
-				continue;
-			}
-			$attr = $ownerAttributes;
-			$attr['USER_ID'] = $obsId;
-			$observerAttributes[] = $attr;
-		}
-		return $observerAttributes;
+		return new QueryBuilder\OrmBased($this);
 	}
 }

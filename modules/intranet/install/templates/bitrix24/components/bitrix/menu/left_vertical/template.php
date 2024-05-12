@@ -412,6 +412,7 @@ $arJSParams = array(
 	"customPresetExists" => !empty($arResult["CUSTOM_PRESET_EXISTS"]) ? "Y" : "N",
 	'workgroupsCounterData' => $arResult["WORKGROUP_COUNTER_DATA"],
 	'availablePresetTools' => $arResult['PRESET_TOOLS_AVAILABILITY'],
+	'settingsPath' => $arResult['SETTINGS_PATH'],
 );
 ?>
 
@@ -419,10 +420,10 @@ $arJSParams = array(
 BX.message({
 	add_to_favorite: '<?=CUtil::JSEscape(GetMessage('MENU_ADD_TO_FAVORITE'))?>',
 	delete_from_favorite: '<?=CUtil::JSEscape(GetMessage('MENU_DELETE_FROM_FAVORITE'))?>',
-	hide_item: '<?=CUtil::JSEscape(GetMessage('MENU_HIDE_ITEM'))?>',
-	show_item: '<?=CUtil::JSEscape(GetMessage('MENU_SHOW_ITEM'))?>',
+	hide_item: '<?=CUtil::JSEscape(GetMessage('MENU_HIDE_ITEM_MSGVER_1'))?>',
+	show_item: '<?=CUtil::JSEscape(GetMessage('MENU_SHOW_ITEM_MSGVER_1'))?>',
 	delete_from_favorite_all: '<?=CUtil::JSEscape(GetMessage('MENU_DELETE_FROM_FAVORITE_ALL'))?>',
-	MENU_SET_MAIN_PAGE: '<?=GetMessageJS("MENU_SET_MAIN_PAGE")?>',
+	MENU_SET_MAIN_PAGE: '<?=GetMessageJS("MENU_SET_MAIN_PAGE_MSGVER_1")?>',
 	more_items_hide: '<?=CUtil::JSEscape(GetMessage('MENU_MORE_ITEMS_HIDE'))?>',
 	more_items_show: '<?=CUtil::JSEscape(GetMessage('MENU_MORE_ITEMS_SHOW'))?>',
 	edit_error: '<?=CUtil::JSEscape(GetMessage('MENU_ITEM_EDIT_ERROR'))?>',
@@ -460,7 +461,7 @@ BX.message({
 	MENU_SAVE_BUTTON: '<?=GetMessageJS("MENU_SAVE_BUTTON")?>',
 	MENU_EMPTY_FORM_ERROR: '<?=GetMessageJS("MENU_EMPTY_FORM_ERROR")?>',
 	MENU_SELF_ITEM_FIRST_ERROR: '<?=GetMessageJS("MENU_SELF_ITEM_FIRST_ERROR")?>',
-	MENU_FIRST_ITEM_ERROR: '<?=GetMessageJS("MENU_FIRST_ITEM_ERROR")?>',
+	MENU_FIRST_ITEM_ERROR: '<?=GetMessageJS("MENU_FIRST_ITEM_ERROR_MSGVER_1")?>',
 	MENU_COLLAPSE: '<?=GetMessageJS("MENU_COLLAPSE")?>',
 	MENU_EXPAND: '<?=GetMessageJS("MENU_EXPAND")?>',
 	MENU_CONFIRM_BUTTON: '<?=GetMessageJS("MENU_CONFIRM_BUTTON")?>',

@@ -38,9 +38,4 @@ class Contact extends Base
 		return true;
 	}
 	//endregion
-
-	protected static function getEnabledFlagOptionName(): string
-	{
-		return '~CRM_SECURITY_CONTACT_CONTROLLER_ENABLED';
-	}
 }

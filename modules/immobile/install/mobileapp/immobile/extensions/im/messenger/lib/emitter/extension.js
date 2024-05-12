@@ -12,15 +12,17 @@ jn.define('im/messenger/lib/emitter', (require, exports, module) => {
 		 *
 		 * @param {string} eventName
 		 * @param {Object} [eventData]
+		 * @param {string|null} [componentCode=null]
 		 */
-		static emit(eventName, eventData)
+		static emit(eventName, eventData, componentCode = null)
 		{
 			if (!Type.isStringFilled(eventName))
 			{
 				throw new Error(`MessengerEvent: ${eventName}is not a filled string`);
 			}
 
-			BX.postComponentEvent(eventName, [eventData], MessengerParams.get('COMPONENT_CODE'));
+			const component = componentCode || MessengerParams.get('COMPONENT_CODE');
+			BX.postComponentEvent(eventName, [eventData], component);
 		}
 	}
 

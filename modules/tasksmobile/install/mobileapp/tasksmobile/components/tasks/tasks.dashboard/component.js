@@ -102,6 +102,7 @@
 						;
 					},
 				},
+				isTabsMode: this.props.isTabsMode,
 			});
 
 			this.sorting = new Sorting();
@@ -121,6 +122,7 @@
 					onCounterClick: this.onCounterClick,
 					onSortingClick: this.onSortingClick,
 					onReadAllClick: this.onReadAllClick,
+					getSelectedView: () => this.state.view,
 				},
 			);
 
@@ -1051,7 +1053,12 @@
 		{
 			if (this.state.view !== Views.LIST)
 			{
-				const newTaskStageId = selectTaskStageId(store.getState(), item.id, this.state.view, this.props.ownerId);
+				const newTaskStageId = selectTaskStageId(
+					store.getState(),
+					item.id,
+					this.state.view,
+					this.props.ownerId,
+				);
 				if (!Type.isNil(newTaskStageId))
 				{
 					dispatch(increaseStageCounter({
@@ -1069,7 +1076,12 @@
 			if (this.state.view !== Views.LIST)
 			{
 				const task = selectById(store.getState(), item.id);
-				const newTaskStageId = selectTaskStageId(store.getState(), item.id, this.state.view, this.props.ownerId);
+				const newTaskStageId = selectTaskStageId(
+					store.getState(),
+					item.id,
+					this.state.view,
+					this.props.ownerId,
+				);
 				if (!Type.isNil(newTaskStageId) && (Type.isNil(task) || task.isRemoved === true))
 				{
 					dispatch(decreaseStageCounter({

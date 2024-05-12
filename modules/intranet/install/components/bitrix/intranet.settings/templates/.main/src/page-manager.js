@@ -11,41 +11,6 @@ export class PageManager
 		this.#pages = pages;
 	}
 
-	fetchUnfetchedPages(): Promise
-	{
-		const pages = [];
-		this.#pages.forEach((page: BaseSettingsPage) => {
-			if (!page.hasData())
-			{
-				pages.push(page);
-			}
-		});
-		if (pages.length <= 0)
-		{
-			return Promise.resolve();
-		}
-
-		return new Promise((resolve, reject) => {
-			ajax.runComponentAction(
-				'bitrix:intranet.settings',
-				'getSome',
-				{
-					mode: 'class',
-					data: { types: pages.map((page: BaseSettingsPage) => page.getType()) }
-				},
-			).then((response) => {
-				const data = response.data ?? {};
-				pages.forEach((page: BaseSettingsPage) => {
-					if (data[page.getType()])
-					{
-						page.setData(data[page.getType()]);
-					}
-				});
-				resolve();
-			}, reject)
-		});
-	}
-
 	fetchPage(page: BaseSettingsPage): Promise
 	{
 		return new Promise((resolve, reject) => {

@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Item\Mixin\FileListPreparer;
@@ -323,8 +325,7 @@ class ToDo extends Activity
 
 	private function buildDescriptionBlock(): ?ContentBlock
 	{
-		$description = (string)($this->getAssociatedEntityModel()->get('DESCRIPTION') ?? '');
-
+		$description = (string)($this->getAssociatedEntityModel()?->get('DESCRIPTION') ?? '');
 		if ($description === '')
 		{
 			return null;
@@ -346,6 +347,16 @@ class ToDo extends Activity
 					->addActionParamInt('id', $this->getActivityId())
 			)
 			->setEditable(true);
+
+			if (AIManager::isEnabledInGlobalSettings(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE))
+			{
+				$editableDescriptionBlock->setCopilotSettings([
+					'moduleId' => 'crm',
+					'contextId' => 'crm_timeline_todo_editor_update_item_' . $this->getActivityId(),
+					'category' => 'crm_activity',
+					'autoHide' => true,
+				]);
+			}
 		}
 
 		return $editableDescriptionBlock;

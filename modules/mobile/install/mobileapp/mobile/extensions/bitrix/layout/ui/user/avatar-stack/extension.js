@@ -23,7 +23,7 @@ jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						paddingLeft: this.size / 2,
+						paddingLeft: this.size / 1.5,
 						flexDirection: this.reverse ? 'row-reverse' : 'row',
 						justifyContent: this.reverse ? 'flex-end' : 'flex-start',
 						...this.styles.container,
@@ -36,7 +36,7 @@ jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
 						additionalStyles: {
 							image: this.styles.avatar,
 							wrapper: {
-								marginLeft: -1 * (this.size / 2),
+								marginLeft: -1 * (this.size / 1.5),
 							},
 						},
 					});

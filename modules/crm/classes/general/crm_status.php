@@ -1471,21 +1471,27 @@ class CCrmStatus
 				'COLOR' => '#00A9F4',
 			],
 			[
-				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_COORDINATION_AND_FILLING'),
-				'STATUS_ID' => 'COORDINATION_AND_FILLING',
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_COORDINATION'),
+				'STATUS_ID' => 'COORDINATION',
 				'SORT' => 20,
 				'COLOR' => '#00C9FA',
 			],
 			[
+				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_FILLING'),
+				'STATUS_ID' => 'FILLING',
+				'SORT' => 30,
+				'COLOR' => '#00C4FB',
+			],
+			[
 				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_SIGNING'),
 				'STATUS_ID' => 'SIGNING',
-				'SORT' => 30,
+				'SORT' => 40,
 				'COLOR' => '#00D3E2',
 			],
 			[
 				'NAME' => GetMessage('CRM_SMART_B2E_DOCUMENT_STATUS_COMPLETED'),
 				'STATUS_ID' => 'COMPLETED',
-				'SORT' => 40,
+				'SORT' => 50,
 				'COLOR' => '#FEA300',
 			],
 			[

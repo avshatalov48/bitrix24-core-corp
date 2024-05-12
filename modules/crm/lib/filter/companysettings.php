@@ -11,11 +11,12 @@ class CompanySettings extends EntitySettings implements ISettingsSupportsCategor
 	/** @var string[]  */
 	private array $unsupportedFields = [];
 
+	private bool $isMyCompanyMode = false;
+
 	function __construct(array $params)
 	{
 		parent::__construct($params);
-
-		$this->unsupportedFields = $params['UNSUPPORTED_FIELDS'] ?? [];
+		$this->isMyCompanyMode = ($params['MYCOMPANY_MODE'] ?? false) === true;
 
 		$this->categoryId = isset($params['categoryID'])
 			? (int)$params['categoryID'] : null;
@@ -53,5 +54,10 @@ class CompanySettings extends EntitySettings implements ISettingsSupportsCategor
 	public function unsupportedFields(): array
 	{
 		return $this->unsupportedFields;
+	}
+
+	public function isMyCompanyMode(): bool
+	{
+		return $this->isMyCompanyMode;
 	}
 }

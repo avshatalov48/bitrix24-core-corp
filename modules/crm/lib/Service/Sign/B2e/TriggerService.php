@@ -3,9 +3,6 @@
 namespace Bitrix\Crm\Service\Sign\B2e;
 
 use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
-use Bitrix\Crm\Automation\Trigger\Sign\B2e\CompletedTrigger;
-use Bitrix\Crm\Automation\Trigger\Sign\B2e\CoordinationAndFillingTrigger;
-use Bitrix\Crm\Automation\Trigger\Sign\B2e\SigningTrigger;
 use CCrmOwnerType;
 use ReflectionClass;
 
@@ -14,17 +11,8 @@ use ReflectionClass;
  */
 final class TriggerService
 {
-	public function getDefaultTriggers(): array
-	{
-		return [
-			SigningTrigger::class => 'SIGNING',
-			CoordinationAndFillingTrigger::class => 'COORDINATION_AND_FILLING',
-			CompletedTrigger::class => 'COMPLETED',
-		];
-	}
-
 	/**
-	 * @param array<string, string> $triggers
+	 * @param array{string, string} $triggers
 	 */
 	public function addTriggers(array $triggers): void
 	{

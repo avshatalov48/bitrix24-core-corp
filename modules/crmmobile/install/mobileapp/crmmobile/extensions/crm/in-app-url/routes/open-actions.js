@@ -2,6 +2,7 @@
  * @module crm/in-app-url/routes/open-actions
  */
 jn.define('crm/in-app-url/routes/open-actions', (require, exports, module) => {
+	const { AnalyticsEvent } = require('analytics');
 	const { Type } = require('crm/type');
 	const { DisablingTools } = require('crm/disabling-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
@@ -85,12 +86,13 @@ jn.define('crm/in-app-url/routes/open-actions', (require, exports, module) => {
 
 		const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
-		EntityDetailOpener.open(
+		EntityDetailOpener.open({
 			payload,
 			widgetParams,
-			parentWidget || null,
+			parentWidget: parentWidget || null,
 			canOpenInDefault,
-		);
+			analytics: new AnalyticsEvent().setSection('text_link'),
+		});
 	};
 
 	/**
@@ -100,6 +102,7 @@ jn.define('crm/in-app-url/routes/open-actions', (require, exports, module) => {
 	 * @param {number} entityTypeId
 	 */
 	const openEntityList = async ({ activeTabName, entityTypeId }) => {
+		activeTabName = activeTabName.toUpperCase();
 		if (!Type.isEntitySupportedByName(activeTabName))
 		{
 			return;

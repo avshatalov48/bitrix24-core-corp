@@ -5,13 +5,17 @@ namespace Bitrix\BIConnector\Integration\Superset\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Logger\IntegratorEventLogger;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Logger\IntegratorLogger;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
+use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 
 final class ProxyIntegrator implements SupersetIntegrator
@@ -31,11 +35,12 @@ final class ProxyIntegrator implements SupersetIntegrator
 	private const PROXY_ACTION_EXPORT_DASHBOARD = '/dashboard/export';
 	private const PROXY_ACTION_DELETE_DASHBOARD = '/dashboard/delete';
 	private const PROXY_ACTION_IMPORT_DASHBOARD = '/dashboard/import';
-	private const PROXY_ACTION_EMBED_DASHBOARD = '/dashboard/embed';
-	private const PROXY_ACTION_GET_COMMON_USER_CREDENTIALS = '/user/get';
-	private const PROXY_ACTION_CHANGE_SUPERSET_USER_PASSWORD = '/user/changePassword';
+	private const PROXY_ACTION_CREATE_USER = '/user/create';
+	private const PROXY_ACTION_GET_LOGIN_URL = '/user/getLoginUrl';
+	private const PROXY_ACTION_UPDATE_DASHBOARD = '/dashboard/update';
 	private const PROXY_ACTION_IMPORT_DATASET = '/dataset/import';
 	private const PROXY_ACTION_CREATE_EMPTY_DASHBOARD = '/dashboard/createEmpty';
+	private const PROXY_ACTION_SET_OWNER_DASHBOARD = '/dashboard/setOwner';
 
 	static private self $instance;
 
@@ -117,6 +122,12 @@ final class ProxyIntegrator implements SupersetIntegrator
 		foreach ($innerDashboards as $dashboardData)
 		{
 			$jsonMetadata = $this->decode($dashboardData['json_metadata']) ?? [];
+			$dateModify = null;
+			if (isset($dashboardData['timestamp_modify']))
+			{
+				$dateModify = DateTime::createFromTimestamp((int)$dashboardData['timestamp_modify']);
+			}
+
 			$dashboards[] = new Dto\Dashboard(
 				id: $dashboardData['id'],
 				title: $dashboardData['title'],
@@ -125,6 +136,7 @@ final class ProxyIntegrator implements SupersetIntegrator
 				editUrl: $dashboardData['edit_url'] ?? '',
 				isEditable: $dashboardData['is_editable'] ?? false,
 				nativeFilterConfig: $jsonMetadata['native_filter_configuration'] ?? [],
+				dateModify: $dateModify,
 			);
 		}
 
@@ -157,6 +169,12 @@ final class ProxyIntegrator implements SupersetIntegrator
 		if ($dashboardData)
 		{
 			$jsonMetadata = Json::decode($dashboardData['json_metadata']) ?? [];
+			$dateModify = null;
+			if (isset($dashboardData['timestamp_modify']))
+			{
+				$dateModify = DateTime::createFromTimestamp((int)$dashboardData['timestamp_modify']);
+			}
+
 			$dashboard = new Dto\Dashboard(
 				id: $dashboardData['id'],
 				title: $dashboardData['title'],
@@ -165,6 +183,7 @@ final class ProxyIntegrator implements SupersetIntegrator
 				editUrl: $dashboardData['edit_url'] ?? '',
 				isEditable: $dashboardData['is_editable'] ?? false,
 				nativeFilterConfig: $jsonMetadata['native_filter_configuration'] ?? [],
+				dateModify: $dateModify,
 			);
 		}
 
@@ -343,7 +362,12 @@ final class ProxyIntegrator implements SupersetIntegrator
 			return $response;
 		}
 
-		return $response->setData($result->requestResult->getData()['data']['token']);
+		$responseData = [
+			'token' => $result->requestResult->getData()['data']['token'],
+			'superset_address' => $result->requestResult->getData()['data']['superset_address'] ?? null,
+		];
+
+		return $response->setData($responseData);
 	}
 
 	/**
@@ -426,41 +450,49 @@ final class ProxyIntegrator implements SupersetIntegrator
 	/**
 	 * @inheritDoc
 	 */
-	public function getSupersetCommonUserCredentials(): IntegratorResponse
+	public function createUser(Dto\User $user): IntegratorResponse
 	{
-		$result = $this->performRequest(
-			action: self::PROXY_ACTION_GET_COMMON_USER_CREDENTIALS,
-			requiredFields: ['login', 'password'],
+		$action = self::PROXY_ACTION_CREATE_USER;
+		$parameters = [
+			'username' => $user->userName,
+			'email' => $user->email,
+			'first_name' => $user->firstName,
+			'last_name' => $user->lastName,
+		];
+
+		$result = $this->sender->performRequest(
+			$action,
+			['fields' => $parameters],
+			$user
 		);
 
-		$response = $result->response;
+		$performingResult = $this->createPerformingResult(
+			$result,
+			$action,
+			['client_id']
+		);
+
+		$response = $performingResult->response;
 		if ($response->hasErrors())
 		{
 			return $response;
 		}
 
-		$userCredentialsData = $result->requestResult->getData()['data'];
-		$credentials = new Dto\UserCredentials(
-			login: $userCredentialsData['login'],
-			password: $userCredentialsData['password'],
-		);
+		$createUserData = $performingResult->requestResult->getData()['data'];
 
-		return $response->setData($credentials);
+		return $response->setData($createUserData);
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public function changeSupersetCommonUserCredentials(string $password): IntegratorResponse
+	public function getLoginUrl(): IntegratorResponse
 	{
-		$parameters = [
-			'password' => $password,
-		];
+		$action = self::PROXY_ACTION_GET_LOGIN_URL;
 
 		$result = $this->performRequest(
-			action: self::PROXY_ACTION_CHANGE_SUPERSET_USER_PASSWORD,
-			requestParams: $parameters,
-			requiredFields: ['login', 'password'],
+			$action,
+			requiredFields: ['url'],
 		);
 
 		$response = $result->response;
@@ -469,13 +501,9 @@ final class ProxyIntegrator implements SupersetIntegrator
 			return $response;
 		}
 
-		$userCredentialsData = $result->requestResult->getData()['data'];
-		$credentials = new Dto\UserCredentials(
-			login: $userCredentialsData['login'],
-			password: $userCredentialsData['password'],
-		);
+		$resultData = $result->requestResult->getData()['data'];
 
-		return $response->setData($credentials);
+		return $response->setData($resultData);
 	}
 
 	/**
@@ -505,16 +533,6 @@ final class ProxyIntegrator implements SupersetIntegrator
 		$resultData = $result->requestResult->getData()['data'];
 
 		return $response->setData($resultData);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function embedDashboard(int $dashboardId): IntegratorResponse
-	{
-		$result = $this->sender->performRequest(self::PROXY_ACTION_EMBED_DASHBOARD);
-		// TODO: IMPLEMENT
-		return new ProxyIntegratorResponse(0, null);
 	}
 
 	private static function createResponse(Result $result, array $requiredFields = []): ProxyIntegratorResponse
@@ -571,29 +589,8 @@ final class ProxyIntegrator implements SupersetIntegrator
 		return $response;
 	}
 
-	/**
-	 * @param string $action
-	 * @param array $requestParams
-	 * @param string[] $requiredFields
-	 * @param bool $isMultipart
-	 * @return PerformingResult
-	 */
-	private function performRequest(string $action, array $requestParams = [], array $requiredFields = [], bool $isMultipart = false): PerformingResult
+	private function createPerformingResult(Result $result, string $action, array $requiredFields = []): PerformingResult
 	{
-		if ($isMultipart)
-		{
-			$result = $this->sender->performMultipartRequest($action, $requestParams);
-		}
-		else
-		{
-			$result = $this->sender->performRequest($action, $requestParams);
-		}
-
-		if ($this->skipFields)
-		{
-			$requiredFields = [];
-		}
-
 		$response = self::createResponse($result, $requiredFields);
 
 		if ($response->getStatus() === IntegratorResponse::STATUS_FROZEN && SupersetInitializer::isSupersetActive())
@@ -639,6 +636,77 @@ final class ProxyIntegrator implements SupersetIntegrator
 		);
 	}
 
+	/**
+	 * @param string $action
+	 * @param array $requestParams
+	 * @param string[] $requiredFields
+	 * @param bool $isMultipart
+	 * @param Dto\User|null $user
+	 * @return PerformingResult
+	 */
+	private function performRequest(
+		string $action,
+		array $requestParams = [],
+		array $requiredFields = [],
+		bool $isMultipart = false,
+		Dto\User $user = null
+	): PerformingResult
+	{
+		if (!$user)
+		{
+			$userId = CurrentUser::get()->getId();
+			if ($userId)
+			{
+				$user = (new SupersetUserRepository())->getById($userId);
+			}
+			else
+			{
+				$user = (new SupersetUserRepository())->getAdmin();
+			}
+
+			if (!$user && $this->isUserRequired($action))
+			{
+				$result = (new Result())->addError(new Error('User not found', ProxyIntegratorResponse::HTTP_STATUS_NOT_FOUND));
+				return $this->createPerformingResult($result, $action, $requiredFields);
+			}
+		}
+
+		if (
+			SupersetInitializer::isSupersetActive()
+			&& $user
+			&& !$user->clientId
+		)
+		{
+			$superset = new SupersetController($this);
+			$result = $superset->createUser($user->id);
+			if ($result->isSuccess())
+			{
+				$createUserData = $result->getData();
+				$user = $createUserData['user'];
+			}
+			else
+			{
+				return $this->createPerformingResult($result, $action, $requiredFields);
+			}
+		}
+
+		if ($isMultipart)
+		{
+			$result = $this->sender->performMultipartRequest($action, $requestParams, $user);
+		}
+		else
+		{
+			$result = $this->sender->performRequest($action, $requestParams, $user);
+		}
+
+		if ($this->skipFields)
+		{
+			$requiredFields = [];
+		}
+
+		return $this->createPerformingResult($result, $action, $requiredFields);
+	}
+
 	private function isStatusUnsuccessful(int $status): bool
 	{
 		return ($status >= 500) && ($status !== ProxyIntegratorResponse::HTTP_STATUS_SERVICE_FROZEN);
@@ -674,6 +742,29 @@ final class ProxyIntegrator implements SupersetIntegrator
 		$result = $this->performRequest(
 			action: self::PROXY_ACTION_CREATE_EMPTY_DASHBOARD,
 			requestParams: ['fields' => $fields]
+		);
+
+		$response = $result->response;
+		if ($response->hasErrors())
+		{
+			return $response;
+		}
+
+		$resultData = $result->requestResult->getData()['data'];
+
+		return $response->setData($resultData);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function setOwnerDashboard(Dto\User $user, int $dashboardId): IntegratorResponse
+	{
+		$result = $this->performRequest(
+			action: self::PROXY_ACTION_SET_OWNER_DASHBOARD,
+			requestParams: ['id' => $dashboardId],
+			requiredFields: ['dashboard'],
+			user: $user
 		);
 
 		$response = $result->response;
@@ -731,5 +822,91 @@ final class ProxyIntegrator implements SupersetIntegrator
 		$this->skipFields = true;
 
 		return $this;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function updateDashboard(int $dashboardId, array $editedFields): IntegratorResponse
+	{
+		$result = $this->performRequest(
+			action: self::PROXY_ACTION_UPDATE_DASHBOARD,
+			requestParams: [
+				'id' => $dashboardId,
+				'fields' => $editedFields,
+			],
+		);
+
+		$response = $result->response;
+		if ($response->hasErrors())
+		{
+			return $response;
+		}
+
+		$resultData = $result->requestResult->getData()['data'];
+		if (isset($resultData['changed_fields']))
+		{
+			$response->setData($resultData['changed_fields']);
+		}
+		else
+		{
+			$keys = [];
+			foreach ($editedFields as $key => $val)
+			{
+				$keys[] = htmlspecialcharsbx($key);
+			}
+
+			$keys = implode(', ', $keys);
+			$error = new Error("Update dashboard returns empty 'changed_fields'. Try to change: {$keys}");
+
+			$this->logger->logMethodErrors(
+				self::PROXY_ACTION_UPDATE_DASHBOARD,
+				$response->getStatus(),
+				[$error]
+			);
+
+			$response->addError($error);
+		}
+
+		return $response;
+	}
+
+	/**
+	 * @param string $action
+	 * @return bool
+	 * @throws ArgumentException
+	 */
+	private function isUserRequired(string $action): bool
+	{
+		$actions = [
+			self::PROXY_ACTION_PING_SUPERSET => false,
+			self::PROXY_ACTION_START_SUPERSET => false,
+			self::PROXY_ACTION_FREEZE_SUPERSET => false,
+			self::PROXY_ACTION_UNFREEZE_SUPERSET => false,
+			self::PROXY_ACTION_DELETE_SUPERSET => false,
+			self::PROXY_ACTION_CHANGE_BI_TOKEN_SUPERSET => false,
+			self::PROXY_ACTION_REFRESH_DOMAIN_CONNECTION => false,
+			self::PROXY_ACTION_CLEAR_CACHE => false,
+			self::PROXY_ACTION_LIST_DASHBOARD => false,
+			self::PROXY_ACTION_DASHBOARD_DETAIL => false,
+			self::PROXY_ACTION_GET_EMBEDDED_DASHBOARD_CREDENTIALS => false,
+			self::PROXY_ACTION_COPY_DASHBOARD => true,
+			self::PROXY_ACTION_EXPORT_DASHBOARD => false,
+			self::PROXY_ACTION_DELETE_DASHBOARD => false,
+			self::PROXY_ACTION_IMPORT_DASHBOARD => false,
+			self::PROXY_ACTION_CREATE_USER => true,
+			self::PROXY_ACTION_GET_LOGIN_URL => true,
+			self::PROXY_ACTION_UPDATE_DASHBOARD => false,
+			self::PROXY_ACTION_IMPORT_DATASET => false,
+			self::PROXY_ACTION_CREATE_EMPTY_DASHBOARD => true,
+			self::PROXY_ACTION_SET_OWNER_DASHBOARD => true,
+		];
+
+		if (!array_key_exists($action, $actions))
+		{
+			throw new ArgumentException('Action "' . $action . '" is not supported', 'action');
+		}
+
+		return $actions[$action];
 	}
 }

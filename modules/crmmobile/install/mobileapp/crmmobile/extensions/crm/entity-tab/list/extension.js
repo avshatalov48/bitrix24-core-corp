@@ -14,6 +14,11 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 	 */
 	class ListTab extends EntityTab
 	{
+		getView()
+		{
+			return 'list';
+		}
+
 		render()
 		{
 			return View(
@@ -30,6 +35,9 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				testId,
 				actions: this.props.actions || {},
 				actionParams: this.prepareActionParams(),
+				actionCallbacks: {
+					loadItems: this.onItemsLoaded,
+				},
 				itemLayoutOptions: this.getItemLayoutOptions(),
 				itemActions: this.getItemActions(),
 				itemParams: {
@@ -66,6 +74,13 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				},
 			});
 		}
+
+		onItemsLoaded = (data) => {
+			if (data.event === 'refreshPresets')
+			{
+				this.props.searchRef?.refreshPresets();
+			}
+		};
 
 		getItemCustomStyles(item, section, row)
 		{

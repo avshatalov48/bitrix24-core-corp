@@ -4,7 +4,7 @@
 jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { Settings } = require('im/messenger/lib/settings');
+	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		Table,
 		FieldType,
@@ -29,7 +29,7 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 
 		async getListByMessageIds(idList)
 		{
-			if (!Settings.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
 			{
 				return {
 					items: [],

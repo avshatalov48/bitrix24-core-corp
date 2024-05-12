@@ -2,17 +2,19 @@
  * @module im/messenger/provider/service/classes/chat/load
  */
 jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, module) => {
+	/* global ChatMessengerCommon, ChatUtils */
 	const { Type } = require('type');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RestManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, EventType } = require('im/messenger/const');
-	const { MessengerParams } = require('im/messenger/lib/params');
-	const { RestDataExtractor } = require('im/messenger/provider/service/classes/rest-data-extractor');
+	const { RestMethod, EventType, DialogType } = require('im/messenger/const');
+	const { ChatDataExtractor } = require('im/messenger/provider/service/classes/chat-data-extractor');
 	const { MessageService } = require('im/messenger/provider/service/message');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { runAction } = require('im/messenger/lib/rest');
 
 	const logger = LoggerManager.getInstance().getLogger('load-service--chat');
 
@@ -23,7 +25,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 	{
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.restManager = new RestManager();
 		}
 
@@ -34,75 +36,88 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				return Promise.reject(new Error('ChatService: loadChatWithMessages: dialogId is not provided'));
 			}
 
-			this.restManager.once(RestMethod.imChatGet, { dialog_id: dialogId });
+			const params = {
+				dialogId,
+				messageLimit: MessageService.getMessageRequestLimit(),
+				ignoreMark: true, // TODO: remove when we support look later to start receiving messages from the flagged one
+			};
 
-			const isChat = dialogId.toString().startsWith('chat');
-			if (isChat)
-			{
-				this.restManager.once(RestMethod.imUserGet);
-			}
-			else
-			{
-				this.restManager.once(RestMethod.imUserListGet, { id: [MessengerParams.getUserId(), dialogId] });
-			}
+			return this.requestChat(RestMethod.imV2ChatLoad, params);
+		}
 
-			this.restManager
-				.once(RestMethod.imV2ChatMessageList, {
-					dialogId,
-					limit: MessageService.getMessageRequestLimit(),
-				})
-				.once(RestMethod.imChatPinGet, {
-					chat_id: `$result[${RestMethod.imChatGet}][id]`,
-				})
-			;
+		loadChatWithContext(dialogId, messageId)
+		{
+			const params = {
+				dialogId,
+				messageId,
+				messageLimit: MessageService.getMessageRequestLimit(),
+			};
 
-			return this.restManager.callBatch()
-				.then((response) => {
-					logger.log('ChatLoadService: batch response', response);
+			return this.requestChat(RestMethod.imV2ChatLoadInContext, params);
+		}
 
-					return this.updateModels(response);
-				})
-				.then(() => {
-					return this.store.dispatch('dialoguesModel/update', {
-						dialogId,
-						fields: {
-							inited: true,
-						},
-					});
-				})
+		async requestChat(actionName, params)
+		{
+			const { dialogId } = params;
+			logger.log('ChatLoadService.requestChat: request', actionName, params);
+
+			const actionResult = await runAction(actionName, { data: params })
 				.catch((error) => {
-					const extractor = new RestDataExtractor(error);
-					Object.values(extractor.errors).forEach((methodError) => {
-						if (!methodError)
-						{
-							return;
-						}
+					logger.error('ChatLoadService.requestChat.catch:', error);
 
-						throw methodError.ex.error;
-					});
-
-					throw extractor.errors;
+					throw error;
 				})
 			;
+
+			logger.log('ChatLoadService.requestChat: response', actionName, params, actionResult);
+
+			const chatId = await this.updateModels(actionResult);
+
+			if (this.isDialogLoadedMarkNeeded(actionName))
+			{
+				await this.markDialogAsLoaded(dialogId);
+			}
+
+			return chatId;
+		}
+
+		markDialogAsLoaded(dialogId)
+		{
+			return this.store.dispatch('dialoguesModel/update', {
+				dialogId,
+				fields: {
+					inited: true,
+				},
+			});
+		}
+
+		isDialogLoadedMarkNeeded(actionName)
+		{
+			return actionName !== RestMethod.imV2ChatShallowLoad;
 		}
 
 		/**
 		 * @private
 		 */
-		updateModels(response)
+		async updateModels(response)
 		{
-			const extractor = new RestDataExtractor(response);
-			extractor.extractData();
-
+			const extractor = new ChatDataExtractor(response);
 			const usersPromise = [
 				this.store.dispatch('usersModel/set', extractor.getUsers()),
-				this.store.dispatch('usersModel/addShort', extractor.getUsersShort()),
+				this.store.dispatch('usersModel/addShort', extractor.getAdditionalUsers()),
 			];
-			const dialogList = this.prepareDialogues(extractor.getDialogues());
+			const dialogList = extractor.getChats();
+
+			if (this.isCopilotDialog(extractor))
+			{
+				this.setRecent(extractor).catch((err) => logger.log('LoadService.updateModels.setRecent error', err));
+			}
 
 			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', dialogList);
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
-			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', extractor.getReactions());
+			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
+				reactions: extractor.getReactions(),
+			});
 
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
@@ -110,21 +125,66 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 					messages: extractor.getMessages(),
 					clearCollection: true,
 				}),
-				this.store.dispatch('messagesModel/setPinned', {
-					chatId: extractor.getChatId(),
-					pinnedMessages: extractor.getPinnedMessages(),
+				this.store.dispatch('messagesModel/pinModel/setChatCollection', {
+					pins: extractor.getPins(),
+					messages: extractor.getPinnedMessages(),
 				}),
 			];
 
-			return Promise.all([
+			await Promise.all([
 				dialoguesPromise,
 				usersPromise,
 				filesPromise,
 				reactionPromise,
-			])
-				.then(() => Promise.all(messagesPromise))
-				.then(() => this.updateCounters(dialogList))
-			;
+			]);
+
+			await Promise.all(messagesPromise);
+
+			await this.updateCounters(dialogList);
+
+			return extractor.getChatId();
+		}
+
+		/**
+		 * @desc check is copilot dialog
+		 * @param {ChatDataExtractor} extractor
+		 * @return {Boolean}
+		 */
+		isCopilotDialog(extractor)
+		{
+			const dialogData = extractor.getMainChat();
+
+			return dialogData.type === DialogType.copilot;
+		}
+
+		/**
+		 * @desc Set recent item by extract data response
+		 * @param {ChatDataExtractor} extractor
+		 * @return {Promise}
+		 */
+		setRecent(extractor)
+		{
+			const messages = ChatUtils.objectClone(extractor.getMessages());
+			const message = messages[messages.length - 1];
+			message.text = ChatMessengerCommon.purifyText(
+				message.text,
+				message.params,
+			);
+			message.senderId = message.author_id;
+
+			const userId = message.author_id || message.authorId;
+			const userData = extractor.getUsers().filter((user) => user.id === userId);
+
+			const recentItem = RecentConverter.fromPushToModel({
+				id: extractor.getDialogId(),
+				chat: extractor.getMainChat(),
+				user: userData,
+				message,
+				counter: 0,
+				liked: false,
+			});
+
+			return this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
 		/**

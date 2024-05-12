@@ -1,7 +1,14 @@
 import { Loc, Tag, Dom, Event } from 'main.core';
 import { Section, Row } from 'ui.section';
 import { ItemPicker, TextInput, Selector } from 'ui.form-elements.view';
-import { SettingsSection, SettingsRow, TabField, TabsField, BaseSettingsPage } from 'ui.form-elements.field';
+import {
+	SettingsSection,
+	SettingsRow,
+	TabField,
+	TabsField,
+	BaseSettingsPage,
+	SettingsField,
+} from 'ui.form-elements.field';
 
 export class SchedulePage extends BaseSettingsPage
 {
@@ -26,110 +33,142 @@ export class SchedulePage extends BaseSettingsPage
 		holidaysSection.renderTo(contentNode);
 	}
 
+	#buildScheduleTab(parent)
+	{
+		let workTimeRow = new Row({
+			className: 'intranet-settings__work-time_container --no-padding',
+		});
+		let settingsRow = new SettingsRow({
+			row: workTimeRow,
+			parent: parent,
+		});
+		if (this.hasValue('WORK_TIME_START'))
+		{
+			const workTimeStartField = new Selector(this.getValue('WORK_TIME_START'));
+
+			new SettingsRow({
+				child: new SettingsField({
+					fieldView: workTimeStartField,
+				}),
+				parent: settingsRow,
+				row: new Row({
+					className: 'intranet-settings__work-time_row',
+				}),
+			});
+		}
+
+		new SettingsRow({
+			row: new Row({
+				className: 'ui-section__field-inline-separator',
+			}),
+			parent: settingsRow,
+		});
+
+		if (this.hasValue('WORK_TIME_END'))
+		{
+			const workTimeEndField = new Selector(this.getValue('WORK_TIME_END'));
+
+			new SettingsRow({
+				child: new SettingsField({
+					fieldView: workTimeEndField,
+				}),
+				parent: settingsRow,
+				row: new Row({
+					className: 'intranet-settings__work-time_row',
+				}),
+			});
+		}
+
+		let containerTab = Tag.render`<div><div>`;
+		Dom.append(workTimeRow.render(), containerTab);
+
+		if (this.hasValue('WEEK_DAYS'))
+		{
+			const itemPickerField = new ItemPicker({
+				inputName: this.getValue('WEEK_DAYS').inputName,
+				isMulti: true,
+				label: this.getValue('WEEK_DAYS').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WEEKEND'),
+				items: this.getValue('WEEK_DAYS').values,
+				current: this.getValue('WEEK_DAYS').multiValue,
+			});
+			let settingsField = new SettingsField({
+				fieldView: itemPickerField,
+			});
+			const itemPickerRow = new Row({
+				content: itemPickerField.render(),
+			});
+			new SettingsRow({
+				row: itemPickerRow,
+				child: settingsField,
+				parent: parent
+			});
+			Dom.append(itemPickerRow.render(), containerTab);
+		}
+
+		if (this.hasValue('WEEK_START'))
+		{
+			const weekStartField = new ItemPicker(this.getValue('WEEK_START'));
+			let settingsField = new SettingsField({
+				fieldView: weekStartField,
+			});
+			Dom.addClass(weekStartField.render(), '--row-frame_gray');
+			const weekStartRow = new Row({
+				content: weekStartField.render(),
+			});
+			new SettingsRow({
+				row: weekStartRow,
+				child: settingsField,
+				parent: parent,
+			});
+
+			Dom.append(weekStartRow.render(), containerTab);
+		}
+
+		return containerTab;
+	}
+
 	#buildScheduleSection(): SettingsSection
 	{
-		let scheduleSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_SCHEDULE'),
-			titleIconClasses: 'ui-icon-set --calendar-1',
-		});
+		if (!this.hasValue('sectionSchedule'))
+		{
+			return;
+		}
+		let scheduleSection = new Section(this.getValue('sectionSchedule'));
 
 		const settingsSection = new SettingsSection({
 			parent: this,
 			section: scheduleSection
 		})
 
-		//region tab section
-		const settingsRow = new SettingsRow({
-			parent: settingsSection
+		const tabsRow = new SettingsRow({
+			parent: settingsSection,
 		});
+
 		const tabsField = new TabsField({
-			parent: settingsRow,
+			parent: tabsRow,
 		});
+
 		const forCompanyTab = new TabField({
 			parent: tabsField,
-			tabsOptions: {
-				head: Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_COMPANY'),
-				body: () => {
-					return new Promise((resolve) => {
-
-						let workTimeRow = new Row({});
-						let workTimeContainerNode = Tag.render`<div class="intranet-settings__work-time_container"><div>`;
-						if (this.hasValue('WORK_TIME_START'))
-						{
-							const workTimeStartField = new Selector({
-								label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WORK_TIME_START'),
-								name: this.getValue('WORK_TIME_START').name,
-								items: this.getValue('WORK_TIME_START').values,
-								current: this.getValue('WORK_TIME_START').current,
-							});
-							Dom.append(workTimeStartField.render(), workTimeContainerNode);
-						}
-						Dom.append(Tag.render`<div class="ui-section__field-inline-separator"></div>`, workTimeContainerNode);
-						if (this.hasValue('WORK_TIME_END'))
-						{
-							const workTimeEndField = new Selector({
-								label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WORK_TIME_END'),
-								name: this.getValue('WORK_TIME_END').name,
-								items: this.getValue('WORK_TIME_END').values,
-								current: this.getValue('WORK_TIME_END').current,
-							});
-							Dom.append(workTimeEndField.render(), workTimeContainerNode);
-
-						}
-						workTimeRow.append(workTimeContainerNode);
-
-						let containerTab = Tag.render`<div><div>`;
-						Dom.append(workTimeRow.render(), containerTab);
-
-
-						if (this.hasValue('WEEK_DAYS'))
-						{
-							const itemPickerField = new ItemPicker({
-								inputName: this.getValue('WEEK_DAYS').name,
-								isMulti: true,
-								label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WEEKEND'),
-								items: this.getValue('WEEK_DAYS').values,
-								current: this.getValue('WEEK_DAYS').current,
-							});
-							const itemPickerRow = new Row({
-								content: itemPickerField.render(),
-							});
-							Dom.append(itemPickerRow.render(), containerTab);
-						}
-
-						if (this.hasValue('WEEK_START'))
-						{
-							const weekStartField = new ItemPicker({
-								inputName: this.getValue('WEEK_START').name,
-								label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_WEEK_START'),
-								items: this.getValue('WEEK_START').values,
-								current: this.getValue('WEEK_START').current,
-							});
-							const weekStartRow = new Row({
-								content: weekStartField.render(),
-								className: '--row-frame_gray',
-							});
-							this.fields[this.getValue('WEEK_START').name] = weekStartField;
-							Dom.append(weekStartRow.render(), containerTab);
-						}
-
-						resolve(containerTab);
-
-					});
-				}
-			}
+			tabsOptions: this.getValue('tabForCompany')
 		});
+
+		this.#buildScheduleTab(forCompanyTab)
 
 		if (this.getValue('TIMEMAN').enabled)
 		{
-			new TabField({
+			const forDepartmentTab = new TabField({
 				parent: tabsField,
-				tabsOptions: {
-					restricted: this.getValue('TIMEMAN').restricted,
-					bannerCode: 'limit_office_shift_scheduling',
-					head: Loc.getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_DEPARTMENT'),
-					body: this.#forDepartmentsRender(),
-				}
+				tabsOptions: this.getValue('tabForDepartment')
+			});
+
+			const forDepartmentRow = new Row({
+				content: this.#forDepartmentsRender(),
+			});
+
+			new SettingsRow({
+				row: forDepartmentRow,
+				parent: forDepartmentTab,
 			});
 		}
 
@@ -141,19 +180,20 @@ export class SchedulePage extends BaseSettingsPage
 
 	#buildHolidaysSection(): SettingsSection
 	{
-		let holidaysSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_HOLIDAYS'),
-			titleIconClasses: 'ui-icon-set --flag-2',
-			isOpen: false
-		});
+		if (!this.hasValue('sectionHoliday'))
+		{
+			return;
+		}
+
+		let holidaysSection = new Section(this.getValue('sectionHoliday'));
 
 		const settingsSection = new SettingsSection({
 			parent: this,
 			section: holidaysSection
 		})
 
-		const countDays = this.getValue('year_holidays')?.match(/\d{1,2}.\d{1,2}/gm)?.length ?? 0;
-		let countDaysNode = Tag.render`<div class="ui-section__field-label --mb-13">${Loc.getMessage('INTRANET_SETTINGS_FIELD_INFO', { '#COUNT_DAYS#': countDays })}</div>`;
+		const countDays = this.getValue('year_holidays')?.value?.match(/\d{1,2}.\d{1,2}/gm)?.length ?? 0;
+		let countDaysNode = Tag.render`<div class="ui-section__field-label">${Loc.getMessage('INTRANET_SETTINGS_FIELD_INFO', { '#COUNT_DAYS#': countDays })}</div>`;
 		const holidaysRow = new Row({
 			content: countDaysNode,
 		});
@@ -161,11 +201,7 @@ export class SchedulePage extends BaseSettingsPage
 
 		if (this.hasValue('year_holidays'))
 		{
-			const holidaysField = new TextInput({
-				inputName: 'year_holidays',
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_HOLIDAYS'),
-				value: this.getValue('year_holidays'),
-			});
+			const holidaysField = new TextInput(this.getValue('year_holidays'));
 			SchedulePage.addToSectionHelper(holidaysField, settingsSection);
 
 			Event.bind(holidaysField.getInputNode(), 'keyup', () => {

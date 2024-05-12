@@ -15,6 +15,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/**
+ * @property-write int DynamicTypeId
+ * @property-write int DynamicId
+ * @property-write array DynamicFilterFields
+ * @property-write array DynamicEntitiesFields
+ */
 class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 {
 	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
@@ -97,10 +103,9 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		$errors = parent::internalExecute();
 
-		$entityType = CCrmOwnerType::ResolveName($this->DynamicTypeId);
-		$documentId = $entityType . '_' . $this->DynamicId;
+		$documentId = CCrmBizProcHelper::ResolveDocumentId($this->DynamicTypeId, $this->DynamicId);
 
-		$updateResult = Document\Dynamic::UpdateDocument($documentId, $this->DynamicEntitiesFields);
+		$updateResult = static::getDocumentService()->updateDocument($documentId, $this->DynamicEntitiesFields);
 		if (is_string($updateResult))
 		{
 			$errors->setError(new Error($updateResult));

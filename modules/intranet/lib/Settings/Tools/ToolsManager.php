@@ -2,6 +2,8 @@
 
 namespace Bitrix\Intranet\Settings\Tools;
 
+use Bitrix\Main;
+
 class ToolsManager
 {
 	private static ToolsManager $instance;
@@ -15,6 +17,8 @@ class ToolsManager
 	private ?array $disabledMenuItemListId = null;
 	private Sorter $sorter;
 	private FirstPageChanger $firstPageChanger;
+	private const CACHE_ID_DISABLED_TOOLS = 'disabled_tools';
+	private const CACHE_PATH = '/intranet/settings/';
 
 	public static function getInstance(): static
 	{
@@ -106,25 +110,38 @@ class ToolsManager
 			return $this->disabledMenuItemListId;
 		}
 
+		$cache = Main\Application::getInstance()->getCache();
+		$cacheTtl = 60 * 60 * 24 * 7; // 7 days
 		$this->disabledMenuItemListId = [];
-		$toolList = $this->getToolList();
 
-		foreach ($toolList as $tool)
+		if ($cache->initCache($cacheTtl, self::CACHE_ID_DISABLED_TOOLS, self::CACHE_PATH))
 		{
-			if (!$tool->isEnabled() && $tool->getMenuItemId())
-			{
-				$this->disabledMenuItemListId[$tool->getId()] = $tool->getMenuItemId();
-			}
+			$this->disabledMenuItemListId = $cache->getVars();
+		}
+		else
+		{
+			$toolList = $this->getToolList();
 
-			$subgroups = $tool->getSubgroups();
-
-			foreach ($subgroups as $id => $subgroup)
+			foreach ($toolList as $tool)
 			{
-				if (isset($subgroup['menu_item_id'], $subgroup['enabled']) && !$subgroup['enabled'])
+				if (!$tool->isEnabled() && $tool->getMenuItemId())
 				{
-					$this->disabledMenuItemListId[$id] = $subgroup['menu_item_id'];
+					$this->disabledMenuItemListId[$tool->getId()] = $tool->getMenuItemId();
+				}
+
+				$subgroups = $tool->getSubgroups();
+
+				foreach ($subgroups as $id => $subgroup)
+				{
+					if (isset($subgroup['menu_item_id'], $subgroup['enabled']) && !$subgroup['enabled'])
+					{
+						$this->disabledMenuItemListId[$id] = $subgroup['menu_item_id'];
+					}
 				}
 			}
+
+			$cache->startDataCache();
+			$cache->endDataCache($this->disabledMenuItemListId);
 		}
 
 		return $this->disabledMenuItemListId;
@@ -153,5 +170,11 @@ class ToolsManager
 	public function clearDisabledMenuItemIdList(): void
 	{
 		$this->disabledMenuItemListId = null;
+	}
+
+	public function clearCache(): void
+	{
+		$this->clearDisabledMenuItemIdList();
+		Main\Application::getInstance()->getCache()->clean(self::CACHE_ID_DISABLED_TOOLS, self::CACHE_PATH);
 	}
 }

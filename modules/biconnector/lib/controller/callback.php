@@ -42,7 +42,7 @@ class Callback extends Controller
 
 		if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_LOAD)
 		{
-			SupersetInitializer::enableSuperset();
+			SupersetInitializer::enableSuperset($responseBody->get('superset_address') ?? '');
 		}
 	}
 

@@ -3,7 +3,7 @@
  */
 jn.define('crm/mail/sending-form', (require, exports, module) => {
 	const { WarningBlock } = require('layout/ui/warning-block');
-	const { Alert } = require('alert');
+	const { confirmClosing } = require('alert');
 	const { Haptics } = require('haptics');
 	const { EmailField, EmailType } = require('layout/ui/fields/email');
 	const { MailContactField, MailContactType } = require('layout/ui/fields/mail-contact');
@@ -619,26 +619,12 @@ jn.define('crm/mail/sending-form', (require, exports, module) => {
 		{
 			Haptics.impactLight();
 
-			Alert.confirm(
-				Loc.getMessage('MESSAGE_SEND_EXIT_ALERT_TITLE'),
-				Loc.getMessage('MESSAGE_SEND_EXIT_ALERT_TEXT'),
-				[
-					{
-						text: Loc.getMessage('MESSAGE_SEND_EXIT_ALERT_SAVE'),
-						type: 'default',
-						onPress: onSave,
-					},
-					{
-						text: Loc.getMessage('MESSAGE_SEND_EXIT_ALERT_DISCARD'),
-						type: 'destructive',
-						onPress: onDiscard,
-					},
-					{
-						text: Loc.getMessage('MESSAGE_SEND_EXIT_ALERT_CANCEL'),
-						type: 'cancel',
-					},
-				],
-			);
+			confirmClosing({
+				title: Loc.getMessage('MESSAGE_SEND_EXIT_ALERT_TITLE'),
+				description: Loc.getMessage('MESSAGE_SEND_EXIT_ALERT_TEXT'),
+				onSave,
+				onClose: onDiscard,
+			});
 		}
 
 		close()

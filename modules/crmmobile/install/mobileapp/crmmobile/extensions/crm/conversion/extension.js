@@ -2,16 +2,18 @@
  * @module crm/conversion
  */
 jn.define('crm/conversion', (require, exports, module) => {
+	const { AnalyticsEvent } = require('analytics');
 	const { Url } = require('in-app-url/url');
 	const { inAppUrl } = require('in-app-url');
 	const { unique } = require('utils/array');
 	const { EventEmitter } = require('event-emitter');
 	const { get, isEmpty } = require('utils/object');
 	const { NotifyManager } = require('notify-manager');
-	const { TypeId, TypeName } = require('crm/type');
+	const { TypeId, TypeName, Type } = require('crm/type');
 	const { BackdropWizard } = require('layout/ui/wizard/backdrop');
 	const { ConversionWizard } = require('crm/conversion/wizard');
 	const { createConversionConfig } = require('crm/conversion/utils');
+	const { CrmMode } = require('crm/crm-mode');
 
 	const AJAX_ACTION = 'crmmobile.Conversion.getConversionMenuItems';
 
@@ -337,16 +339,46 @@ jn.define('crm/conversion', (require, exports, module) => {
 			}
 
 			const conversionConfig = this.getConversionConfig(params);
+			this.processAnalyticsEvents(conversionConfig, this.props.analytics, 'attempt');
 
-			return BX.ajax.runComponentAction(
-				`bitrix:${component.name}`,
-				'convert',
+			return new Promise((resolve, reject) => {
+				BX.ajax.runComponentAction(
+					`bitrix:${component.name}`,
+					'convert',
+					{
+						mode: component.mode,
+						...conversionConfig,
+					},
+				).then((response) => {
+					console.warn(response);
+					const status = !response || response.ERROR ? 'error' : 'success';
+					this.processAnalyticsEvents(conversionConfig, this.props.analytics, status);
+					resolve(response);
+				}).catch((error) => {
+					console.error(error);
+					this.processAnalyticsEvents(conversionConfig, this.props.analytics, 'error');
+					reject(error);
+				});
+			});
+		}
+
+		processAnalyticsEvents(config, analytics, status)
+		{
+			const preparedEvent = new AnalyticsEvent(analytics)
+				.setStatus(status)
+				.setP1(`crmMode_${CrmMode.getCrmModeFromCache().toLowerCase()}`)
+				.setP2(`from_${Type.getCommonEntityTypeName(config.entityTypeId).toLowerCase()}`);
+
+			const conversionTargetEntitiesTypes = ['COMPANY', 'CONTACT', 'DEAL', 'SMART_INVOICE', 'QUOTE'];
+			const eventsToSend = [];
+			conversionTargetEntitiesTypes.forEach((type) => {
+				if (config[type.toLowerCase()] === 'Y')
 				{
-					mode: component.mode,
-					...conversionConfig,
+					eventsToSend.push(new AnalyticsEvent(preparedEvent).setType(type));
+				}
+			});
 
-				},
-			);
+			eventsToSend.forEach((event) => event.send());
 		}
 
 		errorProcessing(requiredFields)

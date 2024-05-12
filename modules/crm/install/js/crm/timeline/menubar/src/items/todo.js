@@ -61,6 +61,7 @@ export default class ToDo extends Item
 			ownerId: this.getEntityId(),
 			currentUser: this.getSetting('currentUser'),
 			pingSettings: this.getSetting('pingSettings'),
+			copilotSettings: this.getSetting('copilotSettings'),
 			events: {
 				onFocus: this.setFocused.bind(this, true),
 				onChangeDescription: this.#onChangeDescription.bind(this),

@@ -298,6 +298,11 @@ class CCrmEntityEditorComponent extends UIFormComponent
 						];
 					}
 
+					if ($name === 'OPPORTUNITY_WITH_CURRENCY')
+					{
+						$schemeElement = self::setOpportunityWithCurrencyDefaultOptions($schemeElement);
+					}
+
 					$schemeElements[] = $schemeElement;
 					unset($availableFields[$name]);
 					unset($requiredFields[$name]);
@@ -888,5 +893,12 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				'fields' => $repository->getFieldsData(),
 			],
 		];
+	}
+
+	private static function setOpportunityWithCurrencyDefaultOptions(array $schemeElement): array {
+		$schemeElement['options']['isPayButtonVisible'] = $schemeElement['options']['isPayButtonVisible'] ?? 'true';
+		$schemeElement['options']['isPaymentDocumentsVisible'] = $schemeElement['options']['isPaymentDocumentsVisible'] ?? 'true';
+
+		return $schemeElement;
 	}
 }

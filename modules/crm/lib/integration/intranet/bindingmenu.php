@@ -3,11 +3,11 @@
 namespace Bitrix\Crm\Integration\Intranet;
 
 use Bitrix\Crm\Automation;
+use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Intranet;
 use Bitrix\Main\Application;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
@@ -175,9 +175,12 @@ class BindingMenu
 		}
 
 		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
-		if (!$toolsManager->checkBizprocScriptAvailability())
+		$isToolAvailable = $toolsManager->checkBizprocScriptAvailability();
+		$availabilityJs = null;
+		if (!$isToolAvailable)
 		{
-			return $items;
+			$availabilityManager = AvailabilityManager::getInstance();
+			$availabilityJs = $availabilityManager->getBizprocAvailabilityLock();
 		}
 
 		$marketUrl = null;
@@ -210,6 +213,27 @@ class BindingMenu
 				{
 					continue;
 				}
+
+				if (!$isToolAvailable)
+				{
+					$items[] = [
+						'bindings' =>
+							[
+								$placement => ['include' => [$entity]]
+							],
+						'items' => [
+							[
+								'id' => 'script_root',
+								'system' => true,
+								'text' => Loc::getMessage("CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT"),
+								'onclick' => $availabilityJs,
+							],
+						]
+					];
+
+					continue;
+				}
+
 
 				$docType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::ResolveID($entity));
 				$docTypeParam = '\''.\CUtil::JSEscape(\CBPDocument::signDocumentType($docType)).'\'';

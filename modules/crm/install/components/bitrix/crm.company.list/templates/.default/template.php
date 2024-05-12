@@ -19,11 +19,11 @@ use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\AvailabilityManager;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
@@ -47,7 +47,6 @@ Bitrix\Main\UI\Extension::load(
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
@@ -358,19 +357,6 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 				'TEXT' => Loc::getMessage('CRM_COMPANY_ADD_TODO'),
 				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Company . ", " . (int)$arCompany['ID'] . ", " . $currentUser . ", " . $pingSettings . ");"
 			];
-
-			if (RestrictionManager::isHistoryViewPermitted() && !$arResult['CATEGORY_ID'])
-			{
-				$arActions[] = $arActivityMenuItems[] = array(
-					'TITLE' => Loc::getMessage('CRM_COMPANY_EVENT_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_COMPANY_EVENT'),
-					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}',
-						BX.CrmUIGridMenuCommand.createEvent,
-						{ entityTypeName: BX.CrmEntityType.names.company, entityId: {$arCompany['ID']} }
-					)"
-				);
-			}
 
 			if (IsModuleInstalled('subscribe'))
 			{
@@ -944,6 +930,14 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'category_id' => $arResult['CATEGORY_ID'] ?? null,
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -965,8 +959,9 @@ $APPLICATION->IncludeComponent(
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => [
 			'LAZY_LOAD' => [
-				'GET_LIST' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+				'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+				'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+				'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
 			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
@@ -976,6 +971,10 @@ $APPLICATION->IncludeComponent(
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
+			'RESTRICTED_FIELDS' => $arResult['RESTRICTED_FIELDS'] ?? [],
 		],
 		'LIVE_SEARCH_LIMIT_INFO' => $arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null,
 		'ENABLE_LIVE_SEARCH' => true,
@@ -1134,12 +1133,6 @@ $APPLICATION->IncludeComponent(
 					mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_COMPANY_MERGE'])?>"
 				}
 			);
-
-			BX.Crm.AnalyticTracker.config =
-				{
-					id: "company_list",
-					settings: { params: <?=CUtil::PhpToJSObject($arResult['ANALYTIC_TRACKER'])?> }
-				};
 		}
 	);
 </script>

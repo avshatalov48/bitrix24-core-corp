@@ -2,7 +2,7 @@
  * @module im/messenger/db/repository/queue
  */
 jn.define('im/messenger/db/repository/queue', (require, exports, module) => {
-	const { Settings } = require('im/messenger/lib/settings');
+	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		QueueTable,
 	} = require('im/messenger/db/table');
@@ -22,7 +22,7 @@ jn.define('im/messenger/db/repository/queue', (require, exports, module) => {
 		 */
 		async getList()
 		{
-			if (!Settings.isLocalStorageEnabled)
+			if (!Feature.isLocalStorageEnabled)
 			{
 				return [];
 			}

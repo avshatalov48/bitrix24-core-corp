@@ -56,7 +56,7 @@ final class CompleteStores implements Enricher
 
 	private function buildStoreDto(array $fields): Store
 	{
-		return new Store([
+		return Store::make([
 			'id' => $fields['ID'],
 			'title' => ($fields['TITLE'] == '' ? $fields['ADDRESS'] : $fields['TITLE']),
 		]);

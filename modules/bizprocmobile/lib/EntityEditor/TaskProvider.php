@@ -64,6 +64,9 @@ class TaskProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 						'title' => Loc::getMessage('BIZPROCMOBILE_LIB_ENTITY_EDITOR_TASK_PROVIDER_FIELDS_SECTION_TITLE_1'),
 						'type' => 'section',
 						'elements' => $this->getEntityFields(),
+						'data' => [
+							'showBorder' => true,
+						],
 					]
 				],
 			],

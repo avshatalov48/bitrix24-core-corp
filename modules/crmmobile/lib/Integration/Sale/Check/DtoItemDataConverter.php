@@ -12,7 +12,7 @@ class DtoItemDataConverter
 		/** @var DateTime|null $dateCreate */
 		$dateCreate = $check->getField('DATE_CREATE');
 
-		$itemData = new DtoItemData([
+		$itemData = DtoItemData::make([
 			'id' => (int)$check->getField('ID'),
 			'date' => $dateCreate?->getTimestamp(),
 			'name' => '',

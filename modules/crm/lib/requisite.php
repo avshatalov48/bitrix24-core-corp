@@ -402,7 +402,7 @@ class RequisiteTable extends Entity\DataManager
 			"SELECT DISTINCT P.COUNTRY_ID "
 			. "FROM b_crm_requisite R "
 			. "INNER JOIN b_crm_preset P "
-			. "ON R.PRESET_ID = P.ID AND P.ENTITY_TYPE_ID = $entityTypeId"
+			. "ON P.ENTITY_TYPE_ID = $entityTypeId AND R.PRESET_ID = P.ID"
 		;
 		$res = $connection->query($sql);
 		if (is_object($res))

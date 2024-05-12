@@ -5,12 +5,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Superset\SystemDashboardManager;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\IconController;
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\KeyTable;
 use Bitrix\BIConnector\Services\ApacheSuperset;
 use Bitrix\BIConnector\Superset\KeyManager;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\KeyInfoField;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\NewDashboardNotificationSelectorField;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Section\EntityEditorSection;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\EntityEditorController;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\SettingsComponentController;
@@ -28,6 +30,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\UI\Buttons;
 use Bitrix\Bitrix24\Feature;
@@ -81,7 +84,7 @@ class ApacheSupersetSettingComponent
 					"color" => Buttons\Color::LIGHT_BORDER,
 					"size"  => Buttons\Size::MEDIUM,
 					"click" => new Buttons\JsCode(
-						"top.BX.Helper.show('redirect=detail&code=19123608');"
+						"top.BX.Helper.show('redirect=detail&code=20337242');"
 					),
 					"text" => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_DASHBOARD_HELP')
 				]
@@ -106,6 +109,7 @@ class ApacheSupersetSettingComponent
 				new IconController('ICON_CONTROLLER')
 			)
 			->addSection($this->getFilterSection())
+			->addSection($this->getNewDashboardNotificationSection())
 			->setAjaxData($ajaxData)
 		;
 
@@ -148,6 +152,18 @@ class ApacheSupersetSettingComponent
 		);
 		$dateFilterSection->setIconClass('--calendar-1');
 		$dateFilterSection->addField(new PeriodFilterField('DASHBOARD_FILTER'));
+
+		return $dateFilterSection;
+	}
+
+	private function getNewDashboardNotificationSection(): EntityEditorSection
+	{
+		$dateFilterSection = new EntityEditorSection(
+			name: 'NEW_DASHBOARD_NOTIFICATION',
+			title: Loc::getMessage('BICONNECTOR_SUPERSET_NEW_DASHBOARD_NOTIFICATION_SECTION'),
+		);
+		$dateFilterSection->setIconClass('--bell');
+		$dateFilterSection->addField(new NewDashboardNotificationSelectorField('NOTIFICATION_SELECTOR'));
 
 		return $dateFilterSection;
 	}
@@ -224,7 +240,12 @@ class ApacheSupersetSettingComponent
 			Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_DATE_END_OPTION_NAME]);
 		}
 
+		$ids = $data['NOTIFICATION_SELECTOR'] ?? [];
+		$ids = !empty($ids) && is_array($ids) ? $ids : [];
+		Option::set('biconnector', SystemDashboardManager::OPTION_NEW_DASHBOARD_NOTIFICATION_LIST, Json::encode($ids));
+
 		return [
+			'NOTIFICATION_SELECTOR' => $ids,
 			'FILTER_PERIOD' => $period,
 			'DATE_FILTER_START' => $startTime,
 			'DATE_FILTER_END' => $endTime,

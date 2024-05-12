@@ -10,6 +10,7 @@ use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use CCrmEntitySelectorHelper;
 
 Loc::loadMessages(__FILE__);
 
@@ -507,6 +508,7 @@ class EntityPreset
 
 	public function update($id, $fields, $options = array())
 	{
+		$id = (int)$id;
 		unset($fields['DATE_CREATE'], $fields['CREATED_BY_ID']);
 		$fields['DATE_MODIFY'] = new DateTime();
 		$fields['MODIFY_BY_ID '] = \CCrmSecurityHelper::GetCurrentUserID();
@@ -517,6 +519,7 @@ class EntityPreset
 		}
 
 		$this->clearCache();
+		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByPreset($id);
 
 		return PresetTable::update($id, $fields);
 	}
@@ -572,6 +575,7 @@ class EntityPreset
 		}
 
 		$this->clearCache();
+		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByPreset($id);
 
 		return PresetTable::delete($id);
 	}

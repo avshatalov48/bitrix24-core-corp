@@ -126,11 +126,11 @@ export class PhoneCallsController extends EventEmitter
 
 		this.hasSipPhone = options.deviceActive === true;
 
-		this.skippedCallsList = [];
 		this.skipIncomingCallTimer = null;
 
+		this.hasActiveCallView = false;
+
 		this.readDefaults();
-		this.restoreFoldedCallView();
 
 		if (Browser.isLocalStorageSupported())
 		{
@@ -156,6 +156,7 @@ export class PhoneCallsController extends EventEmitter
 			}
 		});
 
+		this.restoreFoldedCallView();
 		BX.garbage(() =>
 		{
 			if (this.hasActiveCall() && this.callView && this.callView.canBeUnloaded() && (this.hasExternalCall || this.deviceType === 'PHONE'))
@@ -192,6 +193,7 @@ export class PhoneCallsController extends EventEmitter
 			});
 		}
 		this._currentCall = call;
+		this.hasActiveCallView = Boolean(this._currentCall);
 
 		if (this._currentCall)
 		{
@@ -271,8 +273,18 @@ export class PhoneCallsController extends EventEmitter
 			return false;
 		}
 
-		if (this.callView && !this.callView?.popup)
+		const popupConditions = this.callView?.popup
+			&& !this.callView?.commentShown
+			&& !this.callView?.autoCloseTimer
+			&& !this.hasActiveCallView
+		;
+		if (
+			(this.callView && !this.callView?.popup && !this.currentCall)
+			|| (popupConditions && !this.currentCall)
+			|| (this.callView && this.callView?.isFolded() && !this.currentCall)
+		)
 		{
+			console.log('Close a stuck call view');
 			this.#onCallViewClose();
 		}
 
@@ -299,7 +311,6 @@ export class PhoneCallsController extends EventEmitter
 		if (
 			BX.localStorage.get(lsKeys.callInited)
 			|| BX.localStorage.get(lsKeys.externalCall)
-			|| this.skippedCallsList.includes(params.callId)
 		)
 		{
 			return false;
@@ -361,12 +372,12 @@ export class PhoneCallsController extends EventEmitter
 
 	#onPullAnswerSelf(params)
 	{
+		this.clearSkipIncomingCallTimer();
 		if (this.callSelfDisabled || this.callId != params.callId)
 		{
 			return false;
 		}
 
-		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone');
 		this.messengerFacade.stopRepeatSound('dialtone');
 
@@ -379,10 +390,7 @@ export class PhoneCallsController extends EventEmitter
 
 	#onPullTimeout(params)
 	{
-		if (!this.skippedCallsList.includes(params.callId))
-		{
-			this.skippedCallsList.push(params.callId);
-		}
+		this.clearSkipIncomingCallTimer();
 
 		if (this.phoneTransferCallId === params.callId)
 		{
@@ -398,7 +406,6 @@ export class PhoneCallsController extends EventEmitter
 
 		var external = this.hasExternalCall;
 
-		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone');
 		this.messengerFacade.stopRepeatSound('dialtone');
 
@@ -442,7 +449,7 @@ export class PhoneCallsController extends EventEmitter
 
 	#onPullOutgoing(params)
 	{
-		if ((this.phoneNumber == params.phoneNumber || params.phoneNumber.indexOf(this.phoneNumber) >= 0))
+		if (this.phoneNumber && (this.phoneNumber === params.phoneNumber || params.phoneNumber.indexOf(this.phoneNumber) >= 0))
 		{
 			this.deviceType = params.callDevice == DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
 			this.phonePortalCall = !!params.portalCall;
@@ -1947,6 +1954,7 @@ export class PhoneCallsController extends EventEmitter
 
 	#onCallConnected(e)
 	{
+		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone', 5000);
 
 		BX.localStorage.set(lsKeys.callInited, true, 7);
@@ -2110,6 +2118,7 @@ export class PhoneCallsController extends EventEmitter
 			this.closeCallViewBalloon();
 			this.callView = null;
 		}
+		this.hasActiveCallView = false;
 
 		if (this.deviceType == DeviceType.Phone)
 		{
@@ -2240,7 +2249,15 @@ export class PhoneCallsController extends EventEmitter
 			this.callView.setPortalCallUserId(params.portalCallUserId);
 		}
 
-		this.skipIncomingCallTimer = setTimeout(() => this.callView?._onSkipButtonClick(), 40000);
+		this.hasActiveCallView = true;
+		this.skipIncomingCallTimer = setTimeout(() => {
+			console.log('Skip phone call by timer');
+			if (!this.currentCall)
+			{
+				this.callView?._onSkipButtonClick();
+			}
+			this.skipIncomingCallTimer = null;
+		}, 40000);
 	}
 
 	sendInviteTransfer()
@@ -2407,6 +2424,7 @@ export class PhoneCallsController extends EventEmitter
 				this.closeCallViewBalloon();
 				this.callView = null;
 			}
+			this.hasActiveCallView = false;
 
 			this.callId = '';
 			this.callActive = false;
@@ -2511,7 +2529,7 @@ export class PhoneCallsController extends EventEmitter
 		}
 
 		this.callActive = true;
-		this.callId = callProperties.phoneCallId;
+		this.callId = callProperties.callId;
 		this.phoneCrm = callProperties.phoneCrm;
 		this.deviceType = callProperties.phoneCallDevice;
 		this.hasExternalCall = callProperties.hasExternalCall;
@@ -2563,6 +2581,7 @@ export class PhoneCallsController extends EventEmitter
 				this.closeCallViewBalloon();
 				this.callView = null;
 			}
+			this.hasActiveCallView = false;
 		});
 	}
 
@@ -2706,6 +2725,8 @@ export class PhoneCallsController extends EventEmitter
 			currentCall: this.currentCall ? this.currentCall.id() : 'N',
 			callView: this.callView ? this.callView.callId : 'N',
 			callViewPopup: this.callView?.popup ? 'Y' : 'N',
+			hasActiveCallView: this.hasActiveCallView ? 'Y' : 'N',
+			isFoldedCallView: this.callView?.isFolded() ? 'Y' : 'N',
 		};
 	}
 
@@ -2756,6 +2777,7 @@ export class PhoneCallsController extends EventEmitter
 	{
 		if (this.skipIncomingCallTimer)
 		{
+			console.log('Clear skip incoming call timer: ' + this.skipIncomingCallTimer);
 			clearTimeout(this.skipIncomingCallTimer);
 			this.skipIncomingCallTimer = null;
 		}

@@ -21,6 +21,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 	};
 	const BUTTON_CANCEL_EVENT = 'Crm.LoadingProgress::cancelChangeCrmMode';
 	const CONVERSION_TYPES_IDS = [TypeId.Deal, TypeId.Contact, TypeId.Company];
+	const CRM_MODE_CACHE_NAME = 'CrmMode';
 
 	/**
 	 * @class CrmMode
@@ -425,6 +426,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 
 			if (isSuccess)
 			{
+				this.setCrmModeInCache(crmType);
 				if (this.isProgress)
 				{
 					this.closeProgressBar(true);
@@ -487,13 +489,55 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
+		static getCrmModeRunActionExecutor()
+		{
+			return new RunActionExecutor(AJAX_ACTIONS.configCrmMode, {})
+				.setCacheId(CRM_MODE_CACHE_NAME);
+		}
+
+		static getCrmModeFromCache()
+		{
+			const cache = CrmMode.getCrmModeRunActionExecutor().getCache();
+
+			return cache.getData()?.data?.currentCrmMode ?? '';
+		}
+
+		setCrmModeInCache(crmMode)
+		{
+			const executor = CrmMode.getCrmModeRunActionExecutor();
+			const cache = executor.getCache();
+			const cacheData = cache.getData()?.data ?? null;
+			if (cacheData)
+			{
+				const newCacheData = {
+					status: 'success',
+					data: {
+						...cacheData,
+						currentCrmMode: crmMode.toUpperCase(),
+					},
+					errors: [],
+				};
+				executor.getCache().saveData(newCacheData);
+			}
+		}
+
 		static async getCrmModeConfig()
 		{
 			try
 			{
-				const { data } = await BX.ajax.runAction(AJAX_ACTIONS.configCrmMode, {});
-
-				return data;
+				return new Promise((resolve) => {
+					CrmMode.getCrmModeRunActionExecutor()
+						.setHandler((response) => {
+							if (response && response.status === 'success')
+							{
+								resolve(response.data);
+							}
+						})
+						.call(true);
+				})
+					.catch((error) => {
+						console.error(error);
+					});
 			}
 			catch (e)
 			{

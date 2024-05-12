@@ -13,15 +13,16 @@ jn.define('calendar/model/sharing/rule', (require, exports, module) => {
 		constructor(rule, weekStart)
 		{
 			this.DEFAULT_SLOT_SIZE = 30;
-
-			const { hash, slotSize, ranges, maxRanges, availableSlots } = rule;
+			const slotSize = BX.prop.getNumber(rule, 'slotSize', this.DEFAULT_SLOT_SIZE);
+			const ranges = BX.prop.getArray(rule, 'ranges', []);
+			const availableSlots = BX.prop.getArray(rule, 'availableSlots', []);
 
 			this.weekStart = weekStart;
 			this.ranges = [];
 			this.availableSlots = availableSlots.map((availableSlotSize) => parseInt(availableSlotSize, 10));
 			this.setSlotSize(slotSize);
-			this.hash = hash;
-			this.maxRanges = maxRanges;
+			this.hash = BX.prop.getString(rule, 'hash', '');
+			this.maxRanges = BX.prop.getNumber(rule, 'maxRanges', 5);
 			this.internalRangeId = 1;
 
 			for (const range of ranges)
@@ -117,7 +118,7 @@ jn.define('calendar/model/sharing/rule', (require, exports, module) => {
 		}
 
 		/**
-		 * @param range {from, to, weekDays}
+		 * @param range {from, to, weekdays}
 		 * @param {boolean} isNew
 		 */
 		addRange(range, isNew = true)

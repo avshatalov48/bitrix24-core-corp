@@ -2,9 +2,15 @@
 
 namespace Bitrix\Intranet\Settings;
 
+use Bitrix\Intranet\Settings\Controls\Field;
+use Bitrix\Intranet\Settings\Controls\Section;
+use Bitrix\Intranet\Settings\Controls\Selector;
+use Bitrix\Intranet\Settings\Controls\Switcher;
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Location\Infrastructure\FormatCode;
 use Bitrix\Location\Service\FormatService;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Event;
@@ -78,7 +84,7 @@ class EmployeeSettings extends AbstractSettings
 			\COption::SetOptionInt('main', 'phone_number_default_country', $this->data['phone_number_default_country']);
 		}
 
-		if (isset($this->data["show_fired_employees"]) && $this->data["show_fired_employees"] === 'Y')
+		if (isset($this->data['show_fired_employees']) && $this->data['show_fired_employees'] === 'Y')
 		{
 			\COption::SetOptionString("bitrix24", "show_fired_employees", "Y");
 		}
@@ -92,11 +98,11 @@ class EmployeeSettings extends AbstractSettings
 			if (Loader::includeModule("socialservices"))
 			{
 				Network::setRegisterSettings(array(
-					"REGISTER" => isset($this->data["allow_register"]) && $this->data["allow_register"] === 'Y' ? "Y" : "N",
+					"REGISTER" => isset($this->data['allow_register']) && $this->data['allow_register'] === 'Y' ? 'Y' : 'N',
 				));
 			}
 
-			if (isset($this->data["allow_invite_users"]) && $this->data["allow_invite_users"] === 'Y')
+			if (isset($this->data['allow_invite_users']) && $this->data['allow_invite_users'] === 'Y')
 			{
 				\COption::SetOptionString("bitrix24", "allow_invite_users", "Y");
 			}
@@ -115,9 +121,9 @@ class EmployeeSettings extends AbstractSettings
 			}
 
 
-			if (isset($this->data["feature_extranet"]) && $this->data["feature_extranet"] === 'Y')
+			if (isset($this->data['feature_extranet']) && $this->data['feature_extranet'] === 'Y')
 			{
-				\COption::SetOptionString("bitrix24", "feature_extranet", "Y");
+				Option::set('bitrix24', 'feature_extranet', 'Y');
 				\CBitrix24::updateExtranetUsersActivity(true);
 				if (!IsModuleInstalled("extranet"))
 				{
@@ -125,13 +131,15 @@ class EmployeeSettings extends AbstractSettings
 				}
 				$manualModulesChangedList['extranet'] = 'Y';
 			}
-			elseif (isset($this->data["feature_extranet"])
-				&& $this->data["feature_extranet"] !== 'Y'
-				&& IsModuleInstalled("extranet"))
+			elseif (
+				isset($this->data['feature_extranet'])
+				&& $this->data['feature_extranet'] !== 'Y'
+				&& IsModuleInstalled('extranet')
+			)
 			{
-				\COption::SetOptionString("bitrix24", "feature_extranet", "N");
+				Option::set('bitrix24', 'feature_extranet', 'N');
 				\CBitrix24::updateExtranetUsersActivity(false);
-				ModuleManager::delete("extranet");
+				ModuleManager::delete('extranet');
 				$manualModulesChangedList['extranet'] = 'N';
 			}
 			if (!empty($manualModulesChangedList))
@@ -143,22 +151,22 @@ class EmployeeSettings extends AbstractSettings
 			}
 		}
 
-		if ($this->data["general_chat_message_join"] <> 'N')
+		if ($this->data['general_chat_message_join'] <> 'N')
 		{
-			\COption::SetOptionString("im", "general_chat_message_join", true);
+			Option::set('im', 'general_chat_message_join', true);
 		}
 		else
 		{
-			\COption::SetOptionString("im", "general_chat_message_join", false);
+			Option::set('im', 'general_chat_message_join', false);
 		}
 
 		if ($this->data['allow_new_user_lf'] <> 'N')
 		{
-			\COption::SetOptionString('intranet', 'BLOCK_NEW_USER_LF_SITE', 'N', false, SITE_ID);
+			Option::set('intranet', 'BLOCK_NEW_USER_LF_SITE', 'N', false, SITE_ID);
 		}
 		else
 		{
-			\COption::SetOptionString('intranet', 'BLOCK_NEW_USER_LF_SITE', 'Y', false, SITE_ID);
+			Option::set('intranet', 'BLOCK_NEW_USER_LF_SITE', 'Y', false, SITE_ID);
 		}
 
 		return new Result();
@@ -169,26 +177,89 @@ class EmployeeSettings extends AbstractSettings
 		$data = [];
 		if ($this->isBitrix24)
 		{
-			$data["allow_register"] = "N";
+			$data['allow_register'] = new Switcher(
+				'settings-employee-field-allow_register',
+				'allow_register',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_FAST_REG'),
+				'N',
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1'),
+				],
+				helpDesk: 'redirect=detail&code=17726876',
+			);
 			if(Loader::includeModule("socialservices"))
 			{
 				$registerSettings = Network::getRegisterSettings();
-				$data["allow_register"] = $registerSettings["REGISTER"] == "Y" ? "Y" : "N";
+				$data['allow_register']->setValue($registerSettings['REGISTER'] == 'Y' ? 'Y' : 'N');
 			}
-			$data["allow_invite_users"] = \COption::GetOptionString("bitrix24", "allow_invite_users", "N");
+
+			$data['allow_invite_users'] = new Switcher(
+				'settings-employee-field-allow_invite_users',
+				'allow_invite_users',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_USERS_TO_INVITE'),
+				Option::get('bitrix24', 'allow_invite_users', 'N'),
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_USERS_TO_INVITE_ON'),
+				],
+			);
 
 			$culture = Application::getInstance()->getContext()->getCulture();
-			$data['show_year_for_female'] = [
-				'current' => \COption::GetOptionString("intranet", "show_year_for_female", "N"),
-				'hintOn' => FormatDate($culture->get('LONG_DATE_FORMAT')),
-				'hintOff' => FormatDate($culture->get('DAY_MONTH_FORMAT')),
-			];
+
+			$data['show_year_for_female'] = new Switcher(
+				'settings-employee-field-show_year_for_female',
+				'show_year_for_female',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_BIRTH_YEAR'),
+				Option::get('intranet', 'show_year_for_female', 'N'),
+				[
+					'on' => FormatDate($culture->get('LONG_DATE_FORMAT')),
+					'off' => FormatDate($culture->get('DAY_MONTH_FORMAT')),
+					'hintTitle' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_BIRTH_YEAR')
+				],
+			);
+
 			$defaultExtranet = IsModuleInstalled("extranet") ? 'Y' : 'N';
-			$data['feature_extranet'] = \COption::GetOptionString("bitrix24", "feature_extranet", $defaultExtranet);
+
+			$data['feature_extranet'] = new Switcher(
+				'settings-employee-field-feature_extranet',
+				'feature_extranet',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_EXTRANET'),
+				Option::get('bitrix24', 'feature_extranet', $defaultExtranet),
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_EXTRANET_ON_MSGVER_1'),
+				],
+				helpDesk: 'redirect=detail&code=17983050'
+			);
 		}
-		$data['show_fired_employees'] = \COption::GetOptionString("bitrix24", "show_fired_employees", "Y");
-		$data['general_chat_message_join'] = \COption::GetOptionString("im", "general_chat_message_join") ? 'Y' : 'N';
-		$data['allow_new_user_lf'] = \COption::GetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "N", SITE_ID) === 'Y' ? 'N' : 'Y';
+
+		$data['show_fired_employees'] = new Switcher(
+			'settings-employee-field-show_fired_employees',
+			'show_fired_employees',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_QUIT_EMPLOYEE'),
+			Option::get('bitrix24', 'show_fired_employees', 'Y'),
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_QUIT_EMPLOYEE_ON'),
+			]
+		);
+
+		$data['general_chat_message_join'] = new Switcher(
+			'settings-employee-field-general_chat_message_join',
+			'general_chat_message_join',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE'),
+			Option::get('im', 'general_chat_message_join') ? 'Y' : 'N',
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_ON'),
+			]
+		);
+
+		$data['allow_new_user_lf'] = new Switcher(
+			'settings-employee-field-allow_new_user_lf',
+			'allow_new_user_lf',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE_LF'),
+			Option::get('intranet', 'BLOCK_NEW_USER_LF_SITE', 'N', SITE_ID) === 'Y' ? 'N' : 'Y',
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_MESSAGE_NEW_EMPLOYEE_LF_ON'),
+			]
+		);
 
 		$values = [];
 		$currentSite = Culture::getCurrentSite();
@@ -201,11 +272,15 @@ class EmployeeSettings extends AbstractSettings
 			];
 		}
 
-		$data["NAME_FORMATS"] = [
-			'name' => 'FORMAT_NAME',
-			'values' => $values,
-			'current' => $currentSite["FORMAT_NAME"],
-		];
+		$data["fieldFormatName"] = new Selector(
+			'settings-employee-field-name_formats',
+			'FORMAT_NAME',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_NAME_FORMAT'),
+			$values,
+			$currentSite["FORMAT_NAME"]
+		);
+
+
 		$countriesReference = GetCountryArray();
 		$phoneNumberDefaultCountry = Parser::getDefaultCountry();
 		$currentCountry = GetCountryIdByCode($phoneNumberDefaultCountry);
@@ -220,13 +295,29 @@ class EmployeeSettings extends AbstractSettings
 		}
 
 		$phoneNumberHint = $this->getPhoneNumberFormatHint();
+		$phoneNumberHint['hintTitle'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_NUMBER_FORMAT');
+		$data['fieldFormatPhoneNumber'] = new Selector(
+			'settings-employee-field-phone_number_default_country',
+			'phone_number_default_country',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COUNTRY_PHONE_NUMBER'),
+			$countries,
+			$currentCountry,
+			hints: $phoneNumberHint
+		);
 
-		$data['PHONE_NUMBER_DEFAULT_COUNTRY'] = [
-			'name' => 'phone_number_default_country',
-			'values' => $countries,
-			'current' => $currentCountry,
-			'hints' => $phoneNumberHint,
-		];
+		$data['SECTION_PROFILE'] = new Section(
+			'settings-employee-section-profile',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_PROFILE'),
+			'ui-icon-set --person'
+		);
+
+		$data['SECTION_INVITE'] = new Section(
+			'settings-employee-section-invite',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_INVITE'),
+			'ui-icon-set --person-plus',
+			false
+		);
+
 		if (Loader::includeModule('location'))
 		{
 			$addressFormatList = [];
@@ -242,13 +333,15 @@ class EmployeeSettings extends AbstractSettings
 				];
 				$hintList[$format->getCode()] = $sanitizer->SanitizeHtml($format->getDescription());
 			}
-
-			$data['LOCATION_ADDRESS_FORMAT_LIST'] = [
-				'name' => 'address_format_code',
-				'values' => $addressFormatList,
-				'current' => FormatCode::getCurrent(),
-				'hints' => $hintList
-			];
+			$hintList['hintTitle'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_ADDRESS_FORMAT');
+			$data['fieldFormatAddress'] = new Selector(
+				'settings-employee-field-format_address',
+				'address_format_code',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ADDRESS_FORMAT'),
+				$addressFormatList,
+				FormatCode::getCurrent(),
+				hints: $hintList
+			);
 		}
 		$data['IS_BITRIX_24'] = $this->isBitrix24;
 
@@ -273,5 +366,34 @@ class EmployeeSettings extends AbstractSettings
 		}
 
 		return $phoneNumberHint;
+	}
+
+	public function find(string $query): array
+	{
+		$index = [
+			'settings-employee-section-profile' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_PROFILE'),
+			'settings-employee-section-invite' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_INVITE'),
+		];
+		if ($this->isBitrix24)
+		{
+			$index['show_year_for_female'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_BIRTH_YEAR');
+			$index['allow_register'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_FAST_REG');
+			$index['allow_invite_users'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_USERS_TO_INVITE');
+			$index['feature_extranet'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_EXTRANET');
+		}
+		if (Loader::includeModule('location'))
+		{
+			$index['address_format_code'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ADDRESS_FORMAT');
+		}
+
+		$searchEngine = SearchEngine::initWithDefaultFormatter($index + [
+			'phone_number_default_country' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COUNTRY_PHONE_NUMBER'),
+			'FORMAT_NAME_selector' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_NAME_FORMAT'),
+			'show_fired_employees' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_QUIT_EMPLOYEE'),
+			'general_chat_message_join' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE'),
+			'allow_new_user_lf' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE_LF'),
+		]);
+
+		return $searchEngine->find($query);
 	}
 }

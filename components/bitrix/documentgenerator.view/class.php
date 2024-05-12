@@ -51,6 +51,7 @@ class DocumentsViewComponent extends CBitrixComponent
 
 		$urlManager = \Bitrix\Main\Engine\UrlManager::getInstance();
 		$this->arResult = array_merge($this->document->getFile()->getData(), [
+			'isPdfReady' => $this->document->PDF_ID > 0,
 			'downloadUrl' => $urlManager->create('documentgenerator.api.publicdocument.getFile', [
 				'id' => $this->arParams['ID'],
 				'hash' => $this->arParams['HASH'],

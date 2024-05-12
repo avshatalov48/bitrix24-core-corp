@@ -3,8 +3,11 @@
 namespace Bitrix\BIConnector\Integration\Superset;
 
 
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetUserTable;
 use Bitrix\BIConnector\Integration\Superset\Integrator\SupersetIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Repository\DashboardRepository;
+use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
+use Bitrix\Main;
 
 final class SupersetController
 {
@@ -45,15 +48,58 @@ final class SupersetController
 		return SupersetInitializer::isSupersetActive();
 	}
 
-	public function getUserCredentials(): ?Integrator\Dto\UserCredentials
+	public function createUser(int $userId): Main\Result
 	{
-		$response = $this->integrator->getSupersetCommonUserCredentials();
+		$result = new Main\Result();
+
+		$user = (new SupersetUserRepository)->getById($userId);
+		if (!$user)
+		{
+			$result->addError(new Main\Error("User with id \"{$userId}\" not found"));
+			return $result;
+		}
+
+		if ($user->clientId)
+		{
+			$result->addError(new Main\Error('User already exists'));
+			return $result;
+		}
+
+		$response = $this->integrator->createUser($user);
+		if ($response->hasErrors())
+		{
+			$result->addErrors($response->getErrors());
+			return $result;
+		}
+
+		$data = $response->getData();
+
+		$addResult = SupersetUserTable::addClientId($user->id, $data['client_id']);
+		if ($addResult->isSuccess())
+		{
+			$user->clientId = $data['client_id'];
+			$result->setData([
+				'user' => $user,
+			]);
+		}
+		else
+		{
+			$result->addErrors($addResult->getErrors());
+		}
+
+		return $result;
+	}
+
+	public function getLoginUrl(): ?string
+	{
+		$response = $this->integrator->getLoginUrl();
 		if ($response->hasErrors())
 		{
 			return null;
 		}
 
-		return $response->getData();
+		$data = $response->getData();
+		return $data['url'];
 	}
 
 	public function isExternalServiceAvailable(): bool

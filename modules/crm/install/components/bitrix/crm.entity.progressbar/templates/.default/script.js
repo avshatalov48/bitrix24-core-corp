@@ -64,7 +64,8 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 								entityId: this._entityId,
 								typeId : BX.prop.getInteger(settings, "conversionTypeId", BX.CrmLeadConversionType.general),
 								canConvert: BX.prop.getBoolean(settings, "canConvert", false),
-								conversionScheme: BX.prop.get(settings, "conversionScheme", null)
+								conversionScheme: BX.prop.get(settings, "conversionScheme", null),
+								converterId: BX.prop.getString(settings, 'converterId', null),
 							}
 						)
 					);

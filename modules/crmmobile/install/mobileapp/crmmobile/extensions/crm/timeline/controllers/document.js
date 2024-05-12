@@ -4,7 +4,7 @@
 jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 	const { TimelineBaseController } = require('crm/controllers/base');
 	const { CrmDocumentDetails } = require('crm/document/details');
-	const { Alert, makeDestructiveButton, makeCancelButton, makeButton } = require('alert');
+	const { Alert, makeCancelButton, makeButton, confirmDestructiveAction } = require('alert');
 	const { Loc } = require('loc');
 	const { Filesystem, utils } = require('native/filesystem');
 	const { withCurrentDomain } = require('utils/url');
@@ -117,17 +117,11 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 
 			if (confirmationText)
 			{
-				Alert.confirm(
-					'',
-					confirmationText,
-					[
-						makeDestructiveButton(
-							Loc.getMessage('CRM_TIMELINE_CONFIRM_REMOVE'),
-							() => this.executeDeleteAction(data),
-						),
-						makeCancelButton(),
-					],
-				);
+				confirmDestructiveAction({
+					title: '',
+					description: confirmationText,
+					onDestruct: () => this.executeDeleteAction(data),
+				});
 			}
 			else
 			{

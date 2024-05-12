@@ -5,6 +5,7 @@
 jn.define('im/messenger/model/files', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--files');
 
@@ -147,6 +148,65 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 				}
 			},
 
+			/** @function filesModel/setFromLocalDatabase */
+			setFromLocalDatabase: (store, payload) => {
+				let fileList = [];
+				if (Type.isArray(payload))
+				{
+					fileList = payload.map((file) => {
+						const result = validate(store, { ...file });
+						result.templateId = result.id;
+
+						return {
+							...elementState,
+							...result,
+						};
+					});
+				}
+				else
+				{
+					const result = validate(store, { ...payload });
+					result.templateId = result.id;
+					fileList.push({
+						...elementState,
+						...result,
+					});
+				}
+
+				const existingFileList = [];
+				const newFileList = [];
+				fileList.forEach((file) => {
+					if (store.getters.hasFile(file.id))
+					{
+						existingFileList.push(file);
+
+						return;
+					}
+
+					newFileList.push(file);
+				});
+
+				if (existingFileList.length > 0)
+				{
+					store.commit('update', {
+						actionName: 'setFromLocalDatabase',
+						data: {
+							fileList: existingFileList,
+						},
+					});
+				}
+
+				if (newFileList.length > 0)
+				{
+					store.commit('add', {
+						actionName: 'setFromLocalDatabase',
+						data: {
+							fileList: newFileList,
+						},
+					});
+				}
+			},
+
 			/** @function filesModel/updateWithId */
 			updateWithId: (store, payload) => {
 				const { id, fields } = payload;
@@ -184,7 +244,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesSetStateData, FilesSetStateActions>} payload
 			 */
 			setState: (state, payload) => {
 				const {
@@ -196,7 +256,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesAddData, FilesAddActions>} payload
 			 */
 			add: (state, payload) => {
 				logger.log('filesModel: add mutation', payload);
@@ -212,7 +272,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} payload
 			 */
 			update: (state, payload) => {
 				logger.log('filesModel: update mutation', payload);
@@ -231,7 +291,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesUpdateWithIdData, FilesUpdateWithIdActions>} payload
 			 */
 			updateWithId: (state, payload) => {
 				logger.log('filesModel: updateWithId mutation', payload);
@@ -252,7 +312,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesDeleteData, FilesDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
 				logger.log('filesModel: delete mutation', payload);
@@ -308,15 +368,14 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		if (Type.isString(fields.extension))
 		{
 			result.extension = fields.extension.toString().toLowerCase();
-
-			if (result.type === FileType.image
-				&& Application.getPlatform() === 'ios' // ios cant show webp and bmp and others type
-				&& (result.extension !== FileImageType.jpeg
-					&& result.extension !== FileImageType.jpg
-					&& result.extension !== FileImageType.png
-					&& result.extension !== FileImageType.gif
-					&& result.extension !== FileImageType.heif
-					&& result.extension !== FileImageType.heic)
+			if (!Feature.isSupportBMPImageType && result.type === FileType.image
+					&& Application.getPlatform() === 'ios' // ios cant support webp and bmp type before 53 api
+					&& (result.extension !== FileImageType.jpeg
+						&& result.extension !== FileImageType.jpg
+						&& result.extension !== FileImageType.png
+						&& result.extension !== FileImageType.gif
+						&& result.extension !== FileImageType.heif
+						&& result.extension !== FileImageType.heic)
 			)
 			{
 				result.type = FileType.file;

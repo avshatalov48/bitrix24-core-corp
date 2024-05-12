@@ -17,14 +17,17 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 			this.chatId = 0;
 			this.dialogId = '';
 
+			/** @type {Array<RawUser>} */
 			this.rawUsers = [];
 
 			this.users = {};
 			this.dialogues = {};
+			/** @type {Record<number,RawFile>} */
 			this.files = {};
+			/** @type {Record<number, RawMessage>} */
 			this.messages = {};
 			this.messagesToStore = {};
-			this.pinnedMessageIds = [];
+			this.pins = {};
 			this.reactions = [];
 			this.usersShort = [];
 
@@ -90,7 +93,7 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 
 		getPinnedMessages()
 		{
-			return this.pinnedMessageIds;
+			return this.pins;
 		}
 
 		getReactions()
@@ -171,21 +174,33 @@ jn.define('im/messenger/provider/service/classes/rest-data-extractor', (require,
 
 		extractPinnedMessagesResult()
 		{
-			const pinMessageList = this.response[RestMethod.imChatPinGet];
-			if (!pinMessageList)
+			/**
+			 * @type {ImV2ChatPinTailResult}
+			 */
+			const pinMessageList = this.response[RestMethod.imV2ChatPinTail];
+			if (!pinMessageList || pinMessageList.pins.length === 0)
 			{
 				return;
 			}
+			const {
+				additionalMessages,
+				pins,
+				files,
+				users,
+				reactions,
+				reminders,
+			} = pinMessageList;
 
-			const { list = [], users = [], files: pinnedFiles = [] } = pinMessageList;
 			this.rawUsers = [...this.rawUsers, ...users];
-			pinnedFiles.forEach((file) => {
+			this.pins = {
+				pins,
+				messages: additionalMessages,
+			};
+
+			for (const file of files)
+			{
 				this.files[file.id] = file;
-			});
-			list.forEach((pinnedItem) => {
-				this.pinnedMessageIds.push(pinnedItem.messageId);
-				this.messagesToStore[pinnedItem.message.id] = pinnedItem.message;
-			});
+			}
 		}
 
 		extractMessages(data)

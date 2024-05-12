@@ -577,7 +577,7 @@ export default class GoToChat extends Item
 		if (!phone)
 		{
 			/*
-			now the situation of the absence of the client’s phone
+			now the situation of the absence of the clientâ€™s phone
 			has not been worked out by the product manager in any way
 
 			@todo need handle this situation

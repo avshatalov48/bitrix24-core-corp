@@ -299,21 +299,28 @@ abstract class BaseComponent extends Crm\Component\Base
 
 	protected function tryToDetectMode()
 	{
-		if($this->entityID <= 0)
+		if ($this->entityID <= 0)
 		{
-			if(!$this->checkEntityPermission(EntityPermissionType::CREATE))
+			if ($this->checkEntityPermission(EntityPermissionType::CREATE))
 			{
-				$this->addError(ComponentError::PERMISSION_DENIED);
-				return false;
+				if ($this->getConversionWizard())
+				{
+					$this->mode = ComponentMode::CONVERSION;
+				}
+				else
+				{
+					$this->mode = ComponentMode::CREATION;
+				}
 			}
-
-			if ($this->getConversionWizard())
+			elseif ($this->checkEntityPermission(EntityPermissionType::READ) && !$this->isIframe())
 			{
-				$this->mode = ComponentMode::CONVERSION;
+				$this->mode = ComponentMode::VIEW;
 			}
 			else
 			{
-				$this->mode = ComponentMode::CREATION;
+				$this->addError(ComponentError::PERMISSION_DENIED);
+
+				return false;
 			}
 		}
 		else

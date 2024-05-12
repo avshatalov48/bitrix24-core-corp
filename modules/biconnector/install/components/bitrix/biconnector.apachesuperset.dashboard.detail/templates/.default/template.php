@@ -23,6 +23,7 @@ Loader::includeModule('ui');
 
 Extension::load([
 	'biconnector.apache-superset-analytics',
+	'ui.lottie',
 ]);
 
 $analyticSource = Context::getCurrent()->getRequest()->get('openFrom') ?? 'grid';

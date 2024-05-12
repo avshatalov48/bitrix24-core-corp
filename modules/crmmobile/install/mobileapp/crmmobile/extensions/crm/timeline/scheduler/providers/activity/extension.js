@@ -7,12 +7,12 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const { dateTimeOutline: dateTimeOutlineSvg, clipOutline, clockOutline: clockOutlineSvg } = require('assets/common');
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { ResponsibleSelector } = require('crm/timeline/services/responsible-selector');
 	const { Toolbar, ToolbarIcon, ToolbarButton } = require('crm/timeline/ui/toolbar');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
-	const { Textarea } = require('crm/timeline/ui/textarea');
+	const { Textarea } = require('layout/ui/textarea');
 	const { FileField } = require('layout/ui/fields/file');
 	const { Moment } = require('utils/date');
 	const { datetime } = require('utils/date/formats');
@@ -22,9 +22,6 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 	const { ItemSelector } = require('layout/ui/item-selector');
 	const { DatePill } = require('layout/ui/date-pill');
 	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
-
-	const DEFAULT_AVATAR = '/bitrix/mobileapp/crmmobile/extensions/crm/timeline/item/ui/user-avatar/default-avatar.png';
-	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/user.png';
 
 	const INITIAL_HEIGHT = 1000;
 
@@ -105,7 +102,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 		static getMenuIcon()
 		{
-			return `<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 5.5C9.47715 5.5 5 9.97715 5 15.5C5 21.0228 9.47715 25.5 15 25.5C20.5228 25.5 25 21.0228 25 15.5C25 9.97715 20.5228 5.5 15 5.5ZM11.6346 14.4874L13.8697 16.7226L19.228 11.3643L20.8081 12.9444L13.8713 19.8812L13.7853 19.7952L13.7838 19.7968L10.0545 16.0675L11.6346 14.4874Z" fill="${AppTheme.colors.base4}"/></svg>`;
+			return `<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15 5.5C9.47715 5.5 5 9.97715 5 15.5C5 21.0228 9.47715 25.5 15 25.5C20.5228 25.5 25 21.0228 25 15.5C25 9.97715 20.5228 5.5 15 5.5ZM11.6346 14.4874L13.8697 16.7226L19.228 11.3643L20.8081 12.9444L13.8713 19.8812L13.7853 19.7952L13.7838 19.7968L10.0545 16.0675L11.6346 14.4874Z" fill="${Color.base4}"/></svg>`;
 		}
 
 		static getDefaultPosition()
@@ -177,7 +174,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					{
 						style: {
 							flex: 1,
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary,
 							borderTopLeftRadius: 12,
 							borderTopRightRadius: 12,
 							maxHeight: this.state.maxHeight,
@@ -298,7 +295,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					},
 					Image(
 						{
-							tintColor: AppTheme.colors.base4,
+							tintColor: Color.base4,
 							svg: {
 								content: clockOutlineSvg(),
 							},
@@ -340,7 +337,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					},
 				},
 				Image({
-					tintColor: AppTheme.colors.base4,
+					tintColor: Color.base4,
 					svg: {
 						content: dateTimeOutlineSvg(),
 					},
@@ -361,8 +358,8 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						},
 					},
 					new DatePill({
-						textColor: AppTheme.colors.base3,
-						backgroundColor: AppTheme.colors.bgContentTertiary,
+						textColor: Color.base3,
+						backgroundColor: Color.bgContentTertiary,
 						fontSize: 14,
 						imageSize: 14,
 						fontWeight: 500,
@@ -452,7 +449,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						testId: 'TimelineProviderActivityAttachButtonCounter',
 						style: {
 							borderRadius: 500,
-							backgroundColor: AppTheme.colors.accentBrandBlue,
+							backgroundColor: Color.accentBrandBlue,
 							position: attachedFilesCount === 0 ? 'relative' : 'absolute',
 							display: attachedFilesCount === 0 ? 'none' : 'flex',
 							alignItems: 'center',
@@ -469,7 +466,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					Text(
 						{
 							style: {
-								color: AppTheme.colors.baseWhiteFixed,
+								color: Color.baseWhiteFixed,
 								fontSize: 11,
 								fontWeight: 500,
 								textAlign: 'center',
@@ -483,7 +480,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						width: 26,
 						height: 27,
 					},
-					tintColor: AppTheme.colors.base3,
+					tintColor: Color.base3,
 					resizeMode: 'contain',
 					svg: {
 						content: clipOutline(),
@@ -505,7 +502,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 				View(
 					{
 						style: {
-							backgroundColor: AppTheme.colors.bgSeparatorPrimary,
+							backgroundColor: Color.bgSeparatorPrimary,
 							flex: 1,
 						},
 					},
@@ -615,7 +612,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 									title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ATTACHMENTS_TITLE'),
 									message: `${Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ATTACHMENTS_BODY')} 😉`,
 									time: 3,
-									backgroundColor: AppTheme.colors.accentSoftElementBlue1,
+									backgroundColor: Color.accentSoftElementBlue1,
 									blur: true,
 									code: 'attach_hint',
 								});
@@ -623,7 +620,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						},
 					}),
 					ToolbarIcon({
-						svg: `<svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.8209 8.6302C13.4064 8.61776 13.8912 9.08233 13.9036 9.66785C13.9607 12.3582 11.9789 15.5172 8.13976 16.039L8.13894 17.4335L8.59835 17.4339C9.12608 17.4339 9.55389 17.8617 9.55389 18.3894C9.55389 18.9171 9.12608 19.3449 8.59835 19.3449H5.40111C4.87338 19.3449 4.44557 18.9171 4.44557 18.3894C4.44557 17.8617 4.87338 17.4339 5.40111 17.4339L5.85906 17.4335L5.85898 16.0381C2.02549 15.5205 0.0658277 12.4368 0.0956103 9.67891C0.101934 9.0933 0.581793 8.62369 1.1674 8.62989C1.71398 8.63592 2.15949 9.05432 2.21132 9.58621L2.2163 9.70181C2.21036 10.2519 2.51762 11.3083 3.08472 12.1298C3.8989 13.3093 5.15055 13.9929 7.01102 13.9929C8.86116 13.9929 10.1084 13.2962 10.924 12.0939C11.4448 11.3263 11.7482 10.351 11.7806 9.82579L11.7833 9.71288C11.7708 9.12737 12.2354 8.64263 12.8209 8.6302ZM6.99973 0.29834C8.59695 0.29834 9.89175 1.59314 9.89175 3.19036V9.28705C9.89175 10.8843 8.59695 12.1791 6.99973 12.1791C5.40252 12.1791 4.10772 10.8843 4.10772 9.28705V3.19036C4.10772 1.59314 5.40252 0.29834 6.99973 0.29834Z" fill="${AppTheme.colors.base6}"/></svg>`,
+						svg: `<svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.8209 8.6302C13.4064 8.61776 13.8912 9.08233 13.9036 9.66785C13.9607 12.3582 11.9789 15.5172 8.13976 16.039L8.13894 17.4335L8.59835 17.4339C9.12608 17.4339 9.55389 17.8617 9.55389 18.3894C9.55389 18.9171 9.12608 19.3449 8.59835 19.3449H5.40111C4.87338 19.3449 4.44557 18.9171 4.44557 18.3894C4.44557 17.8617 4.87338 17.4339 5.40111 17.4339L5.85906 17.4335L5.85898 16.0381C2.02549 15.5205 0.0658277 12.4368 0.0956103 9.67891C0.101934 9.0933 0.581793 8.62369 1.1674 8.62989C1.71398 8.63592 2.15949 9.05432 2.21132 9.58621L2.2163 9.70181C2.21036 10.2519 2.51762 11.3083 3.08472 12.1298C3.8989 13.3093 5.15055 13.9929 7.01102 13.9929C8.86116 13.9929 10.1084 13.2962 10.924 12.0939C11.4448 11.3263 11.7482 10.351 11.7806 9.82579L11.7833 9.71288C11.7708 9.12737 12.2354 8.64263 12.8209 8.6302ZM6.99973 0.29834C8.59695 0.29834 9.89175 1.59314 9.89175 3.19036V9.28705C9.89175 10.8843 8.59695 12.1791 6.99973 12.1791C5.40252 12.1791 4.10772 10.8843 4.10772 9.28705V3.19036C4.10772 1.59314 5.40252 0.29834 6.99973 0.29834Z" fill="${Color.base6}"/></svg>`,
 						width: 14,
 						height: 20,
 						onClick: () => {
@@ -631,7 +628,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 								title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_VOICE_NOTES_TITLE'),
 								message: `${Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_VOICE_NOTES_BODY')} 😉`,
 								time: 3,
-								backgroundColor: AppTheme.colors.accentSoftElementBlue1,
+								backgroundColor: Color.accentSoftElementBlue1,
 								blur: true,
 								code: 'voice_hint',
 							});

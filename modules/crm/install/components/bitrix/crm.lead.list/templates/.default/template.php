@@ -16,9 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
-use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Component\EntityList\ActionManager;
-use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\AvailabilityManager;
@@ -50,7 +48,6 @@ Bitrix\Main\UI\Extension::load(
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_conversion.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
@@ -265,29 +262,33 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 		if ($arResult['CAN_CONVERT'])
 		{
 			$isReturnCustomer = $arLead['IS_RETURN_CUSTOMER'] === 'Y';
-			$arSchemeDescriptions = \Bitrix\Crm\Conversion\LeadConversionDispatcher::getConfiguration(
+
+			$config = \Bitrix\Crm\Conversion\LeadConversionDispatcher::getConfiguration(
 				['FIELDS' => $arLead]
-			)->getSchemeJavaScriptDescriptions(true);
+			);
 
 			$arSchemeList = [];
 
-			$curPage = CUtil::JSEscape($APPLICATION->GetCurPage());
-
-			foreach($arSchemeDescriptions as $name => $description)
+			foreach($config->getScheme()->getItems() as $item)
 			{
-				$entityTypeId = \CCrmOwnerType::ResolveID($name);
-				if ($toolsManager->checkEntityTypeAvailability($entityTypeId))
+				if (empty($item->getAvailabilityLock()))
 				{
-					$onClick = "BX.CrmLeadConverter.getCurrent().convert({$arLead['ID']}, BX.CrmLeadConversionScheme.createConfig('{$name}'), '" . $curPage . "');";
+					$onClick = sprintf(
+						"BX.Crm.Conversion.Manager.Instance.getConverter('%s').setAnalyticsElement('%s').convertBySchemeItemId('%s', %d);",
+						\CUtil::JSEscape($arResult['CONVERTER_ID_PREFIX'] . '_' . $config->getTypeID()),
+						Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU,
+						\CUtil::JSEscape($item->getId()),
+						(int)$arLead['ID']
+					);
 				}
 				else
 				{
-					$onClick = $availabilityManager->getEntityTypeAvailabilityLock($entityTypeId);
+					$onClick = $item->getAvailabilityLock();
 				}
 
 				$arSchemeList[] = [
-					'TITLE' => $description,
-					'TEXT' => $description,
+					'TITLE' => $item->getPhrase(),
+					'TEXT' => $item->getPhrase(),
 					'ONCLICK' => $onClick,
 				];
 			}
@@ -299,7 +300,25 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 					$arSchemeList[] = [
 						'TITLE' => Loc::getMessage('CRM_LEAD_CONV_OPEN_ENTITY_SEL'),
 						'TEXT' => Loc::getMessage('CRM_LEAD_CONV_OPEN_ENTITY_SEL'),
-						'ONCLICK' => "BX.CrmLeadConverter.getCurrent().openEntitySelector(function(result){ BX.CrmLeadConverter.getCurrent().convert({$arLead['ID']}, result.config, '".CUtil::JSEscape($APPLICATION->GetCurPage())."', result.data); });"
+						'ONCLICK' => sprintf(
+<<<js
+(function() {
+	const selector = BX.Crm.Conversion.Manager.Instance.createEntitySelector(
+		'%s',
+		[BX.CrmEntityType.enumeration.contact, BX.CrmEntityType.enumeration.company],
+		%d,
+	);
+	if (selector)
+	{
+		selector.getConverter().setAnalyticsElement('%s');
+		selector.show();
+	}
+})()
+js,
+							\CUtil::JSEscape($arResult['CONVERTER_ID_PREFIX'] . '_' . $config->getTypeID()),
+							(int)$arLead['ID'],
+							Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU,
+						),
 					];
 				}
 
@@ -317,19 +336,6 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 
 	if (!$isInternal)
 	{
-		if (RestrictionManager::isHistoryViewPermitted())
-		{
-			$arActions[] = $arActivityMenuItems[] = [
-				'TITLE' => Loc::getMessage('CRM_LEAD_EVENT_TITLE'),
-				'TEXT' => Loc::getMessage('CRM_LEAD_EVENT'),
-				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-					'{$gridManagerID}',
-					BX.CrmUIGridMenuCommand.createEvent,
-					{ entityTypeName: BX.CrmEntityType.names.lead, entityId: {$arLead['ID']} }
-				)"
-			];
-		}
-
 		if ($arLead['EDIT'])
 		{
 			$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
@@ -587,8 +593,9 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 						? $arResult['CONVERSION']['SCHEMES'][$arLead['CONVERSION_TYPE_ID']]
 						: null,
 					'CAN_CONVERT' => $arResult['CAN_CONVERT'],
+					'CONVERTER_ID' => $arResult['CONVERTER_ID_PREFIX'] . '_' . $arLead['CONVERSION_TYPE_ID'],
 					'CONVERSION_TYPE_ID' => $arLead['CONVERSION_TYPE_ID'],
-					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true)
+					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true),
 				)
 			),
 			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? null,
@@ -1099,6 +1106,7 @@ $APPLICATION->IncludeComponent(
 				'CONTROLLER' => [
 					'getList' => 'crm.api.filter.lead.getlist',
 					'getField' => 'crm.api.filter.lead.getfield',
+					'getFields' => 'crm.api.filter.lead.getfields',
 				],
 			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
@@ -1108,6 +1116,10 @@ $APPLICATION->IncludeComponent(
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
+			'RESTRICTED_FIELDS' => $arResult['RESTRICTED_FIELDS'] ?? [],
 		],
 		'LIVE_SEARCH_LIMIT_INFO' => ($arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null),
 		'ENABLE_LIVE_SEARCH' => true,
@@ -1206,12 +1218,6 @@ $APPLICATION->IncludeComponent(
 					mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_LEAD_MERGE'])?>"
 				}
 			);
-
-			BX.Crm.AnalyticTracker.config =
-				{
-					id: "lead_list",
-					settings: { params: <?=CUtil::PhpToJSObject($arResult['ANALYTIC_TRACKER'])?> }
-				};
 		}
 	);
 </script>
@@ -1295,55 +1301,50 @@ $APPLICATION->IncludeComponent(
 			}
 	);
 </script>
-<?endif;?>
+<?php endif;
 
-<?if ($arResult['CAN_CONVERT'] && isset($arResult['CONVERSION']['CONFIGS'])):?>
-<script type="text/javascript">
+if ($arResult['CAN_CONVERT']):
+	\Bitrix\Main\UI\Extension::load('crm.conversion');
+	?><script type="text/javascript">
 	BX.ready(
 		function()
 		{
-			BX.CrmLeadConversionType.configs = <?=CUtil::PhpToJSObject($arResult['CONVERSION']['CONFIGS'])?>;
-			BX.CrmLeadConversionScheme.messages =
-				<?=CUtil::PhpToJSObject(LeadConversionScheme::getJavaScriptDescriptions(false))?>;
-			BX.CrmLeadConverter.messages =
-			{
-				accessDenied: "<?=GetMessageJS("CRM_LEAD_CONV_ACCESS_DENIED")?>",
-				generalError: "<?=GetMessageJS("CRM_LEAD_CONV_GENERAL_ERROR")?>",
-				dialogTitle: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_TITLE")?>",
-				syncEditorLegend: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_SYNC_LEGEND")?>",
-				syncEditorFieldListTitle: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_SYNC_FILED_LIST_TITLE")?>",
-				syncEditorEntityListTitle: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
-				continueButton: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_CONTINUE_BTN")?>",
-				cancelButton: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_CANCEL_BTN")?>",
-				selectButton: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_BTN")?>",
-				openEntitySelector: "<?=GetMessageJS("CRM_LEAD_CONV_OPEN_ENTITY_SEL")?>",
-				entitySelectorTitle: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_TITLE")?>",
-				contact: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_CONTACT")?>",
-				company: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_COMPANY")?>",
-				noresult: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_SEARCH_NO_RESULT")?>",
-				search : "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_SEARCH")?>",
-				last : "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_LAST")?>"
-			};
-			BX.CrmLeadConverter.permissions =
-			{
-				contact: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_CONTACT'])?>,
-				company: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_COMPANY'])?>,
-				deal: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_DEAL'])?>
-			};
-			BX.CrmLeadConverter.settings =
-			{
-				serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.show/ajax.php?action=convert&'.bitrix_sessid_get()?>"
-			};
-			BX.CrmDealCategory.infos = <?=CUtil::PhpToJSObject(
-				DealCategory::getJavaScriptInfos(EntityConverter::getPermittedDealCategoryIDs())
-			)?>;
-			BX.CrmDealCategorySelectDialog.messages =
-			{
-				title: "<?=GetMessageJS('CRM_LEAD_LIST_CONV_DEAL_CATEGORY_DLG_TITLE')?>",
-				field: "<?=GetMessageJS('CRM_LEAD_LIST_CONV_DEAL_CATEGORY_DLG_FIELD')?>",
-				saveButton: "<?=GetMessageJS('CRM_LEAD_LIST_BUTTON_SAVE')?>",
-				cancelButton: "<?=GetMessageJS('CRM_LEAD_LIST_BUTTON_CANCEL')?>"
-			};
+			<?php foreach (\Bitrix\Crm\Conversion\LeadConversionDispatcher::getAllConfigurations() as $conversionConfig): ?>
+			BX.Crm.Conversion.Manager.Instance.initializeConverter(
+				BX.CrmEntityType.enumeration.lead,
+				{
+					configItems: <?= CUtil::PhpToJSObject($conversionConfig->toJson()) ?>,
+					scheme: <?= CUtil::PhpToJSObject($conversionConfig->getScheme()->toJson(true)) ?>,
+					params: {
+						id: '<?= \CUtil::JSEscape($arResult['CONVERTER_ID_PREFIX'] . '_' . $conversionConfig->getTypeID()) ?>',
+						serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.show/ajax.php?action=convert&'.bitrix_sessid_get()?>",
+						messages: {
+							accessDenied: "<?=GetMessageJS("CRM_LEAD_CONV_ACCESS_DENIED")?>",
+							generalError: "<?=GetMessageJS("CRM_LEAD_CONV_GENERAL_ERROR")?>",
+							dialogTitle: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_TITLE")?>",
+							syncEditorLegend: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_SYNC_LEGEND")?>",
+							syncEditorFieldListTitle: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_SYNC_FILED_LIST_TITLE")?>",
+							syncEditorEntityListTitle: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
+							continueButton: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_CONTINUE_BTN")?>",
+							cancelButton: "<?=GetMessageJS("CRM_LEAD_CONV_DIALOG_CANCEL_BTN")?>",
+
+							selectButton: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_BTN")?>",
+							openEntitySelector: "<?=GetMessageJS("CRM_LEAD_CONV_OPEN_ENTITY_SEL")?>",
+							entitySelectorTitle: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_TITLE")?>",
+							contact: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_CONTACT")?>",
+							company: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_COMPANY")?>",
+							noresult: "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_SEARCH_NO_RESULT")?>",
+							search : "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_SEARCH")?>",
+							last : "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_LAST")?>",
+						},
+						analytics: {
+							c_sub_section: '<?= Integration\Analytics\Dictionary::SUB_SECTION_LIST ?>',
+						},
+					}
+				},
+			);
+			<?php endforeach; ?>
+
 			BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 			BX.CrmEntityType.setNotFoundMessages(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetNotFoundMessages())?>);
 
@@ -1351,6 +1352,7 @@ $APPLICATION->IncludeComponent(
 			BX.Crm.BatchConversionManager.create(
 				gridId,
 				{
+					entityTypeId: BX.CrmEntityType.enumeration.lead,
 					gridId: gridId,
 					serviceUrl: "/bitrix/components/bitrix/crm.lead.list/list.ajax.php?sessid=" + BX.bitrix_sessid(),
 					container: "batchConversionWrapper",
@@ -1362,6 +1364,11 @@ $APPLICATION->IncludeComponent(
 						summaryCaption: "<?=GetMessageJS('CRM_LEAD_BATCH_CONVERSION_COMPLETED')?>",
 						summarySucceeded: "<?=GetMessageJS('CRM_LEAD_BATCH_CONVERSION_COUNT_SUCCEEDED')?>",
 						summaryFailed: "<?=GetMessageJS('CRM_LEAD_BATCH_CONVERSION_COUNT_FAILED')?>"
+					},
+					analytics: {
+						c_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD ?>',
+						c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST ?>',
+						c_element: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_GROUP_ACTIONS ?>',
 					}
 				}
 			);

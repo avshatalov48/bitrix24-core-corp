@@ -19,6 +19,7 @@ use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UtmTable;
@@ -1182,11 +1183,12 @@ class CAllCrmContact
 			/** @var \CCrmPerms $arOptions['PERMS'] */
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			Crm\Security\QueryBuilder\Options::createFromArray($arOptions)
-				->setOperations((array)$mPermType)
-				->setAliasPrefix((string)$sAliasPrefix)
-				->setSkipCheckOtherEntityTypes($permissionTypeHelper->getAllowSkipOtherEntityTypesFromOptions($arOptions))
+
+		$builderOptions = OptionsBuilder::makeFromArray($arOptions)
+			->setOperations((array)$mPermType)
+			->setAliasPrefix((string)$sAliasPrefix)
+			->setSkipCheckOtherEntityTypes($permissionTypeHelper->getAllowSkipOtherEntityTypesFromOptions($arOptions))
+			->build()
 		;
 
 		$queryBuilder = Crm\Service\Container::getInstance()
@@ -3008,6 +3010,8 @@ class CAllCrmContact
 			{
 				$GLOBALS["CACHE_MANAGER"]->ClearByTag("crm_entity_name_".CCrmOwnerType::Contact."_".$ID);
 			}
+
+			CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(CCrmOwnerType::Contact, $ID);
 
 			$afterEvents = GetModuleEvents('crm', 'OnAfterCrmContactDelete');
 			while ($arEvent = $afterEvents->Fetch())

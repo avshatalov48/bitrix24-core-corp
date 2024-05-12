@@ -2,51 +2,27 @@
  * @module tasks/layout/checklist/list/src/text-field
  */
 jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { PureComponent } = require('layout/pure-component');
+	const { Color } = require('tokens');
 	const { Random } = require('utils/random');
+	const { throttle } = require('utils/function');
 
 	/**
 	 * @class ItemTextField
 	 */
-	class ItemTextField extends PureComponent
+	class ItemTextField extends LayoutComponent
 	{
 		constructor(props)
 		{
 			super(props);
 
-			this.focused = false;
 			this.textInputRef = null;
 			this.cursorPosition = 0;
-			this.handleOnSubmit = this.handleOnSubmit.bind(this);
-			this.handleOnChange = this.handleOnChange.bind(this);
+
+			this.handleOnSubmit = throttle(this.handleOnSubmit, 500, this);
+			this.handleOnChange = throttle(this.handleOnChange, 200, this);
 			this.handleOnLayout = this.handleOnLayout.bind(this);
-
-			this.initialState(props);
-		}
-
-		componentWillReceiveProps(props)
-		{
-			this.initialState(props);
-		}
-
-		initialState(props)
-		{
-			const { completed } = props;
-
-			this.state = {
-				completed,
-				reload: null,
-			};
-		}
-
-		completeItem()
-		{
-			const { completed } = this.state;
-
-			return new Promise((resolve) => {
-				this.setState({ completed: !completed }, resolve);
-			});
+			this.handleOnFocus = this.handleOnFocus.bind(this);
+			this.handleOnBlur = this.handleOnBlur.bind(this);
 		}
 
 		render()
@@ -58,7 +34,6 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 						marginTop: 4,
 						justifyContent: 'center',
 					},
-					onLayout: this.handleOnLayout,
 				},
 				this.renderTextField(),
 			);
@@ -88,14 +63,32 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 		{
 			const { isFocused } = this.props;
 
-			/**
-			 * Set focus if the element is rendered in hidden space
-			 */
-			if (isFocused)
+			if (isFocused && this.textInputRef)
 			{
-				setTimeout(() => {
-					this.textInputRef.focus();
-				}, 200);
+				this.textInputRef.focus();
+			}
+		}
+
+		handleOnFocus()
+		{
+			const { onFocus, item } = this.props;
+
+			const title = item.getTitle();
+			this.cursorPosition = title.length;
+
+			if (onFocus)
+			{
+				onFocus();
+			}
+		}
+
+		handleOnBlur()
+		{
+			const { onBlur } = this.props;
+
+			if (onBlur)
+			{
+				onBlur();
 			}
 		}
 
@@ -111,7 +104,9 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 		{
 			if (this.textInputRef)
 			{
-				this.textInputRef.blur();
+				this.textInputRef.blur({
+					hideKeyboard: true,
+				});
 			}
 		}
 
@@ -122,12 +117,14 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 		{
 			if (this.textInputRef)
 			{
-				this.textInputRef.isFocused();
+				return this.textInputRef.isFocused();
 			}
+
+			return false;
 		}
 
 		/**
-		 * @private
+		 * @public
 		 */
 		clear()
 		{
@@ -144,33 +141,30 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 
 		renderTextField()
 		{
-			const { styles = {}, onFocus, onBlur, isFocused, placeholder } = this.props;
-			const value = this.getTitle();
+			const { item, style = {}, placeholder } = this.props;
+
+			if (!item.isRoot())
+			{
+				style.color = this.getTitleColor();
+			}
 
 			return TextInput({
 				ref: (ref) => {
 					this.textInputRef = ref;
 				},
-				focus: isFocused,
+				onLayout: this.handleOnLayout,
 				placeholder,
-				placeholderTextColor: AppTheme.colors.base4,
+				placeholderTextColor: Color.base4,
 				style: {
 					fontSize: 16,
-					color: AppTheme.colors.base1,
 					textAlignVertical: 'center',
-					...styles,
-				},
-				onBlur: () => {
-					this.focused = false;
-					onBlur();
-				},
-				onFocus: () => {
-					this.cursorPosition = value.length;
-					this.focused = true;
-					onFocus();
+					...style,
 				},
 				multiline: true,
-				forcedValue: value,
+				forcedValue: this.getTitle(),
+				onBlur: this.handleOnBlur,
+				onFocus: this.handleOnFocus,
+				returnKeyType: this.getReturnKeyType(),
 				onSubmitEditing: this.handleOnSubmit,
 				onChangeText: this.handleOnChange,
 				onSelectionChange: ({ selection }) => {
@@ -181,7 +175,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 
 		renderBBCodeText()
 		{
-			const { styles = {} } = this.props;
+			const { style = {} } = this.props;
 
 			return View(
 				{
@@ -194,15 +188,22 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 					style: {
 						fontSize: 16,
 						fontWeight: '400',
-						color: AppTheme.colors.base3,
+						color: Color.base3,
 						textAlignVertical: 'center',
-						...styles,
+						...style,
 					},
 					focus: false,
 					linksUnderline: false,
 					value: this.getTitleWithUrls(),
 				}),
 			);
+		}
+
+		getReturnKeyType()
+		{
+			const { item } = this.props;
+
+			return item.isRoot() ? 'done' : null;
 		}
 
 		getTitleWithUrls(title, members)
@@ -212,28 +213,34 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 				const { name } = members[id];
 				newTitle = newTitle.replace(
 					name,
-					`[COLOR=${AppTheme.colors.accentMainLinks}][URL=${id}]${name}[/URL][/COLOR]`,
+					`[COLOR=${Color.accentMainLinks}][URL=${id}]${name}[/URL][/COLOR]`,
 				);
 			});
 		}
 
 		getTitle()
 		{
-			const { completed } = this.state;
-			const { getTitle } = this.props;
-			const title = getTitle();
+			const { item } = this.props;
 
-			if (completed && title.length > 0)
-			{
-				return `[COLOR=${AppTheme.colors.base5}]${title}[/COLOR]`;
-			}
+			return item.getTitle();
+		}
 
-			return title;
+		getTitleColor()
+		{
+			const { item } = this.props;
+			const completed = item.getIsComplete();
+
+			return completed ? Color.base5 : Color.base1;
 		}
 
 		getCursorPosition()
 		{
 			return this.cursorPosition;
+		}
+
+		getTextValue()
+		{
+			return this.textInputRef.getTextValue();
 		}
 	}
 

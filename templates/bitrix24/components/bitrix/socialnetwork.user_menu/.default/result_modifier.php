@@ -72,9 +72,6 @@ if (intval($arResult["User"]["PERSONAL_PHOTO"]) > 0)
 		$arResult["User"]["PersonalPhotoFile"] = $arFileTmp;
 }
 
-if(!CModule::IncludeModule("video"))
-	$arResult["CurrentUserPerms"]["Operations"]["videocall"] = false;
-
 if ($arResult["User"]["ID"] == $GLOBALS["USER"]->GetID())
 {
 	$arResult["CurrentUserPerms"]["Operations"]["message"] = false;

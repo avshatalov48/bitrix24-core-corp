@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Automation;
 
+use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Crm\Settings\InvoiceSettings;
@@ -40,14 +41,23 @@ class Helper
 		}
 
 		$categoryId = max(0, $categoryId);
-		$url = Container::getInstance()->getRouter()->getAutomationUrl($entityTypeId, $categoryId);
+
+		$toolsManager = Container::getInstance()->getIntranetToolsManager();
+		if ($toolsManager->checkRobotsAvailability())
+		{
+			$url = Container::getInstance()->getRouter()->getAutomationUrl($entityTypeId, $categoryId);
+		}
+		else
+		{
+			$url = 'javascript:' . AvailabilityManager::getInstance()->getRobotsAvailabilityLock();
+		}
 
 		return [
 			[
 				'id' => 'automation',
 				'name' => Loc::getMessage('CRM_AUTOMATION_HELPER_ROBOT_TITLE'),
 				'active' => false,
-				'url' => $url
+				'url' => $url,
 			]
 		];
 	}

@@ -1,9 +1,9 @@
-import {EventEmitter} from 'main.core.events';
-import {Row, Section} from 'ui.section';
-import {Checker, InlineChecker, Selector, TextInput, TextInputInline} from 'ui.form-elements.view';
-import {BaseSettingsPage, SettingsRow, SettingsSection} from 'ui.form-elements.field';
-import {AnalyticSettingsEvent} from '../analytic';
-import {Event, Loc, Tag} from 'main.core';
+import { Event, Loc, Tag } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { BaseSettingsPage, SettingsRow, SettingsSection } from 'ui.form-elements.field';
+import { Checker, InlineChecker, Selector, TextInput, TextInputInline } from 'ui.form-elements.view';
+import { Row, Section, SeparatorRow } from 'ui.section';
+import { AnalyticSettingsEvent } from '../analytic';
 
 export class ConfigurationPage extends BaseSettingsPage
 {
@@ -37,9 +37,9 @@ export class ConfigurationPage extends BaseSettingsPage
 			<div class="intranet-settings__date-widget_content">
 				<div class="intranet-settings__date-widget_inner">
 					<span data-role="time" class="intranet-settings__date-widget_title">${timeFormat}</span>
-					<span class="intranet-settings__date-widget_subtitle">${this.getValue('culture')?.offsetUTC}</span>
+					<span class="intranet-settings__date-widget_subtitle">${this.getValue('offsetUTC')}</span>
 				</div>
-				<div data-role="date" class="intranet-settings__date-widget_subtitle">${this.getValue('culture')?.currentDate}</div>
+				<div data-role="date" class="intranet-settings__date-widget_subtitle">${this.getValue('currentDate')}</div>
 			</div>
 		</div>`;
 
@@ -49,30 +49,31 @@ export class ConfigurationPage extends BaseSettingsPage
 	appendSections(contentNode: HTMLElement): void
 	{
 		let dateTimeSection = this.#buildDateTimeSection();
-		dateTimeSection.renderTo(contentNode);
+		dateTimeSection?.renderTo(contentNode);
 
 		let mailsSection = this.#buildMailsSection();
-		mailsSection.renderTo(contentNode);
+		mailsSection?.renderTo(contentNode);
 
 		if (this.hasValue('mapsProviderCRM') && this.getValue('mapsProviderCRM'))
 		{
 			let mapsSection = this.#buildCRMMapsSection();
-			mapsSection.renderTo(contentNode);
+			mapsSection?.renderTo(contentNode);
 		}
 
 		let cardsProductPropertiesSection = this.#buildCardsProductPropertiesSection();
-		cardsProductPropertiesSection.renderTo(contentNode);
+		cardsProductPropertiesSection?.renderTo(contentNode);
 
 		let additionalSettingsSection = this.#buildAdditionalSettingsSection();
-		additionalSettingsSection.renderTo(contentNode);
+		additionalSettingsSection?.renderTo(contentNode);
 	}
 
-	#buildDateTimeSection(): SettingsSection
+	#buildDateTimeSection(): ?SettingsSection
 	{
-		let dateTimeSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DATETIME'),
-			titleIconClasses: 'ui-icon-set --clock-2',
-		});
+		if (!this.hasValue('sectionDateFormat'))
+		{
+			return;
+		}
+		let dateTimeSection = new Section(this.getValue('sectionDateFormat'));
 
 		const settingsSection = new SettingsSection({
 			section: dateTimeSection,
@@ -81,32 +82,17 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		if (this.hasValue('culture'))
 		{
-			let regionField = new Selector({
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DATETIME_REGION_FORMAT'),
-				hintTitle: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_DATE_FORMAT'),
-				name: this.getValue('culture').name,
-				items: this.getValue('culture').values,
-				hints: this.getValue('culture').hints,
-				current: this.getValue('culture').current
-			});
+			let regionField = new Selector(this.getValue('culture'));
 			ConfigurationPage.addToSectionHelper(regionField, settingsSection, new Row( { className: '--intranet-settings__mb-20' } ));
 
 			Event.bind(regionField.getInputNode(), 'change', (event) => {
-				let newData = this.getValue('culture').longDates[event.target.value];
-				this.#header.querySelector('[data-role="date"]').innerHTML = newData;
+				this.#header.querySelector('[data-role="date"]').innerHTML = this.getValue('longDates')[event.target.value];
 			});
 		}
 
 		if (this.hasValue('isFormat24Hour'))
 		{
-			let format24Time = new InlineChecker({
-				inputName: 'isFormat24Hour',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24'),
-				hintTitle: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24'),
-				hintOn: this.getValue('format24HourTime'),
-				hintOff: this.getValue('format12HourTime'),
-				checked: this.getValue('isFormat24Hour') === 'Y'
-			});
+			let format24Time = new InlineChecker(this.getValue('isFormat24Hour'));
 			ConfigurationPage.addToSectionHelper(format24Time, settingsSection);
 
 			EventEmitter.subscribe(format24Time, 'change', (event) => {
@@ -119,13 +105,14 @@ export class ConfigurationPage extends BaseSettingsPage
 		return settingsSection;
 	}
 
-	#buildMailsSection(): SettingsSection
+	#buildMailsSection(): ?SettingsSection
 	{
-		let mailsSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAILS'),
-			titleIconClasses: 'ui-icon-set --mail',
-			isOpen: false
-		});
+		if (!this.hasValue('sectionLetters'))
+		{
+			return;
+		}
+
+		let mailsSection = new Section(this.getValue('sectionLetters'));
 
 		const settingsSection = new SettingsSection({
 			section: mailsSection,
@@ -134,25 +121,14 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		if (this.hasValue('trackOutMailsRead'))
 		{
-			let trackOutLettersRead = new Checker({
-				inputName: 'trackOutMailsRead',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_ON'),
-				checked: this.getValue('trackOutMailsRead') === 'Y'
-			});
+			let trackOutLettersRead = new Checker(this.getValue('trackOutMailsRead'));
 			let showQuitRow = new Row({});
 			ConfigurationPage.addToSectionHelper(trackOutLettersRead, settingsSection, showQuitRow);
 		}
 
 		if (this.hasValue('trackOutMailsClick'))
 		{
-			let trackOutMailsClick = new Checker({
-				inputName: 'trackOutMailsClick',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_CLICK_ON'),
-				checked: this.getValue('trackOutMailsClick') === 'Y',
-				helpDesk: 'redirect=detail&code=18213310',
-			});
+			let trackOutMailsClick = new Checker(this.getValue('trackOutMailsClick'));
 			let showQuitRow = new Row({});
 
 			ConfigurationPage.addToSectionHelper(trackOutMailsClick, settingsSection, showQuitRow);
@@ -160,13 +136,7 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		if (this.hasValue('defaultEmailFrom'))
 		{
-			let defaultEmailFrom = new TextInput({
-				inputName: 'defaultEmailFrom',
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL'),
-				value: this.getValue('defaultEmailFrom'),
-				placeholder: Loc.getMessage('INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL'),
-				hintTitle: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_DEFAULT_EMAIL'),
-			});
+			let defaultEmailFrom = new TextInput(this.getValue('defaultEmailFrom'));
 			let showQuitRow = new Row({});
 
 			ConfigurationPage.addToSectionHelper(defaultEmailFrom, settingsSection, showQuitRow);
@@ -175,13 +145,13 @@ export class ConfigurationPage extends BaseSettingsPage
 		return settingsSection;
 	}
 
-	#buildCRMMapsSection(): SettingsSection
+	#buildCRMMapsSection(): ?SettingsSection
 	{
-		let mapsSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS'),
-			titleIconClasses: 'ui-icon-set --crm-map',
-			isOpen: false
-		});
+		if (!this.hasValue('sectionMapsInCrm'))
+		{
+			return;
+		}
+		let mapsSection = new Section(this.getValue('sectionMapsInCrm'));
 
 		const settingsSection = new SettingsSection({
 			section: mapsSection,
@@ -189,15 +159,24 @@ export class ConfigurationPage extends BaseSettingsPage
 		});
 
 		let cardsProvider = new Selector({
-			label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+			label: this.getValue('mapsProviderCRM').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
 			name: this.getValue('mapsProviderCRM').name,
 			items: this.getValue('mapsProviderCRM').values,
 			current: this.getValue('mapsProviderCRM').current,
 		});
 		let cardsProviderRow = new Row({
+			separator: 'bottom',
 			className: '--block',
 		});
-		ConfigurationPage.addToSectionHelper(cardsProvider, settingsSection, cardsProviderRow)
+		ConfigurationPage.addToSectionHelper(cardsProvider, settingsSection, cardsProviderRow);
+
+		const separatorRow = new SeparatorRow({
+			isHidden: this.getValue('mapsProviderCRM').current === 'OSM',
+		});
+		new SettingsRow({
+			row: separatorRow,
+			parent: settingsSection,
+		});
 
 		const description = new BX.UI.Alert({
 			text: Loc.getMessage('INTRANET_SETTINGS_SECTION_CRM_MAPS_DESCRIPTION', {'#GOOGLE_API_URL#': this.getValue('googleApiUrl')}),
@@ -246,6 +225,14 @@ export class ConfigurationPage extends BaseSettingsPage
 		});
 		ConfigurationPage.addToSectionHelper(mapApiKeyBackend, settingsSection, googleKeyBackendRow);
 
+		const separatorRow1 = new SeparatorRow({
+
+		});
+		new SettingsRow({
+			row: separatorRow1,
+			parent: settingsSection,
+		});
+
 		let showPhotoPlacesMaps = new Checker({
 			inputName: 'SHOW_PHOTOS_ON_MAP',
 			title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_PHOTO_PLACES_MAPS'),
@@ -254,6 +241,8 @@ export class ConfigurationPage extends BaseSettingsPage
 			checked: this.getValue('SHOW_PHOTOS_ON_MAP').value === '1'
 		});
 		let showPhotoPlacesMapsRow = new Row({
+			separator: 'top',
+			className: '--block',
 			content: showPhotoPlacesMaps.render(),
 			isHidden: this.getValue('mapsProviderCRM').current === 'OSM',
 		});
@@ -277,6 +266,7 @@ export class ConfigurationPage extends BaseSettingsPage
 			.addEventListener('change', (event) => {
 				if (event.target.value === 'OSM')
 				{
+					separatorRow.hide();
 					descriptionRow.hide();
 					googleKeyFrontendRow.hide();
 					googleKeyBackendRow.hide();
@@ -285,6 +275,7 @@ export class ConfigurationPage extends BaseSettingsPage
 				}
 				else
 				{
+					separatorRow.show();
 					descriptionRow.show();
 					googleKeyFrontendRow.show();
 					googleKeyBackendRow.show();
@@ -296,13 +287,13 @@ export class ConfigurationPage extends BaseSettingsPage
 		return settingsSection;
 	}
 
-	#buildCardsProductPropertiesSection(): SettingsSection
+	#buildCardsProductPropertiesSection(): ?SettingsSection
 	{
-		let productPropertiesSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_PRODUCT'),
-			titleIconClasses: 'ui-icon-set --location-2',
-			isOpen: false
-		});
+		if (!this.hasValue('sectionMapsInProduct'))
+		{
+			return;
+		}
+		let productPropertiesSection = new Section(this.getValue('sectionMapsInProduct'));
 
 		const settingsSection = new SettingsSection({
 			section: productPropertiesSection,
@@ -312,7 +303,7 @@ export class ConfigurationPage extends BaseSettingsPage
 		if (this.hasValue('cardsProviderProductProperties'))
 		{
 			let cardsProviderProductProperties = new Selector({
-				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
+				label: this.getValue('cardsProviderProductProperties').label ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
 				name: this.getValue('cardsProviderProductProperties').name,
 				items: this.getValue('cardsProviderProductProperties').values,
 				current: this.getValue('cardsProviderProductProperties').current,
@@ -321,6 +312,11 @@ export class ConfigurationPage extends BaseSettingsPage
 				separator: 'bottom'
 			});
 			ConfigurationPage.addToSectionHelper(cardsProviderProductProperties, settingsSection, cardsProviderProductPropertiesRow);
+
+			new SettingsRow({
+				row: new SeparatorRow(),
+				parent: settingsSection,
+			});
 
 			const descriptionYandex = new BX.UI.Alert({
 				text: Loc.getMessage('INTRANET_SETTINGS_SECTION_CRM_MAPS_YANDEX_DESCRIPTION', {'#YANDEX_API_URL#': this.getValue('yandexApiUrl')}),
@@ -345,6 +341,8 @@ export class ConfigurationPage extends BaseSettingsPage
 				placeholder: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_TEXT_KEY_PLACEHOLDER'),
 			});
 			const yandexKeyProductPropertiesRow = new Row({
+				separator: 'bottom',
+				className: '--block',
 				content: yandexKeyProductProperties.render(),
 				isHidden: this.getValue('cardsProviderProductProperties').current !== 'yandex',
 			});
@@ -403,13 +401,13 @@ export class ConfigurationPage extends BaseSettingsPage
 		return settingsSection;
 	}
 
-	#buildAdditionalSettingsSection(): SettingsSection
+	#buildAdditionalSettingsSection(): ?SettingsSection
 	{
-		let additionalSettingsSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL_SETTINGS'),
-			titleIconClasses: 'ui-icon-set --apps',
-			isOpen: false
-		});
+		if (!this.hasValue('sectionOther'))
+		{
+			return;
+		}
+		let additionalSettingsSection = new Section(this.getValue('sectionOther'));
 
 		const settingsSection = new SettingsSection({
 			section: additionalSettingsSection,
@@ -418,12 +416,7 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		if (this.hasValue('allowUserInstallApplication'))
 		{
-			let allInstallMarketApplication = new Checker({
-				inputName: 'allowUserInstallApplication',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON'),
-				checked: this.getValue('allowUserInstallApplication') === 'Y'
-			});
+			let allInstallMarketApplication = new Checker(this.getValue('allowUserInstallApplication'));
 			let allInstallMarketApplicationRow = new Row({});
 
 			EventEmitter.subscribe(
@@ -443,13 +436,17 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		if (this.hasValue('allCanBuyTariff'))
 		{
+			const messageNode = Tag.render`<span>${Loc.getMessage(
+				'INTRANET_SETTINGS_FIELD_HELP_MESSAGE'
+			)}</span>`;
 			let allCanBuyTariff = new Checker({
-				inputName: 'allCanBuyTariff',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON'),
-				checked: this.getValue('allCanBuyTariff').value === 'Y',
+				inputName: this.getValue('allCanBuyTariff').inputName,
+				title: this.getValue('allCanBuyTariff').title ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
+				hintOn: this.getValue('allCanBuyTariff').hintOn,
+				checked: this.getValue('allCanBuyTariff').checked,
 				isEnable: this.getValue('allCanBuyTariff').isEnable,
 				bannerCode: 'limit_why_pay_tariff_everyone',
+				helpMessageProvider: this.helpMessageProviderFactory(messageNode),
 			});
 			let allCanBuyTariffRow = new Row({});
 
@@ -470,27 +467,14 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		if (this.hasValue('allowMeasureStressLevel'))
 		{
-			let allowMeasureStressLevel = new Checker({
-				inputName: 'allowMeasureStressLevel',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON'),
-				checked: this.getValue('allowMeasureStressLevel') === 'Y',
-				helpDesk: 'redirect=detail&code=17697808',
-			});
+			let allowMeasureStressLevel = new Checker(this.getValue('allowMeasureStressLevel'));
 			let allowMeasureStressLevelRow = new Row({});
 			ConfigurationPage.addToSectionHelper(allowMeasureStressLevel, settingsSection, allowMeasureStressLevelRow);
 		}
 
 		if (this.hasValue('collectGeoData'))
 		{
-			let collectGeoData = new Checker({
-				inputName: 'collectGeoData',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON'),
-				checked: this.getValue('collectGeoData') === 'Y',
-				helpDesk: 'redirect=detail&code=18213320',
-			});
-			let collectGeoDataRow = new Row({});
+			let collectGeoData = new Checker(this.getValue('collectGeoData'));
 
 			EventEmitter.subscribe(
 				collectGeoData.switcher,
@@ -501,23 +485,24 @@ export class ConfigurationPage extends BaseSettingsPage
 				}
 			);
 
-			ConfigurationPage.addToSectionHelper(collectGeoData, settingsSection, collectGeoDataRow);
+			ConfigurationPage.addToSectionHelper(collectGeoData, settingsSection);
 		}
 
-		if (this.hasValue('showSettingsAllUsers'))
-		{
-			let showSettingsAllUsers = new Checker({
-				inputName: 'showSettingsAllUsers',
-				title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_SETTINGS_ALL_USER'),
-				hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_SETTINGS_ALL_USER_CLICK_ON'),
-				checked: this.getValue('showSettingsAllUsers') === 'Y'
-			});
-			let showSettingsAllUsersRow = new Row({
-				content: showSettingsAllUsers.render(),
-				isHidden: true
-			});
-			ConfigurationPage.addToSectionHelper(showSettingsAllUsers, settingsSection, showSettingsAllUsersRow);
-		}
+		// This is hidden
+		// if (this.hasValue('showSettingsAllUsers'))
+		// {
+		// 	let showSettingsAllUsers = new Checker({
+		// 		inputName: 'showSettingsAllUsers',
+		// 		title: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_SETTINGS_ALL_USER'),
+		// 		hintOn: Loc.getMessage('INTRANET_SETTINGS_FIELD_HINT_SHOW_SETTINGS_ALL_USER_CLICK_ON'),
+		// 		checked: this.getValue('showSettingsAllUsers') === 'Y'
+		// 	});
+		// 	let showSettingsAllUsersRow = new Row({
+		// 		content: showSettingsAllUsers.render(),
+		// 		isHidden: true
+		// 	});
+		// 	ConfigurationPage.addToSectionHelper(showSettingsAllUsers, settingsSection, showSettingsAllUsersRow);
+		// }
 
 		return settingsSection;
 	}

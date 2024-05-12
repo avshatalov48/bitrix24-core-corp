@@ -45,8 +45,6 @@ $MESS['M_CRM_TIMELINE_SCHEDULER_GTC_NO_CLIENT_TEXT_COMPANY'] = 'Вернитес
 
 $MESS['M_CRM_TIMELINE_SCHEDULER_GTC_ADD_PHONE_TO_CLIENT'] = 'Добавить номер';
 
-$MESS['M_CRM_TIMELINE_SCHEDULER_GTC_B24_AGREEMENT_NOTIFY'] = 'Для отправки приглашения через Битрикс 24 вы должны согласиться с условиями использования сервиса уведомлений';
-
 $MESS['M_CRM_TIMELINE_SCHEDULER_GTC_NO_PROVIDER_TITLE'] = 'Не настроен СМС-сервис';
 $MESS['M_CRM_TIMELINE_SCHEDULER_GTC_NO_PROVIDER_TEXT'] = 'Подключите отправку СМС и WhatsApp сообщений вашим клиентам через СМС-сервис';
 

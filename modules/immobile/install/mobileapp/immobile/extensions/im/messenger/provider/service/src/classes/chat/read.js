@@ -2,7 +2,7 @@
  * @module im/messenger/provider/service/classes/chat/read
  */
 jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { RestMethod } = require('im/messenger/const/rest');
 	const { Counters } = require('im/messenger/lib/counters');
@@ -25,7 +25,7 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 			 * @private
 			 * @type{MessengerCoreStore}
 			 */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 
 			/** @private */
 			this.messagesToRead = {};

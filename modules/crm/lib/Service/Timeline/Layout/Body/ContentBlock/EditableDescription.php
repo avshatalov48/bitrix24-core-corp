@@ -19,6 +19,7 @@ class EditableDescription extends ContentBlock
 	protected ?string $backgroundColor = null;
 	protected ?bool $editable = true;
 	protected string $height = self::HEIGHT_LONG;
+	protected array $copilotSettings = [];
 
 	public function getRendererName(): string
 	{
@@ -73,6 +74,18 @@ class EditableDescription extends ContentBlock
 		return $this;
 	}
 
+	public function getCopilotSettings(): array
+	{
+		return $this->copilotSettings;
+	}
+
+	public function setCopilotSettings(array $copilotSettings): self
+	{
+		$this->copilotSettings = $copilotSettings;
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
 		return [
@@ -81,6 +94,7 @@ class EditableDescription extends ContentBlock
 			'editable' => $this->getEditable(),
 			'height' => $this->getHeight(),
 			'backgroundColor' => $this->getBackgroundColor(),
+			'copilotSettings' => $this->getCopilotSettings(),
 		];
 	}
 }

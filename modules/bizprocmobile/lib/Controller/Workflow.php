@@ -9,6 +9,7 @@ use Bitrix\BizprocMobile\EntityEditor\Converter;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Provider\UserRepository;
 use Bitrix\Mobile\UI\StatefulList\BaseController;
@@ -20,6 +21,12 @@ class Workflow extends BaseController
 		return [
 			'loadList' => [
 				'class' => Action\Workflow\LoadListAction::class,
+				'+prefilters' => [
+					new ActionFilter\CloseSession(),
+				],
+			],
+			'loadDetails' => [
+				'class' => Action\Workflow\LoadDetailsAction::class,
 				'+prefilters' => [
 					new ActionFilter\CloseSession(),
 				],
@@ -64,7 +71,43 @@ class Workflow extends BaseController
 		$data = $timeline->jsonSerialize();
 		$data['users'] = UserRepository::getByIds($userIds);
 
+		if (isset($data['documentId']) && is_array($data['documentId']) && $data['documentId'][0] === 'disk')
+		{
+			$data['documentDiskFile'] = $this->getDiskDocumentFile((int)$data['documentId'][2]);
+		}
+
 		return $data;
+	}
+
+	private function getDiskDocumentFile(int $fileId): ?array
+	{
+		if (Loader::includeModule('disk'))
+		{
+			$diskFile = \Bitrix\Disk\File::loadById($fileId);
+
+			if ($diskFile)
+			{
+				$securityContext = $diskFile->getStorage()?->getSecurityContext((int)(CurrentUser::get()->getId()));
+				if (!$securityContext || !$diskFile->canRead($securityContext))
+				{
+					return [
+						'error' => Loc::getMessage('M_BP_LIB_CONTROLLER_WORKFLOW_TIMELINE_DOCUMENT_ERROR_ACCESS_DENIED'),
+					];
+				}
+
+				$file = \Bitrix\Mobile\UI\File::load($diskFile->getFileId());
+				if ($file)
+				{
+					return [
+						'type' => $file->getType(),
+						'name' => $file->getName(),
+						'url' => $file->getUrl(),
+					];
+				}
+			}
+		}
+
+		return null;
 	}
 
 	public function startAction(string $signedDocument, int $templateId, array $parameters = []): ?array

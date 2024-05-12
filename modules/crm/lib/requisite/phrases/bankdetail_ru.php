@@ -1,15 +1,15 @@
 <?php
 $phrasesConfig = [
-	'encoding' => 'Windows-1251',
+	'encoding' => 'utf-8',
 	'lang' => 'ru',
 	'phrases' => [
-		'CRM_BANK_DETAIL_SECTION_RU_TITLE' => 'Áàíêîâñêèå ðåêâèçèòû',
-		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_RU_FIELD' => 'Íàèìåíîâàíèå áàíêà',
-		'CRM_BANK_DETAIL_ENTITY_RQ_BIK_RU_FIELD' => 'ÁÈÊ',
-		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_RU_FIELD' => 'Ðàñ÷åòíûé ñ÷¸ò',
-		'CRM_BANK_DETAIL_ENTITY_RQ_COR_ACC_NUM_RU_FIELD' => 'Êîð. ñ÷¸ò',
-		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_CURRENCY_RU_FIELD' => 'Âàëþòà ñ÷¸òà',
-		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_ADDR_RU_FIELD' => 'Àäðåñ áàíêà',
+		'CRM_BANK_DETAIL_SECTION_RU_TITLE' => 'Ð‘Ð°Ð½ÐºÐ¾Ð²ÑÐºÐ¸Ðµ Ñ€ÐµÐºÐ²Ð¸Ð·Ð¸Ñ‚Ñ‹',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_RU_FIELD' => 'ÐÐ°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ðµ Ð±Ð°Ð½ÐºÐ°',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BIK_RU_FIELD' => 'Ð‘Ð˜Ðš',
+		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_RU_FIELD' => 'Ð Ð°ÑÑ‡ÐµÑ‚Ð½Ñ‹Ð¹ ÑÑ‡Ñ‘Ñ‚',
+		'CRM_BANK_DETAIL_ENTITY_RQ_COR_ACC_NUM_RU_FIELD' => 'ÐšÐ¾Ñ€. ÑÑ‡Ñ‘Ñ‚',
+		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_CURRENCY_RU_FIELD' => 'Ð’Ð°Ð»ÑŽÑ‚Ð° ÑÑ‡Ñ‘Ñ‚Ð°',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_ADDR_RU_FIELD' => 'ÐÐ´Ñ€ÐµÑ Ð±Ð°Ð½ÐºÐ°',
 		'CRM_BANK_DETAIL_ENTITY_RQ_SWIFT_RU_FIELD' => 'SWIFT'
 	]
 ];

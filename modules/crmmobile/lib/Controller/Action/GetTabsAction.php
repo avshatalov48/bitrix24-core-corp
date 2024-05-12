@@ -25,6 +25,9 @@ use Bitrix\Crm\Integration\Im;
 class GetTabsAction extends Action
 {
 	private const TITLE_MAX_LENGTH = 30;
+
+	private static ?array $defaultPresets = null;
+
 	public function run(?int $customSectionId = null): array
 	{
 		$this->checkModules();
@@ -322,16 +325,19 @@ class GetTabsAction extends Action
 		else
 		{
 			$gridId = (new GridId($factory->getEntityTypeId()))->getValue();
-			$filter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
-				\Bitrix\Crm\Filter\Factory::createEntitySettings($factory->getEntityTypeId(), $gridId)
-			);
 
-			$defaultPresets = (new \Bitrix\Crm\Filter\Preset\Contact())
-				->setDefaultValues($filter->getDefaultFieldIDs())
-				->getDefaultPresets()
-			;
+			if (self::$defaultPresets === null)
+			{
+				$filter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
+					\Bitrix\Crm\Filter\Factory::createEntitySettings($factory->getEntityTypeId(), $gridId)
+				);
+				self::$defaultPresets = (new \Bitrix\Crm\Filter\Preset\Contact())
+					->setDefaultValues($filter->getDefaultFieldIDs())
+					->getDefaultPresets()
+				;
+			}
 
-			$options = (new Options($gridId, $defaultPresets));
+			$options = (new Options($gridId, self::$defaultPresets));
 		}
 
 		return $options;

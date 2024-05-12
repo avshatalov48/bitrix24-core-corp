@@ -163,7 +163,7 @@ class UserField extends BaseField
 		return is_numeric($id) && (int)$id > 0;
 	}
 
-	protected function isEmployeeCompatibleMode(): bool
+	public function isEmployeeCompatibleMode(): bool
 	{
 		return $this->isEmployeeField && $this->fieldTypeObject?->getBaseType() === 'string';
 	}

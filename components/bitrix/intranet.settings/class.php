@@ -30,9 +30,12 @@ use Bitrix\Main\Result;
 use Bitrix\Main;
 use Bitrix\Intranet;
 use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Intranet\User;
+use Bitrix\Intranet\Settings\SettingsPermission;
 
 class SettingsComponent extends CBitrixComponent implements Controllerable, Errorable
 {
+	const EXTERNAL_LINKS = 'EXTERNAL_LINKS';
 	protected ErrorCollection $errorCollection;
 
 	public function configureActions(): array
@@ -101,7 +104,7 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 			}
 		}
 
-		$providers =  array_merge($sortedProviders, $providers);
+		$providers = array_merge($sortedProviders, $providers);
 		uasort(
 			$providers,
 			fn(SettingsPageProviderInterface $providerA, SettingsPageProviderInterface $providerB) => $providerA->getSort() > $providerB->getSort()
@@ -129,10 +132,13 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 
 	public static function hasAccess(): bool
 	{
-		$currentUser = CurrentUser::get();
+		$permission = static::createPermission();
+		return $permission->canEdit() || $permission->canRead();
+	}
 
-		return (Loader::includeModule("intranet") && $currentUser->isAdmin())
-			|| (Loader::includeModule("bitrix24") && $currentUser->CanDoOperation('bitrix24_config'));
+	public static function createPermission(): SettingsPermission
+	{
+		return SettingsPermission::initByUser(CurrentUser::get());
 	}
 
 	public function executeComponent(): void
@@ -174,10 +180,16 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 		$codesOfPages = array_keys($providers);
 		$this->arResult['START_PAGE'] = $this->getStartPage($codesOfPages);
 		$this->arResult['ANALYTIC_CONTEXT'] = htmlspecialcharsbx($_REQUEST['analyticContext'] ?? '');
+		$this->arResult['OPTION_TO_MOVE'] = htmlspecialcharsbx($_REQUEST['option'] ?? '');
 		$this->arResult['MENU_ITEMS'] = [];
+		$this->arResult['PERMISSION'] = static::createPermission()->getPermission();
+		$this->arResult['PAGES_PERMISSION'] = [];
 
+		$settingsFactory = $this->createFactory();
 		foreach ($providers as $type => $provider)
 		{
+			$pageSettingsInstance = $settingsFactory->build($type);
+
 			$this->arResult['MENU_ITEMS'][$provider->getType() . '_item'] = [
 					'NAME' => $provider->getTitle(),
 					'ACTIVE' => $this->arResult['START_PAGE'] === $type,
@@ -187,7 +199,8 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 							'type' => $type,
 						],
 					],
-					'OPERATIVE' => true
+					'DISABLED' => !$pageSettingsInstance->getPermission()->canRead(),
+					'OPERATIVE' => $pageSettingsInstance->getPermission()->canRead()
 				] + ($provider instanceof Intranet\Settings\SettingsExternalPageProviderInterface ?
 					[
 						'EXTERNAL' => 'Y',
@@ -196,7 +209,7 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 				)
 			;
 
-			if ($type === 'tools')
+			if ($type === 'tools' && $pageSettingsInstance->getPermission()->canEdit())
 			{
 				$toolList = ToolsManager::getInstance()->getToolList();
 				$this->arResult['MENU_ITEMS'][$type . '_item']['ATTRIBUTES']['bx-disable-expand-by-link'] = 'Y';
@@ -220,6 +233,8 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 					}
 				}
 			}
+
+			$this->arResult['PAGES_PERMISSION'][$type] = $pageSettingsInstance->getPermission()->getPermission();
 		}
 
 		$this->includeComponentTemplate();
@@ -248,7 +263,7 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 			->getRequest();
 		$result = new Result();
 
-		if (!static::hasAccess())
+		if (!static::createPermission()->canEdit())
 		{
 			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
 			return new Result();
@@ -291,47 +306,28 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 	 */
 	public function getAction(string $type): array
 	{
-		if (!static::hasAccess())
+		$pageSettingsInstance = $this->createFactory();
+		$provider = $pageSettingsInstance->build($type);
+		if (!$provider->getPermission()->canRead())
 		{
-			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
+//			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
 			return [];
 		}
 
-		$factory = $this->createFactory();
-		return array_merge(
-			...array_map(
-				fn($providerSettings) => $providerSettings->get()->toArray(),
-				$factory->buildAll($type)
-			)
-		);
+		return $provider->get()->toArray();
 	}
 
 	/**
+	 * @throws Main\LoaderException
 	 * @throws ArgumentException
 	 */
-	public function getSomeAction(array $types): array
-	{
-		if (!static::hasAccess())
-		{
-			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
-			return [];
-		}
-
-		$settingsResult = [];
-		$settingsFactory = $this->createFactory();
-		foreach ($types as $type)
-		{
-			$settingsResult[$type] = $settingsFactory->build($type)->get()->toArray();
-		}
-
-		return $settingsResult;
-	}
-
 	public function getLandingAction(int $companyId, int $requisiteId, int $bankRequisiteId): array
 	{
-		if (!static::hasAccess())
+		$factory = $this->createFactory();
+		$pageSettingsInstance = $factory->build(RequisiteSettings::TYPE);
+		if (!$pageSettingsInstance->getPermission()->canRead())
 		{
-			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
+//			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
 			return [];
 		}
 
@@ -393,6 +389,80 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 
 			$event->send();
 		}
+	}
+
+	/**
+	 * @throws ArgumentException
+	 */
+	public function searchAction(string $query): array
+	{
+		$result = [];
+		$settingsFactory = $this->createFactory();
+		foreach ($this->getProviders() as $provider)
+		{
+			$pageSettingsInstance = $settingsFactory->build($provider->getType());
+			if (!$pageSettingsInstance->getPermission()->canRead())
+			{
+				continue;
+			}
+			$found = $pageSettingsInstance->find($query);
+			if (count($found) > 0)
+			{
+				$result[] = [
+					'title' => $provider->getTitle(),
+					'page' => $provider->getType(),
+					'options' => $found
+				];
+			}
+		}
+
+		/*Main\EventManager::getInstance()
+			->addEventHandler(
+				'intranet',
+				'onSettingsSearchOutLinks',
+				function(Main\Event $event) {
+				$event->addResult(new Main\EventResult(
+					Main\EventResult::SUCCESS,
+					[
+						'title' => 'Terminal',
+						'options' => [
+							[
+								'title' => 'Terminal 1',
+								'url' => '/'
+							],
+							[
+								'title' => 'Terminal 2',
+								'url' => '/company/'
+							],
+						],
+					]
+					)
+				);
+			});*/
+
+		$event = new Main\Event('intranet', 'onSettingsSearchOutLinks', ['query' => $query]);
+		$event->send();
+		foreach ($event->getResults() as $eventResult)
+		{
+			$eventParams = $eventResult->getParameters();
+			if (
+				!isset($eventParams['title'])
+				|| !isset($eventParams['options'])
+				|| !is_array($eventParams['options'])
+				|| $eventResult->getType() !== Main\EventResult::SUCCESS
+			)
+			{
+				continue;
+			}
+
+			$result[] = [
+				'title' => $eventParams['title'],
+				'page' => self::EXTERNAL_LINKS,
+				'options' => $eventParams['options']
+			];
+		}
+
+		return $result;
 	}
 
 	public function getErrors(): array

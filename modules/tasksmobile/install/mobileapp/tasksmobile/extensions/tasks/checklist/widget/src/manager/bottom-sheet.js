@@ -2,7 +2,7 @@
  * @module tasks/checklist/widget/src/manager/bottom-sheet
  */
 jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { Haptics } = require('haptics');
 	const { BottomSheet } = require('bottom-sheet');
 	const { Alert } = require('alert');
@@ -37,10 +37,11 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 
 			const layoutWidget = await checklistBottomSheet
 				.setParentWidget(this.getParentWidget())
-				.setBackgroundColor(AppTheme.colors.bgContentPrimary)
-				.setNavigationBarColor(AppTheme.colors.bgContentPrimary)
+				.setBackgroundColor(Color.bgContentPrimary)
+				.setNavigationBarColor(Color.bgContentPrimary)
 				.showNavigationBar()
 				.setMediumPositionPercent(85)
+				.disableContentSwipe()
 				.open();
 
 			this.actionsAfterOpenWidget(layoutWidget);
@@ -56,6 +57,7 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 		{
 			this.layoutWidget.preventBottomSheetDismiss(true);
 			this.layoutWidget.on('preventDismiss', this.handleOnPreventDismiss);
+			this.layoutWidget.on('onViewHidden', this.handleOnClose);
 		}
 
 		/**

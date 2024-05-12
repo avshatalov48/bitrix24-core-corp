@@ -67,6 +67,13 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 	}
 }
 
+$kanbanViewMode = $arResult['KANBAN_VIEW_MODE'] ?? null;
+
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+	'c_sub_section' => $kanbanViewMode === ViewMode::MODE_ACTIVITIES ? \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_ACTIVITIES : \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN,
+];
+
 // main menu
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
@@ -91,7 +98,8 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 		'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
 		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : '',
-		//'COUNTER_EXTRAS' => array('DEAL_CATEGORY_ID' => $categoryID)
+		//'COUNTER_EXTRAS' => array('DEAL_CATEGORY_ID' => $categoryID),
+		'ANALYTICS' => $analytics,
 	),
 	$component
 );
@@ -173,6 +181,7 @@ else
 			'CATEGORY_ID' => $categoryID,
 			'TYPE' => 'list',
 			'DISABLE_EXPORT' => 'Y',
+			'ANALYTICS' => $analytics,
 		),
 		$component
 	);
@@ -197,8 +206,6 @@ else
 			array('category_id' => $accessCID)
 		), true);
 	}
-
-	$kanbanViewMode = $arResult['KANBAN_VIEW_MODE'] ?? null;
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal_category.panel',

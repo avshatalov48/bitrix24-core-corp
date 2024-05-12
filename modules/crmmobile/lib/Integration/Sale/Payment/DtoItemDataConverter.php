@@ -34,7 +34,7 @@ class DtoItemDataConverter
 			->isTerminalPayment($payment->getId())
 		;
 
-		$itemData = new DtoItemData([
+		$itemData = DtoItemData::make([
 			'id' => $payment->getId(),
 			'accountNumber' => $payment->getField('ACCOUNT_NUMBER'),
 			'accessCode' => $order ? $order->getHash() : null,

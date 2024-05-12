@@ -2359,6 +2359,7 @@ class CCrmViewHelper
 
 		\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 		\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
+		\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 
 		$entityTypeName = isset($arParams['ENTITY_TYPE_NAME']) ? $arParams['ENTITY_TYPE_NAME'] : '';
 		$leadTypeName = CCrmOwnerType::ResolveName(CCrmOwnerType::Lead);
@@ -2625,6 +2626,12 @@ class CCrmViewHelper
 		$conversionTypeID = isset($arParams['CONVERSION_TYPE_ID']) ? (int)$arParams['CONVERSION_TYPE_ID'] : LeadConversionType::GENERAL;
 		$canConvert = !isset($arParams['CAN_CONVERT']) || $arParams['CAN_CONVERT'];
 
+		$converterId = '';
+		if (!empty($arParams['CONVERTER_ID']) && is_string($arParams['CONVERTER_ID']))
+		{
+			$converterId = $arParams['CONVERTER_ID'];
+		}
+
 		return $registrationScript.'<div class="crm-list-stage-bar'.$wrapperClass.'" '.$wrapperStyle.' id="'.htmlspecialcharsbx($controlID).'"><table class="crm-list-stage-bar-table"><tr>'
 			.$stepHtml
 			.'</tr></table>'
@@ -2644,6 +2651,7 @@ class CCrmViewHelper
 			.', "infoTypeId":"'.CUtil::JSEscape("category_{$categoryID}").'"'
 			.', "readOnly":'.($isReadOnly ? 'true' : 'false')
 			.', "enableCustomColors":'.($enableCustomColors ? 'true' : 'false')
+			.', "converterId":"' . CUtil::JSEscape($converterId) . '"'
 			.' }));});</script>'
 			.'</div>'.$legendHtml;
 	}

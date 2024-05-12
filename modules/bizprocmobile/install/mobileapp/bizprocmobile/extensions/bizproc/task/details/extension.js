@@ -3,7 +3,7 @@
  */
 jn.define('bizproc/task/details', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Alert } = require('alert');
+	const { Alert, confirmClosing } = require('alert');
 	const { PureComponent } = require('layout/pure-component');
 	const { openNativeViewer } = require('utils/file');
 	const { throttle } = require('utils/function');
@@ -19,6 +19,8 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { EventEmitter } = require('event-emitter');
 	const { inAppUrl } = require('in-app-url');
+	const { CollapsibleText } = require('layout/ui/collapsible-text');
+	const { WorkflowComments } = require('bizproc/workflow/comments');
 
 	class TaskDetails extends PureComponent
 	{
@@ -43,6 +45,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 						parentLayout: layout,
 						layout: readyLayout,
 						taskId: props.taskId,
+						targetUserId: props.targetUserId || null,
 					}));
 				},
 			});
@@ -52,9 +55,16 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			super(props);
 
-			this.state.taskInfo = null;
-			this.state.allCount = 0;
-			this.state.editor = null;
+			this.state = {
+				taskInfo: null,
+				allCount: 0,
+				editor: null,
+				taskResponsibleMessage: '',
+				rights: {
+					delegate: false,
+				},
+			};
+
 			this.fieldList = null;
 			this.scrollViewRef = null;
 			this.scrollY = 0;
@@ -121,21 +131,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			Haptics.impactLight();
 
-			Alert.confirm(
-				BX.message('BPMOBILE_TASK_DETAILS_ALERT_TITLE'),
-				BX.message('BPMOBILE_TASK_DETAILS_ALERT_TEXT'),
-				[
-					{
-						text: BX.message('BPMOBILE_TASK_DETAILS_ALERT_DISCARD'),
-						type: 'destructive',
-						onPress: onDiscard,
-					},
-					{
-						text: BX.message('BPMOBILE_TASK_DETAILS_ALERT_CANCEL'),
-						type: 'cancel',
-					},
-				],
-			);
+			confirmClosing({
+				hasSaveAndClose: false,
+				description: Loc.getMessage('BPMOBILE_TASK_DETAILS_ALERT_TEXT'),
+				onClose: onDiscard,
+			});
 		}
 
 		close()
@@ -157,6 +157,16 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		get task()
 		{
 			return (this.state.taskInfo && this.state.taskInfo.task) || {};
+		}
+
+		get isTaskCompleted()
+		{
+			return (this.task.status > 0 || this.task.userStatus > 0);
+		}
+
+		get isMyTask()
+		{
+			return this.props.targetUserId ? (Number(this.props.targetUserId) === Number(env.userId)) : true;
 		}
 
 		get files()
@@ -216,6 +226,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 									minHeight: device.screen.height * 0.85 - 250,
 								},
 							},
+							!this.isMyTask && this.renderTaskResponsibleBlock(),
 							View(
 								{
 									style: {
@@ -226,31 +237,10 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 									{
 										testId: 'TASK_DETAILS_NAME',
 										style: styles.taskName,
-										text: this.task.name,
+										text: jnComponent.convertHtmlEntities(this.task.name),
 									},
 								),
-								this.task.description && BBCodeText(
-									{
-										value: this.task.description,
-										style: styles.taskDescription,
-										onLinkClick: ({ url }) => {
-											if (this.files.hasOwnProperty(url))
-											{
-												const file = this.files[url];
-												const openViewer = throttle(openNativeViewer, 500);
-												openViewer({
-													fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
-													url: file.url,
-													name: file.name,
-												});
-
-												return;
-											}
-
-											inAppUrl.open(url);
-										},
-									},
-								),
+								this.renderDescription(),
 								View(
 									{ style: { marginVertical: 8 } },
 									this.renderTaskFields(),
@@ -264,17 +254,54 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 			);
 		}
 
+		renderDescription()
+		{
+			const description = this.task.description && new CollapsibleText({
+				bbCodeMode: true,
+				value: jnComponent.convertHtmlEntities(this.task.description),
+				style: styles.taskDescription,
+				containerStyle: {
+					flexGrow: 0,
+				},
+				onLinkClick: ({ url }) => {
+					if (this.files.hasOwnProperty(url))
+					{
+						const file = this.files[url];
+						const openViewer = throttle(openNativeViewer, 500);
+						openViewer({
+							fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
+							url: file.url,
+							name: file.name,
+						});
+
+						return;
+					}
+
+					inAppUrl.open(url);
+				},
+			});
+
+			if (description && !this.canRenderTaskFields())
+			{
+				description.toggleExpand();
+			}
+
+			return description;
+		}
+
 		loadTask()
 		{
 			BX.ajax.runAction(
 				'bizprocmobile.Task.loadDetails',
-				{ data: { taskId: this.props.taskId } },
+				{ data: { taskId: this.props.taskId, targetUserId: this.props.targetUserId } },
 			)
-				.then((response) => {
+				.then(({ data }) => {
 					this.setState({
-						taskInfo: response.data.task.data,
-						allCount: response.data.allCount,
-						editor: response.data.editor,
+						taskInfo: data.task.data,
+						allCount: data.allCount,
+						editor: data.editor,
+						taskResponsibleMessage: data.taskResponsibleMessage,
+						rights: Object.assign(this.state.rights, (data.rights || {})),
 					});
 
 					this.props.layout.setRightButtons([
@@ -284,18 +311,23 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 						},
 					]);
 				})
-				.catch((response) => {})
+				.catch(({ errors }) => {
+					if (Array.isArray(errors) && errors.length > 0)
+					{
+						Alert.alert(errors[0].message, '', () => {
+							if (this.props.layout)
+							{
+								this.props.layout.close();
+							}
+						});
+					}
+				})
 			;
 		}
 
 		renderTaskFields()
 		{
-			if (this.task.status > 0)
-			{
-				return null;
-			}
-
-			if (this.state.editor)
+			if (this.canRenderTaskFields())
 			{
 				return new TaskFields({
 					uid: this.uid,
@@ -329,73 +361,121 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 			return null;
 		}
 
+		canRenderTaskFields()
+		{
+			return Boolean(this.isMyTask && !this.isTaskCompleted && this.state.editor);
+		}
+
+		renderTaskResponsibleBlock()
+		{
+			return View(
+				{
+					style: {
+						borderRadius: 12,
+						borderWidth: 1,
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
+						marginTop: 12,
+					},
+				},
+				Text({
+					style: {
+						marginHorizontal: 24,
+						marginVertical: 16,
+						color: AppTheme.colors.base5,
+						fontSize: 14,
+						fontWeight: '400',
+						textAlign: 'center',
+					},
+					text: this.state.taskResponsibleMessage,
+				}),
+			);
+		}
+
 		renderTaskButtons()
 		{
 			const task = this.task;
 
-			if (task.status > 0)
-			{
-				return null;
-			}
+			const showTaskButtons = this.isMyTask && !this.isTaskCompleted && task.buttons && task.buttons.length > 0;
+			const showDelegateButton = !this.isMyTask && !this.isTaskCompleted && this.state.rights.delegate;
+			const showTimelineButton = this.isMyTask;
 
-			if (task.buttons && task.buttons.length > 0)
-			{
-				return ScrollView(
+			return ScrollView(
+				{
+					style: {
+						height: 64,
+					},
+					horizontal: true,
+				},
+				View(
 					{
 						style: {
-							height: 64,
+							paddingTop: 16,
+							paddingBottom: 12,
+							flexDirection: 'row',
+							alignContent: 'center',
+							alignItems: 'center',
+							paddingHorizontal: 11,
 						},
-						horizontal: true,
 					},
-					View(
+					showTaskButtons && View(
 						{
 							style: {
-								paddingTop: 16,
-								paddingBottom: 12,
-								flexDirection: 'row',
-								alignContent: 'center',
-								alignItems: 'center',
-								paddingHorizontal: 11,
+								maxWidth: (device.screen.width) * 0.69,
 							},
 						},
-						View(
-							{
-								style: {
-									maxWidth: (device.screen.width) * 0.69,
-								},
+						new TaskButtons({
+							testId: 'TASK_DETAILS_BUTTONS',
+							task,
+							onBeforeAction: this.handleBeforeButtonAction.bind(this),
+							onComplete: () => {
+								NotifyManager.hideLoadingIndicatorWithoutFallback();
+								// eslint-disable-next-line no-undef
+								Notify.showIndicatorSuccess({ hideAfter: 300 });
+								if (this.props.layout)
+								{
+									setTimeout(() => this.props.layout.close(), 250);
+								}
 							},
-							new TaskButtons({
-								testId: 'TASK_DETAILS_BUTTONS',
-								task,
-								onBeforeAction: this.handleBeforeButtonAction.bind(this),
-								onComplete: () => {
-									NotifyManager.hideLoadingIndicator(true);
+							onFail: (errors) => {
+								NotifyManager.hideLoadingIndicator(false);
+
+								const firstError = errors[0];
+								if (firstError.code === 'TASK_NOT_FOUND_ERROR')
+								{
+									// eslint-disable-next-line no-undef
+									InAppNotifier.showNotification({
+										backgroundColor: AppTheme.colors.baseBlackFixed,
+										message: firstError.message,
+										code: 'bp-workflow-details-buttons-task-not-found',
+										time: 3,
+									});
+
 									if (this.props.layout)
 									{
 										this.props.layout.close();
 									}
-								},
-								onFail: () => {
-									NotifyManager.hideLoadingIndicator(false);
-								},
-							}),
-						),
-						View(
-							{
-								style: {
-									marginLeft: 12,
-									width: 1,
-									height: 19,
-									backgroundColor: AppTheme.colors.base6,
-								},
-							},
-						),
-						this.renderTimelineButton(),
-					),
-				);
-			}
 
-			return null;
+									return;
+								}
+
+								Alert.alert(firstError.message);
+							},
+						}),
+					),
+					showDelegateButton && this.renderDelegateButton(),
+					(showTaskButtons || showDelegateButton) && showTimelineButton && View(
+						{
+							style: {
+								marginLeft: 12,
+								width: 1,
+								height: 19,
+								backgroundColor: AppTheme.colors.base6,
+							},
+						},
+					),
+					showTimelineButton && this.renderTimelineButton(),
+				),
+			);
 		}
 
 		async handleBeforeButtonAction(task, button)
@@ -472,9 +552,14 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		renderTimelineCounter()
 		{
-			const value = this.state.allCount - 1;
+			let value = this.state.allCount;
 
-			if (!value)
+			if (!this.isTaskCompleted)
+			{
+				value -= 1;
+			}
+
+			if (value <= 0)
 			{
 				return null;
 			}
@@ -496,6 +581,34 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					},
 					text: String(value),
 				},
+			);
+		}
+
+		renderDelegateButton()
+		{
+			return View(
+				{
+					style: {
+						justifyContent: 'center',
+						height: 36,
+						borderRadius: 8,
+						borderWidth: 1,
+						borderColor: AppTheme.colors.base5,
+						paddingVertical: 8,
+						paddingHorizontal: 10,
+					},
+					onClick: () => {
+						this.openDelegationSelector();
+					},
+				},
+				Text({
+					style: {
+						fontWeight: '500',
+						fontSize: 14,
+						color: AppTheme.colors.base2,
+					},
+					text: Loc.getMessage('BPMOBILE_TASK_DETAILS_ACTION_DELEGATE'),
+				}),
 			);
 		}
 
@@ -583,7 +696,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							data: {
 								taskIds: [this.task.id],
 								toUserId: selectedUsers.pop().id,
-								fromUserId: env.userId,
+								fromUserId: this.props.targetUserId ?? env.userId,
 							},
 						})
 							.then(({ data }) => {
@@ -618,94 +731,9 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		renderComments()
 		{
-			return View(
-				{
-					style: {
-						paddingHorizontal: 18,
-						paddingTop: 12,
-						paddingBottom: 55,
-					},
-				},
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							justifyContent: 'space-between',
-						},
-					},
-					Text({
-						style: {
-							fontSize: 12,
-							fontWeight: '400',
-							color: AppTheme.colors.base4,
-						},
-						text: Loc.getMessage('BPMOBILE_TASK_DETAILS_COMMENTS_TITLE'),
-					}),
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-								borderWidth: 1,
-								borderColor: AppTheme.colors.base4,
-								borderRadius: 55,
-								paddingHorizontal: 5,
-								paddingRight: 9,
-								height: 24,
-							},
-						},
-						Image({
-							style: {
-								width: 28,
-								height: 28,
-								alignSelf: 'center',
-							},
-							svg: {
-								content: `
-									<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path opacity="0.7" fill-rule="evenodd" clip-rule="evenodd" d="M17.4799 9.90391L14.472 9.9045C14.3855 9.9045 14.3018 9.85442 14.2694 9.7749C14.1339 9.43617 14.1392 9.05444 14.2877 8.71807C14.5368 7.99291 14.5651 7.20942 14.3695 6.46776C14.1651 5.95761 14.1109 5.02567 13.1678 4.98267C12.8727 5.02626 12.6152 5.20357 12.4668 5.46218C12.4403 5.50813 12.4291 5.56233 12.4291 5.61476C12.4291 5.61476 12.4724 6.51967 12.4291 7.14874C12.3858 7.77782 11.182 9.38021 10.4168 10.3976C10.3685 10.4624 10.3007 10.5048 10.2206 10.5171C9.93371 10.5601 9.38648 10.6329 9.18923 10.6589C9.14306 10.665 9.11606 10.723 9.11606 10.7502C9.11606 12.022 9.11606 13.9244 9.11606 16.4574C9.11606 16.4784 9.14139 16.5241 9.1864 16.5316C9.34093 16.5571 9.72745 16.6278 10.1175 16.7532C10.6076 16.9105 11.0159 17.2828 11.8329 17.5585C11.8759 17.5732 11.9237 17.5809 11.969 17.5809H15.8057C16.3012 17.4925 16.6699 17.069 16.6953 16.5606C16.7023 16.2773 16.6458 15.9968 16.5297 15.7394C16.5132 15.7023 16.535 15.6634 16.5751 15.6558C17.067 15.5662 17.682 14.6325 16.9244 13.8803C16.9044 13.8608 16.9079 13.8343 16.935 13.8272C17.3527 13.7206 17.6726 13.3872 17.7704 12.9713C17.8081 12.8122 17.7945 12.6479 17.7474 12.4918C17.692 12.3056 17.6036 12.1312 17.4864 11.9757C17.457 11.9369 17.4735 11.8862 17.5206 11.8709C17.9365 11.7301 18.2228 11.3324 18.2198 10.88C18.2675 10.4364 17.9111 9.9045 17.4799 9.90391ZM7.93847 10.1443H5.76415C5.65105 10.1443 5.56504 10.2444 5.58448 10.3534L6.84748 17.4489C6.86692 17.5579 6.96294 17.6375 7.07546 17.6375H7.87957C8.00386 17.6375 8.1046 17.5391 8.1046 17.4177L8.12227 10.3245C8.12227 10.225 8.04039 10.1443 7.93847 10.1443Z" fill="${AppTheme.colors.base4}"/>
-									</svg>
-								`,
-							},
-						}),
-						Text({
-							style: {
-								fontSize: 12,
-								fontWeight: '400',
-								color: AppTheme.colors.base4,
-							},
-							text: Loc.getMessage('BPMOBILE_TASK_DETAILS_COMMENTS_LIKE'),
-						}),
-					),
-				),
-				Image({
-					style: {
-						marginTop: 35,
-						width: 61,
-						height: 60,
-						alignSelf: 'center',
-					},
-					svg: {
-						content: `
-							<svg width="61" height="60" viewBox="0 0 61 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<g opacity="0.3">
-							<path fill-rule="evenodd" clip-rule="evenodd" d="M30.5 47C39.8888 47 47.5 39.3888 47.5 30C47.5 20.6112 39.8888 13 30.5 13C21.1112 13 13.5 20.6112 13.5 30C13.5 39.3888 21.1112 47 30.5 47ZM50.5 30C50.5 41.0457 41.5457 50 30.5 50C19.4543 50 10.5 41.0457 10.5 30C10.5 18.9543 19.4543 10 30.5 10C41.5457 10 50.5 18.9543 50.5 30Z" fill="${AppTheme.colors.base4}"/>
-							<path fill-rule="evenodd" clip-rule="evenodd" d="M30.2873 18.5163C31.1157 18.5163 31.7873 19.1878 31.7873 20.0163V28.7748L38.9198 28.7748C39.7482 28.7748 40.4198 29.4463 40.4198 30.2748C40.4198 31.1032 39.7482 31.7748 38.9198 31.7748L30.2873 31.7748C29.8895 31.7748 29.5079 31.6168 29.2266 31.3355C28.9453 31.0542 28.7873 30.6727 28.7873 30.2748V20.0163C28.7873 19.1878 29.4589 18.5163 30.2873 18.5163Z" fill="${AppTheme.colors.base4}"/>
-							</g>
-							</svg>
-						`,
-					},
-				}),
-				Text({
-					style: {
-						fontSize: 14,
-						fontWeight: '400',
-						color: AppTheme.colors.base4,
-						alignSelf: 'center',
-						marginTop: 4,
-					},
-					text: Loc.getMessage('BPMOBILE_TASK_DETAILS_COMMENTS_DEVELOPING_1'),
-				}),
-			);
+			return new WorkflowComments({
+				workflowId: this.task.workflowId,
+			});
 		}
 	}
 

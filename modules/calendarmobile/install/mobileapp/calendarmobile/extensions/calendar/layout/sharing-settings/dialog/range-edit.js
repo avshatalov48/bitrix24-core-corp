@@ -18,6 +18,13 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 			super(props);
 
 			this.rangeHeight = props.rangeHeight;
+			this.sortedWeekdays = this.range.sortWeekdays([1, 2, 3, 4, 5, 6, 0]);
+			this.weekdaysLoc = this.range.getWeekdaysLoc(true);
+
+			this.onWeekdaysSelectedHandler = this.onWeekdaysSelectedHandler.bind(this);
+			this.onTimeFromSelectedHandler = this.onTimeFromSelectedHandler.bind(this);
+			this.onTimeToSelectedHandler = this.onTimeToSelectedHandler.bind(this);
+			this.onCloseButtonClickHandler = this.onCloseButtonClickHandler.bind(this);
 		}
 
 		get rule()
@@ -52,9 +59,7 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 			return View(
 				{
 					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						marginVertical: 9,
+						...styles.container,
 						height: this.range.isNew ? 0 : 'auto',
 					},
 					onLayout: ({ height }) => {
@@ -76,30 +81,23 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 
 		renderWeekdaysSelect()
 		{
-			const isFull = true;
-			const weekdaysLoc = this.range.getWeekdaysLoc(isFull);
-
-			const items = this.range.sortWeekdays([1, 2, 3, 4, 5, 6, 0]).map((weekday) => {
+			const items = this.sortedWeekdays.map((weekday) => {
 				return {
 					value: weekday,
-					name: weekdaysLoc[weekday],
+					name: this.weekdaysLoc[weekday],
 				};
 			});
 
 			return View(
 				{
-					style: {
-						flex: 1,
-						marginRight: 10,
-						marginLeft: 18,
-					},
+					style: styles.weekdaysSelectContainer,
 				},
 				new MultipleSelectField({
 					title: Loc.getMessage('M_CALENDAR_SETTINGS_SELECT_WEEKDAYS'),
 					layoutWidget: this.props.layoutWidget,
 					items,
 					selected: this.range.getWeekDays(),
-					onChange: (value) => this.onWeekdaysSelectedHandler(value),
+					onChange: this.onWeekdaysSelectedHandler,
 					formatValue: () => this.range.getWeekdaysFormatted(),
 				}),
 			);
@@ -116,10 +114,7 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 		{
 			return View(
 				{
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-					},
+					style: styles.timeContainer,
 				},
 				this.renderTimeFromSelect(),
 				this.renderDash(),
@@ -138,14 +133,14 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 					value: this.range.getFrom(),
 					name: this.range.getFromFormatted(),
 				},
-				onChange: (value) => this.onTimeFromSelectedHandler(value),
+				onChange: this.onTimeFromSelectedHandler,
 				renderValue: () => this.renderTimeValue(this.range.getFromFormatted()),
 			});
 		}
 
 		onTimeFromSelectedHandler(value)
 		{
-			this.range.setFrom(value);
+			this.range.setFrom(parseInt(value, 10));
 			this.redraw();
 			this.props.onRuleUpdated();
 		}
@@ -161,14 +156,14 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 					value: this.range.getTo(),
 					name: this.range.getToFormatted(),
 				},
-				onChange: (value) => this.onTimeToSelectedHandler(value),
+				onChange: this.onTimeToSelectedHandler,
 				renderValue: () => this.renderTimeValue(this.range.getToFormatted()),
 			});
 		}
 
 		onTimeToSelectedHandler(value)
 		{
-			this.range.setTo(value);
+			this.range.setTo(parseInt(value, 10));
 			this.redraw();
 			this.props.onRuleUpdated();
 		}
@@ -180,46 +175,22 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 
 			return View(
 				{
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						justifyContent: 'center',
-						width: isAmPmMode() ? 53 : 48,
-					},
+					style: styles.timeValueContainer,
 				},
-				Text(
-					{
-						style: {
-							fontSize: 15,
-							color: AppTheme.colors.accentMainLinks,
-						},
-						text: timeWithoutAmPm,
-					},
-				),
-				Text(
-					{
-						style: {
-							fontSize: 10,
-							color: AppTheme.colors.accentMainLinks,
-						},
-						text: amPm.toUpperCase(),
-					},
-				),
+				Text({
+					text: timeWithoutAmPm,
+					style: styles.timeValue,
+				}),
+				Text({
+					text: amPm.toUpperCase(),
+					style: styles.timeValueAmPm,
+				}),
 			);
 		}
 
 		renderDash()
 		{
-			return View(
-				{
-					style: {
-						height: 1,
-						width: 5,
-						marginHorizontal: 5,
-						backgroundColor: AppTheme.colors.base3,
-					},
-				},
-			);
+			return View({ style: styles.timeDash });
 		}
 
 		renderCloseButton()
@@ -227,24 +198,18 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 			return View(
 				{
 					style: {
+						...styles.closeButton,
 						opacity: this.rule.canRemoveRange() ? 1 : 0,
-						height: '100%',
-						justifyContent: 'center',
-						paddingRight: 18,
 					},
 					clickable: true,
-					onClick: this.onCloseButtonClickHandler.bind(this),
+					onClick: this.onCloseButtonClickHandler,
 				},
 				Image({
 					tintColor: AppTheme.colors.base6,
 					svg: {
 						content: cross(),
 					},
-					style: {
-						width: 24,
-						height: 24,
-						marginLeft: 10,
-					},
+					style: styles.closeIcon,
 				}),
 			);
 		}
@@ -255,6 +220,53 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 			this.props.onRemove();
 		}
 	}
+
+	const styles = {
+		container: {
+			flexDirection: 'row',
+			alignItems: 'center',
+			marginVertical: 9,
+		},
+		weekdaysSelectContainer: {
+			flex: 1,
+			marginRight: 10,
+			marginLeft: 18,
+		},
+		timeContainer: {
+			flexDirection: 'row',
+			alignItems: 'center',
+		},
+		timeValueContainer: {
+			flexDirection: 'row',
+			alignItems: 'center',
+			justifyContent: 'center',
+			width: isAmPmMode() ? 53 : 48,
+		},
+		timeValue: {
+			fontSize: 15,
+			color: AppTheme.colors.accentMainLinks,
+		},
+		timeValueAmPm: {
+			fontSize: 10,
+			color: AppTheme.colors.accentMainLinks,
+		},
+		timeDash: {
+			height: 1,
+			width: 5,
+			marginHorizontal: 5,
+			backgroundColor: AppTheme.colors.base3,
+		},
+		closeButton: {
+			height: '100%',
+			justifyContent: 'center',
+			paddingRight: 18,
+		},
+		closeIcon: {
+			width: 24,
+			height: 24,
+			marginLeft: 10,
+		},
+	};
 
 	module.exports = { RangeEditComponent };
 });

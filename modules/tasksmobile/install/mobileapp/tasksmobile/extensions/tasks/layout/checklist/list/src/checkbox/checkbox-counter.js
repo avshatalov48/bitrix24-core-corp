@@ -65,6 +65,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 
 			return View(
 				{
+					testId: this.getTestId(),
 					style: {
 						width: CHECKBOX_LAYOUT_SIZE,
 						height: CHECKBOX_LAYOUT_SIZE,
@@ -79,6 +80,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 						this.importantRef = ref;
 					}),
 					important,
+					onClick: this.handleOnClick,
 				}),
 			);
 		}
@@ -88,6 +90,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 			const { checked } = this.state;
 
 			return new Checkbox({
+				testId: this.getTestId(checked ? 'select' : 'unselect'),
 				checked,
 				useState: false,
 				size: 18,
@@ -106,6 +109,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 
 			return View(
 				{
+					testId: checked ? 'select_block' : 'unselect_block',
 					style: {
 						flexDirection: 'row',
 						alignItems: 'center',
@@ -152,6 +156,13 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 					onClick(!checked);
 				}
 			}).catch(console.error);
+		}
+
+		getTestId(suffix)
+		{
+			const prefix = 'checkbox_block';
+
+			return suffix ? `${prefix}_${suffix}` : prefix;
 		}
 	}
 

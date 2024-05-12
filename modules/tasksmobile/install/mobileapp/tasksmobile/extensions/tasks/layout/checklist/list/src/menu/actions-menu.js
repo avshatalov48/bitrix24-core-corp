@@ -2,26 +2,27 @@
  * @module tasks/layout/checklist/list/src/menu/actions-menu
  */
 jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { Haptics } = require('haptics');
 	const { animate } = require('animation');
 	const { PureComponent } = require('layout/pure-component');
 	const { directions } = require('tasks/layout/checklist/list/src/constants');
-	const { IconView } = require('ui-system/blocks/icon');
+	const { IconView, iconTypes } = require('ui-system/blocks/icon');
 	const { Random } = require('utils/random');
 	const { UIScrollView } = require('layout/ui/scroll-view');
+	const { MEMBER_TYPE } = require('tasks/layout/checklist/list/src/constants');
 
-	const IS_ANDROID = Application.getPlatform() === 'android';
 	const ICON_SIZE = 24;
-	const ICON_MARGIN = 24;
+	const ICON_MARGIN = 16;
 	const BUTTON_TYPES = {
 		important: 'important',
-		members: 'members',
+		accomplice: 'accomplice',
+		auditor: 'auditor',
 		attach: 'attach',
 	};
 
-	const ACTIVE_COLOR = AppTheme.colors.accentMainPrimary;
-	const INACTIVE_COLOR = AppTheme.colors.base3;
+	const ACTIVE_COLOR = Color.accentMainPrimary;
+	const INACTIVE_COLOR = Color.base3;
 
 	/**
 	 * @class ChecklistActionsMenu
@@ -130,11 +131,30 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		{
 			const activeMap = {
 				[BUTTON_TYPES.important]: this.item?.getIsImportant(),
-				[BUTTON_TYPES.members]: Boolean(this.item?.getMembersCount() > 0),
 				[BUTTON_TYPES.attach]: Boolean(this.item?.getAttachmentsCount() > 0),
+				[BUTTON_TYPES.auditor]: this.item?.hasAuditor(),
+				[BUTTON_TYPES.accomplice]: this.item?.hasAccomplice(),
 			};
 
 			return Boolean(activeMap[type]);
+		}
+
+		renderIconView(iconProps)
+		{
+			const { onClick, style, testId, ...restProps } = iconProps;
+
+			return View(
+				{
+					testId,
+					style: {
+						width: 30,
+						height: 30,
+						...style,
+					},
+					onClick,
+				},
+				IconView(restProps),
+			);
 		}
 
 		/**
@@ -154,6 +174,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 
 			return View(
 				{
+					testId: this.getTestId(),
 					style: {
 						flex: 1,
 						flexDirection: 'row',
@@ -170,94 +191,120 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 							flexDirection: 'row',
 							alignItems: 'center',
 						},
-						children: [
-							IconView({
-								iconColor: this.getIconColor(BUTTON_TYPES.attach),
-								icon: 'attach1',
-								onClick: onAddFile,
-								iconSize: ICON_SIZE,
-								style: {
-									marginRight: ICON_MARGIN,
-								},
-							}),
-							IconView({
-								iconColor: this.getIconColor(BUTTON_TYPES.members),
-								icon: 'group',
-								iconSize: ICON_SIZE,
-								disabled: !canUpdate,
-								onClick: openUserSelectionManager,
-								style: {
-									marginRight: ICON_MARGIN,
-								},
-							}),
-							IconView({
-								iconSize: ICON_SIZE,
-								iconColor: this.isActiveIconByType(BUTTON_TYPES.important)
-									? AppTheme.colors.accentMainWarning
-									: INACTIVE_COLOR,
-								icon: 'fire',
-								disabled: !canUpdate,
-								onClick: this.handleOnToggleImportant,
-								style: {
-									marginRight: ICON_MARGIN,
-								},
-							}),
-							IconView({
-								iconColor: this.getIconColor(),
-								iconSize: ICON_SIZE,
-								icon: 'shiftLeft',
-								onClick: () => {
-									this.onTabMove(directions.LEFT);
-								},
-								style: {
-									marginRight: ICON_MARGIN,
-								},
-							}),
-							IconView({
-								iconColor: this.getIconColor(),
-								iconSize: ICON_SIZE,
-								icon: 'shiftRight',
-								onClick: () => {
-									this.onTabMove(directions.RIGHT);
-								},
-								style: {
-									marginRight: ICON_MARGIN,
-								},
-							}),
-							IconView({
-								iconColor: this.getIconColor(),
-								icon: 'moveToChecklist',
-								disabled: (canUpdate && !canAdd && !hasAnotherCheckLists) || !canUpdate,
-								iconSize: ICON_SIZE,
-								onClick: () => {
-									if (onMoveToCheckList)
-									{
-										onMoveToCheckList(this.item?.getMoveIds());
-									}
-								},
-								style: {
-									marginRight: ICON_MARGIN,
-								},
-							}),
-						],
 					},
+					this.renderIconView({
+						testId: this.getTestId('attach'),
+						iconColor: this.getIconColor(BUTTON_TYPES.attach),
+						icon: iconTypes.outline.attach1,
+						onClick: onAddFile,
+						iconSize: ICON_SIZE,
+						style: {
+							marginRight: ICON_MARGIN,
+						},
+					}),
+					this.renderIconView({
+						testId: this.getTestId(MEMBER_TYPE.accomplice),
+						iconColor: this.getIconColor(BUTTON_TYPES.accomplice),
+						icon: iconTypes.outline.group,
+						iconSize: ICON_SIZE,
+						disabled: !canUpdate,
+						style: {
+							marginRight: ICON_MARGIN,
+						},
+						onClick: () => {
+							openUserSelectionManager(this.item.getId(), MEMBER_TYPE.accomplice);
+						},
+					}),
+					this.renderIconView({
+						testId: this.getTestId(MEMBER_TYPE.auditor),
+						iconColor: this.getIconColor(BUTTON_TYPES.auditor),
+						icon: iconTypes.outline.observer,
+						iconSize: ICON_SIZE,
+						disabled: !canUpdate,
+						style: {
+							marginRight: ICON_MARGIN,
+						},
+						onClick: () => {
+							openUserSelectionManager(this.item.getId(), MEMBER_TYPE.auditor);
+						},
+					}),
+					this.renderIconView({
+						testId: this.getTestId('importance'),
+						iconSize: ICON_SIZE,
+						iconColor: this.isActiveIconByType(BUTTON_TYPES.important)
+							? Color.accentMainWarning
+							: INACTIVE_COLOR,
+						icon: iconTypes.outline.fire,
+						disabled: !canUpdate,
+						style: {
+							marginRight: ICON_MARGIN,
+						},
+						onClick: this.handleOnToggleImportant,
+					}),
+					this.renderIconView({
+						testId: this.getTestId('toLeft'),
+						iconColor: this.getIconColor(),
+						iconSize: ICON_SIZE,
+						icon: iconTypes.outline.pointLeft,
+						disabled: !canTabOut,
+						style: {
+							marginRight: ICON_MARGIN,
+						},
+						onClick: () => {
+							if (canTabOut)
+							{
+								this.onTabMove(directions.LEFT);
+							}
+						},
+					}),
+					this.renderIconView({
+						testId: this.getTestId('toRight'),
+						iconColor: this.getIconColor(),
+						iconSize: ICON_SIZE,
+						icon: iconTypes.outline.pointRight,
+						disabled: !canTabIn,
+						style: {
+							marginRight: ICON_MARGIN,
+						},
+						onClick: () => {
+							if (canTabIn)
+							{
+								this.onTabMove(directions.RIGHT);
+							}
+						},
+					}),
+					this.renderIconView({
+						testId: this.getTestId('toChecklist'),
+						iconColor: this.getIconColor(),
+						icon: iconTypes.outline.moveToChecklist,
+						disabled: (canUpdate && !canAdd && !hasAnotherCheckLists) || !canUpdate,
+						iconSize: ICON_SIZE,
+						onClick: () => {
+							if (onMoveToCheckList)
+							{
+								onMoveToCheckList(this.item?.getMoveIds());
+							}
+						},
+					}, true),
 				),
 				View({
 					style: {
 						width: 1,
 						height: 14,
 						justifyContent: 'center',
-						backgroundColor: AppTheme.colors.bgSeparatorPrimary,
+						backgroundColor: Color.bgSeparatorPrimary,
 						marginHorizontal: 10,
 					},
 				}),
-				IconView({
+				this.renderIconView({
+					testId: this.getTestId('hide'),
 					iconColor: ACTIVE_COLOR,
-					icon: 'chevronDown',
+					icon: iconTypes.outline.chevronDown,
 					iconSize: ICON_SIZE,
 					style: {
 						alignSelf: 'flex-end',
-						padding: 4,
+						alignItems: 'center',
+						justifyContent: 'center',
 					},
 					onClick: onBlur,
 				}),
@@ -284,7 +331,6 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 				canUpdate: this.item?.checkCanUpdate(),
 				canAddAccomplice: this.item?.checkCanAddAccomplice(),
 				hasAnotherCheckLists: this.item?.hasAnotherCheckLists(),
-				canRemove: this.item?.checkCanRemove(),
 			};
 		}
 
@@ -305,12 +351,19 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						position: 'absolute',
 						width: '100%',
 						left: 0,
-						bottom: IS_ANDROID ? 15 : 0,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						bottom: 0,
+						backgroundColor: Color.bgContentPrimary,
 					},
 				},
 				this.renderMenu(),
 			);
+		}
+
+		getTestId(suffix)
+		{
+			const prefix = 'checklist_toolbar';
+
+			return suffix ? `${prefix}_${suffix}` : prefix;
 		}
 	}
 

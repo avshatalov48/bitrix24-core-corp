@@ -16,12 +16,12 @@ return [
 		'utils/type',
 		'utils/random',
 		'utils/skeleton',
-		'utils/date/duration',
 
 		'layout/pure-component',
 		'layout/ui/empty-screen',
 		'layout/ui/wizard/step',
 
 		'bizproc:wizard/progress-bar-number',
+		'bizproc:helper/duration',
 	],
 ];

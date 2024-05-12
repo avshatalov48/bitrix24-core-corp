@@ -73,6 +73,7 @@ jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 					readOnly: this.state.readOnly,
 					showEditIcon: true,
 					hasHiddenEmptyView: true,
+					showHiddenEntities: false,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_CRM'),
 					value: values.map((item) => item.id),
 					multiple: true,

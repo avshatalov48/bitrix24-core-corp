@@ -11,7 +11,7 @@ $MESS["CONFIG_ADD_LOGO_DELETE"] = "Logo löschen";
 $MESS["CONFIG_ADD_LOGO_DELETE_CONFIRM"] = "Möchten Sie das Logo wirklich löschen?";
 $MESS["CONFIG_ALLOW_INVITE_USERS"] = "Allen Nutzern erlauben, neue Nutzer auf das Portal einzuladen";
 $MESS["CONFIG_ALLOW_NEW_USER_LF"] = "Informationen über Einstellung neuer Mitarbeiter im Activity Stream veröffentlichen";
-$MESS["CONFIG_ALLOW_SEARCH_NETWORK"] = "Suchen nach Kommunikationskanälen in Bitrix24.Network erlauben";
+$MESS["CONFIG_ALLOW_SEARCH_NETWORK_MSGVER_1"] = "Suchen nach Kommunikationskanälen in Bitrix24 Network erlauben";
 $MESS["CONFIG_ALLOW_SELF_REGISTER"] = "Schnellregistrierung erlauben";
 $MESS["CONFIG_ALLOW_TOALL"] = "\"Alle Nutzer\" als Option im Activity Stream erlauben";
 $MESS["CONFIG_BUY_TARIFF_BY_ALL_MSGVER_1"] = "Allen Nutzern erlauben, Upgrades und Erweiterungen für aktuellen Bitrix24 Tarif zu kaufen";
@@ -29,21 +29,21 @@ $MESS["CONFIG_CULTURE_OTHER"] = "Sonstiges";
 $MESS["CONFIG_DATE_FORMAT"] = "Datumsformat";
 $MESS["CONFIG_DEFAULT_TOALL"] = "\"Alle Mitarbeiter/Nutzer\" als standardmäßigen Empfänger benutzen";
 $MESS["CONFIG_DISK_ALLOW_DOCUMENT_TRANSFORMATION"] = "PDF- und JPG-Dateien für Dokumente automatisch generieren";
-$MESS["CONFIG_DISK_ALLOW_EDIT_OBJECT_IN_UF"] = "Alle beteiligten Nutzer können Dateien bearbeiten, die zu Aufgaben, Kommentaren etc. <br/>angehängt sind (jedoch kann man die Zugriffsrechte für Dateien jederzeit <br/>unter Bitrix24.Drive - Hochgeladene Dateien ändern)";
+$MESS["CONFIG_DISK_ALLOW_EDIT_OBJECT_IN_UF"] = "Alle beteiligten Nutzer können Dateien bearbeiten, die zu Aufgaben, Kommentaren etc. <br/>angehängt sind (jedoch kann man die Zugriffsrechte für Dateien jederzeit <br/>unter Mein Drive - Hochgeladene Dateien ändern)";
 $MESS["CONFIG_DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Drive-Dokumente durchsuchen";
 $MESS["CONFIG_DISK_ALLOW_USE_EXTERNAL_LINK"] = "Öffentliche Links erlauben";
 $MESS["CONFIG_DISK_ALLOW_VIDEO_TRANSFORMATION"] = "MP4- und JPG-Dateien für Videos automatisch generieren";
 $MESS["CONFIG_DISK_EXTENDED_FULLTEXT_INFO"] = "Die Suche ist vorübergehend nicht verfügbar. Bitte kontaktieren Sie den Helpdesk, damit die Suche wieder aktiviert wird.";
 $MESS["CONFIG_DISK_LIMIT_HISTORY_LOCK_POPUP_TEXT"] = "Unbegrenzte Dokumenten-History ist nur <a href=\"/settings/license_all.php\" target=\"_blank\">bestimmten kostenpflichtigen Tarifen</a> verfügbar.";
-$MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TEXT"] = "Mit dem erweiterten Bitrix24.Drive bekommen Sie noch mehr praktische Funktionen:<br/><br/>
+$MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TEXT"] = "Mit dem erweiterten Bitrix24 Drive bekommen Sie noch mehr praktische Funktionen:<br/><br/>
 + History der Dokumentänderungen (wann und von wem geändert)<br/>
 + Wiederherstellung einer beliebigen vorherigen Version aus der History<br/><br/>
 <a href=\"https://www.bitrix24.de/pro/drive.php\" target='_blank'>Mehr erfahren</a><br/><br/>
 Erweiterter Drive ist verfügbar ab dem Tarif \"Standard\".
 ";
-$MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE"] = "Verfügbar nur im erweiterten Bitrix24.Drive";
+$MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE_MSGVER_1"] = "Verfügbar nur im erweiterten Bitrix24 Drive";
 $MESS["CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT"] = "Nur auf bestimmten kostenpflichtigen Tarifen verfügbar";
-$MESS["CONFIG_DISK_LOCK_POPUP_TEXT"] = "Erweiterter Drive in Bitrix24 bietet Ihnen folgende zusätzliche Optionen an:
+$MESS["CONFIG_DISK_LOCK_POPUP_TEXT_MSGVER_1"] = "Erweiterter Drive in Bitrix24 bietet Ihnen folgende zusätzliche Optionen an:
 <br/><br/>
 - Dokumente können während der Bearbeitung gesperrt werden, sodass ein gleichzeitiges Bearbeiten durch mehrere Mitarbeiter nicht möglich ist.
 <br/><br/>
@@ -51,9 +51,9 @@ $MESS["CONFIG_DISK_LOCK_POPUP_TEXT"] = "Erweiterter Drive in Bitrix24 bietet Ihn
 <br/><br/>
 <a href=\"https://www.bitrix24.de/pro/drive.php\" target='_blank'>Mehr erfahren</a>
 <br/><br/>
-Erweiterte Bitrix24.Drive Funktionen sind verfügbar in den kostenpflichtigen Tarifen angefangen vom Tarif Standard.
+Erweiterte Drive Funktionen sind verfügbar in den kostenpflichtigen Tarifen angefangen vom Tarif Standard.
 ";
-$MESS["CONFIG_DISK_LOCK_POPUP_TITLE"] = "Verfügbar nur im erweiterten Bitrix24.Drive";
+$MESS["CONFIG_DISK_LOCK_POPUP_TITLE"] = "Verfügbar nur im erweiterten Bitrix24 Drive";
 $MESS["CONFIG_DISK_OBJECT_LOCK_ENABLED"] = "Die Sperrfunktion für Dokumente erlauben";
 $MESS["CONFIG_DISK_TRANSFORM_FILES_ON_OPEN"] = "Datei konvertieren, wenn sie geöffnet wird";
 $MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Maximum Einträge in der Dokumentenhistory.";
@@ -123,14 +123,14 @@ $MESS["CONFIG_NAME_GOOGLE_API_KEY_HINT"] = "Ein Google API Schlüssel ist erford
 $MESS["CONFIG_NAME_MAP_PROVIDER_SETTINGS"] = "Einstellungen des Anbieters #PROVIDER#";
 $MESS["CONFIG_NETWORK_AVAILABLE"] = "Alle Nutzer von meinem Bitrix24 können im globalen Network kommunizieren";
 $MESS["CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED"] = "Diese Funktion wird verfügbar sein, sobald der Administrator den Account bestätigen wird.";
-$MESS["CONFIG_NETWORK_AVAILABLE_TEXT_NEW"] = "Kommunikation im Bitrix24.Network ist nur für Nutzer von kostenpflichtigen Bitrix24 Tarifen verfügbar.<br/><br/>
-Folgende Vorteile haben Sie, wenn Sie Bitrix24.Network nutzen:<br/>
+$MESS["CONFIG_NETWORK_AVAILABLE_TEXT_NEW_MSGVER_1"] = "Kommunikation im Bitrix24 Network ist nur für Nutzer von kostenpflichtigen Bitrix24 Tarifen verfügbar.<br/><br/>
+Folgende Vorteile haben Sie, wenn Sie Network nutzen:<br/>
 <ul>
 <li>Alle Ihre Geschäftspartner und Kontakte sind in einem Netzwerk vereinigt</li>
 <li>Kommunikation mit Kunden und externen Nutzern erfolgt schnell und einfach</li>
 <li>Nahtlose Kommunikation zwischen Nutzern verschiedener Bitrix24 Accounts</li>
 </ul>
-<b>Alle Tools von Bitrix24.Network stehen zur Verfügung ab dem Tarif Plus für #PRICE# monatlich.</b>
+<b>Alle Tools von Network stehen zur Verfügung ab dem Tarif Plus für #PRICE# monatlich.</b>
 ";
 $MESS["CONFIG_NETWORK_AVAILABLE_TITLE"] = "Verfügbar nur in den kostenpflichtigen Bitrix24-Tarifen";
 $MESS["CONFIG_ORGANIZATION"] = "Typ Ihrer Organisation";

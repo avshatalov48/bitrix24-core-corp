@@ -4,11 +4,12 @@
 jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatTitle, ChatAvatar, UserStatus } = require('im/messenger/lib/element');
 	const { bookmarkAvatar } = require('im/messenger/assets/common');
 	const { Moment } = require('utils/date');
 	const { UserUtils } = require('im/messenger/lib/utils');
+	const { BotCode } = require('im/messenger/const');
 
 	/**
 	 * @class SidebarUserService
@@ -17,7 +18,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, expo
 	{
 		constructor(dialogId, isNotes)
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.isNotes = isNotes;
 			this.dialogId = dialogId;
 		}
@@ -25,10 +26,11 @@ jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, expo
 		/**
 		 * @desc Get title and desc data by current dialogId
 		 * @param {string} [id=this.dialogId]
+		 * @param {boolean} [isCopilot=false]
 		 * @param {boolean} [isNotes=this.isNotes]
 		 * @return {object}
 		 */
-		getTitleDataById(id = this.dialogId, isNotes = this.isNotes)
+		getTitleDataById(id = this.dialogId, isCopilot = false, isNotes = this.isNotes)
 		{
 			if (isNotes)
 			{
@@ -39,6 +41,14 @@ jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, expo
 			}
 
 			const chatTitle = ChatTitle.createFromDialogId(id);
+
+			if (isCopilot)
+			{
+				const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
+
+				chatTitle.description = Type.isStringFilled(dialogModel?.aiProvider)
+					? dialogModel?.aiProvider : chatTitle.description;
+			}
 
 			return {
 				title: chatTitle.getTitle(),
@@ -110,6 +120,11 @@ jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, expo
 			return UserStatus.getStatusCrown();
 		}
 
+		/**
+		 * @desc check is bot user by id
+		 * @param {number} userId
+		 * @return {boolean}
+		 */
 		isBotById(userId)
 		{
 			const userModelState = this.store.getters['usersModel/getById'](userId);
@@ -119,6 +134,22 @@ jn.define('im/messenger/controller/sidebar/sidebar-user-service', (require, expo
 			}
 
 			return userModelState.bot;
+		}
+
+		/**
+		 * @desc check is bot copilot user by id
+		 * @param {number} userId
+		 * @return {boolean}
+		 */
+		isCopilotBotById(userId)
+		{
+			const userModelState = this.store.getters['usersModel/getById'](userId);
+			if (!userModelState)
+			{
+				return false;
+			}
+
+			return userModelState.bot && userModelState.botData && userModelState.botData.code === BotCode.copilot;
 		}
 	}
 

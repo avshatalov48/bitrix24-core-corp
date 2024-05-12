@@ -1,0 +1,37 @@
+<?
+$MESS["SONET_SEF_PATH_VIEW_ITEM"] = "Reservierung anzeigen";
+$MESS["SONET_ITEM_VAR"] = "Variable für die Reservierungs ID";
+$MESS["INTL_P_FRI_F"] = "Freitag";
+$MESS["INTL_IBLOCK"] = "Informationsblock";
+$MESS["INTL_IBLOCK_TYPE"] = "Informationsblocktyp";
+$MESS["SONET_SEF_PATH_RESERVE_MEETING"] = "Raum reservieren";
+$MESS["SONET_SEF_PATH_INDEX"] = "Hauptseite der Raum-Reservierungen";
+$MESS["SONET_SEF_PATH_MEETING"] = "Grafik: Räume reservieren";
+$MESS["SONET_SEF_PATH_MODIFY_MEETING"] = "Raum bearbeiten";
+$MESS["INTL_P_MON_F"] = "Montag";
+$MESS["SONET_PAGE_VAR"] = "Variable für die Seite";
+$MESS["INTL_P_SAT_F"] = "Samstag";
+$MESS["INTL_SET_NAVCHAIN"] = "Breadcrumb-Navigation festlegen";
+$MESS["INTL_P_SAN_F"] = "Sonntag";
+$MESS["INTL_P_THU_F"] = "Donnerstag";
+$MESS["INTL_P_TUE_F"] = "Dienstag";
+$MESS["INTL_USERGROUPS_RESERVE"] = "Nutzergruppen, die Räume reservieren dürfen";
+$MESS["INTL_USERGROUPS_CLEAR"] = "Nutzergruppen, die Reservierungen stornieren dürfen";
+$MESS["INTL_USERGROUPS_MODIFY"] = "Nutzergruppen, die Räumlichkeiten bearbeiten dürfen";
+$MESS["SONET_SEF_PATH_SEARCH"] = "Freie Räume suchen";
+$MESS["SONET_MEETING_VAR"] = "Variable für die Raum ID";
+$MESS["INTL_P_WEN_F"] = "Mittwoch";
+$MESS["INTL_P_WEEK_HOLIDAYS"] = "Wochenenden";
+$MESS["INTR_IRM_PARAM_PATH_TO_USER"] = "Pfadvorlage zum Nutzerprofil";
+$MESS["INTR_IRM_PARAM_PM_URL"] = "Seite zum Versenden privater Nachrichten";
+$MESS["INTR_IRM_PARAM_PATH_TO_CONPANY_DEPARTMENT"] = "Pfadvorlage zur Abteilungsseite";
+$MESS["INTR_IRM_PARAM_NAME_TEMPLATE"] = "Name anzeigen";
+$MESS["INTR_IRM_PARAM_NAME_TEMPLATE_DEFAULT"] = "#NOBR##NAME# #LAST_NAME##/NOBR#";
+$MESS["INTR_IRM_PARAM_SHOW_LOGIN"] = "Login anzeigen, wenn kein Name vorhanden";
+$MESS["INTR_IRM_PARAM_DATE_TIME_FORMAT"] = "Datum- und Zeitformat";
+$MESS["INTR_IRM_PARAM_SHOW_YEAR"] = "Geburtstag anzeigen";
+$MESS["INTR_IRM_PARAM_SHOW_YEAR_VALUE_Y"] = "für alle";
+$MESS["INTR_IRM_PARAM_SHOW_YEAR_VALUE_M"] = "nur für Männer";
+$MESS["INTR_IRM_PARAM_SHOW_YEAR_VALUE_N"] = "niemandem";
+$MESS["INTR_IRM_PARAM_PATH_TO_VIDEO_CALL"] = "Videoanrufe";
+?>

@@ -141,6 +141,13 @@ type RawUser = {
     avatarHr: string,
     birthday: string,
     bot: boolean,
+	botData?: {
+		appId: string,
+		code: string,
+		isHidden: boolean,
+		isSupportOpenline: boolean,
+		type: string,
+	}
     color: string,
     connector: boolean,
     departments: number[],

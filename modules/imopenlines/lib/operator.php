@@ -636,6 +636,8 @@ class Operator
 			'CHAT_ID' => $session['CHAT_ID'],
 			'OPERATOR_ID' => $userId,
 			'MESSAGE_ID' => $message->getMessageId(),
+			'MESSAGE_TEXT' => $message->getMessage(),
+			'MESSAGE_AUTHOR' => $message->getAuthor()->isConnector() ? $message->getAuthorid() : 0,
 			'QUOTED_MESSAGE' => implode("\n", $quotedMessageParts),
 			'SESSION_ID' => $session['ID'],
 		]);

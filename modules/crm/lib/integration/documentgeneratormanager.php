@@ -29,6 +29,7 @@ use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Uri;
 
 class DocumentGeneratorManager
@@ -139,7 +140,7 @@ class DocumentGeneratorManager
 		?int $templateId = null
 	): ?Uri
 	{
-		$provider = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
+		$provider = $this->getCrmOwnerTypeProvider($entityTypeId);
 		if (!$provider)
 		{
 			return null;
@@ -387,6 +388,13 @@ class DocumentGeneratorManager
 		return true;
 	}
 
+	public function getCrmOwnerTypeProvider(int $entityTypeId, bool $isSourceEntitiesOnly = true): ?string
+	{
+		$map = $this->getCrmOwnerTypeProvidersMap($isSourceEntitiesOnly);
+
+		return ($map[$entityTypeId] ?? null);
+	}
+
 	/**
 	 * Returns array where key - id from \CCrmOwnerType and value - data provider class name
 	 *
@@ -491,7 +499,7 @@ class DocumentGeneratorManager
 		}
 
 		$entityId = (int) $entityId;
-		$provider = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
+		$provider = $this->getCrmOwnerTypeProvider($entityTypeId);
 		if($provider && $entityId > 0)
 		{
 			return DocumentTable::deleteList([
@@ -544,7 +552,7 @@ class DocumentGeneratorManager
 	{
 		$result = [];
 
-		$provider = $this->getCrmOwnerTypeProvidersMap()[$item->getEntityTypeId()] ?? null;
+		$provider = $this->getCrmOwnerTypeProvider($item->getEntityTypeId());
 		if (!$provider)
 		{
 			return $result;
@@ -595,7 +603,7 @@ class DocumentGeneratorManager
 	{
 		$result = [];
 
-		$provider = $this->getCrmOwnerTypeProvidersMap()[$item->getEntityTypeId()] ?? null;
+		$provider = $this->getCrmOwnerTypeProvider($item->getEntityTypeId());
 		if (!$provider)
 		{
 			return $result;
@@ -667,7 +675,7 @@ class DocumentGeneratorManager
 	{
 		$result = new Result();
 
-		$provider = $this->getCrmOwnerTypeProvidersMap()[$identifier->getEntityTypeId()] ?? null;
+		$provider = $this->getCrmOwnerTypeProvider($identifier->getEntityTypeId());
 		if (!$provider)
 		{
 			return $result->addError(new Error('Provider for entityTypeId ' . $identifier->getEntityTypeId() . ' is not found'));
@@ -913,7 +921,12 @@ class DocumentGeneratorManager
 		);
 	}
 
-	public function replacePlaceholdersInText(int $entityTypeId, int $entityId, string $text): ?string
+	public function replacePlaceholdersInText(
+		int $entityTypeId,
+		int $entityId,
+		string $text,
+		?string $placeholderForEmptyValue = null
+	): ?string
 	{
 		if (!$this->isEnabled)
 		{
@@ -921,33 +934,45 @@ class DocumentGeneratorManager
 		}
 
 		if (
-			$entityTypeId <= 0
-			|| $entityId <= 0
+			$entityId <= 0
 			|| empty($text)
+			|| !\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId)
 		)
 		{
 			return null;
 		}
 
+		$text = (string)Encoding::convertToUtf($text);
+
 		$template = \Bitrix\DocumentGenerator\Template::loadFromArray([
 			'BODY_TYPE' => PlainText::class,
 			'BODY_CONTENT' => $text
 		]);
-		$providerClassName = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
+
+		$providerClassName = $this->getCrmOwnerTypeProvider($entityTypeId, false);
 		if (!$providerClassName)
 		{
 			return null;
 		}
+
 		$template->setSourceType($providerClassName);
 
-		$document = VirtualDocument::createByTemplate($template, $entityId,);
+		$document = VirtualDocument::createByTemplate($template, $entityId);
 		if ($document)
 		{
+			if ($placeholderForEmptyValue !== null)
+			{
+				$document->setPlaceholderForFieldEmptyValue($placeholderForEmptyValue);
+			}
+
 			$result = $document->getProcessedResult();
 
-			return $result->isSuccess()
-				? $result->getData()['BODY']->getContent()
-				: null;
+			if ($result->isSuccess())
+			{
+				$content = $result->getData()['BODY']->getContent();
+
+				return Encoding::convertEncodingToCurrent($content);
+			}
 		}
 
 		return null;

@@ -391,12 +391,12 @@ class Connector
 								if (isset($params['message']['extraData']['SOURCE_MESSAGE_ID']))
 								{
 									$message = new \Bitrix\Im\V2\Message($params['message']['extraData']['SOURCE_MESSAGE_ID']);
+									$messageParams['MESSAGE'] = $message->getMessage();
 									if ($message->getAuthorId() === (int)$params['message']['user_id'])
 									{
 										$messageParams['FROM_USER_ID'] = $message->getAuthorId();
 										unset($messageParams['SYSTEM']);
 									}
-
 								}
 
 								\Bitrix\ImOpenLines\Im::addMessage($messageParams);
@@ -2229,8 +2229,11 @@ class Connector
 		// set read message
 		$messages = new Im\V2\MessageCollection();
 		$messages->add($message);
+
+		$entityData = $chat->getEntityData();
+		$connectorUserId = $entityData['entityId']['connectorUserId'] ?? 0;
 		$chat
-			//->withContextUser()
+			->withContextUser((int)$connectorUserId)
 			->readMessages($messages, true)
 		;
 

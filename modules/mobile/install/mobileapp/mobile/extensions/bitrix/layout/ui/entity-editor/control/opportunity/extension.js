@@ -51,9 +51,20 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 			return null;
 		}
 
+		shouldShowReceivePaymentButton()
+		{
+			return this.isReceivePaymentAvailable()
+					&& this.schemeElement.options.isPayButtonVisible === 'true';
+		}
+
 		shouldShowDocumentList()
 		{
 			if (this.isNewEntity())
+			{
+				return false;
+			}
+
+			if (this.schemeElement.options.isPaymentDocumentsVisible === 'false')
 			{
 				return false;
 			}
@@ -70,6 +81,7 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 
 		renderDocumentList()
 		{
+			const contactId = Number(this.model.getField('CONTACT_ID', 0));
 			const entityTypeId = this.model.getField('ENTITY_TYPE_ID', 0);
 			const data = {
 				documentsData: this.model.getField('DOCUMENTS', {}),
@@ -81,6 +93,11 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 				modeWithOrders: this.model.getField('MODE_WITH_ORDERS', false),
 				salesOrderRights: this.model.getField('SALES_ORDERS_RIGHTS', {}),
 				isTerminalAvailable: this.model.getField('IS_TERMINAL_AVAILABLE', false),
+				resendParams: {
+					entityHasContact: contactId > 0,
+					contactId,
+					contactHasPhone: this.model.getField('CONTACT_HAS_PHONE', 'N') === 'Y',
+				},
 			};
 
 			return new DocumentList(data);
@@ -121,7 +138,7 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 						},
 						this.getFieldInstance(this.getValue()),
 					),
-					this.isReceivePaymentAvailable() && View(
+					this.shouldShowReceivePaymentButton() && View(
 						{
 							style: {
 								alignItems: 'flex-end',

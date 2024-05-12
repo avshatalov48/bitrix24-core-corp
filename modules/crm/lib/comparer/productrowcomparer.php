@@ -32,10 +32,21 @@ class ProductRowComparer extends ComparerBase
 	{
 		if ($name === 'TAX_RATE')
 		{
-			$left[$name] = (float)($left[$name] ?? null);
-			$right[$name] = (float)($right[$name] ?? null);
+			// TAX_RATE is nullable, and null - is a valid value ('NO VAT') that is different from 0 ('VAT 0')
 
-			return $left[$name] === $right[$name];
+			$taxRateLeft = $left[$name] ?? null;
+			if ($taxRateLeft !== null)
+			{
+				$taxRateLeft = (float)$taxRateLeft;
+			}
+
+			$taxRateRight = $right[$name] ?? null;
+			if ($taxRateRight !== null)
+			{
+				$taxRateRight = (float)$taxRateRight;
+			}
+
+			return $taxRateLeft === $taxRateRight;
 		}
 
 		return parent::areFieldsEquals($left, $right, $name);

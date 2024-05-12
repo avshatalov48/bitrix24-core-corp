@@ -46,9 +46,6 @@ $MESS['CRM_TIMELINE_REMINDER_DESCRIPTION3_SMART_INVOICE'] = 'Запланиру�
 
 $MESS['CRM_TIMELINE_CONFIRM_REMOVE'] = 'Удалить';
 
-$MESS['M_CRM_TIMELINE_TYPE_SOMETHING'] = 'Напишите что-нибудь';
-$MESS['M_CRM_TIMELINE_SAVE'] = 'Сохранить';
-$MESS['M_CRM_TIMELINE_SAVING'] = 'Сохранение...';
 $MESS['M_CRM_TIMELINE_CANCEL'] = 'Отмена';
 $MESS['M_CRM_TIMELINE_CLOSE'] = 'Закрыть';
 

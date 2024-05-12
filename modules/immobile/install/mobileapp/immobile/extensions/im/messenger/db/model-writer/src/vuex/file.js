@@ -5,7 +5,8 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) => {
 	const { Type } = require('type');
-
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('repository--file');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
 	class FileWriter extends Writer
@@ -31,7 +32,7 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} mutation.payload
 		 */
 		addRouter(mutation)
 		{
@@ -61,11 +62,12 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 			});
 			const fileList = this.store.getters['filesModel/getByIdList'](fileIdList);
 
-			this.repository.file.saveFromModel(fileList);
+			this.repository.file.saveFromModel(fileList)
+				.catch((error) => logger.error('FileWriter.addRouter.saveFromModel.catch:', error));
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} mutation.payload
 		 */
 		updateRouter(mutation)
 		{
@@ -105,11 +107,12 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 				return;
 			}
 
-			this.repository.file.saveFromModel(fileList);
+			this.repository.file.saveFromModel(fileList)
+				.catch((error) => logger.error('FileWriter.updateRouter.saveFromModel.catch:', error));
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} mutation.payload
 		 */
 		updateWithIdRouter(mutation)
 		{
@@ -140,11 +143,12 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 				return;
 			}
 
-			this.repository.file.saveFromModel([file]);
+			this.repository.file.saveFromModel([file])
+				.catch((error) => logger.error('FileWriter.updateWithIdRouter.saveFromModel.catch:', error));
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} mutation.payload
 		 */
 		deleteRouter(mutation)
 		{}

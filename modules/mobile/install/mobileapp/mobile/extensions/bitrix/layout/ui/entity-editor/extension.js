@@ -294,6 +294,11 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 			return validator.validate();
 		}
 
+		getAnalytics()
+		{
+			return this.settings?.payload?.analytics;
+		}
+
 		renderControls()
 		{
 			return (
@@ -309,6 +314,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 								readOnly: this.readOnly,
 								mode: this.mode,
 								isChanged: this.isChanged,
+								analytics: this.getAnalytics(),
 							},
 						);
 					})

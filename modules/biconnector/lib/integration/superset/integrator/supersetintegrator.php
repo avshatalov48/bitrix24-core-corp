@@ -2,8 +2,6 @@
 
 namespace Bitrix\BIConnector\Integration\Superset\Integrator;
 
-use Bitrix\BIConnector\Integration\Superset\Integrator\Dto;
-
 interface SupersetIntegrator
 {
 	/**
@@ -66,7 +64,7 @@ interface SupersetIntegrator
 	 * If status code is OK/IN_PROGRESS - superset was started.
 	 *
 	 * @param string $biconnectorToken
-	 * @return IntegratorResponse<string>
+	 * @return IntegratorResponse<Array<string,string>>
 	 */
 	public function startSuperset(string $biconnectorToken): IntegratorResponse;
 
@@ -108,20 +106,19 @@ interface SupersetIntegrator
 	public function clearCache(): IntegratorResponse;
 
 	/**
-	 * Returns response with result of start superset.
-	 * If status code is OK/IN_PROGRESS - superset was started.
+	 * Creates user in Superset
 	 *
-	 * @return IntegratorResponse<Dto\UserCredentials>
-	 */
-	public function getSupersetCommonUserCredentials(): IntegratorResponse;
-
-	/**
-	 * Changes superset user's password
-	 *
-	 * @param string $password
+	 * @param Dto\User $user
 	 * @return IntegratorResponse
 	 */
-	public function changeSupersetCommonUserCredentials(string $password): IntegratorResponse;
+	public function createUser(Dto\User $user): IntegratorResponse;
+
+	/**
+	 * Gets login url with jwt
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function getLoginUrl(): IntegratorResponse;
 
 	/**
 	 * Returns response with dashboard import result.
@@ -132,15 +129,6 @@ interface SupersetIntegrator
 	 * @return IntegratorResponse<Dto\Dashboard>
 	 */
 	public function importDashboard(string $filePath, string $appCode): IntegratorResponse;
-
-	/**
-	 * Return response with result of embedding dashboard.
-	 * If response is OK - dashboard was embedded successfully.
-	 *
-	 * @param int $dashboardId
-	 * @return IntegratorResponse
-	 */
-	public function embedDashboard(int $dashboardId): IntegratorResponse;
 
 	/**
 	 * Returns response with dataset import result.
@@ -159,6 +147,15 @@ interface SupersetIntegrator
 	 * @return IntegratorResponse<Dto\Dashboard>
 	 */
 	public function createEmptyDashboard(array $fields): IntegratorResponse;
+
+	/**
+	 * Sets owner for dashboard
+	 *
+	 * @param Dto\User $user
+	 * @param int $dashboardId
+	 * @return IntegratorResponse
+	 */
+	public function setOwnerDashboard(Dto\User $user, int $dashboardId): IntegratorResponse;
 
 	/**
 	 * Set option that skip required fields in request and return instance
@@ -183,4 +180,13 @@ interface SupersetIntegrator
 	 * @return bool
 	 */
 	public function ping(): bool;
+
+	/**
+	 * Update dashboard fields, that allowed in proxy white-list
+	 *
+	 * @param int $dashboardId external id of edited dashboard
+	 * @param array $editedFields fields for edit in superset. Format: *field_name_in_superset* -> *new_value*
+	 * @return IntegratorResponse<Array<string|string>> return array of fields that changed
+	 */
+	public function updateDashboard(int $dashboardId, array $editedFields): IntegratorResponse;
 }

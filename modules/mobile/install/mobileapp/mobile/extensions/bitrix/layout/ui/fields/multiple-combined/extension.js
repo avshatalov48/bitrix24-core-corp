@@ -137,7 +137,6 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 						},
 					},
 					Image({
-						tintColor: AppTheme.colors.base3,
 						style: {
 							width: 12,
 							height: 12,

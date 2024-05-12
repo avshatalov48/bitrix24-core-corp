@@ -20,7 +20,7 @@ abstract class AggregatorBase implements AggregateStrategy
 	 */
 	public function __construct(array $params)
 	{
-		$this->setDate(new DateTime($params['DATE']->format('Y-m-d'), 'Y-m-d'));
+		$this->setDate(new DateTime($params['DATE']->format('Y-m-d 00:00:00'), 'Y-m-d 00:00:00'));
 		$this->setOpenLineId($params['OPEN_LINE_ID']);
 		$this->setSourceId($params['SOURCE_ID']);
 		$this->setOperatorId($params['OPERATOR_ID']);
@@ -33,7 +33,11 @@ abstract class AggregatorBase implements AggregateStrategy
 	{
 		$existStatistic = DialogStatTable::getRow(array(
 			'filter' => Query::filter()
-				->where('DATE', $this->getDate())
+				->whereBetween(
+					'DATE',
+					new DateTime($this->getDate()->format('Y-m-d 00:00:00'), 'Y-m-d H:i:s'),
+					new DateTime($this->getDate()->format('Y-m-d 23:59:59'), 'Y-m-d H:i:s')
+				)
 				->where('OPEN_LINE_ID', $this->getOpenLineId())
 				->where('SOURCE_ID', $this->getSourceId())
 				->where('OPERATOR_ID', $this->getOperatorId())

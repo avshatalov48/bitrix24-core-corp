@@ -2,6 +2,7 @@
 
 namespace Bitrix\Imbot\Bot;
 
+use Bitrix\ImBot\Service\CopilotAnalytics;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
@@ -29,7 +30,7 @@ class CopilotChatBot extends Base
 	// option amount of the messages to select for context
 	public const
 		OPTION_CONTEXT_AMOUNT = 'copilot_context_amount',
-		CONTEXT_AMOUNT_DEFAULT = 50 // default value
+		CONTEXT_AMOUNT_DEFAULT = 25 // default value
 	;
 
 	// option mode interaction with ai service
@@ -42,6 +43,7 @@ class CopilotChatBot extends Base
 	public const
 		MESSAGE_COMPONENT_ID = 'CopilotMessage',
 		MESSAGE_COMPONENT_START = 'ChatCopilotCreationMessage',
+		MESSAGE_COMPONENT_COLLECTIVE = 'ChatCopilotAddedUsersMessage',
 		MESSAGE_PARAMS_ERROR = 'COPILOT_ERROR',
 		MESSAGE_PARAMS_MORE = 'COPILOT_HAS_MORE'
 	;
@@ -50,7 +52,10 @@ class CopilotChatBot extends Base
 		ERROR_SYSTEM = 'SYSTEM_ERROR',
 		ERROR_AGREEMENT = 'AGREEMENT_ERROR',
 		ERROR_TARIFF = 'TARIFF_ERROR',
-		ERROR_NETWORK = 'NETWORK'
+		ERROR_NETWORK = 'NETWORK',
+		AI_ENGINE_ERROR_PROVIDER = 'AI_ENGINE_ERROR_PROVIDER',
+		LIMIT_IS_EXCEEDED_DAILY = 'LIMIT_IS_EXCEEDED_DAILY',
+		LIMIT_IS_EXCEEDED_MONTHLY = 'LIMIT_IS_EXCEEDED_MONTHLY'
 	;
 
 	protected const BOT_PROPERTIES = [
@@ -296,29 +301,57 @@ class CopilotChatBot extends Base
 	{
 		$chat = Im\V2\Chat::getInstance((int)$messageFields['CHAT_ID']);
 
-		if (!self::checkMembershipRestriction($chat, $messageFields))
-		{
-			self::sendError($messageFields['DIALOG_ID'], Loc::getMessage('IMBOT_COPILOT_RESTRICTION'));
-
-			$chat->deleteUser(self::getBotId());
-			return false;
-		}
-
 		if (!self::checkMessageRestriction($messageFields))
 		{
 			return false;
 		}
 
-		$serviceRestriction = self::checkAiServeRestriction();
+		if (!Loader::includeModule('ai'))
+		{
+			return false;
+		}
+
+		$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY);
+		$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
+		$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
+		$serviceRestriction = self::checkAiServeRestriction($engine);
 		if (!$serviceRestriction->isSuccess())
 		{
 			$serviceRestrictionError = $serviceRestriction->getErrors()[0];
 			self::sendError($messageFields['DIALOG_ID'], $serviceRestrictionError->getMessage());
+
+			CopilotAnalytics::sendAnalyticsEvent(
+				$chat,
+				$engine,
+				$messageFields['PARAMS']['COPILOT_PROMPT_CODE'] ?? null);
+
+			CopilotAnalytics::sendAnalyticsEvent(
+				$chat,
+				$engine,
+				$messageFields['PARAMS']['COPILOT_PROMPT_CODE'] ?? null,
+				null,
+				CopilotAnalytics::getCopilotStatusByResult($serviceRestriction)
+			);
+
 			return false;
 		}
 
-		$messages = new Im\V2\MessageCollection();
-		$messages->add(new Im\V2\Message($messageId));
+		if ($chat->getType() === Im\V2\Chat::IM_TYPE_COPILOT
+			&& self::checkMessageMentions($chat, $messageFields['MESSAGE_ORIGINAL'])
+		)
+		{
+			return false;
+		}
+
+		if (($chat->getType() === Im\V2\Chat::IM_TYPE_CHAT || $chat->getType() === Im\V2\Chat::IM_TYPE_OPEN)
+			&& !self::checkBotMention($messageFields['MESSAGE_ORIGINAL'])
+		)
+		{
+			return false;
+		}
+
+		$message = new Im\V2\Message($messageId);
+		$messages = (new Im\V2\MessageCollection())->add($message);
 
 		$chat
 			->withContextUser(self::getBotId())
@@ -331,7 +364,10 @@ class CopilotChatBot extends Base
 		$result = self::askService([
 			'DIALOG_ID' => $messageFields['DIALOG_ID'],
 			'MESSAGE_ID' => $messageId,
-			'MESSAGE_TEXT' => $messageFields['MESSAGE']
+			'MESSAGE_TEXT' => $messageFields['MESSAGE'],
+			'CHAT_TYPE' => $chat->getType(),
+			'PROMPT_CODE' => $messageFields['PARAMS']['COPILOT_PROMPT_CODE'] ?? null,
+			'CHAT' => $chat,
 		]);
 
 		if ($result->isSuccess())
@@ -392,6 +428,53 @@ class CopilotChatBot extends Base
 		return $result->isSuccess();
 	}
 
+	private static function checkMessageMentions(Im\V2\Chat $chat, string $message): bool
+	{
+		$relations = $chat->getRelations()->getUsers();
+
+		$forUsers = [];
+		if (preg_match_all("/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/i", $message, $matches))
+		{
+			foreach ($matches[1] as $userId)
+			{
+				$forUsers[(int)$userId] = (int)$userId;
+			}
+		}
+
+		foreach ($relations as $relation)
+		{
+			if ($relation->getId() === self::getBotId())
+			{
+				continue;
+			}
+
+			$userId = $relation->getId();
+
+			if (in_array($userId, $forUsers, true))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static function checkBotMention(string $message): bool
+	{
+		if (preg_match_all("/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/i", $message, $matches))
+		{
+			foreach ($matches[1] as $userId)
+			{
+				if ((int)$userId === self::getBotId())
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * @param int $messageId Message Id.
 	 * @param array $messageFields Event arguments.
@@ -419,39 +502,13 @@ class CopilotChatBot extends Base
 		return true;
 	}
 
-	/**
-	 * Event handler when bot join to chat.
-	 * @see \Bitrix\Im\Bot::onJoinChat
-	 * Method registers at bot field `b_im_bot.METHOD_WELCOME_MESSAGE`
-	 *
-	 * @param string $dialogId
-	 * @param array $joinFields
-	 *
-	 * @return bool
-	 */
-	public static function onChatStart($dialogId, $joinFields): bool
-	{
-		$chat = Im\V2\Chat\ChatFactory::getInstance()->getChat($dialogId);
-
-		if (!self::checkMembershipRestriction($chat, $joinFields))
-		{
-			self::sendError($dialogId, Loc::getMessage('IMBOT_COPILOT_RESTRICTION'));
-
-			$chat->deleteUser(self::getBotId());
-
-			return false;
-		}
-
-		return true;
-	}
-
 	//endregion
 
 	//region AI Payload
 
 	/**
 	 * Make request to AI Engine.
-	 * @param array{DIALOG_ID: string, MESSAGE_TEXT: string} $params
+	 * @param array{DIALOG_ID: string, MESSAGE_TEXT: string, MESSAGE_ID: int, CHAT_TYPE: string, PROMPT_CODE: string, CHAT: Im\V2\Chat} $params
 	 * @return Result<array{HASH: string, MESSAGE: string, HAS_MORE: bool}>
 	 */
 	protected static function askService(array $params): Result
@@ -459,17 +516,21 @@ class CopilotChatBot extends Base
 		$result = new Result();
 
 		$contextParams = ['chat_id' => $params['DIALOG_ID']];
-		$text = $params['MESSAGE_TEXT'];
 
 		$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_ID);
-		$context->setParameters($contextParams);
 
-		$engine = AI\Engine::getByCategory(AI\Engine::CATEGORIES['text'], $context);
+		if ($params['CHAT_TYPE'] === Im\V2\Chat::IM_TYPE_COPILOT)
+		{
+			$context->setParameters($contextParams);
+		}
+
+		$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
+		$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
 		if ($engine instanceof AI\Engine)
 		{
-			$payload = new AI\Payload\Text($text);
-			$payload->setRole(AI\Prompt\Role::get(self::ASSISTANT_ROLE_ID));
+			CopilotAnalytics::sendAnalyticsEvent($params['CHAT'], $engine, $params['PROMPT_CODE']);
 
+			$payload = self::fillPayload($params);
 			$engine
 				->setPayload($payload)
 				->setParameters(['collect_context' => true])
@@ -505,7 +566,33 @@ class CopilotChatBot extends Base
 			}
 		}
 
+		$copilotStatus = CopilotAnalytics::getCopilotStatusByResult($result);
+		CopilotAnalytics::sendAnalyticsEvent($params['CHAT'], $engine, $params['PROMPT_CODE'], null, $copilotStatus);
+
 		return $result;
+	}
+
+	protected static function fillPayload(array $params): AI\Payload\Payload
+	{
+		$payload = new AI\Payload\Text($params['MESSAGE_TEXT']);
+
+		return $payload->setRole(AI\Prompt\Role::get(self::ASSISTANT_ROLE_ID));
+	}
+
+	protected static function checkPrompts(string $code): bool
+	{
+		$prompts = \Bitrix\AI\Prompt\Manager::getCachedTree('chat');
+
+		$isMatch = false;
+		foreach ($prompts as $prompt)
+		{
+			if ($prompt['code'] === $code)
+			{
+				$isMatch = true;
+			}
+		}
+
+		return $isMatch;
 	}
 
 	/**
@@ -526,7 +613,8 @@ class CopilotChatBot extends Base
 			$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY);
 			$context->setParameters($contextParams);
 
-			$engine = AI\Engine::getByCategory(AI\Engine::CATEGORIES['text'], $context);
+			$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
+			$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
 			if ($engine instanceof AI\Engine)
 			{
 				$payload = new AI\Payload\Prompt(self::SUMMARY_PROMPT_ID);
@@ -597,59 +685,95 @@ class CopilotChatBot extends Base
 		$chatId = Im\Dialog::getChatId($parameters['chat_id']);
 		$chat = Im\V2\Chat::getInstance($chatId);
 
+		$result = self::fillContextMessages($chat, $result);
+
+		return $result;
+	}
+
+	private static function fillContextMessages(Im\V2\Chat $chat, array $result): array
+	{
+		$chatId = $chat->getId();
 		$lastMessageId = $chat->getLastMessageId();
-
-		$filter = ['CHAT_ID' => $chatId];
-		$order = ['ID' => 'DESC']; // start from newest
-		$limit = self::getContextAmount();
-
 		$botId = self::getBotId();
-		$messages = Im\V2\MessageCollection::find($filter, $order, $limit);
-		$messages->fillParams();
-		foreach ($messages as $message)
+
+		while (true)
 		{
-			if (
-				$message->isSystem() // skip all system messages
-				|| $message->getMessageId() == $lastMessageId // skip last user message
-			)
+			$filter = [
+				'CHAT_ID' => $chatId,
+				'LAST_ID' => $lastMessageId,
+			];
+
+			$order = ['ID' => 'DESC']; // start from newest
+			$limit = self::getContextAmount();
+
+			$messages = Im\V2\MessageCollection::find($filter, $order, $limit);
+
+			if ($messages->count() === 0)
 			{
-				continue;
+				break;
 			}
 
-			if ($message->getParams()->isSet(Im\V2\Message\Params::COMPONENT_ID))
+			$messages->fillParams();
+
+			foreach ($messages as $message)
 			{
-				// skip welcome chat message
-				if ($message->getParams()->get(Im\V2\Message\Params::COMPONENT_ID)->getValue() == self::MESSAGE_COMPONENT_START)
-				{
-					continue;
-				}
-				// skip error message
 				if (
-					$message->getParams()->isSet(Im\V2\Message\Params::COMPONENT_PARAMS)
-					&& isset($message->getParams()->get(Im\V2\Message\Params::COMPONENT_PARAMS)->getValue()[self::MESSAGE_PARAMS_ERROR])
+					$message->isSystem() // skip all system messages
 				)
 				{
 					continue;
 				}
+
+				if (self::checkMessageMentions($chat, $message->getMessage()))
+				{
+					continue;
+				}
+
+				if ($message->getParams()->isSet(Im\V2\Message\Params::COMPONENT_ID))
+				{
+					// skip welcome chat message
+					if ($message->getParams()->get(Im\V2\Message\Params::COMPONENT_ID)->getValue() == self::MESSAGE_COMPONENT_START)
+					{
+						continue;
+					}
+					// skip error message
+					if (
+						$message->getParams()->isSet(Im\V2\Message\Params::COMPONENT_PARAMS)
+						&& isset($message->getParams()->get(Im\V2\Message\Params::COMPONENT_PARAMS)->getValue()[self::MESSAGE_PARAMS_ERROR])
+					)
+					{
+						continue;
+					}
+				}
+
+				$result['messages'][] = self::fillUserContext($message, $botId);
+
+				if (count($result['messages']) === self::getContextAmount())
+				{
+					return $result;
+				}
 			}
 
-			if ($message->getAuthorId() == $botId)
-			{
-				$result['messages'][] = [
-					'role' => 'assistant',
-					'content' => $message->getMessage(),
-				];
-			}
-			else
-			{
-				$result['messages'][] = [
-					'role' => 'user',
-					'content' => $message->getMessage(),
-				];
-			}
+			$lastMessageId = $message->getMessageId();
 		}
 
 		return $result;
+	}
+
+	protected static function fillUserContext(Im\V2\Message $message, int $botId): array
+	{
+		if ($message->getAuthorId() === $botId)
+		{
+			return [
+				'role' => 'assistant',
+				'content' => $message->getMessage(),
+			];
+		}
+
+		return [
+			'role' => 'user',
+			'content' => $message->getMessage(),
+		];
 	}
 
 	/**
@@ -788,13 +912,11 @@ class CopilotChatBot extends Base
 	 * Check service AI unavailability and restrictions.
 	 * @return Result
 	 */
-	protected static function checkAiServeRestriction(): Result
+	protected static function checkAiServeRestriction(?AI\Engine $engine): Result
 	{
 		$checkResult = new Result();
 		if (Loader::includeModule('ai'))
 		{
-			$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY);
-			$engine = AI\Engine::getByCategory(AI\Engine::CATEGORIES['text'], $context);
 			if ($engine instanceof AI\Engine)
 			{
 				if (!$engine->isAvailableByAgreement())
@@ -986,6 +1108,11 @@ class CopilotChatBot extends Base
 	 */
 	protected static function sendError(string $dialogId, $message): void
 	{
+		if (!Loader::includeModule('im'))
+		{
+			return;
+		}
+
 		if (!is_array($message))
 		{
 			$message = ['MESSAGE' => $message];
@@ -1021,6 +1148,11 @@ class CopilotChatBot extends Base
 		{
 			Pull\Event::send();
 		}
+	}
+
+	public static function onChatStart($dialogId, $joinFields)
+	{
+		return false;
 	}
 
 	//endregion

@@ -1,5 +1,4 @@
 (() => {
-
 	// Empty component for experiments, showcases, sharing code, etc.
 	// Please, keep it empty.
 

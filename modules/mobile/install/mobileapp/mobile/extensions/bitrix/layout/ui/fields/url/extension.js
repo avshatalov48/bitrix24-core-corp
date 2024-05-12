@@ -79,7 +79,8 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 			};
 		}
 
-		focus() {
+		focus()
+		{
 			if (!this.isEmpty() && this.isPossibleToFocus())
 			{
 				return this.setFocus();
@@ -126,19 +127,18 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 						justifyContent: 'center',
 						alignItems: 'center',
 						marginLeft: 5,
+						marginRight: 6,
 					},
 				},
-				Image(
-					{
-						style: {
-							width: 14,
-							height: 14,
-						},
-						svg: {
-							content: pen(),
-						},
+				Image({
+					style: {
+						width: 14,
+						height: 14,
 					},
-				),
+					svg: {
+						content: pen(),
+					},
+				}),
 			);
 		}
 

@@ -5,7 +5,10 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { chevronRight } = require('assets/common');
+	const { SharingContext } = require('calendar/model/sharing');
+	const { SharingSettingsCard } = require('calendar/layout/sharing-settings/card');
 	const { SharingSettingsRule } = require('calendar/layout/sharing-settings/rule');
+	const { SharingSettingsMembers } = require('calendar/layout/sharing-settings/members');
 	const { BottomSheet } = require('bottom-sheet');
 	const { RuleEditDialog } = require('calendar/layout/sharing-settings/dialog/rule-edit');
 	const { EventEmitter } = require('event-emitter');
@@ -20,8 +23,6 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 		constructor(props)
 		{
 			super(props);
-
-			this.readOnly = this.props.readOnly || false;
 
 			if (this.props.customEventEmitter)
 			{
@@ -50,6 +51,11 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 		componentWillUnmount()
 		{
 			this.unbindEvents();
+		}
+
+		get readOnly()
+		{
+			return this.props.readOnly || false;
 		}
 
 		get model()
@@ -102,16 +108,7 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 
 			return {
 				linkHash: settings.getRule().getHash(),
-				ruleArray: {
-					ranges: settings.getRule().getRanges().map((range) => {
-						return {
-							from: range.getFrom(),
-							to: range.getTo(),
-							weekdays: range.getWeekDays(),
-						};
-					}),
-					slotSize: settings.getRule().getSlotSize(),
-				},
+				ruleArray: settings.getRuleArray(),
 			};
 		}
 
@@ -124,17 +121,25 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 		{
 			return View(
 				{
-					style: {
-						flex: 1,
-						paddingHorizontal: 12,
-						paddingTop: 12,
-						paddingBottom: 14,
-					},
-					clickable: true,
-					onClick: this.readOnly ? this.showReadOnlyWarning : this.openRuleEditBackdrop,
+					testId: 'SharingPanelSettings',
 				},
-				this.renderHeader(),
-				this.renderRule(),
+				this.renderRuleContainer(),
+				this.model.getContext() === SharingContext.CALENDAR && this.renderMembers(),
+			);
+		}
+
+		renderRuleContainer()
+		{
+			return SharingSettingsCard(
+				{},
+				View(
+					{
+						clickable: true,
+						onClick: this.readOnly ? this.showReadOnlyWarning : this.openRuleEditBackdrop,
+					},
+					this.renderHeaderContainer(),
+					this.model.getContext() === SharingContext.CRM && this.renderRule(),
+				),
 			);
 		}
 
@@ -147,6 +152,7 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 			new BottomSheet({ component })
 				.setBackgroundColor(AppTheme.colors.bgNavigation)
 				.setMediumPositionPercent(60)
+				.disableContentSwipe()
 				.setParentWidget(parentLayoutWidget)
 				.open()
 				.then((widget) => {
@@ -165,19 +171,34 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 			});
 		}
 
-		renderHeader()
+		renderHeaderContainer()
 		{
 			return View(
 				{
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						marginBottom: 10,
-					},
+					style: styles.headerContainer,
+				},
+				this.renderHeader(),
+				this.renderRightArrow(),
+			);
+		}
+
+		renderHeader()
+		{
+			return View(
+				{},
+				this.renderHeaderTitleContainer(),
+				this.renderHeaderSubtitle(),
+			);
+		}
+
+		renderHeaderTitleContainer()
+		{
+			return View(
+				{
+					style: styles.titleContainer,
 				},
 				this.renderClock(),
-				this.renderTitle(),
-				this.renderRightArrow(),
+				this.renderHeaderTitle(),
 			);
 		}
 
@@ -185,61 +206,70 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 		{
 			return View(
 				{
-					style: {
-						width: 40,
-					},
+					style: styles.clockContainer,
 				},
-				Image(
-					{
-						tintColor: AppTheme.colors.accentMainPrimary,
-						svg: {
-							content: icons.clock,
-						},
-						style: {
-							width: 24,
-							height: 24,
-						},
+				Image({
+					tintColor: AppTheme.colors.accentMainPrimary,
+					svg: {
+						content: icons.clock,
 					},
-				),
+					style: styles.clockIcon,
+				}),
 			);
 		}
 
-		renderTitle()
+		renderHeaderTitle()
 		{
-			return Text(
+			return Text({
+				style: styles.headerTitle,
+				text: Loc.getMessage('M_CALENDAR_SETTINGS_DESCRIPTION'),
+			});
+		}
+
+		renderHeaderSubtitle()
+		{
+			return View(
 				{
-					style: {
-						fontSize: 15,
-						color: AppTheme.colors.base1,
-						flex: 1,
-					},
-					text: Loc.getMessage('M_CALENDAR_SETTINGS_DESCRIPTION'),
+					style: styles.headerSubtitleContainer,
 				},
+				Text({
+					text: this.getSubtitleText(),
+					style: styles.headerSubtitleText,
+				}),
 			);
+		}
+
+		getSubtitleText()
+		{
+			if (this.model.getSettings().isDefaultRule())
+			{
+				return Loc.getMessage('M_CALENDAR_SETTINGS_SUBTITLE_DEFAULT');
+			}
+
+			return Loc.getMessage('M_CALENDAR_SETTINGS_SUBTITLE_PERSONAL');
 		}
 
 		renderRightArrow()
 		{
-			return Image(
-				{
-					tintColor: AppTheme.colors.base3,
-					svg: {
-						content: chevronRight(),
-					},
-					style: {
-						alignItems: 'flex-end',
-						width: 24,
-						height: 24,
-					},
+			return Image({
+				tintColor: AppTheme.colors.base5,
+				svg: {
+					content: chevronRight(),
 				},
-			);
+				style: styles.rightArrowIcon,
+			});
 		}
 
 		renderRule()
 		{
-			return new SharingSettingsRule({
-				model: this.model,
-			});
+			return View(
+				{
+					style: styles.ruleContainer,
+				},
+				new SharingSettingsRule({
+					model: this.model,
+				}),
+			);
 		}
 
 		getRuleEditDialog()
@@ -249,10 +279,57 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 				customEventEmitter: this.customEventEmitter,
 			});
 		}
+
+		renderMembers()
+		{
+			return new SharingSettingsMembers({
+				model: this.model,
+				layoutWidget: this.props.layoutWidget,
+			});
+		}
 	}
 
 	const icons = {
-		clock: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.8"><path d="M10.9917 7.98797H12.9917V10.988H15.9917V12.988H10.9917V7.98797Z" fill="#29A8DF"/><path fill-rule="evenodd" clip-rule="evenodd" d="M4.73197 15.268C6.06564 18.2337 9.06758 20.0915 12.3168 19.962C16.6274 19.8738 20.0516 16.3101 19.9678 11.9995C19.9676 8.74766 17.9915 5.82222 14.9749 4.60793C11.9584 3.39365 8.50658 4.13417 6.25355 6.47895C4.00052 8.82373 3.3983 12.3023 4.73197 15.268ZM6.58701 14.4339C7.58028 16.6426 9.81604 18.0263 12.2359 17.9298C15.4463 17.8641 17.9966 15.21 17.9341 11.9995C17.934 9.57771 16.4623 7.39894 14.2156 6.49458C11.969 5.59022 9.39822 6.14173 7.72024 7.88805C6.04225 9.63437 5.59374 12.2251 6.58701 14.4339Z" fill="#29A8DF"/></g></svg>',
+		clock: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 18.8C15.7555 18.8 18.8 15.7555 18.8 12C18.8 8.24447 15.7555 5.2 12 5.2C8.24447 5.2 5.2 8.24447 5.2 12C5.2 15.7555 8.24447 18.8 12 18.8ZM20 12C20 16.4183 16.4183 20 12 20C7.58173 20 4 16.4183 4 12C4 7.58173 7.58173 4 12 4C16.4183 4 20 7.58173 20 12Z" fill="#00A2E8"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M11.9149 7.40651C12.2463 7.40651 12.5149 7.67514 12.5149 8.00651V11.5099L15.3679 11.5099C15.6993 11.5099 15.9679 11.7785 15.9679 12.1099C15.9679 12.4413 15.6993 12.7099 15.3679 12.7099L11.9149 12.7099C11.7558 12.7099 11.6032 12.6467 11.4907 12.5342C11.3781 12.4217 11.3149 12.2691 11.3149 12.1099V8.00651C11.3149 7.67514 11.5835 7.40651 11.9149 7.40651Z" fill="#00A2E8"/></svg>',
+	};
+
+	const styles = {
+		headerContainer: {
+			flexDirection: 'row',
+			alignItems: 'center',
+			justifyContent: 'space-between',
+		},
+		titleContainer: {
+			flexDirection: 'row',
+		},
+		clockContainer: {
+			width: 40,
+		},
+		clockIcon: {
+			width: 24,
+			height: 24,
+		},
+		headerTitle: {
+			flexDirection: 'column',
+			fontSize: 15,
+			color: AppTheme.colors.base1,
+			flex: 1,
+		},
+		headerSubtitleContainer: {
+			paddingLeft: 40,
+		},
+		headerSubtitleText: {
+			fontSize: 14,
+			color: AppTheme.colors.base3,
+		},
+		rightArrowIcon: {
+			alignItems: 'flex-end',
+			width: 24,
+			height: 24,
+		},
+		ruleContainer: {
+			marginTop: 10,
+		},
 	};
 
 	module.exports = { SharingSettings };

@@ -3,19 +3,19 @@
  */
 jn.define('im/messenger/controller/search/experimental/helper/search-date-formatter', (require, exports, module) => {
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DateHelper } = require('im/messenger/lib/helper');
 
 	function formatDateByDialogId(dialogId)
 	{
 		/** @type {RecentModelState || RecentSearchModelState} */
 		let item = null;
-		const recentItem = core.getStore().getters['recentModel/getById'](dialogId);
+		const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
 		if (recentItem)
 		{
 			item = recentItem;
 		}
-		const recentSearchItem = core.getStore().getters['recentModel/searchModel/getById'](dialogId);
+		const recentSearchItem = serviceLocator.get('core').getStore().getters['recentModel/searchModel/getById'](dialogId);
 
 		if (recentSearchItem)
 		{

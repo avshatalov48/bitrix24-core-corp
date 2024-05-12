@@ -6,8 +6,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { Runtime } = require('runtime');
 
 	const { View } = require('im/messenger/view/base');
-	const { EventType, FeatureFlag } = require('im/messenger/const');
+	const { EventType, FeatureFlag, ComponentCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const AppTheme = require('apptheme');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { AnalyticsEvent } = require('analytics');
 
 	class RecentView extends View
 	{
@@ -24,13 +27,17 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.loaderShown = false;
 			this.loadNextPageItemId = 'loadNextPage';
 			this.itemCollection = {};
+			this.style = {
+				chatCreateButtonColor: AppTheme.colors.accentBrandBlue,
+				icon: 'plus',
+				showLoader: false,
+				...options.style,
+			};
 
 			this.subscribeEvents();
 			this.initTopMenu();
 			this.initSections();
 			this.initChatCreateButton();
-
-			IntranetInvite.init();
 		}
 
 		get isLoaderShown()
@@ -55,14 +62,19 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		initTopMenu()
 		{
 			const topMenuPopup = dialogs.createPopupMenu();
-			const topMenuButtons = [
-				{
-					id: 'readAll',
-					title: Loc.getMessage('IMMOBILE_RECENT_VIEW_READ_ALL'),
-					sectionCode: 'general',
-					iconName: 'read',
-				},
-			];
+			const topMenuButtons = [];
+
+			if (!this.isCopilotComponent())
+			{
+				topMenuButtons.push(
+					{
+						id: 'readAll',
+						title: Loc.getMessage('IMMOBILE_RECENT_VIEW_READ_ALL'),
+						sectionCode: 'general',
+						iconName: 'read',
+					},
+				);
+			}
 
 			if (FeatureFlag.isDevelopmentEnvironment)
 			{
@@ -92,18 +104,27 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				}
 			};
 
-			topMenuPopup.setData(topMenuButtons, [{ id: 'general' }], topMenuButtonHandler);
+			const buttons = [];
+			if (topMenuButtons.length > 0)
+			{
+				topMenuPopup.setData(topMenuButtons, [{ id: 'general' }], topMenuButtonHandler);
+				buttons.push(
+					{
+						type: 'more',
+						callback: () => topMenuPopup.show(),
+					},
+				);
+			}
 
-			this.setRightButtons([
-				{
+			if (!this.isCopilotComponent())
+			{
+				buttons.unshift({
 					type: 'search',
 					callback: this.showSearchBar.bind(this),
-				},
-				{
-					type: 'more',
-					callback: () => topMenuPopup.show(),
-				},
-			]);
+				});
+			}
+
+			this.setRightButtons(buttons);
 		}
 
 		initSections()
@@ -132,15 +153,26 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		initChatCreateButton()
 		{
-			const chatCreateButton = {
+			this.setFloatingButton(this.getChatCreateButtonOption());
+		}
+
+		isCopilotComponent()
+		{
+			const componentCode = MessengerParams.get('COMPONENT_CODE');
+
+			return componentCode === ComponentCode.imCopilotMessenger;
+		}
+
+		getChatCreateButtonOption()
+		{
+			return {
 				type: 'plus',
 				callback: this.sendCreateChatEvent.bind(this),
-				icon: 'plus',
+				icon: this.style.icon,
 				animation: 'hide_on_scroll',
-				color: '#60C7EF',
+				color: this.style.chatCreateButtonColor,
+				showLoader: false,
 			};
-
-			this.setFloatingButton(chatCreateButton);
 		}
 
 		onItemWillDisplay(item)
@@ -234,7 +266,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			const loader = {
 				id: this.loadNextPageItemId,
-				title: Loc.getMessage('IMMOBILE_DIALOG_LIST_ITEMS_LOADING'),
+				title: Loc.getMessage('IMMOBILE_RECENT_VIEW_ITEMS_LOADING'),
 				type: 'loading',
 				unselectable: true,
 				params: {
@@ -263,13 +295,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_1'),
 					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_INVITE'),
 					iconName: 'ws_employees',
-					listener: () => IntranetInvite.openRegisterSlider({
-						originator: 'im.messenger',
-						registerUrl: MessengerParams.get('INTRANET_INVITATION_REGISTER_URL', ''),
-						rootStructureSectionId: MessengerParams.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
-						adminConfirm: MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
-						disableAdminConfirm: MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
-						sharingMessage: MessengerParams.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
+					listener: () => openIntranetInviteWidget({
+						analytics: new AnalyticsEvent().setSection('chat'),
 					}),
 				};
 			}
@@ -288,6 +315,15 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				iconName: 'ws_plus',
 			};
 
+			if (this.isCopilotComponent())
+			{
+				options = {
+					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_COPILOT_UPPER_TEXT'),
+					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_COPILOT_LOWER_TEXT'),
+					iconName: 'ws_copilot',
+				};
+			}
+
 			this.ui.welcomeScreen.show(options);
 		}
 
@@ -299,13 +335,22 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		sendCreateChatEvent()
 		{
 			this.emitCustomEvent(EventType.recent.createChat);
+
+			if (this.style.showLoader)
+			{
+				const chatCreateButton = this.getChatCreateButtonOption();
+				chatCreateButton.icon = Application.getPlatform() === 'ios' ? null : this.style.icon;
+				chatCreateButton.showLoader = this.style.showLoader;
+
+				this.setFloatingButton(chatCreateButton);
+			}
 		}
 	}
 
 	window.showMessengerDeveloperMenu = () => {
-		jn.import('im:messenger/lib/dev')
+		jn.import('im:messenger/lib/dev/menu')
 			.then(() => {
-				const { showDeveloperMenu } = require('im/messenger/lib/dev');
+				const { showDeveloperMenu } = require('im/messenger/lib/dev/menu');
 				showDeveloperMenu();
 			})
 			.catch((error) => {

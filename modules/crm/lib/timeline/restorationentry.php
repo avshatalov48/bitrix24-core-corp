@@ -1,92 +1,81 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
+use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
 
 class RestorationEntry extends TimelineEntry
 {
 	public static function create(array $params)
 	{
-		$entityTypeID = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : 0;
-		if($entityTypeID <= 0)
-		{
-			throw new Main\ArgumentException('Entity type ID must be greater than zero.', 'entityTypeID');
-		}
+		$entityTypeId = self::fetchEntityTypeId($params);
+		$entityId = self::fetchEntityId($params);
+		[$authorId, $created, $settings, $bindings] = self::fetchParams($params);
 
-		$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
-		if($entityID <= 0)
-		{
-			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'entityID');
-		}
+		$result = TimelineTable::add([
+			'TYPE_ID' => TimelineType::RESTORATION,
+			'TYPE_CATEGORY_ID' => 0,
+			'CREATED' => $created,
+			'AUTHOR_ID' => $authorId,
+			'SETTINGS' => $settings,
+			'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeId,
+			'ASSOCIATED_ENTITY_ID' => $entityId
+		]);
 
-		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : 0;
-		if(!is_int($authorID))
-		{
-			$authorID = (int)$authorID;
-		}
-
-		if($authorID <= 0)
-		{
-			throw new Main\ArgumentException('Author ID must be greater than zero.', 'authorID');
-		}
-
-		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
-			? $params['CREATED'] : new DateTime();
-
-		$settings = isset($params['SETTINGS']) && is_array($params['SETTINGS']) ? $params['SETTINGS'] : array();
-
-		$result = TimelineTable::add(
-			array(
-				'TYPE_ID' => TimelineType::RESTORATION,
-				'TYPE_CATEGORY_ID' => 0,
-				'CREATED' => $created,
-				'AUTHOR_ID' => $authorID,
-				'SETTINGS' => $settings,
-				'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeID,
-				'ASSOCIATED_ENTITY_ID' => $entityID
-			)
-		);
-
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			return 0;
 		}
 
-		$ID = $result->getId();
-		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
-		if(empty($bindings))
+		$createdId = $result->getId();
+
+		if (empty($bindings))
 		{
-			$bindings[] = array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID);
+			$bindings[] = [
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => $entityId
+			];
 		}
-		self::registerBindings($ID, $bindings);
-		if($entityTypeID === \CCrmOwnerType::Activity)
+
+		self::registerBindings($createdId, $bindings);
+
+		if ($entityTypeId === CCrmOwnerType::Activity)
 		{
-			self::buildSearchContent($ID);
+			self::buildSearchContent($createdId);
 		}
-		return $ID;
+
+		return $createdId;
 	}
+
 	public static function attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID)
 	{
-		Entity\TimelineBindingTable::attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array(TimelineType::RESTORATION));
+		Entity\TimelineBindingTable::attach(
+			$srcEntityTypeID,
+			$srcEntityID,
+			$targEntityTypeID,
+			$targEntityID,
+			[TimelineType::RESTORATION]
+		);
 	}
-	public static function shiftEntity($entityTypeID, $entityID, DateTime $time)
+
+	public static function shiftEntity($entityTypeId, $entityId, DateTime $time)
 	{
 		$dbResult = Entity\TimelineTable::getList(
 			array(
-				'select' => array('ID'),
-				'filter' => array(
-					'=ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeID,
-					'=ASSOCIATED_ENTITY_ID' => $entityID,
+				'select' => ['ID'],
+				'filter' => [
+					'=ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeId,
+					'=ASSOCIATED_ENTITY_ID' => $entityId,
 					'=TYPE_ID' => TimelineType::RESTORATION
-				),
+				],
 				'limit' => 1
 			)
 		);
 
 		$fields = $dbResult->fetch();
-		if(is_array($fields))
+		if (is_array($fields))
 		{
 			TimelineEntry::shift($fields['ID'], $time);
 		}

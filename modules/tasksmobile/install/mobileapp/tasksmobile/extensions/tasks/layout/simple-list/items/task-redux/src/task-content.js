@@ -72,6 +72,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 						flexDirection: 'column',
 						backgroundColor: withPressed(this.backgroundColor),
 					},
+					testId: `${this.props.testId}_ITEM_${this.props.id}`,
 				},
 				View({
 					style: Styles.itemWrapper(this.showLastPinnedDelimiter, this.backgroundColor),

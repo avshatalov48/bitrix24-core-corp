@@ -94,6 +94,7 @@
 		onActive: 'onActive',
 		onInactive: 'onInactive',
 		onDestroy: 'onDestroy',
+		onHangup: 'onHangup',
 	};
 
 	class CallEngine
@@ -509,6 +510,11 @@
 		isBitrixCallServerEnabled()
 		{
 			return BX.componentParameters.get('bitrixCallsEnabled');
+		}
+
+		isCallBetaIosEnabled()
+		{
+			return BX.componentParameters.get('callBetaIosEnabled', false);
 		}
 
 		// previous method to detect new call, kept in case of reverting
@@ -1280,38 +1286,6 @@
 					],
 				);
 			});
-		}
-
-		// temporary methods for calls compatibility
-		// should be deleted after new calls are fully implemented
-		getSdk()
-		{
-			if (BX.componentParameters.get('bitrixCallsEnabled'))
-			{
-				return JNBXCall;
-			}
-
-			return JNVICall;
-		}
-
-		getSdkClient()
-		{
-			if (BX.componentParameters.get('bitrixCallsEnabled'))
-			{
-				return BXClient;
-			}
-
-			return VIClient;
-		}
-
-		getSdkClientWrapper()
-		{
-			if (BX.componentParameters.get('bitrixCallsEnabled'))
-			{
-				return BxClientWrapper;
-			}
-
-			return VIClientWrapper;
 		}
 
 		getSdkAudioManager()

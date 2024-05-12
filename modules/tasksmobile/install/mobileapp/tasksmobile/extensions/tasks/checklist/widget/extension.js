@@ -34,13 +34,20 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 			this.props = props;
 			/** @type {ChecklistBaseLayout} */
 			this.openManager = null;
+			/** @type {Checklist} */
+			this.checklistComponent = null;
 			this.parentWidget = props.parentWidget;
 			this.handleOnSave = this.handleOnSave.bind(this);
 			this.handleOnClose = this.handleOnClose.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
+			this.onChangeFilter = this.onChangeFilter.bind(this);
 			this.handleOnShowMoreMenu = this.handleOnShowMoreMenu.bind(this);
 
-			this.moreMenuActions = new ChecklistMoreMenu(props.moreMenuActions);
+			this.moreMenuActions = new ChecklistMoreMenu({
+				...props.moreMenuActions,
+				onShowOnlyMine: this.onChangeFilter,
+				onHideCompleted: this.onChangeFilter,
+			});
 		}
 
 		async initialOpenPageManager()
@@ -65,9 +72,18 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 
 			this.setParentWidget(layoutWidget);
 			this.setOpenManager(openManager);
+			this.setChecklistComponent(checklistComponent);
 			checklistComponent.setParentWidget(layoutWidget);
 
 			return openManager;
+		}
+
+		async onChangeFilter(params)
+		{
+			this.checklistComponent.reload(params);
+			const moreMenuParams = await this.moreMenuActions.reload(params);
+
+			this.openManager.update({ highlightMoreButton: Object.values(moreMenuParams).some((value) => value) });
 		}
 
 		/**
@@ -90,6 +106,7 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 				...restProps,
 				onMoveToCheckList,
 				onChange: this.handleOnChange,
+				onChangeFilter: this.onChangeFilter,
 			};
 		}
 
@@ -110,8 +127,14 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 			this.openManager = openManager;
 		}
 
+		setChecklistComponent(checklistComponent)
+		{
+			this.checklistComponent = checklistComponent;
+		}
+
 		handleOnShowMoreMenu()
 		{
+			Keyboard.dismiss();
 			this.moreMenuActions.show(this.parentWidget);
 		}
 
@@ -149,8 +172,6 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 			onCreateChecklist: PropTypes.func,
 			onRemove: PropTypes.func,
 			onMoveToCheckList: PropTypes.func,
-			onShowOnlyMine: PropTypes.func,
-			onHideCompleted: PropTypes.func,
 		}),
 	};
 

@@ -47,7 +47,7 @@ jn.define('calendar/storage/event', (require, exports, module) => {
 		{
 			const key = this.generateHash(params);
 			const dataFromLocalStorage = await EventTable.get(key);
-			this.syncDataWithRemoteStorage({
+			void this.syncDataWithRemoteStorage({
 				key,
 				dataFromLocalStorage,
 				...params,

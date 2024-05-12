@@ -3,12 +3,15 @@
 namespace Bitrix\BizprocMobile\UI;
 
 use Bitrix\Bizproc\WorkflowInstanceTable;
+use Bitrix\Main\Application;
+use Bitrix\Main\Type\DateTime;
 
 class WorkflowView implements \JsonSerializable
 {
 	private array $workflow;
 	private array $tasks;
 	private int $userId;
+	private bool $workflowIsCompleted;
 
 	public function __construct(array $workflow, int $userId)
 	{
@@ -16,6 +19,17 @@ class WorkflowView implements \JsonSerializable
 		$this->userId = $userId;
 
 		$this->tasks = \CBPViewHelper::getWorkflowTasks($workflow['ID'], true, true);
+
+		$this->workflowIsCompleted = !WorkflowInstanceTable::exists($this->workflow['ID']);
+	}
+
+	public function getFacesIds(): array
+	{
+		return array_merge(
+			$this->getCompletedTaskUserIds(),
+			$this->getRunningTaskUserIds(),
+			$this->getDoneTaskUserIds(),
+		);
 	}
 
 	public function jsonSerialize(): array
@@ -33,7 +47,8 @@ class WorkflowView implements \JsonSerializable
 		return [
 			'id' => $this->workflow['ID'],
 			'typeName' => $this->getTypeName(),
-			'itemName' => $this->getItemName($myTasks),
+			'itemName' => $this->getName($myTasks),
+			'itemTime' => $this->getTime($myTasks),
 			'statusText' => $this->workflow['STATE_INFO']['TITLE'] ?? '',
 			'faces' => $this->getFaces(),
 			'tasks' => $myTasks,
@@ -41,11 +56,16 @@ class WorkflowView implements \JsonSerializable
 		];
 	}
 
-	private function getItemName(array $myTasks): mixed
+	private function getName(array $myTasks): mixed
 	{
 		if ($myTasks)
 		{
 			return current($myTasks)['name'];
+		}
+
+		if ($this->isWorkflowAuthorView())
+		{
+			return $this->workflow['DOCUMENT_INFO']['NAME'] ?? '';
 		}
 
 		foreach (['RUNNING', 'COMPLETED'] as $taskState)
@@ -62,20 +82,107 @@ class WorkflowView implements \JsonSerializable
 		return $this->workflow['DOCUMENT_INFO']['NAME'] ?? '';
 	}
 
+	private function getTime(array $myTasks): ?string
+	{
+		if ($myTasks)
+		{
+			return $this->getDateTimeTimestamp(current($myTasks)['createdDate'] ?? null);
+		}
+
+		if ($this->isWorkflowAuthorView())
+		{
+			return $this->getDateTimeTimestamp($this->workflow['STARTED'] ?? null);
+		}
+
+		foreach (['RUNNING', 'COMPLETED'] as $taskState)
+		{
+			foreach ($this->tasks[$taskState] as $task)
+			{
+				foreach ($task['USERS'] as $taskUser)
+				{
+					if ((int)$taskUser['USER_ID'] === $this->userId)
+					{
+						return $this->getDateTimeTimestamp($taskUser['DATE_UPDATE'] ?? null);
+					}
+				}
+			}
+		}
+
+		return $this->getDateTimeTimestamp($this->workflow['STARTED'] ?? null);
+	}
+
 	private function getFaces(): array
 	{
-		$completedTasks = array_reverse($this->tasks['COMPLETED']);
-		$completedTask = current($completedTasks);
-		$completedUsers = array_merge(...array_column($completedTasks, 'USERS'));
-
-		$runningTask = current($this->tasks['RUNNING']);
+		$completedTask = $this->getCompletedTask();
+		$doneTask = $this->getDoneTask();
 
 		return [
 			'author' => $this->workflow['STARTED_USER_INFO']['ID'],
 			'completedSuccess' => \CBPTaskStatus::isSuccess($completedTask['STATUS'] ?? 0),
-			'completed' => array_reverse($this->extractUserIds(($completedUsers))),
-			'running' => $this->extractUserIds($runningTask['USERS'] ?? []),
-			'workflowIsCompleted' => !WorkflowInstanceTable::exists($this->workflow['ID']),
+			'completed' => $this->getCompletedTaskUserIds(),
+			'running' => $this->getRunningTaskUserIds(),
+			'done' => $this->getDoneTaskUserIds(),
+			'doneSuccess' => \CBPTaskStatus::isSuccess($doneTask['STATUS'] ?? 0),
+			'workflowIsCompleted' => $this->workflowIsCompleted,
+			'completedTaskCount' => count($this->tasks['COMPLETED']),
+			'time' => $this->calculateFacesTime(),
+		];
+	}
+
+	private function calculateFacesTime(): array
+	{
+		$authorDuration = $this->workflow['META']['START_DURATION'] ?? null;
+
+		$startWorkflowTimestamp = $this->getDateTimeTimestamp($this->workflow['STARTED']);
+		$finishWorkflowTimestamp = (
+			$this->workflowIsCompleted
+				? $this->getDateTimeTimestamp($this->workflow['MODIFIED'])
+				: (new DateTime())->getTimestamp()
+		);
+
+		$completedTasks = $this->tasks['COMPLETED'];
+		$completedTask = (
+			$this->workflowIsCompleted && count($completedTasks) > 1
+				? next($completedTasks)
+				: current($completedTasks)
+		);
+		$finishCompletedTaskTimestamp = $completedTask ? $this->getDateTimeTimestamp($completedTask['MODIFIED']) : null;
+
+		$completedDuration = (
+			$startWorkflowTimestamp && $finishCompletedTaskTimestamp
+				? ($finishCompletedTaskTimestamp - $startWorkflowTimestamp)
+				: null
+		);
+
+		$runningTask = $this->workflowIsCompleted ? false : current($this->tasks['RUNNING']);
+		$startRunningTaskTimestamp = (
+			$runningTask
+				? $this->getDateTimeTimestamp($runningTask['CREATED_DATE'] ?? null)
+				: null
+		);
+		if (!$startRunningTaskTimestamp)
+		{
+			$startRunningTaskTimestamp = $runningTask ? $this->getDateTimeTimestamp($runningTask['MODIFIED']) : null;
+		}
+		$runningTaskDuration = (
+			$startRunningTaskTimestamp && $finishWorkflowTimestamp
+				? ($finishWorkflowTimestamp - $startRunningTaskTimestamp)
+				: null
+		);
+
+		$startRunningTimestamp = $finishCompletedTaskTimestamp ?? $startWorkflowTimestamp;
+
+		$runningDuration =
+			$startRunningTimestamp && $finishWorkflowTimestamp
+				? ($finishWorkflowTimestamp - $startRunningTimestamp)
+				: null
+		;
+
+		return [
+			'author' => $authorDuration,
+			'completed' => $completedDuration,
+			'running' => $runningTaskDuration ?? $runningDuration,
+			'done' => $runningDuration,
 		];
 	}
 
@@ -103,7 +210,8 @@ class WorkflowView implements \JsonSerializable
 					'id' => $task['ID'],
 					'name' => $task['~NAME'],
 					'isInline' => \CBPHelper::getBool($task['IS_INLINE']),
-					'buttons' => $controls['BUTTONS'] ?? null
+					'buttons' => $controls['BUTTONS'] ?? null,
+					'createdDate' => $task['~CREATED_DATE'] ?? null,
 				];
 			},
 			array_values($myTasks),
@@ -149,5 +257,78 @@ class WorkflowView implements \JsonSerializable
 		}
 
 		return $this->workflow['DOCUMENT_INFO']['TYPE_CAPTION'] ?? '';
+	}
+
+	private function isWorkflowAuthorView(): bool
+	{
+		return $this->workflow['STARTED_USER_INFO']['ID'] === $this->userId;
+	}
+
+	private function getDateTimeTimestamp($datetime)
+	{
+		if ($datetime instanceof DateTime)
+		{
+			return $datetime->getTimestamp();
+		}
+
+		if (is_string($datetime) && DateTime::isCorrect($datetime))
+		{
+			return DateTime::createFromUserTime($datetime)->getTimestamp();
+		}
+
+		return null;
+	}
+
+	private function getCompletedTask()
+	{
+		$completedTasks = $this->tasks['COMPLETED'];
+
+		$completedTask = current($completedTasks);
+		if ($this->workflowIsCompleted && count($completedTasks) > 1)
+		{
+			$completedTask = next($completedTasks);
+		}
+
+		return $completedTask;
+	}
+
+	private function getCompletedTaskUserIds(): array
+	{
+		$completedTask = $this->getCompletedTask();
+
+		return $this->extractUserIds($completedTask['USERS'] ?? []);
+	}
+
+	private function getDoneTask()
+	{
+		$completedTasks = $this->tasks['COMPLETED'];
+
+		$completedTask = current($completedTasks);
+		$doneTask = [];
+		if ($this->workflowIsCompleted && count($completedTasks) > 1)
+		{
+			$doneTask = $completedTask;
+		}
+
+		return $doneTask;
+	}
+
+	private function getDoneTaskUserIds(): array
+	{
+		$doneTask = $this->getDoneTask();
+
+		return $this->extractUserIds($doneTask['USERS'] ?? []);
+	}
+
+	private function getRunningTask()
+	{
+		return current($this->tasks['RUNNING']);
+	}
+
+	private function getRunningTaskUserIds(): array
+	{
+		$runningTask = $this->getRunningTask();
+
+		return $this->extractUserIds($runningTask['USERS'] ?? []);
 	}
 }

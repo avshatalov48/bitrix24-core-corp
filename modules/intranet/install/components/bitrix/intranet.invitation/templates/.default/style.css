@@ -620,4 +620,17 @@
 	cursor: auto;
 }
 
+.invite-integrator-confirm-message span {
+	margin: 0 5px;
+	border-bottom: 1px dashed rgba(82,92,105,.5);
+	color: rgba(82,92,105,.7);
+	transition: .3s;
+	cursor: pointer;
+}
+
+.invite-integrator-confirm-message span:hover {
+	color: rgba(82,92,105,.9);
+	border-bottom: 1px dashed rgba(82,92,105,.7);
+}
+
 /*endregion*/

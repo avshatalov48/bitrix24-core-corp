@@ -84,7 +84,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 				},
 				View(
 					{
-						style: styles.sectionContainer(this.state.mode),
+						style: styles.sectionContainer(this.state.mode, this.getDataBooleanParam('showBorder', false)),
 					},
 					this.renderTitleBar(),
 					renderedFields,
@@ -258,6 +258,7 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 					isChanged: this.isChanged,
 					mode: this.state.mode,
 					showBorder,
+					analytics: this.editor.getAnalytics(),
 				},
 			);
 		}
@@ -406,11 +407,13 @@ jn.define('layout/ui/entity-editor/control/section', (require, exports, module) 
 			flexDirection: 'column',
 			paddingBottom: 12,
 		},
-		sectionContainer: (mode) => ({
+		sectionContainer: (mode, showBorder) => ({
 			borderRadius: 12,
 			backgroundColor: mode === EntityEditorMode.edit
 				? EDIT_MODE_SECTION_BACKGROUND_COLOR
 				: VIEW_MODE_SECTION_BACKGROUND_COLOR,
+			borderWidth: showBorder ? 1 : 0,
+			borderColor: AppTheme.colors.bgSeparatorPrimary,
 		}),
 		titleBarContainer: {
 			flexDirection: 'row',

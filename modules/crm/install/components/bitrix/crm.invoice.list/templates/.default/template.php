@@ -21,6 +21,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 
 use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Web\Uri;
 
 CJSCore::Init(array('crm_activity_planner', 'ui.fonts.opensans'));
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
@@ -516,6 +517,14 @@ if(!$isInternal
 	$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getForAllCheckbox();
 }
 
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.invoice.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'is_recurring' => $isRecurring ? 'Y' : 'N',
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -534,16 +543,20 @@ $APPLICATION->IncludeComponent(
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => array(
-			'LAZY_LOAD' => array(
-				'GET_LIST' => '/bitrix/components/bitrix/crm.invoice.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.invoice.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			),
+			'LAZY_LOAD' => [
+				'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+				'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+				'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
+			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'CONFIG' => [
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
+		),
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+			$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
 		),
 		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
 			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,

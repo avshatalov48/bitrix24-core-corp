@@ -44,6 +44,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 				onCancel: this.onSearch,
 			});
 			this.filterPresetId = 'in_work';
+			this.filterSearchQuery = '';
 
 			// eslint-disable-next-line no-undef
 			this.customEventEmitter = EventEmitter.createWithUid('bizproc');
@@ -60,7 +61,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 			this.customEventEmitter.off('Task:onTouch', this.onTaskTouch);
 		}
 
-		onTaskTouch({ task })
+		onTaskTouch({ task, isInline })
 		{
 			const item = this.statefulList.getItem(task.workflowId);
 			if (item && item.data.authorId !== Number(env.userId))
@@ -68,7 +69,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 				this.statefulList.deleteItem(task.workflowId);
 			}
 
-			if (task && task.name)
+			if (task && task.name && isInline)
 			{
 				showToast(
 					{
@@ -85,23 +86,13 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 
 		onSearch({ text, presetId })
 		{
-			if (text && text.length > 0)
-			{
-				// eslint-disable-next-line no-undef
-				InAppNotifier.showNotification({
-					backgroundColor: AppTheme.colors.baseBlackFixed,
-					message: Loc.getMessage('BPMOBILE_WORKFLOW_LIST_SEARCH_UNAVAILABLE'),
-					code: 'bp-workflow-list-search',
-					time: 3,
-				});
-			}
-
-			if (this.filterPresetId === presetId)
+			if (this.filterPresetId === presetId && this.filterSearchQuery === text)
 			{
 				return;
 			}
 
 			this.filterPresetId = presetId;
+			this.filterSearchQuery = text;
 
 			// todo avoid setting state and duplicated ajax request
 			this.setState({}, () => {
@@ -124,7 +115,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 		{
 			return {
 				filterPresetId: this.filterPresetId,
-				// searchString:
+				filterSearchQuery: this.filterSearchQuery,
 			};
 		}
 
@@ -221,7 +212,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 
 		renderEmptyListComponent()
 		{
-			const isFiltered = this.filterPresetId !== 'in_work';
+			const isFiltered = this.filterPresetId !== 'in_work' || this.filterSearchQuery !== '';
 
 			return new EmptyScreen({
 				styles: {
@@ -242,7 +233,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 				title: Loc.getMessage(
 					isFiltered
 						? 'BPMOBILE_WORKFLOW_LIST_EMPTY_TITLE'
-						: 'BPMOBILE_WORKFLOW_LIST_EMPTY_FILTERED_TITLE'
+						: 'BPMOBILE_WORKFLOW_LIST_EMPTY_FILTERED_TITLE_MSGVER_1'
 					,
 				),
 				description: isFiltered ? null : Loc.getMessage('BPMOBILE_WORKFLOW_LIST_EMPTY_DESCRIPTION'),
@@ -250,7 +241,38 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 		}
 
 		handleWorkflowDetailOpen(entityId, item)
-		{}
+		{
+			const task = item.tasks[0];
+			if (!task)
+			{
+				void requireLazy('bizproc:workflow/details')
+					.then(({ WorkflowDetails }) => {
+						if (WorkflowDetails)
+						{
+							WorkflowDetails.open(
+								{
+									workflowId: entityId,
+									title: item.typeName || null,
+								},
+								this.props.layout,
+							);
+						}
+					})
+				;
+
+				return;
+			}
+
+			void requireLazy('bizproc:task/details').then(({ TaskDetails }) => {
+				void TaskDetails.open(
+					this.props.layout,
+					{
+						taskId: task.id,
+						title: item.typeName,
+					},
+				);
+			});
+		}
 
 		getItemActions()
 		{

@@ -31,6 +31,7 @@
 			this.tabNameMapConfigName = {
 				stream: 'socialnetwork_livefeed',
 				chats: 'im_messenger',
+				copilot: 'im_messenger',
 				openlines: 'im_messenger',
 				notifications: 'im_messenger',
 				tasks_total: 'tasks_total',
@@ -242,14 +243,14 @@
 					this.userCountersDates[siteId][counter] = startTime;
 				}
 				else
-					if (this.userCountersDates[siteId][counter] >= startTime)
-					{
-						delete counters[siteId][counter];
-					}
-					else
-					{
-						this.userCountersDates[siteId][counter] = startTime;
-					}
+				if (this.userCountersDates[siteId][counter] >= startTime)
+				{
+					delete counters[siteId][counter];
+				}
+				else
+				{
+					this.userCountersDates[siteId][counter] = startTime;
+				}
 			}
 
 			this.userCounters = Utils.objectMerge(this.userCounters, counters);
@@ -314,9 +315,14 @@
 			clearTimeout(this.updateCountersTimeout);
 			this.updateCountersTimeout = null;
 
-			this.counters.messages = this.counters['chats'] + this.counters['notifications'] + this.counters['openlines'];
-			const bpCounter = Application.getApiVersion() < 52 && this.counters['bp_tasks'] > 0 ? this.counters['bp_tasks'] : 0;
-			this.counters.stream = this.counters['livefeed'] + bpCounter;
+			this.counters.messages = this.counters.chats + this.counters.notifications + this.counters.openlines;
+
+			if (typeof this.counters.copilot !== 'undefined')
+			{
+				this.counters.messages += this.counters.copilot;
+			}
+			const bpCounter = Application.getApiVersion() < 52 && this.counters.bp_tasks > 0 ? this.counters.bp_tasks : 0;
+			this.counters.stream = this.counters.livefeed + bpCounter;
 
 			this.total = Object.keys(this.counters)
 				.filter((counterType) => this.isEnableApplicationCounterType(counterType))

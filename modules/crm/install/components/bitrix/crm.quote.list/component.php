@@ -3,11 +3,9 @@
 use Bitrix\Crm;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -134,18 +132,6 @@ if($arResult['CALL_LIST_UPDATE_MODE'])
 	AddEventHandler('crm', 'onCrmQuoteListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmQuoteListItemBuildMenu'));
 }
 
-CCrmQuote::PrepareConversionPermissionFlags(0, $arResult, $CCrmPerms);
-if($arResult['CAN_CONVERT'])
-{
-	$config = \Bitrix\Crm\Conversion\QuoteConversionConfig::load();
-	if($config === null)
-	{
-		$config = \Bitrix\Crm\Conversion\QuoteConversionConfig::getDefault();
-	}
-
-	$arResult['CONVERSION_CONFIG'] = $config;
-}
-
 $arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 CUtil::InitJSCore(array('ajax', 'tooltip'));
@@ -197,6 +183,13 @@ $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] 
 $arResult['AJAX_ID'] = isset($arParams['AJAX_ID']) ? $arParams['AJAX_ID'] : '';
 $arResult['AJAX_OPTION_JUMP'] = isset($arParams['AJAX_OPTION_JUMP']) ? $arParams['AJAX_OPTION_JUMP'] : 'N';
 $arResult['AJAX_OPTION_HISTORY'] = isset($arParams['AJAX_OPTION_HISTORY']) ? $arParams['AJAX_OPTION_HISTORY'] : 'N';
+
+CCrmQuote::PrepareConversionPermissionFlags(0, $arResult, $CCrmPerms);
+if($arResult['CAN_CONVERT'])
+{
+	$arResult['CONVERSION_CONFIG'] = Crm\Conversion\ConversionManager::getConfig(\CCrmOwnerType::Quote);
+	$arResult['CONVERTER_ID'] = $arResult['GRID_ID'];
+}
 
 //region Filter Presets Initialization
 if (!$bInternal)
@@ -351,11 +344,14 @@ $arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
 unset($factory);
 
 //region Check and fill fields restriction
-$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(
-	$arResult['GRID_ID'] ?? '',
+$params = [
+	$arResult['GRID_ID'],
 	$arResult['HEADERS'] ?? [],
 	$entityFilter ?? null
-);
+];
+$arResult['RESTRICTED_FIELDS_ENGINE'] = $fieldRestrictionManager->fetchRestrictedFieldsEngine(...$params);
+$arResult['RESTRICTED_FIELDS'] = $fieldRestrictionManager->getFilterFields(...$params);
+
 //endregion
 
 // list all filds for export
@@ -1514,13 +1510,27 @@ if (!$preFetchWasEmpty)
 			);
 		}
 
-		$arQuote['PATH_TO_QUOTE_COPY'] =  CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
-				$arQuote['PATH_TO_QUOTE_EDIT'] ?? '',
-				['quote_id' => $entityID]
-			),
-			['copy' => 1]
-		);
+		$arQuote['PATH_TO_QUOTE_COPY'] =
+			\Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Quote)
+				->setSection(
+					!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+						? $arParams['ANALYTICS']['c_section']
+						: null
+				)
+				->setSubSection(
+					!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+						? $arParams['ANALYTICS']['c_sub_section']
+						: null
+				)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+				->buildUri(
+					CComponentEngine::makePathFromTemplate($arQuote['PATH_TO_QUOTE_EDIT'] ?? '', ['quote_id' => $entityID])
+				)
+				->addParams([
+					'copy' => 1,
+				])
+				->getUri()
+		;
 		$arQuote['PATH_TO_QUOTE_DELETE'] =  CHTTP::urlAddParams(
 			$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_QUOTE_LIST'],
 			[

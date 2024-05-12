@@ -55,11 +55,30 @@ jn.define('utils/validation', (require, exports, module) => {
 		}
 	}
 
+	/**
+	 * Only suitable for simple single-dimensional arrays containing primitives,
+	 * e.g. set of some ids.
+	 *
+	 * @public
+	 * @param {number[]|string[]} values
+	 * @param {string} message
+	 * @return {void}
+	 */
+	function assertUnique(values, message)
+	{
+		const uniqueValues = new Set(values);
+		if (uniqueValues.size !== values.length)
+		{
+			throw new TypeError(message);
+		}
+	}
+
 	module.exports = {
 		// for testing purposes only
 		PropTypesPolyfill,
 		PropTypes: typeof PropTypes === 'undefined' ? PropTypesPolyfill : PropTypes,
 		assertDefined,
 		assertFunction,
+		assertUnique,
 	};
 });

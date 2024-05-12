@@ -14,7 +14,8 @@ class RequisiteList
 
 	public function __construct(
 		private CompanyList $companyList,
-		private ?AddressList $addressList = null
+		private ?AddressList $addressList = null,
+		private array $select = []
 	)
 	{
 		$this->companyTypeId = \CCrmOwnerType::Company;
@@ -27,7 +28,8 @@ class RequisiteList
 			'filter' => [
 				'ENTITY_TYPE_ID' => $this->companyTypeId,
 				'ENTITY_ID' => $this->companyList->getIds(),
-			]
+			],
+			'select' => !empty($this->select) ? $this->select : ['*']
 		]);
 
 		while ($req = $requisiteResult->fetch())

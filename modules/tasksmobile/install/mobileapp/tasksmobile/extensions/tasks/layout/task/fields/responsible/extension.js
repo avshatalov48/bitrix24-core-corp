@@ -5,6 +5,7 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { UserField } = require('layout/ui/fields/user');
+	const { AnalyticsEvent } = require('analytics');
 
 	class Responsible extends LayoutComponent
 	{
@@ -88,6 +89,7 @@ jn.define('tasks/layout/task/fields/responsible', (require, exports, module) => 
 					style: (style || {}),
 				},
 				UserField({
+					analytics: new AnalyticsEvent().setSection('task'),
 					readOnly,
 					showEditIcon: !readOnly,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RESPONSIBLE_V2'),

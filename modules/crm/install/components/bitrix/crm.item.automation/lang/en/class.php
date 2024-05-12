@@ -1,5 +1,6 @@
 <?php
-$MESS["CRM_ITEM_AUTOMATION_BP_MODULE_NOT_INSTALLED"] = "The Workflows module is not installed.";
+
+$MESS["CRM_ITEM_AUTOMATION_BP_MODULE_NOT_INSTALLED_MSGVER_1"] = "The Business Processes module is not installed";
 $MESS["CRM_ITEM_AUTOMATION_INVALID_ENTITY_TYPE"] = "Invalid entity type";
 $MESS["CRM_ITEM_AUTOMATION_PAGETITLE"] = "Sales automation";
 $MESS["CRM_ITEM_AUTOMATION_PAGETITLE_AUTOMATION"] = "Automation";

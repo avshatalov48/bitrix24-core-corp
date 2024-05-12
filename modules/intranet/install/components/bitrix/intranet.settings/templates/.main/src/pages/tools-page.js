@@ -63,15 +63,18 @@ export class ToolsPage extends BaseSettingsPage
 			const toolSelector = new SwitcherNested({
 				id: tool.code,
 				title: tool.name,
-				link: tool['settings-path'],
-				infoHelperCode: tool['infohelper-slider'],
+				link: this.getPermission().canEdit() ? tool['settings-path'] : null,
+				infoHelperCode: this.getPermission().canEdit() ? tool['infohelper-slider'] : null,
 				linkTitle: tool['settings-title'] ?? Loc.getMessage('INTRANET_SETTINGS_SECTION_TOOLS_LINK_SETTINGS'),
 				isChecked: tool.enabled,
 				mainInputName: tool.code,
 				isOpen: false,
 				items: toolSelectorItems,
+				isDisabled: !this.getPermission().canEdit(),
 				isDefault: tool.default,
-				helpMessage: Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {'#TOOL#': tool.name}),
+				helpMessage: !this.getPermission().canEdit()
+					? Loc.getMessage('INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG')
+					: Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {'#TOOL#': tool.name}),
 			});
 			toolSelectors.push(toolSelector);
 
@@ -88,6 +91,26 @@ export class ToolsPage extends BaseSettingsPage
 				child: toolSelectorSection
 			});
 		});
+	}
+
+	#getSubToolHelpMessage(tool: Object, parentToolName: ?string): string
+	{
+		if (!this.getPermission().canEdit())
+		{
+			return Loc.getMessage('INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG');
+		}
+
+		if (tool.disabled)
+		{
+			return Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {'#TOOL#': tool.name});
+		}
+
+		if (tool.default)
+		{
+			return Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_MAIN_TOOL', {'#TOOL#': parentToolName ?? ''});
+		}
+
+		return '';
 	}
 
 	#getToolsSelectorsItems(subgroups: Object, tool: Object): Array<SwitcherNestedItem>
@@ -111,15 +134,12 @@ export class ToolsPage extends BaseSettingsPage
 				id: subgroupConfig.code,
 				inputName: subgroupConfig.code,
 				isChecked: subgroupConfig.enabled,
-				settingsPath: subgroupConfig['settings_path'],
+				settingsPath: this.getPermission().canEdit() ? subgroupConfig['settings_path'] : null,
 				settingsTitle: subgroupConfig['settings_title'] ?? Loc.getMessage('INTRANET_SETTINGS_SECTION_TOOLS_LINK_SETTINGS'),
-				infoHelperCode: subgroupConfig['infohelper-slider'],
+				infoHelperCode: this.getPermission().canEdit() ? subgroupConfig['infohelper-slider'] : null,
+				isDisabled: !this.getPermission().canEdit(),
 				isDefault: subgroupConfig.default ?? subgroupConfig.disabled ?? false,
-				helpMessage: subgroupConfig.disabled
-					? Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {'#TOOL#': subgroupConfig.name})
-					: subgroupConfig.default
-						? Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_MAIN_TOOL', {'#TOOL#': tool.name})
-						: '',
+				helpMessage: this.#getSubToolHelpMessage(subgroupConfig, tool.name),
 			});
 
 			if (subgroupConfig.disabled)
@@ -132,7 +152,6 @@ export class ToolsPage extends BaseSettingsPage
 					toolSelectorItem.getSwitcher(),
 					'toggled',
 					() => {
-							{
 						this.getAnalytic()?.addEventToggleTools(
 							subgroupConfig.code,
 							toolSelectorItem.getSwitcher().isChecked()
@@ -168,12 +187,7 @@ export class ToolsPage extends BaseSettingsPage
 			return this.#mainSection;
 		}
 
-		this.#mainSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_TOOLS_SHOW'),
-			titleIconClasses: 'ui-icon-set --service',
-			isOpen: true,
-			canCollapse: false,
-		});
+		this.#mainSection = new Section(this.getValue('sectionTools'));
 
 		return this.#mainSection;
 	}
@@ -235,7 +249,7 @@ export class ToolsPage extends BaseSettingsPage
 		this.#draggable = new Draggable({
 			container: [this.#getToolsWrapperRow().render()],
 			draggable: '.--tool-selector',
-			dragElement: '.ui-section__dragdrop-icon',
+			dragElement: '.ui-section__dragdrop-icon-wrapper',
 			type: Draggable.CLONE,
 		});
 

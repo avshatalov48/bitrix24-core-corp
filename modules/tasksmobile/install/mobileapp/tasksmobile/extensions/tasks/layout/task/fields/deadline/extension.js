@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 	const { chevronDown } = require('assets/common');
 	const AppTheme = require('apptheme');
 	const { DateTimeFieldClass } = require('layout/ui/fields/datetime');
+	const { dayMonth, shortTime } = require('utils/date/formats');
 
 	class Deadline extends LayoutComponent
 	{
@@ -75,7 +76,7 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
 						enableTime: true,
-						dateFormat: 'd MMMM HH:mm',
+						dateFormat: `${dayMonth()} ${shortTime()}`,
 						items: this.state.deadlines,
 						taskState: this.state.taskState,
 						showBalloonDate: this.state.showBalloonDate,
@@ -127,7 +128,7 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 					},
 					Text({
 						style: this.styles.value,
-						text: (this.isEmpty() ? this.getEditableEmptyValue() : this.getFormattedDate()),
+						text: (this.isEmpty() ? this.getEditableEmptyValue() : this.getDisplayedValue()),
 					}),
 					(!this.isReadOnly() && this.renderBalloonArrowDown()),
 				),

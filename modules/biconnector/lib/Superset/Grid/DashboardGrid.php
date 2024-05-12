@@ -36,6 +36,7 @@ final class DashboardGrid extends Grid
 				'STATUS',
 				'CREATED_BY_ID',
 				'DATE_CREATE',
+				'DATE_MODIFY',
 				'SOURCE_ID',
 				'EDIT_URL',
 				'FILTER_PERIOD',
@@ -43,7 +44,7 @@ final class DashboardGrid extends Grid
 			],
 			$this->getSettings()
 		);
-		
+
 		return new Rows(
 			$rowAssembler,
 			new \Bitrix\BIConnector\Superset\Grid\Row\Action\DashboardDataProvider($this->getSettings())

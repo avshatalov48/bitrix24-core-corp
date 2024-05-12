@@ -52,8 +52,7 @@ export class AiFormFillApplication
 		});
 
 		this.#store.commit('setMergeUUID', this.#options.mergeUuid);
-		this.#store.commit('setCrmMode', this.#options.crmMode);
-		this.#store.commit('setCallId', this.#options.callId);
+		this.#store.commit('setActivityId', this.#options.activityId);
 		this.#application.use(this.#store);
 		this.#application.mount(this.rootNode);
 	}

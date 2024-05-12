@@ -12,13 +12,27 @@ jn.define('calendar/model/sharing/settings', (require, exports, module) => {
 	{
 		constructor(settings)
 		{
-			const { weekStart, workTimeStart, workTimeEnd, weekHolidays, rule } = settings;
+			const weekStart = BX.prop.getString(settings, 'weekStart', 'MO');
+			const workTimeStart = BX.prop.getNumber(settings, 'workTimeStart', 9);
+			const workTimeEnd = BX.prop.getNumber(settings, 'workTimeEnd', 19);
+			const weekHolidays = BX.prop.getArray(settings, 'weekHolidays', ['SA', 'SU']);
+			const rule = BX.prop.getObject(settings, 'rule', {});
 
 			this.weekStart = this.getIndByWeekDay(weekStart);
 			this.workTimeStart = Math.floor(workTimeStart) + 5 * (workTimeStart - Math.floor(workTimeStart)) / 3;
 			this.workTimeEnd = Math.floor(workTimeEnd) + 5 * (workTimeEnd - Math.floor(workTimeEnd)) / 3;
 			this.workDays = this.getWorkingDays(weekHolidays);
 			this.rule = new Rule(rule, this.weekStart);
+		}
+
+		isDefaultRule()
+		{
+			return !this.isDifferentFrom(this.getDefaultRule());
+		}
+
+		isDifferentFrom(anotherRule)
+		{
+			return !this.objectsEqual(anotherRule, this.getRuleArray());
 		}
 
 		getChanges()
@@ -54,8 +68,39 @@ jn.define('calendar/model/sharing/settings', (require, exports, module) => {
 				ranges: [{
 					from: parseInt(workTimeStart * 60, 10),
 					to: parseInt(workTimeEnd * 60, 10),
-					weekDays: workDays,
+					weekdays: workDays,
 				}],
+			};
+		}
+
+		objectsEqual(obj1, obj2)
+		{
+			return JSON.stringify(this.sortKeys(obj1)) === JSON.stringify(this.sortKeys(obj2));
+		}
+
+		sortKeys(object)
+		{
+			return Object.keys(object).sort().reduce(
+				(obj, key) => {
+					obj[key] = object[key];
+
+					return obj;
+				},
+				{},
+			);
+		}
+
+		getRuleArray()
+		{
+			return {
+				ranges: this.getRule().getRanges().map((range) => {
+					return {
+						from: range.getFrom(),
+						to: range.getTo(),
+						weekdays: range.getWeekDays(),
+					};
+				}),
+				slotSize: this.getRule().getSlotSize(),
 			};
 		}
 

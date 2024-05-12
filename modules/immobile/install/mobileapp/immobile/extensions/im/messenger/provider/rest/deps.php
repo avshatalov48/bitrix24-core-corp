@@ -6,6 +6,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/page-navigation',
 		'im:messenger/lib/helper',
+		'im:messenger/lib/rest',
 		'im:messenger/const',
 		'im:messenger/provider/rest',
 	],

@@ -7,5 +7,6 @@ return [
 		'utils/file',
 		'apptheme',
 		'alert',
+		'loc',
 	],
 ];

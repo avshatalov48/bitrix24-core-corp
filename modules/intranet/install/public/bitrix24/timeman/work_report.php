@@ -26,21 +26,30 @@ if (IsModuleInstalled("timeman"))
 		)
 	);
 }
+elseif (
+	!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('worktime')
+	&& (!\Bitrix\Main\Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Feature::isFeatureEnabled('timeman'))
+)
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:intranet.settings.tool.stub',
+		'',
+		[
+			'LIMIT_CODE' => 'limit_office_worktime_off',
+			'MODULE' => 'timeman',
+			'SOURCE' => 'report_weekly'
+		],
+	);
+}
 elseif (!(!IsModuleInstalled("timeman") && in_array($licenseType, array("company", "edu", "nfr"))))
 {
-	if (LANGUAGE_ID == "de" || LANGUAGE_ID == "la")
-		$lang = LANGUAGE_ID;
-	else
-		$lang = LangSubst(LANGUAGE_ID);
 	?>
-	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT")?></p>
-	<div style="text-align: center;"><img src="images/<?=$lang?>/workreport.png"/></div>
-	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT2")?></p>
-	<br/>
-	<?php if (\Bitrix\Main\Loader::includeModule('bitrix24')): ?>
-		<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("workreport")?></div>
-	<?php endif;?>
-	<?
+	<script>
+		BX.ready(() => {
+			BX.UI.InfoHelper.show("limit_office_reports");
+		});
+	</script>
+	<?php
 }
 ?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

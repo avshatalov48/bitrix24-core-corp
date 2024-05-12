@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view', (require, exports, module) => {
 	const { Logger } = require('im/messenger/lib/logger');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Item } = require('im/messenger/lib/ui/base/item');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
@@ -17,6 +17,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { UserAdd } = require('im/messenger/controller/user-add');
 	const { ChatTitle } = require('im/messenger/lib/element');
+	const { BotCode } = require('im/messenger/const');
 	const AppTheme = require('apptheme');
 
 	/**
@@ -28,8 +29,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		constructor(props)
 		{
 			super(props);
-			this.store = core.getStore();
-			this.storeManager = core.getStoreManager();
+			this.store = serviceLocator.get('core').getStore();
+			this.storeManager = serviceLocator.get('core').getStoreManager();
 			/** @type {ParticipantsService} */
 			this.participantsService = new ParticipantsService(this.props);
 
@@ -95,7 +96,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 			{
 				const eventParticipants = payload.data.fields.participants;
 				const currentParticipants = this.state.participants;
-				if (eventParticipants && eventParticipants.length !== currentParticipants.length)
+
+				if (Type.isArray(eventParticipants) && eventParticipants.length !== currentParticipants.length)
 				{
 					const newParticipants = this.participantsService.getParticipantsFromStore();
 					this.updateState({ participants: newParticipants });
@@ -164,7 +166,6 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 					{
 						return this.getAddParticipantRow();
 					}
-					const isEllipsis = item.isYou || this.isGroupDialog();
 
 					return new Item({
 						data: item,
@@ -172,12 +173,16 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 						isCustomStyle: true,
 						nextTo: false,
 						onLongClick: () => {
-							this.onLongClickItem(item.key, item.userId, item.isYou);
+							this.onLongClickItem(
+								item.key,
+								item.userId,
+								{ isYou: item.isYou, isCopilot: item.isCopilot },
+							);
 						},
 						onClick: () => {
 							this.onClickItem(item.userId);
 						},
-						additionalComponent: isEllipsis ? this.getEllipsisButton(item) : null,
+						additionalComponent: this.isEllipsis(item) ? this.getEllipsisButton(item) : null,
 					});
 				},
 				onLoadMore: platform === 'ios' ? this.iosOnLoadMore.bind(this) : this.androidOnLoadMore.bind(this),
@@ -218,6 +223,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 				userId: item.id,
 				title: item.title,
 				isYou: item.isYou,
+				isCopilot: item.isCopilot,
 				isYouTitle: item.isYouTitle,
 				subtitle: item.desc,
 				avatarUri: item.imageUrl,
@@ -286,15 +292,21 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		}
 
 		/**
-		 * @desc Returns view row element with add btn
+		 * @desc Returns view a row element with added btn
 		 * @return {LayoutComponent}
 		 * @private
 		 */
 		getAddParticipantRow()
 		{
-			const text = this.isGroupDialog()
-				? Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW')
-				: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW_GROUP');
+			let text = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW_MSGVER_1');
+			if (!this.props.isCopilot && !this.isGroupDialog())
+			{
+				text = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW_GROUP');
+			}
+
+			const buttonIcon = this.props.isCopilot
+				? buttonIcons.specialAdd(AppTheme.colors.chatOtherCopilot1, AppTheme.colors.accentMainCopilot)
+				: buttonIcons.specialAdd();
 
 			return View(
 				{
@@ -328,7 +340,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 								marginHorizontal: 2,
 								borderRadius: 22,
 							},
-							svg: { content: buttonIcons.specialAdd() },
+							svg: { content: buttonIcon },
 							onFailure: () => {
 								Logger.error('SidebarParticipantsView.getAddParticipantRow.Image.onFailure');
 							},
@@ -383,6 +395,23 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 					),
 				),
 			);
+		}
+
+		/**
+		 * @desc check is add ellipsis button
+		 * @param {object} item
+		 * @return {boolean}
+		 * @private
+		 */
+		isEllipsis(item)
+		{
+			let isEllipsis = item.isYou || this.isGroupDialog();
+			if (item.isCopilot)
+			{
+				isEllipsis = false;
+			}
+
+			return isEllipsis;
 		}
 
 		onClickBtnAdd()
@@ -492,26 +521,43 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		 * @desc Handler long click item
 		 * @param {string} key
 		 * @param {number} userId
-		 * @param {boolean} isYou
+		 * @param {object} isEntity
+		 * @param {boolean} isEntity.isYou
+		 * @param {boolean} isEntity.isCopilot
 		 * @private
 		 */
-		onLongClickItem(key, userId, isYou)
+		onLongClickItem(key, userId, isEntity)
 		{
 			const actions = [];
 			const callbacks = {};
 			const isGroupDialog = this.isGroupDialog();
+			const participantsCount = this.state.participants.length;
+
+			if (isEntity.isCopilot)
+			{
+				return false;
+			}
 
 			if (isGroupDialog)
 			{
-				if (isYou)
+				if (isEntity.isYou)
 				{
 					actions.push('notes');
 					callbacks.notes = this.participantsService.onClickGetNotes;
-
 					if (this.state.permissions.isCanLeave)
 					{
-						actions.push('leave');
-						callbacks.leave = this.onClickLeaveChat.bind(this);
+						// TODO copilot dialog always is group chat, then need check count participants
+						if (this.props.isCopilot && participantsCount > 2)
+						{
+							actions.push('leave');
+							callbacks.leave = this.onClickLeaveChat.bind(this);
+						}
+
+						if (!this.props.isCopilot)
+						{
+							actions.push('leave');
+							callbacks.leave = this.onClickLeaveChat.bind(this);
+						}
 					}
 				}
 				else
@@ -532,7 +578,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 
 			if (!isGroupDialog)
 			{
-				if (isYou)
+				if (isEntity.isYou)
 				{
 					actions.push('notes');
 					callbacks.notes = this.participantsService.onClickGetNotes;
@@ -582,7 +628,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 					},
 					svg: { content: buttonIcons.ellipsis() },
 					onClick: () => {
-						this.onLongClickItem(item.key, item.userId, item.isYou);
+						this.onLongClickItem(item.key, item.userId, { isYou: item.isYou, isCopilot: item.isCopilot });
 					},
 					testId: 'ITEM_ELLIPSIS_BUTTON',
 				}),
@@ -596,15 +642,37 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		 */
 		callParticipantsAddWidget()
 		{
+			const botFilter = (user) => {
+				if (user?.botData?.code)
+				{
+					return user?.botData?.code === BotCode.copilot;
+				}
+
+				return true;
+			};
+
+			const copilotFilter = (user) => {
+				if (user?.botData?.code)
+				{
+					return user?.botData?.code !== BotCode.copilot;
+				}
+
+				return true;
+			};
+
+			const usersCustomFilter = this.props.isCopilot ? botFilter : copilotFilter;
+
 			UserAdd.open(
 				{
 					dialogId: this.props.dialogId,
-					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_TITLE'),
+					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_TITLE_MSGVER_1'),
 					textRightBtn: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_NAME_BTN'),
 					callback: {
 						onAddUser: (event) => Logger.log('onAddParticipantInBackDrop', event),
 					},
 					widgetOptions: { mediumPositionPercent: 65 },
+					usersCustomFilter,
+					isCopilotDialog: this.props.isCopilot,
 				},
 			);
 		}
@@ -652,6 +720,11 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 		isGroupDialog()
 		{
 			return DialogHelper.isDialogId(this.props.dialogId);
+		}
+
+		isCopilotGroupDialog()
+		{
+			return this.state.participants.length > 2;
 		}
 	}
 

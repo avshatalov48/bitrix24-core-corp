@@ -1,11 +1,11 @@
-<?
+<?php
 $MESS["INTR_MAIL_ADMIN_DOMAIN"] = "Domain <b>#DOMAIN#</b> attached to your Intranet.";
 $MESS["INTR_MAIL_ADMIN_DOMAIN_WAIT"] = "Waiting for completion of configuration of domain <b>#DOMAIN#</b>";
 $MESS["INTR_MAIL_AJAX_ERROR"] = "Error sending request.";
 $MESS["INTR_MAIL_B24_DESCR_CRM"] = "Create a free mailbox on @#DOMAIN#.<br/><br/>Just a few clicks: select a name and a password &mdash; and your new e-mail is ready to roll!<br/><br/>Enable e-mail tracker to save your customer correspondence to CRM.";
 $MESS["INTR_MAIL_B24_DESCR_MAILBOX"] = "You have <b>#EMAIL#</b> mailbox attached.";
 $MESS["INTR_MAIL_B24_HELP_CRM"] = "Enter the new mailbox name and password in the corresponding fields.<br/><br/>Connect your mailbox to CRM to save your customer correspondence to CRM.";
-$MESS["INTR_MAIL_B24_TITLE"] = "Bitrix24.Mail";
+$MESS["INTR_MAIL_B24_TITLE_MSGVER_1"] = "Mail";
 $MESS["INTR_MAIL_CHECK"] = "Check";
 $MESS["INTR_MAIL_CHECK_ERROR"] = "Error";
 $MESS["INTR_MAIL_CHECK_JUST_NOW"] = "just checked";
@@ -170,4 +170,3 @@ $MESS["INTR_MAIL_SERVICETYPE_SETUP"] = "Configure";
 $MESS["MAIL_MAIL_CRM_LICENSE_DESCR_AGE"] = "Only the most recent three days of correspondence can be loaded to CRM on your plan. Please upgrade to <a href=\"/settings/license_all.php\" target=\"_blank\">selected commercial plans</a> to load all the messages to CRM.";
 $MESS["MAIL_MAIL_CRM_LICENSE_TITLE"] = "E-mail tracker";
 $MESS["MAIL_SERVICES_NOT_FOUND"] = "E-mail services are not configured. Please contact your administrator.";
-?>

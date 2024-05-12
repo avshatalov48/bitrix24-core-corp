@@ -10,5 +10,6 @@ return [
 		'alert',
 		'confirm',
 		'./src/confirm-closing',
+		'./src/confirm-destructive',
 	],
 ];

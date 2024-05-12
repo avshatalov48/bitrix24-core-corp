@@ -457,6 +457,7 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		this.adjust();
 		this.markAsChanged();
 	};
+
 	BX.Crm.EntityEditorMultipleUser.prototype.getRuntimeValue = function()
 	{
 		if (this._mode === BX.UI.EntityEditorMode.edit && this._selectedData["id"] > 0)
@@ -465,6 +466,12 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		}
 		return "";
 	};
+
+	BX.Crm.EntityEditorMultipleUser.prototype.checkIfNotEmpty = function(value)
+	{
+		return BX.type.isArrayFilled(value);
+	};
+
 	BX.Crm.EntityEditorMultipleUser.prototype.getMessage = function(name)
 	{
 		var m = BX.Crm.EntityEditorMultipleUser.messages;

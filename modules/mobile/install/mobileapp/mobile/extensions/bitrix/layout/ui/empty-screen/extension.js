@@ -59,7 +59,7 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 
 		get styles()
 		{
-			return BX.prop.get(this.props, 'styles', {});
+			return this.props.styles || {};
 		}
 
 		get containerStyle()

@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/object',
-		'im:messenger/lib/settings',
+		'im:messenger/lib/feature',
 		'im:chat/utils',
 		'im:messenger/db/table',
 		'im:messenger/lib/logger',
@@ -23,5 +23,8 @@ return [
 		'./src/reaction',
 		'./src/queue',
 		'./src/smile',
+		'./src/pin-message',
+		'./src/validators/message',
+		'./src/validators/pin',
 	],
 ];

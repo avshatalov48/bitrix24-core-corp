@@ -17,6 +17,9 @@ return [
 		'layout/ui/buttons',
 		'layout/ui/loading-screen',
 		'navigation-loader',
+		'loc',
+		'haptics',
+		'notify',
 	],
 	'bundle' => [
 		'./stage',

@@ -1,293 +1,91 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,crm_categoryList,crm_categoryModel,main_core_events,main_popup,ui_buttons,ui_dialogs_messagebox,ui_forms,main_core) {
+(function (exports,crm_integration_analytics,ui_analytics,ui_dialogs_messagebox,ui_forms,crm_categoryModel,ui_buttons,ui_entitySelector,main_core,main_core_events,main_popup) {
 	'use strict';
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var _id = /*#__PURE__*/new WeakMap();
-	var _name = /*#__PURE__*/new WeakMap();
-	var _entityTypeIds = /*#__PURE__*/new WeakMap();
-	var _phrase = /*#__PURE__*/new WeakMap();
-	var _availabilityLock = /*#__PURE__*/new WeakMap();
+	var _active = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("active");
+	var _enableSync = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableSync");
+	var _initData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initData");
+	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
+	var _internalizeBooleanValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeBooleanValue");
 	/**
 	 * @memberOf BX.Crm.Conversion
 	 */
-	var SchemeItem = /*#__PURE__*/function () {
-	  function SchemeItem(params) {
-	    var _this = this;
-	    babelHelpers.classCallCheck(this, SchemeItem);
-	    _classPrivateFieldInitSpec(this, _id, {
+	class ConfigItem {
+	  constructor(params) {
+	    Object.defineProperty(this, _internalizeBooleanValue, {
+	      value: _internalizeBooleanValue2
+	    });
+	    Object.defineProperty(this, _active, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec(this, _name, {
+	    Object.defineProperty(this, _enableSync, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec(this, _entityTypeIds, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _phrase, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _availabilityLock, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _id, String(params.id));
-	    babelHelpers.classPrivateFieldSet(this, _name, String(params.name));
-	    babelHelpers.classPrivateFieldSet(this, _phrase, String(params.phrase));
-	    babelHelpers.classPrivateFieldSet(this, _availabilityLock, String(params.availabilityLock));
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeIds, []);
-	    if (main_core.Type.isArray(params.entityTypeIds)) {
-	      params.entityTypeIds.forEach(function (entityTypeId) {
-	        babelHelpers.classPrivateFieldGet(_this, _entityTypeIds).push(Number(entityTypeId));
-	      });
-	    }
-	  }
-	  babelHelpers.createClass(SchemeItem, [{
-	    key: "getId",
-	    value: function getId() {
-	      return babelHelpers.classPrivateFieldGet(this, _id);
-	    }
-	  }, {
-	    key: "getName",
-	    value: function getName() {
-	      return babelHelpers.classPrivateFieldGet(this, _name);
-	    }
-	  }, {
-	    key: "getEntityTypeIds",
-	    value: function getEntityTypeIds() {
-	      return babelHelpers.classPrivateFieldGet(this, _entityTypeIds);
-	    }
-	  }, {
-	    key: "getPhrase",
-	    value: function getPhrase() {
-	      return babelHelpers.classPrivateFieldGet(this, _phrase);
-	    }
-	  }, {
-	    key: "getAvailabilityLock",
-	    value: function getAvailabilityLock() {
-	      return babelHelpers.classPrivateFieldGet(this, _availabilityLock);
-	    }
-	  }]);
-	  return SchemeItem;
-	}();
-
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var _currentItemId = /*#__PURE__*/new WeakMap();
-	var _items = /*#__PURE__*/new WeakMap();
-	/**
-	 * @memberOf BX.Crm.Conversion
-	 */
-	var Scheme = /*#__PURE__*/function () {
-	  function Scheme(currentItemId, items) {
-	    var _this = this;
-	    babelHelpers.classCallCheck(this, Scheme);
-	    _classPrivateFieldInitSpec$1(this, _currentItemId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$1(this, _items, {
-	      writable: true,
-	      value: []
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _currentItemId, main_core.Type.isNull(currentItemId) ? currentItemId : String(currentItemId));
-	    if (main_core.Type.isArray(items)) {
-	      items.forEach(function (item) {
-	        if (item instanceof SchemeItem) {
-	          babelHelpers.classPrivateFieldGet(_this, _items).push(item);
-	        } else {
-	          console.error('SchemeItem is invalid in Scheme constructor. Expected instance of SchemeItem, got ' + babelHelpers["typeof"](item));
-	        }
-	      });
-	    }
-	  }
-	  babelHelpers.createClass(Scheme, [{
-	    key: "getCurrentItem",
-	    value: function getCurrentItem() {
-	      if (!babelHelpers.classPrivateFieldGet(this, _items) || !babelHelpers.classPrivateFieldGet(this, _items).length) {
-	        return null;
-	      }
-	      var item = this.getItemById(babelHelpers.classPrivateFieldGet(this, _currentItemId));
-	      return item || babelHelpers.classPrivateFieldGet(this, _items)[0];
-	    }
-	  }, {
-	    key: "setCurrentItemId",
-	    value: function setCurrentItemId(currentItemId) {
-	      babelHelpers.classPrivateFieldSet(this, _currentItemId, currentItemId);
-	    }
-	  }, {
-	    key: "getItems",
-	    value: function getItems() {
-	      return babelHelpers.classPrivateFieldGet(this, _items);
-	    }
-	  }, {
-	    key: "getItemById",
-	    value: function getItemById(itemId) {
-	      var _iterator = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _items)),
-	        _step;
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var item = _step.value;
-	          if (item.getId() === itemId) {
-	            return item;
-	          }
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
-	      }
-	      return null;
-	    }
-	  }, {
-	    key: "getItemForSingleEntityTypeId",
-	    value: function getItemForSingleEntityTypeId(entityTypeId) {
-	      var _iterator2 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _items)),
-	        _step2;
-	      try {
-	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-	          var item = _step2.value;
-	          var entityTypeIds = item.getEntityTypeIds();
-	          if (entityTypeIds.length === 1 && Array.from(entityTypeIds)[0] === entityTypeId) {
-	            return item;
-	          }
-	        }
-	      } catch (err) {
-	        _iterator2.e(err);
-	      } finally {
-	        _iterator2.f();
-	      }
-	      return null;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(params) {
-	      var schemeItems = [];
-	      params.items.forEach(function (item) {
-	        schemeItems.push(new SchemeItem(item));
-	      });
-	      return new Scheme(params.currentItemId, schemeItems);
-	    }
-	  }]);
-	  return Scheme;
-	}();
-
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _active = /*#__PURE__*/new WeakMap();
-	var _enableSync = /*#__PURE__*/new WeakMap();
-	var _initData = /*#__PURE__*/new WeakMap();
-	var _entityTypeId = /*#__PURE__*/new WeakMap();
-	var _title = /*#__PURE__*/new WeakMap();
-	var _internalizeBooleanValue = /*#__PURE__*/new WeakSet();
-	/**
-	 * @memberOf BX.Crm.Conversion
-	 */
-	var ConfigItem = /*#__PURE__*/function () {
-	  function ConfigItem(params) {
-	    babelHelpers.classCallCheck(this, ConfigItem);
-	    _classPrivateMethodInitSpec(this, _internalizeBooleanValue);
-	    _classPrivateFieldInitSpec$2(this, _active, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$2(this, _enableSync, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec$2(this, _initData, {
+	    Object.defineProperty(this, _initData, {
 	      writable: true,
 	      value: {}
 	    });
-	    _classPrivateFieldInitSpec$2(this, _entityTypeId, {
+	    Object.defineProperty(this, _entityTypeId, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$2(this, _title, {
+	    Object.defineProperty(this, _title, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, Number(params.entityTypeId));
-	    babelHelpers.classPrivateFieldSet(this, _active, _classPrivateMethodGet(this, _internalizeBooleanValue, _internalizeBooleanValue2).call(this, params.active));
-	    babelHelpers.classPrivateFieldSet(this, _enableSync, _classPrivateMethodGet(this, _internalizeBooleanValue, _internalizeBooleanValue2).call(this, params.enableSync));
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = Number(params.entityTypeId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _active)[_active] = babelHelpers.classPrivateFieldLooseBase(this, _internalizeBooleanValue)[_internalizeBooleanValue](params.active);
+	    babelHelpers.classPrivateFieldLooseBase(this, _enableSync)[_enableSync] = babelHelpers.classPrivateFieldLooseBase(this, _internalizeBooleanValue)[_internalizeBooleanValue](params.enableSync);
 	    if (main_core.Type.isPlainObject(params.initData)) {
-	      babelHelpers.classPrivateFieldSet(this, _initData, params.initData);
+	      babelHelpers.classPrivateFieldLooseBase(this, _initData)[_initData] = params.initData;
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _title, String(params.title));
+	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = String(params.title);
 	  }
-	  babelHelpers.createClass(ConfigItem, [{
-	    key: "externalize",
-	    value: function externalize() {
-	      return {
-	        entityTypeId: this.getEntityTypeId(),
-	        title: this.getTitle(),
-	        initData: this.getInitData(),
-	        active: this.isActive() ? "Y" : "N",
-	        enableSync: this.isEnableSync() ? "Y" : "N"
-	      };
-	    }
-	  }, {
-	    key: "isActive",
-	    value: function isActive() {
-	      return babelHelpers.classPrivateFieldGet(this, _active);
-	    }
-	  }, {
-	    key: "setActive",
-	    value: function setActive(active) {
-	      babelHelpers.classPrivateFieldSet(this, _active, active);
-	      return this;
-	    }
-	  }, {
-	    key: "isEnableSync",
-	    value: function isEnableSync() {
-	      return babelHelpers.classPrivateFieldGet(this, _enableSync);
-	    }
-	  }, {
-	    key: "setEnableSync",
-	    value: function setEnableSync(enableSync) {
-	      babelHelpers.classPrivateFieldSet(this, _enableSync, enableSync);
-	      return this;
-	    }
-	  }, {
-	    key: "getInitData",
-	    value: function getInitData() {
-	      return babelHelpers.classPrivateFieldGet(this, _initData) || {};
-	    }
-	  }, {
-	    key: "setInitData",
-	    value: function setInitData(data) {
-	      babelHelpers.classPrivateFieldSet(this, _initData, data);
-	      return this;
-	    }
-	  }, {
-	    key: "getEntityTypeId",
-	    value: function getEntityTypeId() {
-	      return babelHelpers.classPrivateFieldGet(this, _entityTypeId);
-	    }
-	  }, {
-	    key: "getTitle",
-	    value: function getTitle() {
-	      return babelHelpers.classPrivateFieldGet(this, _title);
-	    }
-	  }, {
-	    key: "setTitle",
-	    value: function setTitle(title) {
-	      babelHelpers.classPrivateFieldSet(this, _title, title);
-	      return this;
-	    }
-	  }]);
-	  return ConfigItem;
-	}();
+	  externalize() {
+	    return {
+	      entityTypeId: this.getEntityTypeId(),
+	      title: this.getTitle(),
+	      initData: this.getInitData(),
+	      active: this.isActive() ? 'Y' : 'N',
+	      enableSync: this.isEnableSync() ? 'Y' : 'N'
+	    };
+	  }
+	  isActive() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _active)[_active];
+	  }
+	  setActive(active) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _active)[_active] = active;
+	    return this;
+	  }
+	  isEnableSync() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _enableSync)[_enableSync];
+	  }
+	  setEnableSync(enableSync) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _enableSync)[_enableSync] = enableSync;
+	    return this;
+	  }
+	  getInitData() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _initData)[_initData] || {};
+	  }
+	  setInitData(data) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _initData)[_initData] = data;
+	    return this;
+	  }
+	  getEntityTypeId() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId];
+	  }
+	  getTitle() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _title)[_title];
+	  }
+	  setTitle(title) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = title;
+	    return this;
+	  }
+	}
 	function _internalizeBooleanValue2(value) {
 	  if (main_core.Type.isBoolean(value)) {
 	    return value;
@@ -298,399 +96,698 @@ this.BX = this.BX || {};
 	  return Boolean(value);
 	}
 
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
-	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
+	var _name = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("name");
+	var _entityTypeIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeIds");
+	var _phrase = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("phrase");
+	var _availabilityLock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("availabilityLock");
+	/**
+	 * @memberOf BX.Crm.Conversion
+	 */
+	class SchemeItem {
+	  constructor(params) {
+	    Object.defineProperty(this, _id, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _name, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _entityTypeIds, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _phrase, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _availabilityLock, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = String(params.id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _name)[_name] = String(params.name);
+	    babelHelpers.classPrivateFieldLooseBase(this, _phrase)[_phrase] = String(params.phrase);
+	    babelHelpers.classPrivateFieldLooseBase(this, _availabilityLock)[_availabilityLock] = String(params.availabilityLock);
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeIds)[_entityTypeIds] = [];
+	    if (main_core.Type.isArray(params.entityTypeIds)) {
+	      params.entityTypeIds.forEach(entityTypeId => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _entityTypeIds)[_entityTypeIds].push(Number(entityTypeId));
+	      });
+	    }
+	  }
+	  getId() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _id)[_id];
+	  }
+	  getName() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _name)[_name];
+	  }
+	  getEntityTypeIds() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _entityTypeIds)[_entityTypeIds];
+	  }
+	  getPhrase() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _phrase)[_phrase];
+	  }
+	  getAvailabilityLock() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _availabilityLock)[_availabilityLock];
+	  }
+	}
+
+	var _currentItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentItemId");
+	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
+	/**
+	 * @memberOf BX.Crm.Conversion
+	 */
+	class Scheme {
+	  constructor(currentItemId, items) {
+	    Object.defineProperty(this, _currentItemId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _items, {
+	      writable: true,
+	      value: []
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentItemId)[_currentItemId] = main_core.Type.isNull(currentItemId) ? currentItemId : String(currentItemId);
+	    if (main_core.Type.isArray(items)) {
+	      items.forEach(item => {
+	        if (item instanceof SchemeItem) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].push(item);
+	        } else {
+	          console.error(
+	          // eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+	          `SchemeItem is invalid in Scheme constructor. Expected instance of SchemeItem, got ${typeof item}`);
+	        }
+	      });
+	    }
+	  }
+	  static create(params) {
+	    const schemeItems = [];
+	    params.items.forEach(item => {
+	      schemeItems.push(new SchemeItem(item));
+	    });
+	    return new Scheme(params.currentItemId, schemeItems);
+	  }
+	  getCurrentItem() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] || babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].length === 0) {
+	      return null;
+	    }
+	    const item = this.getItemById(babelHelpers.classPrivateFieldLooseBase(this, _currentItemId)[_currentItemId]);
+	    return item || babelHelpers.classPrivateFieldLooseBase(this, _items)[_items][0];
+	  }
+	  setCurrentItemId(currentItemId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _currentItemId)[_currentItemId] = currentItemId;
+	  }
+	  getItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _items)[_items];
+	  }
+	  getItemById(itemId) {
+	    for (const item of babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) {
+	      if (item.getId() === itemId) {
+	        return item;
+	      }
+	    }
+	    return null;
+	  }
+	  getItemForSingleEntityTypeId(entityTypeId) {
+	    for (const item of babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) {
+	      const entityTypeIds = item.getEntityTypeIds();
+	      if (entityTypeIds.length === 1 && [...entityTypeIds][0] === entityTypeId) {
+	        return item;
+	      }
+	    }
+	    return null;
+	  }
+	  getItemForEntityTypeIds(entityTypeIds) {
+	    const makeIntSet = input => {
+	      // Set - to remove possible duplicates in the array
+	      return new Set(input.map(id => main_core.Text.toInteger(id)));
+	    };
+	    const targetEntityTypeIds = [...makeIntSet(entityTypeIds)];
+	    for (const item of babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) {
+	      const itemSet = makeIntSet(item.getEntityTypeIds());
+	      if (targetEntityTypeIds.length !== itemSet.size) {
+	        continue;
+	      }
+	      const notFoundTargetIds = targetEntityTypeIds.filter(entityTypeId => !itemSet.has(entityTypeId));
+	      if (notFoundTargetIds.length <= 0) {
+	        return item;
+	      }
+	    }
+	    return null;
+	  }
+	  getAllEntityTypeIds() {
+	    const entityTypeIds = new Set();
+	    for (const item of babelHelpers.classPrivateFieldLooseBase(this, _items)[_items]) {
+	      for (const entityTypeId of item.getEntityTypeIds()) {
+	        entityTypeIds.add(entityTypeId);
+	      }
+	    }
+	    return [...entityTypeIds];
+	  }
+	}
 
 	/**
 	 * @memberOf BX.Crm.Conversion
 	 */
-	var _entityTypeId$1 = /*#__PURE__*/new WeakMap();
-	var _items$1 = /*#__PURE__*/new WeakMap();
-	var _scheme = /*#__PURE__*/new WeakMap();
-	var Config = /*#__PURE__*/function () {
-	  function Config(entityTypeId, items, scheme) {
-	    var _this = this;
-	    babelHelpers.classCallCheck(this, Config);
-	    _classPrivateFieldInitSpec$3(this, _entityTypeId$1, {
+	var _entityTypeId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _items$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
+	var _scheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scheme");
+	class Config {
+	  constructor(entityTypeId, items, scheme) {
+	    Object.defineProperty(this, _entityTypeId$1, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$3(this, _items$1, {
+	    Object.defineProperty(this, _items$1, {
 	      writable: true,
 	      value: []
 	    });
-	    _classPrivateFieldInitSpec$3(this, _scheme, {
+	    Object.defineProperty(this, _scheme, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeId$1, Number(entityTypeId));
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = Number(entityTypeId);
 	    if (main_core.Type.isArray(items)) {
-	      items.forEach(function (item) {
+	      items.forEach(item => {
 	        if (item instanceof ConfigItem) {
-	          babelHelpers.classPrivateFieldGet(_this, _items$1).push(item);
+	          babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1].push(item);
 	        } else {
-	          console.error('ConfigItem is invalid in Config constructor. Expected instance of ConfigItem, got ' + babelHelpers["typeof"](item));
+	          console.error(
+	          // eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+	          `ConfigItem is invalid in Config constructor. Expected instance of ConfigItem, got ${typeof item}`);
 	        }
 	      });
 	    }
 	    if (scheme instanceof Scheme) {
-	      babelHelpers.classPrivateFieldSet(this, _scheme, scheme);
+	      babelHelpers.classPrivateFieldLooseBase(this, _scheme)[_scheme] = scheme;
 	    } else {
-	      console.error('Scheme is invalid in Config constructor. Expected instance of Scheme, got ' + babelHelpers["typeof"](scheme));
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
+	      console.error(`Scheme is invalid in Config constructor. Expected instance of Scheme, got ${typeof scheme}`);
 	    }
 	  }
-	  babelHelpers.createClass(Config, [{
-	    key: "getEntityTypeId",
-	    value: function getEntityTypeId() {
-	      return babelHelpers.classPrivateFieldGet(this, _entityTypeId$1);
+	  static create(entityTypeId, items, scheme) {
+	    const configItems = [];
+	    items.forEach(item => {
+	      configItems.push(new ConfigItem(item));
+	    });
+	    return new Config(entityTypeId, configItems, scheme);
+	  }
+	  getEntityTypeId() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1];
+	  }
+	  getItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1];
+	  }
+	  getActiveItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1].filter(item => item.isActive());
+	  }
+	  getScheme() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _scheme)[_scheme];
+	  }
+	  updateFromSchemeItem(schemeItem = null) {
+	    let selectedSchemeItem = null;
+	    if (schemeItem) {
+	      selectedSchemeItem = schemeItem;
+	      this.getScheme().setCurrentItemId(schemeItem.getId());
+	    } else {
+	      selectedSchemeItem = this.getScheme().getCurrentItem();
 	    }
-	  }, {
-	    key: "getItems",
-	    value: function getItems() {
-	      return babelHelpers.classPrivateFieldGet(this, _items$1);
-	    }
-	  }, {
-	    key: "getScheme",
-	    value: function getScheme() {
-	      return babelHelpers.classPrivateFieldGet(this, _scheme);
-	    }
-	  }, {
-	    key: "updateFromSchemeItem",
-	    value: function updateFromSchemeItem() {
-	      var schemeItem = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-	      if (!schemeItem) {
-	        schemeItem = this.getScheme().getCurrentItem();
-	      } else {
-	        this.getScheme().setCurrentItemId(schemeItem.getId());
+	    const activeEntityTypeIds = selectedSchemeItem.getEntityTypeIds();
+	    babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1].forEach(item => {
+	      const isActive = activeEntityTypeIds.includes(item.getEntityTypeId());
+	      item.setEnableSync(isActive);
+	      item.setActive(isActive);
+	    });
+	    return this;
+	  }
+	  getItemByEntityTypeId(entityTypeId) {
+	    for (const item of babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1]) {
+	      if (item.getEntityTypeId() === entityTypeId) {
+	        return item;
 	      }
-	      var activeEntityTypeIds = schemeItem.getEntityTypeIds();
-	      babelHelpers.classPrivateFieldGet(this, _items$1).forEach(function (item) {
-	        var isActive = activeEntityTypeIds.indexOf(item.getEntityTypeId()) > -1;
-	        item.setEnableSync(isActive);
-	        item.setActive(isActive);
-	      });
-	      return this;
 	    }
-	  }, {
-	    key: "getItemByEntityTypeId",
-	    value: function getItemByEntityTypeId(entityTypeId) {
-	      var _iterator = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _items$1)),
-	        _step;
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var item = _step.value;
-	          if (item.getEntityTypeId() === entityTypeId) {
-	            return item;
-	          }
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
-	      }
-	      return null;
-	    }
-	  }, {
-	    key: "externalize",
-	    value: function externalize() {
-	      var data = {};
-	      this.getItems().forEach(function (item) {
-	        data[BX.CrmEntityType.resolveName(item.getEntityTypeId()).toLowerCase()] = item.externalize();
-	      });
-	      return data;
-	    }
-	  }, {
-	    key: "updateItems",
-	    value: function updateItems(items) {
-	      var _this2 = this;
-	      babelHelpers.classPrivateFieldSet(this, _items$1, []);
-	      items.forEach(function (item) {
-	        babelHelpers.classPrivateFieldGet(_this2, _items$1).push(new ConfigItem(item));
-	      });
-	      return this;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(entityTypeId, items, scheme) {
-	      var configItems = [];
-	      items.forEach(function (item) {
-	        configItems.push(new ConfigItem(item));
-	      });
-	      return new Config(entityTypeId, configItems, scheme);
-	    }
-	  }]);
-	  return Config;
-	}();
+	    return null;
+	  }
+	  externalize() {
+	    const data = {};
+	    this.getItems().forEach(item => {
+	      data[BX.CrmEntityType.resolveName(item.getEntityTypeId()).toLowerCase()] = item.externalize();
+	    });
+	    return data;
+	  }
+	  updateItems(items) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1] = [];
+	    items.forEach(item => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _items$1)[_items$1].push(new ConfigItem(item));
+	    });
+	    return this;
+	  }
+	}
 
-	var _templateObject, _templateObject2;
-	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
-	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _entityTypeId$2 = /*#__PURE__*/new WeakMap();
-	var _entityId = /*#__PURE__*/new WeakMap();
-	var _config = /*#__PURE__*/new WeakMap();
-	var _params = /*#__PURE__*/new WeakMap();
-	var _isProgress = /*#__PURE__*/new WeakMap();
-	var _isSynchronisationAllowed = /*#__PURE__*/new WeakMap();
-	var _fieldsSynchronizer = /*#__PURE__*/new WeakMap();
-	var _request = /*#__PURE__*/new WeakSet();
-	var _onRequestSuccess = /*#__PURE__*/new WeakSet();
-	var _onRequestError = /*#__PURE__*/new WeakSet();
-	var _collectAdditionalData = /*#__PURE__*/new WeakSet();
-	var _getCategoryForEntityTypeId = /*#__PURE__*/new WeakSet();
-	var _isNeedToLoadCategories = /*#__PURE__*/new WeakSet();
-	var _showCategorySelector = /*#__PURE__*/new WeakSet();
-	var _processRequiredAction = /*#__PURE__*/new WeakSet();
-	var _getFieldsSynchronizer = /*#__PURE__*/new WeakSet();
-	var _getMessage = /*#__PURE__*/new WeakSet();
-	var _emitConvertedEvent = /*#__PURE__*/new WeakSet();
+	let instance = null;
+	var _extensionSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extensionSettings");
+	var _storage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storage");
+	class CategoryRepository {
+	  constructor() {
+	    Object.defineProperty(this, _extensionSettings, {
+	      writable: true,
+	      value: main_core.Extension.getSettings('crm.conversion')
+	    });
+	    Object.defineProperty(this, _storage, {
+	      writable: true,
+	      value: new Map()
+	    });
+	  }
+	  static get Instance() {
+	    if (instance === null) {
+	      instance = new CategoryRepository();
+	    }
+	    return instance;
+	  }
+	  isCategoriesEnabled(entityTypeId) {
+	    return Boolean(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get(`isCategoriesEnabled.${entityTypeId}`, false));
+	  }
+	  getCategories(entityTypeId) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].has(entityTypeId)) {
+	      return Promise.resolve(babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].get(entityTypeId));
+	    }
+	    return main_core.ajax.runAction('crm.conversion.getDstCategoryList', {
+	      data: {
+	        entityTypeId
+	      }
+	    }).then(({
+	      data
+	    }) => {
+	      var _data$categories;
+	      const models = [];
+	      data == null ? void 0 : (_data$categories = data.categories) == null ? void 0 : _data$categories.forEach(categoryData => {
+	        models.push(new crm_categoryModel.CategoryModel(categoryData));
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _storage)[_storage].set(entityTypeId, models);
+	      return models;
+	    });
+	  }
+	}
+
+	let _ = t => t,
+	  _t,
+	  _t2;
+	// eslint-disable-next-line unicorn/numeric-separators-style
+	const REQUIRED_FIELDS_INFOHELPER_CODE = 8233923;
+
 	/**
 	 * @memberOf BX.Crm.Conversion
 	 */
-	var Converter = /*#__PURE__*/function () {
-	  function Converter(_entityTypeId2, _config2, params) {
-	    babelHelpers.classCallCheck(this, Converter);
-	    _classPrivateMethodInitSpec$1(this, _emitConvertedEvent);
-	    _classPrivateMethodInitSpec$1(this, _getMessage);
-	    _classPrivateMethodInitSpec$1(this, _getFieldsSynchronizer);
-	    _classPrivateMethodInitSpec$1(this, _processRequiredAction);
-	    _classPrivateMethodInitSpec$1(this, _showCategorySelector);
-	    _classPrivateMethodInitSpec$1(this, _isNeedToLoadCategories);
-	    _classPrivateMethodInitSpec$1(this, _getCategoryForEntityTypeId);
-	    _classPrivateMethodInitSpec$1(this, _collectAdditionalData);
-	    _classPrivateMethodInitSpec$1(this, _onRequestError);
-	    _classPrivateMethodInitSpec$1(this, _onRequestSuccess);
-	    _classPrivateMethodInitSpec$1(this, _request);
-	    _classPrivateFieldInitSpec$4(this, _entityTypeId$2, {
+	var _entityTypeId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _config = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("config");
+	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _isProgress = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isProgress");
+	var _isSynchronisationAllowed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSynchronisationAllowed");
+	var _fieldsSynchronizer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldsSynchronizer");
+	var _data = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
+	var _request = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("request");
+	var _sendAnalyticsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsData");
+	var _filterExternalAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterExternalAnalytics");
+	var _onRequestSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onRequestSuccess");
+	var _collectAdditionalData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collectAdditionalData");
+	var _getCategoryForEntityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCategoryForEntityTypeId");
+	var _isNeedToLoadCategories = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNeedToLoadCategories");
+	var _showCategorySelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCategorySelector");
+	var _processRequiredAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processRequiredAction");
+	var _synchronizeFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("synchronizeFields");
+	var _getFieldsSynchronizer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldsSynchronizer");
+	var _askToFillRequiredFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("askToFillRequiredFields");
+	var _getMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessage");
+	var _emitConvertedEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitConvertedEvent");
+	class Converter {
+	  constructor(_entityTypeId2, _config2, params) {
+	    Object.defineProperty(this, _emitConvertedEvent, {
+	      value: _emitConvertedEvent2
+	    });
+	    Object.defineProperty(this, _getMessage, {
+	      value: _getMessage2
+	    });
+	    Object.defineProperty(this, _askToFillRequiredFields, {
+	      value: _askToFillRequiredFields2
+	    });
+	    Object.defineProperty(this, _getFieldsSynchronizer, {
+	      value: _getFieldsSynchronizer2
+	    });
+	    Object.defineProperty(this, _synchronizeFields, {
+	      value: _synchronizeFields2
+	    });
+	    Object.defineProperty(this, _processRequiredAction, {
+	      value: _processRequiredAction2
+	    });
+	    Object.defineProperty(this, _showCategorySelector, {
+	      value: _showCategorySelector2
+	    });
+	    Object.defineProperty(this, _isNeedToLoadCategories, {
+	      value: _isNeedToLoadCategories2
+	    });
+	    Object.defineProperty(this, _getCategoryForEntityTypeId, {
+	      value: _getCategoryForEntityTypeId2
+	    });
+	    Object.defineProperty(this, _collectAdditionalData, {
+	      value: _collectAdditionalData2
+	    });
+	    Object.defineProperty(this, _onRequestSuccess, {
+	      value: _onRequestSuccess2
+	    });
+	    Object.defineProperty(this, _filterExternalAnalytics, {
+	      value: _filterExternalAnalytics2
+	    });
+	    Object.defineProperty(this, _sendAnalyticsData, {
+	      value: _sendAnalyticsData2
+	    });
+	    Object.defineProperty(this, _request, {
+	      value: _request2
+	    });
+	    Object.defineProperty(this, _entityTypeId$2, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _entityId, {
+	    Object.defineProperty(this, _entityId, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _config, {
+	    Object.defineProperty(this, _config, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _params, {
+	    Object.defineProperty(this, _params, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _isProgress, {
+	    Object.defineProperty(this, _isProgress, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _isSynchronisationAllowed, {
+	    Object.defineProperty(this, _isSynchronisationAllowed, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _fieldsSynchronizer, {
+	    Object.defineProperty(this, _fieldsSynchronizer, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeId$2, Number(_entityTypeId2));
+	    Object.defineProperty(this, _data, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2] = Number(_entityTypeId2);
 	    if (_config2 instanceof Config) {
-	      babelHelpers.classPrivateFieldSet(this, _config, _config2);
+	      babelHelpers.classPrivateFieldLooseBase(this, _config)[_config] = _config2;
 	    } else {
-	      console.error('Config is invalid in Converter constructor. Expected instance of Config, got ' + babelHelpers["typeof"](_config2));
+	      console.error('Config is invalid in Converter constructor. Expected instance of Config', _config2, this);
 	    }
-	    babelHelpers.classPrivateFieldSet(this, _params, params !== null && params !== void 0 ? params : {});
-	    babelHelpers.classPrivateFieldSet(this, _isProgress, false);
-	    babelHelpers.classPrivateFieldSet(this, _isSynchronisationAllowed, false);
-	    babelHelpers.classPrivateFieldSet(this, _entityId, 0);
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params != null ? params : {};
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].id = main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].id) ? babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].id : main_core.Text.getRandom();
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics = babelHelpers.classPrivateFieldLooseBase(this, _filterExternalAnalytics)[_filterExternalAnalytics](babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isProgress)[_isProgress] = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isSynchronisationAllowed)[_isSynchronisationAllowed] = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = 0;
 	  }
-	  babelHelpers.createClass(Converter, [{
-	    key: "getEntityTypeId",
-	    value: function getEntityTypeId() {
-	      return babelHelpers.classPrivateFieldGet(this, _entityTypeId$2);
-	    }
-	  }, {
-	    key: "getConfig",
-	    value: function getConfig() {
-	      return babelHelpers.classPrivateFieldGet(this, _config);
-	    }
-	  }, {
-	    key: "getServiceUrl",
-	    value: function getServiceUrl() {
-	      var serviceUrl = babelHelpers.classPrivateFieldGet(this, _params).serviceUrl;
-	      if (!serviceUrl) {
-	        return null;
-	      }
-	      var additionalParams = {
-	        action: "convert"
-	      };
-	      this.getConfig().getItems().forEach(function (item) {
-	        additionalParams[BX.CrmEntityType.resolveName(item.getEntityTypeId()).toLowerCase()] = item.isActive() ? "Y" : "N";
-	      });
-	      return BX.util.add_url_param(serviceUrl, additionalParams);
-	    }
-	  }, {
-	    key: "getOriginUrl",
-	    value: function getOriginUrl() {
-	      if (babelHelpers.classPrivateFieldGet(this, _params) && babelHelpers.classPrivateFieldGet(this, _params).hasOwnProperty("originUrl")) {
-	        return String(babelHelpers.classPrivateFieldGet(this, _params).originUrl);
-	      }
+	  getEntityTypeId() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2];
+	  }
+	  getConfig() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _config)[_config];
+	  }
+	  getId() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].id;
+	  }
+	  getServiceUrl() {
+	    const serviceUrl = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].serviceUrl;
+	    if (!serviceUrl) {
 	      return null;
 	    }
-	  }, {
-	    key: "isRedirectToDetailPageEnabled",
-	    value: function isRedirectToDetailPageEnabled() {
-	      if (babelHelpers.classPrivateFieldGet(this, _params) && babelHelpers.classPrivateFieldGet(this, _params).hasOwnProperty("isRedirectToDetailPageEnabled")) {
-	        return babelHelpers.classPrivateFieldGet(this, _params).isRedirectToDetailPageEnabled;
-	      }
-	      return true;
+	    const additionalParams = {
+	      action: 'convert'
+	    };
+	    this.getConfig().getItems().forEach(item => {
+	      additionalParams[BX.CrmEntityType.resolveName(item.getEntityTypeId()).toLowerCase()] = item.isActive() ? 'Y' : 'N';
+	    });
+	    return BX.util.add_url_param(serviceUrl, additionalParams);
+	  }
+	  getOriginUrl() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] && 'originUrl' in babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]) {
+	      return String(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].originUrl);
 	    }
-	  }, {
-	    key: "convert",
-	    value: function convert(entityId, data) {
-	      var _this = this;
-	      babelHelpers.classPrivateFieldSet(this, _entityId, entityId);
-	      this.data = data;
-	      var schemeItem = babelHelpers.classPrivateFieldGet(this, _config).getScheme().getCurrentItem();
-	      if (!schemeItem) {
-	        console.error('Scheme is not found');
+	    return null;
+	  }
+	  isRedirectToDetailPageEnabled() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] && 'isRedirectToDetailPageEnabled' in babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isRedirectToDetailPageEnabled;
+	    }
+	    return true;
+	  }
+
+	  /**
+	   * Overwrite current analytics[c_element] param.
+	   * Note that you are not allowed to change analytics[c_sub_section] - its by design.
+	   *
+	   * @param c_element
+	   * @returns {BX.Crm.Conversion.Converter}
+	   */
+	  // eslint-disable-next-line camelcase
+	  setAnalyticsElement(c_element) {
+	    // eslint-disable-next-line camelcase
+	    const filtered = babelHelpers.classPrivateFieldLooseBase(this, _filterExternalAnalytics)[_filterExternalAnalytics]({
+	      c_element
+	    });
+	    if ('c_element' in filtered) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_element = filtered.c_element;
+	    }
+	    return this;
+	  }
+	  convertBySchemeItemId(schemeItemId, entityId, data) {
+	    const targetSchemeItem = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].getScheme().getItemById(schemeItemId);
+	    if (!targetSchemeItem) {
+	      console.error('Scheme is not found', schemeItemId, this);
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].updateFromSchemeItem(targetSchemeItem);
+	    this.convert(entityId, data);
+	  }
+	  convert(entityId, data) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = entityId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data] = data;
+	    const schemeItem = babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].getScheme().getCurrentItem();
+	    if (!schemeItem) {
+	      console.error('Scheme is not found', this);
+	      return;
+	    }
+	    if (main_core.Type.isStringFilled(schemeItem.getAvailabilityLock())) {
+	      // eslint-disable-next-line no-eval
+	      eval(schemeItem.getAvailabilityLock());
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].getActiveItems().forEach(item => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData](item.getEntityTypeId(), crm_integration_analytics.Dictionary.STATUS_ATTEMPT);
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _collectAdditionalData)[_collectAdditionalData](schemeItem).then(result => {
+	      if (result.isCanceled) {
+	        // pass it to next 'then' handler
+	        return result;
+	      }
+	      return babelHelpers.classPrivateFieldLooseBase(this, _request)[_request]();
+	    }).then(result => {
+	      if (!result.isFinished) {
+	        // dont need to register anything in statistics
+
 	        return;
 	      }
-	      if (main_core.Type.isStringFilled(schemeItem.getAvailabilityLock())) {
-	        eval(schemeItem.getAvailabilityLock());
-	        return;
-	      }
-	      _classPrivateMethodGet$1(this, _collectAdditionalData, _collectAdditionalData2).call(this, schemeItem).then(function (result) {
-	        if (result.isCanceled) {
-	          return;
-	        }
-	        _classPrivateMethodGet$1(_this, _request, _request2).call(_this);
-	      })["catch"](function (error) {
-	        if (error) {
-	          console.error(error);
-	        }
+	      const status = result.isCanceled ? crm_integration_analytics.Dictionary.STATUS_CANCEL : crm_integration_analytics.Dictionary.STATUS_SUCCESS;
+	      babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].getActiveItems().forEach(item => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData](item.getEntityTypeId(), status);
 	      });
-	    }
-	  }]);
-	  return Converter;
-	}();
+	    }).catch(error => {
+	      if (error) {
+	        // eslint-disable-next-line no-console
+	        console.log('Convert error', error, this);
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].getActiveItems().forEach(item => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData](item.getEntityTypeId(), crm_integration_analytics.Dictionary.STATUS_ERROR);
+	      });
+	    });
+	  }
+	  /**
+	   * @deprecated Will be removed soon
+	   * @todo delete, replace with messages from config.php
+	   */
+	  getMessagePublic(phraseId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage](phraseId);
+	  }
+	}
 	function _request2() {
-	  var serviceUrl = this.getServiceUrl();
-	  if (!serviceUrl) {
-	    console.error('Convert endpoint is not specifier');
-	    return;
-	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _isProgress)) {
-	    console.error('Another request is in progress');
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldSet(this, _isProgress, true);
-	  main_core.ajax({
-	    url: serviceUrl,
-	    method: "POST",
-	    dataType: "json",
-	    data: {
-	      "MODE": "CONVERT",
-	      "ENTITY_ID": babelHelpers.classPrivateFieldGet(this, _entityId),
-	      "ENABLE_SYNCHRONIZATION": babelHelpers.classPrivateFieldGet(this, _isSynchronisationAllowed) ? "Y" : "N",
-	      "ENABLE_REDIRECT_TO_SHOW": this.isRedirectToDetailPageEnabled ? "Y" : "N",
-	      "CONFIG": this.getConfig().externalize(),
-	      "CONTEXT": this.data,
-	      "ORIGIN_URL": this.getOriginUrl()
-	    },
-	    onsuccess: _classPrivateMethodGet$1(this, _onRequestSuccess, _onRequestSuccess2).bind(this),
-	    onfailure: _classPrivateMethodGet$1(this, _onRequestError, _onRequestError2).bind(this)
-	  });
-	}
-	function _onRequestSuccess2(response) {
-	  // todo return promise
-	  babelHelpers.classPrivateFieldSet(this, _isProgress, false);
-	  if (response.ERROR) {
-	    ui_dialogs_messagebox.MessageBox.alert(response.ERROR.MESSAGE || "Error during conversion");
-	    return;
-	  }
-	  if (main_core.Type.isPlainObject(response.REQUIRED_ACTION)) {
-	    return _classPrivateMethodGet$1(this, _processRequiredAction, _processRequiredAction2).call(this, response.REQUIRED_ACTION);
-	  }
-	  var data = main_core.Type.isPlainObject(response.DATA) ? response.DATA : {};
-	  if (!data) {
-	    return;
-	  }
-	  var redirectUrl = main_core.Type.isString(data.URL) ? data.URL : "";
-	  var isRedirected = false;
-	  if (data.IS_FINISHED && data.IS_FINISHED === "Y") {
-	    this.data = {};
-	    isRedirected = _classPrivateMethodGet$1(this, _emitConvertedEvent, _emitConvertedEvent2).call(this, redirectUrl);
-	  }
-	  if (redirectUrl !== "" && !isRedirected) {
-	    BX.Crm.Page.open(redirectUrl);
-	  } else if (!(isRedirected && window.top === window)) ;
-	}
-	function _onRequestError2(error) {
-	  babelHelpers.classPrivateFieldSet(this, _isProgress, false);
-	  ui_dialogs_messagebox.MessageBox.alert(error);
-	}
-	function _collectAdditionalData2(schemeItem) {
-	  var _this2 = this;
-	  var config = this.getConfig();
-	  var promises = [];
-	  schemeItem.getEntityTypeIds().forEach(function (entityTypeId) {
-	    promises.push(function () {
-	      return _classPrivateMethodGet$1(_this2, _getCategoryForEntityTypeId, _getCategoryForEntityTypeId2).call(_this2, entityTypeId);
+	  const promise = new Promise((resolve, reject) => {
+	    const serviceUrl = this.getServiceUrl();
+	    if (!serviceUrl) {
+	      console.error('Convert endpoint is not specifier');
+	      reject();
+	      return;
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isProgress)[_isProgress]) {
+	      console.error('Another request is in progress');
+	      reject();
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isProgress)[_isProgress] = true;
+	    main_core.ajax({
+	      url: serviceUrl,
+	      method: 'POST',
+	      dataType: 'json',
+	      data: {
+	        MODE: 'CONVERT',
+	        ENTITY_ID: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
+	        ENABLE_SYNCHRONIZATION: babelHelpers.classPrivateFieldLooseBase(this, _isSynchronisationAllowed)[_isSynchronisationAllowed] ? 'Y' : 'N',
+	        ENABLE_REDIRECT_TO_SHOW: this.isRedirectToDetailPageEnabled() ? 'Y' : 'N',
+	        CONFIG: this.getConfig().externalize(),
+	        CONTEXT: babelHelpers.classPrivateFieldLooseBase(this, _data)[_data],
+	        ORIGIN_URL: this.getOriginUrl()
+	      },
+	      onsuccess: resolve,
+	      onfailure: reject
 	    });
 	  });
-	  var result = {
-	    isCanceled: false
+	  return promise.then(response => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isProgress)[_isProgress] = false;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _onRequestSuccess)[_onRequestSuccess](response);
+	  }).catch(error => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isProgress)[_isProgress] = false;
+	    if (main_core.Type.isStringFilled(error)) {
+	      // response may contain info about action required from user
+	      ui_dialogs_messagebox.MessageBox.alert(main_core.Text.encode(error));
+	    }
+
+	    // pass error to next 'catch'
+	    throw error;
+	  });
+	}
+	function _sendAnalyticsData2(dstEntityTypeId, status) {
+	  const builder = crm_integration_analytics.Builder.Entity.ConvertEvent.createDefault(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2], dstEntityTypeId).setSubSection(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_sub_section).setElement(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_element).setStatus(status);
+	  ui_analytics.sendData(builder.buildData());
+	}
+	function _filterExternalAnalytics2(analytics) {
+	  if (!main_core.Type.isPlainObject(analytics)) {
+	    return {};
+	  }
+	  const allowedKeys = new Set(['c_sub_section', 'c_element']);
+	  const result = {};
+	  for (const [key, value] of Object.entries(analytics)) {
+	    if (allowedKeys.has(key) && main_core.Type.isStringFilled(value)) {
+	      result[key] = value;
+	    }
+	  }
+	  return result;
+	}
+	function _onRequestSuccess2(response) {
+	  return new Promise((resolve, reject) => {
+	    if (response.ERROR) {
+	      var _response$ERROR;
+	      reject(((_response$ERROR = response.ERROR) == null ? void 0 : _response$ERROR.MESSAGE) || response.ERROR || 'Error during conversion');
+	      return;
+	    }
+	    if (main_core.Type.isPlainObject(response.REQUIRED_ACTION)) {
+	      resolve(babelHelpers.classPrivateFieldLooseBase(this, _processRequiredAction)[_processRequiredAction](response.REQUIRED_ACTION));
+	      return;
+	    }
+	    const data = main_core.Type.isPlainObject(response.DATA) ? response.DATA : {};
+	    if (!data) {
+	      reject();
+	      return;
+	    }
+	    const resolveResult = {
+	      isCanceled: false,
+	      isFinished: true
+	    };
+	    const redirectUrl = main_core.Type.isString(data.URL) ? data.URL : '';
+	    if (data.IS_FINISHED === 'Y') {
+	      // result entity was created on backend, conversion is finished
+	      babelHelpers.classPrivateFieldLooseBase(this, _data)[_data] = {};
+	      const wasRedirectedInExternalEventHandler = babelHelpers.classPrivateFieldLooseBase(this, _emitConvertedEvent)[_emitConvertedEvent](redirectUrl);
+	      if (wasRedirectedInExternalEventHandler) {
+	        resolve(resolveResult);
+	        return;
+	      }
+	    } else {
+	      // backend could not create result entity automatically, user interaction is required
+	      resolveResult.isFinished = false;
+	    }
+	    if (redirectUrl) {
+	      const redirectUrlObject = new main_core.Uri(redirectUrl);
+	      const currentRedirectUrlAnalytics = redirectUrlObject.getQueryParam('st') || {};
+	      redirectUrlObject.setQueryParam('st', {
+	        ...babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics,
+	        ...currentRedirectUrlAnalytics
+	      });
+	      BX.Crm.Page.open(redirectUrlObject.toString());
+	    } else if (window.top !== window) ;
+	    resolve(resolveResult);
+	  });
+	}
+	function _collectAdditionalData2(schemeItem) {
+	  const config = this.getConfig();
+	  const promises = [];
+	  schemeItem.getEntityTypeIds().forEach(entityTypeId => {
+	    promises.push(() => {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getCategoryForEntityTypeId)[_getCategoryForEntityTypeId](entityTypeId);
+	    });
+	  });
+	  const result = {
+	    isCanceled: false,
+	    isFinished: true
 	  };
-	  var promiseIterator = function promiseIterator(promises) {
-	    var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	    return new Promise(function (resolve, reject) {
-	      if (result.isCanceled || !promises[index]) {
+	  const promiseIterator = (receivedPromises, index = 0) => {
+	    return new Promise((resolve, reject) => {
+	      if (result.isCanceled || !receivedPromises[index]) {
 	        resolve(result);
 	        return;
 	      }
-	      promises[index]().then(function (categoryResult) {
+	      receivedPromises[index]().then(categoryResult => {
 	        if (categoryResult.isCanceled) {
 	          result.isCanceled = true;
 	        } else if (categoryResult.category) {
-	          var entityTypeId = categoryResult.category.getEntityTypeId();
-	          var configItem = config.getItemByEntityTypeId(entityTypeId);
+	          const entityTypeId = categoryResult.category.getEntityTypeId();
+	          const configItem = config.getItemByEntityTypeId(entityTypeId);
 	          if (!configItem) {
-	            reject('Scheme is not correct: configItem is not found for ' + entityTypeId);
+	            console.error(`Scheme is not correct: configItem is not found for ${entityTypeId}`, this);
+	            reject();
 	            return;
 	          }
-	          var initData = configItem.getInitData();
+	          const initData = configItem.getInitData();
 	          initData.categoryId = categoryResult.category.getId();
 	          configItem.setInitData(initData);
 	        }
-	        resolve(promiseIterator(promises, ++index));
-	      });
+	        resolve(promiseIterator(receivedPromises, index + 1));
+	      }).catch(reject);
 	    });
 	  };
 	  return promiseIterator(promises);
 	}
 	function _getCategoryForEntityTypeId2(entityTypeId) {
-	  var _this3 = this;
-	  return new Promise(function (resolve, reject) {
-	    var configItem = _this3.getConfig().getItemByEntityTypeId(entityTypeId);
+	  return new Promise((resolve, reject) => {
+	    const configItem = this.getConfig().getItemByEntityTypeId(entityTypeId);
 	    if (!configItem) {
-	      reject('Scheme is not correct: configItem is not found for ' + entityTypeId);
+	      console.error(`Scheme is not correct: configItem is not found for ${entityTypeId}`, this);
+	      reject();
 	      return;
 	    }
-	    if (_classPrivateMethodGet$1(_this3, _isNeedToLoadCategories, _isNeedToLoadCategories2).call(_this3, entityTypeId)) {
-	      crm_categoryList.CategoryList.Instance.getItems(entityTypeId).then(function (categories) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isNeedToLoadCategories)[_isNeedToLoadCategories](entityTypeId)) {
+	      CategoryRepository.Instance.getCategories(entityTypeId).then(categories => {
 	        if (categories.length > 1) {
-	          _classPrivateMethodGet$1(_this3, _showCategorySelector, _showCategorySelector2).call(_this3, categories, configItem.getTitle()).then(resolve)["catch"](reject);
+	          resolve(babelHelpers.classPrivateFieldLooseBase(this, _showCategorySelector)[_showCategorySelector](categories, configItem.getTitle()));
 	        } else {
 	          resolve({
 	            isCanceled: false,
 	            category: categories[0]
 	          });
 	        }
-	      })["catch"](reject);
+	      }).catch(reject);
 	    } else {
 	      resolve({
 	        isCanceled: false,
@@ -700,56 +797,60 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _isNeedToLoadCategories2(entityTypeId) {
-	  // todo pass isCategoriesEnabled from backend
-	  return entityTypeId === BX.CrmEntityType.enumeration.deal || BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId);
+	  return CategoryRepository.Instance.isCategoriesEnabled(entityTypeId);
 	}
 	function _showCategorySelector2(categories, title) {
-	  return new Promise(function (resolve) {
-	    var categorySelectorContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-converter-category-selector ui-form ui-form-line\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"crm-converter-category-selector-label ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t<div class=\"crm-converter-category-selector-select ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t<select class=\"ui-ctl-element\"></select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage("CRM_COMMON_CATEGORY"));
-	    var select = categorySelectorContent.querySelector('select');
-	    categories.forEach(function (category) {
-	      select.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<option value=\"", "\">", "</option>"])), category.getId(), main_core.Text.encode(category.getName())));
+	  return new Promise(resolve => {
+	    const categorySelectorContent = main_core.Tag.render(_t || (_t = _`
+				<div class="crm-converter-category-selector ui-form ui-form-line">
+					<div class="ui-form-row">
+						<div class="crm-converter-category-selector-label ui-form-label">
+							<div class="ui-ctl-label-text">${0}</div>
+						</div>
+						<div class="ui-form-content">
+							<div class="crm-converter-category-selector-select ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+								<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+								<select class="ui-ctl-element"></select>
+							</div>
+						</div>
+					</div>
+				</div>
+			`), main_core.Loc.getMessage('CRM_COMMON_CATEGORY'));
+	    const select = categorySelectorContent.querySelector('select');
+	    categories.forEach(category => {
+	      main_core.Dom.append(main_core.Tag.render(_t2 || (_t2 = _`<option value="${0}">${0}</option>`), category.getId(), main_core.Text.encode(category.getName())), select);
 	    });
-	    var popup = new main_popup.Popup({
-	      titleBar: main_core.Loc.getMessage("CRM_CONVERSION_CATEGORY_SELECTOR_TITLE", {
+	    const popup = new main_popup.Popup({
+	      titleBar: main_core.Loc.getMessage('CRM_CONVERSION_CATEGORY_SELECTOR_TITLE', {
 	        '#ENTITY#': main_core.Text.encode(title)
 	      }),
 	      content: categorySelectorContent,
 	      closeByEsc: true,
 	      closeIcon: true,
 	      buttons: [new ui_buttons.Button({
-	        text: main_core.Loc.getMessage("CRM_COMMON_ACTION_SAVE"),
+	        text: main_core.Loc.getMessage('CRM_COMMON_ACTION_SAVE'),
 	        color: ui_buttons.ButtonColor.SUCCESS,
-	        onclick: function onclick() {
-	          var value = Array.from(select.selectedOptions)[0].value;
+	        onclick: () => {
+	          const value = [...select.selectedOptions][0].value;
 	          popup.destroy();
-	          var _iterator = _createForOfIteratorHelper$2(categories),
-	            _step;
-	          try {
-	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	              var category = _step.value;
-	              if (category.getId() === Number(value)) {
-	                resolve({
-	                  category: category
-	                });
-	                return true;
-	              }
+	          for (const category of categories) {
+	            if (category.getId() === Number(value)) {
+	              resolve({
+	                category
+	              });
+	              return true;
 	            }
-	          } catch (err) {
-	            _iterator.e(err);
-	          } finally {
-	            _iterator.f();
 	          }
-	          console.error('Selected category not found');
+	          console.error('Selected category not found', value, categories);
 	          resolve({
 	            isCanceled: true
 	          });
 	          return true;
 	        }
 	      }), new ui_buttons.Button({
-	        text: main_core.Loc.getMessage("CRM_COMMON_ACTION_CANCEL"),
+	        text: main_core.Loc.getMessage('CRM_COMMON_ACTION_CANCEL'),
 	        color: ui_buttons.ButtonColor.LIGHT,
-	        onclick: function onclick() {
+	        onclick: () => {
 	          popup.destroy();
 	          resolve({
 	            isCanceled: true
@@ -758,7 +859,7 @@ this.BX = this.BX || {};
 	        }
 	      })],
 	      events: {
-	        onClose: function onClose() {
+	        onClose: () => {
 	          resolve({
 	            isCanceled: true
 	          });
@@ -769,309 +870,590 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _processRequiredAction2(action) {
-	  var name = String(action.NAME);
-	  var data = main_core.Type.isPlainObject(action.DATA) ? action.DATA : {};
-	  if (name === "SYNCHRONIZE") {
-	    var newConfig = null;
+	  const name = String(action.NAME);
+	  const data = main_core.Type.isPlainObject(action.DATA) ? action.DATA : {};
+	  if (name === 'SYNCHRONIZE') {
+	    let newConfig = null;
 	    if (main_core.Type.isArray(data.CONFIG)) {
 	      newConfig = data.CONFIG;
 	    } else if (main_core.Type.isPlainObject(data.CONFIG)) {
 	      newConfig = Object.values(data.CONFIG);
 	    }
 	    if (newConfig) {
-	      babelHelpers.classPrivateFieldGet(this, _config).updateItems(newConfig);
+	      babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].updateItems(newConfig);
 	    }
-	    _classPrivateMethodGet$1(this, _getFieldsSynchronizer, _getFieldsSynchronizer2).call(this, main_core.Type.isArray(data.FIELD_NAMES) ? data.FIELD_NAMES : []).show();
-	    return;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _synchronizeFields)[_synchronizeFields](main_core.Type.isArray(data.FIELD_NAMES) ? data.FIELD_NAMES : []);
 	  }
-	  if (name === "CORRECT") {
-	    if (main_core.Type.isPlainObject(data.CHECK_ERRORS)) {
-	      // todo this is actual for leads only.
-	      // this.openEntityEditorDialog(
-	      // 	{
-	      // 		title: manager ? manager.getMessage("checkErrorTitle") : null,
-	      // 		helpData: { text: manager.getMessage("checkErrorHelp"), code: manager.getMessage("checkErrorHelpArticleCode") },
-	      // 		fieldNames: Object.keys(checkErrors),
-	      // 		initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
-	      // 		context: BX.prop.getObject(data, "CONTEXT", null)
-	      // 	}
-	      // );
-	      return;
-	    }
+	  if (name === 'CORRECT' && main_core.Type.isPlainObject(data.CHECK_ERRORS)) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _askToFillRequiredFields)[_askToFillRequiredFields](data);
 	  }
+	  return Promise.resolve({
+	    isCanceled: false,
+	    isFinished: true
+	  });
+	}
+	function _synchronizeFields2(fieldNames) {
+	  const synchronizer = babelHelpers.classPrivateFieldLooseBase(this, _getFieldsSynchronizer)[_getFieldsSynchronizer](fieldNames);
+	  return new Promise(resolve => {
+	    const listener = (sender, args) => {
+	      const isConversionCancelled = main_core.Type.isBoolean(args.isCanceled) && args.isCanceled === true;
+	      if (isConversionCancelled) {
+	        synchronizer.removeClosingListener(listener);
+	        resolve({
+	          isCanceled: true,
+	          isFinished: true
+	        });
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _isSynchronisationAllowed)[_isSynchronisationAllowed] = true;
+	      babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].updateItems(Object.values(babelHelpers.classPrivateFieldLooseBase(this, _fieldsSynchronizer)[_fieldsSynchronizer].getConfig()));
+	      synchronizer.removeClosingListener(listener);
+	      resolve(babelHelpers.classPrivateFieldLooseBase(this, _request)[_request]());
+	    };
+	    synchronizer.addClosingListener(listener);
+	    synchronizer.show();
+	  });
 	}
 	function _getFieldsSynchronizer2(fieldNames) {
-	  var _this4 = this;
-	  if (babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer)) {
-	    babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer).setConfig(babelHelpers.classPrivateFieldGet(this, _config).externalize());
-	    babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer).setFieldNames(fieldNames);
-	    return babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer);
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _fieldsSynchronizer)[_fieldsSynchronizer]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _fieldsSynchronizer)[_fieldsSynchronizer] = BX.CrmEntityFieldSynchronizationEditor.create(`crm_converter_fields_synchronizer_${this.getEntityTypeId()}`, {
+	      config: babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].externalize(),
+	      title: babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage]('dialogTitle'),
+	      fieldNames,
+	      legend: babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage]('syncEditorLegend'),
+	      fieldListTitle: babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage]('syncEditorFieldListTitle'),
+	      entityListTitle: babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage]('syncEditorEntityListTitle'),
+	      continueButton: babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage]('continueButton'),
+	      cancelButton: babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage]('cancelButton')
+	    });
 	  }
-	  babelHelpers.classPrivateFieldSet(this, _fieldsSynchronizer, BX.CrmEntityFieldSynchronizationEditor.create("crm_converter_fields_synchronizer_" + this.getEntityTypeId(), {
-	    config: babelHelpers.classPrivateFieldGet(this, _config).externalize(),
-	    title: _classPrivateMethodGet$1(this, _getMessage, _getMessage2).call(this, "dialogTitle"),
-	    fieldNames: fieldNames,
-	    legend: _classPrivateMethodGet$1(this, _getMessage, _getMessage2).call(this, "syncEditorLegend"),
-	    fieldListTitle: _classPrivateMethodGet$1(this, _getMessage, _getMessage2).call(this, "syncEditorFieldListTitle"),
-	    entityListTitle: _classPrivateMethodGet$1(this, _getMessage, _getMessage2).call(this, "syncEditorEntityListTitle"),
-	    continueButton: _classPrivateMethodGet$1(this, _getMessage, _getMessage2).call(this, "continueButton"),
-	    cancelButton: _classPrivateMethodGet$1(this, _getMessage, _getMessage2).call(this, "cancelButton")
-	  }));
-	  babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer).addClosingListener(function (sender, args) {
-	    if (!(main_core.Type.isBoolean(args["isCanceled"]) && args["isCanceled"] === false)) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldSet(_this4, _isSynchronisationAllowed, true);
-	    babelHelpers.classPrivateFieldGet(_this4, _config).updateItems(Object.values(babelHelpers.classPrivateFieldGet(_this4, _fieldsSynchronizer).getConfig()));
-	    _classPrivateMethodGet$1(_this4, _request, _request2).call(_this4);
+	  babelHelpers.classPrivateFieldLooseBase(this, _fieldsSynchronizer)[_fieldsSynchronizer].setConfig(babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].externalize());
+	  babelHelpers.classPrivateFieldLooseBase(this, _fieldsSynchronizer)[_fieldsSynchronizer].setFieldNames(fieldNames);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _fieldsSynchronizer)[_fieldsSynchronizer];
+	}
+	function _askToFillRequiredFields2(data) {
+	  // just in case that there is previous not yet closed editor
+	  BX.Crm.PartialEditorDialog.close('entity-converter-editor');
+	  const entityEditor = BX.Crm.PartialEditorDialog.create('entity-converter-editor', {
+	    title: main_core.Loc.getMessage('CRM_CONVERSION_REQUIRED_FIELDS_POPUP_TITLE'),
+	    entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2],
+	    entityId: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
+	    fieldNames: Object.keys(data.CHECK_ERRORS),
+	    helpData: {
+	      text: main_core.Loc.getMessage('CRM_CONVERSION_MORE_ABOUT_REQUIRED_FIELDS'),
+	      code: REQUIRED_FIELDS_INFOHELPER_CODE
+	    },
+	    context: data.CONTEXT
 	  });
-	  return babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer);
+	  return new Promise(resolve => {
+	    const handler = (sender, eventParams) => {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2] !== (eventParams == null ? void 0 : eventParams.entityTypeId) || babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] !== (eventParams == null ? void 0 : eventParams.entityId)) {
+	        return;
+	      }
+
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+	      BX.removeCustomEvent(window, 'Crm.PartialEditorDialog.Close', handler);
+
+	      // yes, 'canceled' with double 'l' in this case
+	      const isCanceled = main_core.Type.isBoolean(eventParams.isCancelled) ? eventParams.isCancelled : true;
+	      if (isCanceled) {
+	        resolve({
+	          isCanceled: true,
+	          isFinished: true
+	        });
+	      } else {
+	        resolve(babelHelpers.classPrivateFieldLooseBase(this, _request)[_request]());
+	      }
+	    };
+
+	    // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+	    BX.addCustomEvent(window, 'Crm.PartialEditorDialog.Close', handler);
+	    entityEditor.open();
+	  });
 	}
 	function _getMessage2(phraseId) {
-	  if (!babelHelpers.classPrivateFieldGet(this, _params).messages) {
-	    babelHelpers.classPrivateFieldGet(this, _params).messages = {};
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].messages) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].messages = {};
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _params).messages[phraseId] || phraseId;
+	  return babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].messages[phraseId] || phraseId;
 	}
 	function _emitConvertedEvent2(redirectUrl) {
-	  var entityTypeId = this.getEntityTypeId();
-	  var eventArgs = {
-	    entityTypeId: entityTypeId,
+	  const entityTypeId = this.getEntityTypeId();
+	  const eventArgs = {
+	    entityTypeId,
 	    entityTypeName: BX.CrmEntityType.resolveName(entityTypeId),
-	    entityId: babelHelpers.classPrivateFieldGet(this, _entityId),
-	    redirectUrl: redirectUrl,
+	    entityId: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
+	    redirectUrl,
 	    isRedirected: false
 	  };
-	  var current = BX.Crm.Page.getTopSlider();
+	  const current = BX.Crm.Page.getTopSlider();
 	  if (current) {
-	    eventArgs["sliderUrl"] = current.getUrl();
+	    eventArgs.sliderUrl = current.getUrl();
 	  }
-	  BX.onCustomEvent(window, "Crm.EntityConverter.Converted", [this, eventArgs]);
-	  BX.localStorage.set("onCrmEntityConvert", eventArgs, 10);
-	  this.getConfig().getItems().forEach(function (item) {
-	    if (item.isActive()) {
-	      main_core_events.EventEmitter.emit('Crm.EntityConverter.SingleConverted', {
-	        entityTypeName: BX.CrmEntityType.resolveName(item.getEntityTypeId())
-	      });
-	    }
+
+	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+	  BX.onCustomEvent(window, 'Crm.EntityConverter.Converted', [this, eventArgs]);
+	  BX.localStorage.set('onCrmEntityConvert', eventArgs, 10);
+	  this.getConfig().getActiveItems().forEach(item => {
+	    main_core_events.EventEmitter.emit('Crm.EntityConverter.SingleConverted', {
+	      entityTypeName: BX.CrmEntityType.resolveName(item.getEntityTypeId())
+	    });
 	  });
-	  return eventArgs["isRedirected"];
+	  return eventArgs.isRedirected;
 	}
 
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	/**
+	 * @memberOf BX.Crm.Conversion
+	 */
+	var _converter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("converter");
+	var _entityId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _dstEntityTypeIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dstEntityTypeIds");
+	var _target = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("target");
+	var _dialogProp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogProp");
+	var _dialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialog");
+	var _convert = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("convert");
+	var _handleItemSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemSelect");
+	var _ensureOnlyOneItemOfEachTypeIsSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ensureOnlyOneItemOfEachTypeIsSelected");
+	class EntitySelector {
+	  constructor(converter, entityId, dstEntityTypeIds, target = null) {
+	    Object.defineProperty(this, _handleItemSelect, {
+	      value: _handleItemSelect2
+	    });
+	    Object.defineProperty(this, _convert, {
+	      value: _convert2
+	    });
+	    Object.defineProperty(this, _dialog, {
+	      get: _get_dialog,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _converter, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _entityId$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _dstEntityTypeIds, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _target, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _dialogProp, {
+	      writable: true,
+	      value: null
+	    });
+	    // this dont work in slider for some reason
+	    // if (converter instanceof Converter)
+	    // {
+	    // 	this.#converter = converter;
+	    // }
+	    babelHelpers.classPrivateFieldLooseBase(this, _converter)[_converter] = converter;
+
+	    // eslint-disable-next-line no-param-reassign
+	    entityId = main_core.Text.toInteger(entityId);
+	    if (entityId > 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1] = entityId;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _dstEntityTypeIds)[_dstEntityTypeIds] = dstEntityTypeIds.map(x => main_core.Text.toInteger(x)).filter(entityTypeId => BX.CrmEntityType.isDefined(entityTypeId));
+	    babelHelpers.classPrivateFieldLooseBase(this, _dstEntityTypeIds)[_dstEntityTypeIds].sort();
+	    if (main_core.Type.isDomNode(target) || main_core.Type.isNil(target)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _target)[_target] = target;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _converter)[_converter] || !babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1] || !main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _dstEntityTypeIds)[_dstEntityTypeIds])) {
+	      console.error('Invalid constructor params:', {
+	        converter,
+	        entityId,
+	        dstEntityTypeIds
+	      });
+	      throw new Error('Invalid constructor params');
+	    }
+	  }
+	  show() {
+	    return new Promise(resolve => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].subscribeOnce('onShow', resolve);
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].show();
+	    });
+	  }
+	  hide() {
+	    return new Promise(resolve => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].subscribeOnce('onHide', resolve);
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].hide();
+	    });
+	  }
+	  destroy() {
+	    return new Promise(resolve => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].unsubscribe('Item:onSelect', babelHelpers.classPrivateFieldLooseBase(this, _handleItemSelect)[_handleItemSelect].bind(this));
+	      babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].destroy();
+	      resolve();
+	    });
+	  }
+	  getConverter() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _converter)[_converter];
+	  }
+	}
+	function _get_dialog() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp]) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp];
+	  }
+	  const applyButton = new ui_buttons.ApplyButton({
+	    color: ui_buttons.ButtonColor.SUCCESS,
+	    onclick: () => {
+	      void this.hide();
+	      babelHelpers.classPrivateFieldLooseBase(this, _convert)[_convert]();
+	    }
+	  });
+	  const cancelButton = new ui_buttons.CancelButton({
+	    onclick: () => {
+	      void this.hide();
+	    }
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp] = new ui_entitySelector.Dialog({
+	    targetNode: babelHelpers.classPrivateFieldLooseBase(this, _target)[_target],
+	    enableSearch: true,
+	    context: `crm.converter.entity-selector.${babelHelpers.classPrivateFieldLooseBase(this, _dstEntityTypeIds)[_dstEntityTypeIds].join('-')}`,
+	    entities: babelHelpers.classPrivateFieldLooseBase(this, _dstEntityTypeIds)[_dstEntityTypeIds].map(entityTypeId => {
+	      return {
+	        id: BX.CrmEntityType.resolveName(entityTypeId),
+	        dynamicLoad: true,
+	        dynamicSearch: true,
+	        options: {
+	          showTab: true,
+	          excludeMyCompany: true
+	        },
+	        searchFields: [{
+	          name: 'id'
+	        }],
+	        searchCacheLimits: ['^\\d+$']
+	      };
+	    }),
+	    footer: [applyButton.render(), cancelButton.render()],
+	    footerOptions: {
+	      containerStyles: {
+	        display: 'flex',
+	        'justify-content': 'center'
+	      }
+	    }
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp].subscribe('Item:onSelect', babelHelpers.classPrivateFieldLooseBase(this, _handleItemSelect)[_handleItemSelect].bind(this));
+	  return babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp];
+	}
+	function _convert2() {
+	  const activeEntityTypeIds = new Set();
+	  const data = {};
+	  babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getSelectedItems().forEach(item => {
+	    activeEntityTypeIds.add(BX.CrmEntityType.resolveId(item.getEntityId().toUpperCase()));
+	    data[item.getEntityId()] = item.getId();
+	  });
+	  const schemeItem = babelHelpers.classPrivateFieldLooseBase(this, _converter)[_converter].getConfig().getScheme().getItemForEntityTypeIds([...activeEntityTypeIds]);
+	  if (!schemeItem) {
+	    throw new Error(`Could not find a scheme item for destinations ${[...activeEntityTypeIds].join(', ')}`);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _converter)[_converter].getConfig().updateFromSchemeItem(schemeItem);
+	  babelHelpers.classPrivateFieldLooseBase(this, _converter)[_converter].convert(babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1], data);
+	}
+	function _handleItemSelect2(event) {
+	  const {
+	    item
+	  } = event.getData();
+	  babelHelpers.classPrivateFieldLooseBase(EntitySelector, _ensureOnlyOneItemOfEachTypeIsSelected)[_ensureOnlyOneItemOfEachTypeIsSelected](babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog], item);
+	}
+	function _ensureOnlyOneItemOfEachTypeIsSelected2(dialog, justSelectedItem) {
+	  dialog.getSelectedItems().forEach(item => {
+	    if (item.getEntityId() === justSelectedItem.getEntityId() && main_core.Text.toInteger(item.getId()) !== main_core.Text.toInteger(justSelectedItem.getId())) {
+	      item.deselect();
+	    }
+	  });
+	}
+	Object.defineProperty(EntitySelector, _ensureOnlyOneItemOfEachTypeIsSelected, {
+	  value: _ensureOnlyOneItemOfEachTypeIsSelected2
+	});
+
+	let instance$1 = null;
+
+	/**
+	 * @memberOf BX.Crm.Conversion
+	 */
+	var _converters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("converters");
+	class Manager {
+	  constructor() {
+	    Object.defineProperty(this, _converters, {
+	      writable: true,
+	      value: {}
+	    });
+	  }
+	  static get Instance() {
+	    if (instance$1 === null) {
+	      instance$1 = new Manager();
+	    }
+	    return instance$1;
+	  }
+	  initializeConverter(entityTypeId, params) {
+	    const config = Config.create(entityTypeId, params.configItems, Scheme.create(params.scheme));
+	    const converter = new Converter(entityTypeId, config, params.params);
+	    babelHelpers.classPrivateFieldLooseBase(this, _converters)[_converters][converter.getId()] = converter;
+	    return converter;
+	  }
+	  getConverter(converterId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _converters)[_converters][converterId];
+	  }
+	  createEntitySelector(converterId, dstEntityTypeIds, entityId) {
+	    const converter = this.getConverter(converterId);
+	    if (!converter) {
+	      console.error('Converter with given id not found', converterId, this);
+	      return null;
+	    }
+
+	    // check whether converter supports this type of scheme
+	    const schemeItem = converter.getConfig().getScheme().getItemForEntityTypeIds(dstEntityTypeIds);
+	    if (!schemeItem) {
+	      console.error('Could not find scheme item', dstEntityTypeIds, converter);
+	      return null;
+	    }
+	    return new EntitySelector(converter, entityId, dstEntityTypeIds);
+	  }
+	}
 
 	/**
 	 * @memberOf BX.Crm.Conversion
 	 * @mixes EventEmitter
 	 */
-	var _entityId$1 = /*#__PURE__*/new WeakMap();
-	var _container = /*#__PURE__*/new WeakMap();
-	var _menuButton = /*#__PURE__*/new WeakMap();
-	var _label = /*#__PURE__*/new WeakMap();
-	var _converter = /*#__PURE__*/new WeakMap();
-	var _menuId = /*#__PURE__*/new WeakMap();
-	var _isAutoConversionEnabled = /*#__PURE__*/new WeakMap();
-	var _initUI = /*#__PURE__*/new WeakSet();
-	var _bindEvents = /*#__PURE__*/new WeakSet();
-	var _handleContainerClick = /*#__PURE__*/new WeakSet();
-	var _handleMenuButtonClick = /*#__PURE__*/new WeakSet();
-	var _showMenu = /*#__PURE__*/new WeakSet();
-	var _closeMenu = /*#__PURE__*/new WeakSet();
-	var _getMenuItems = /*#__PURE__*/new WeakSet();
-	var _handleItemClick = /*#__PURE__*/new WeakSet();
-	var SchemeSelector = /*#__PURE__*/function () {
-	  function SchemeSelector(converter, params) {
-	    babelHelpers.classCallCheck(this, SchemeSelector);
-	    _classPrivateMethodInitSpec$2(this, _handleItemClick);
-	    _classPrivateMethodInitSpec$2(this, _getMenuItems);
-	    _classPrivateMethodInitSpec$2(this, _closeMenu);
-	    _classPrivateMethodInitSpec$2(this, _showMenu);
-	    _classPrivateMethodInitSpec$2(this, _handleMenuButtonClick);
-	    _classPrivateMethodInitSpec$2(this, _handleContainerClick);
-	    _classPrivateMethodInitSpec$2(this, _bindEvents);
-	    _classPrivateMethodInitSpec$2(this, _initUI);
-	    _classPrivateFieldInitSpec$5(this, _entityId$1, {
+	var _entityId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityId");
+	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _menuButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuButton");
+	var _label = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("label");
+	var _converter$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("converter");
+	var _menuId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuId");
+	var _isAutoConversionEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAutoConversionEnabled");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _initUI = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initUI");
+	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
+	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
+	var _handleContainerClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleContainerClick");
+	var _handleMenuButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleMenuButtonClick");
+	var _showMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showMenu");
+	var _closeMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeMenu");
+	var _getMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuItems");
+	var _prepareEntitySelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareEntitySelector");
+	var _handleItemClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemClick");
+	class SchemeSelector {
+	  constructor(converter, params) {
+	    Object.defineProperty(this, _handleItemClick, {
+	      value: _handleItemClick2
+	    });
+	    Object.defineProperty(this, _prepareEntitySelector, {
+	      value: _prepareEntitySelector2
+	    });
+	    Object.defineProperty(this, _getMenuItems, {
+	      value: _getMenuItems2
+	    });
+	    Object.defineProperty(this, _closeMenu, {
+	      value: _closeMenu2
+	    });
+	    Object.defineProperty(this, _showMenu, {
+	      value: _showMenu2
+	    });
+	    Object.defineProperty(this, _handleMenuButtonClick, {
+	      value: _handleMenuButtonClick2
+	    });
+	    Object.defineProperty(this, _handleContainerClick, {
+	      value: _handleContainerClick2
+	    });
+	    Object.defineProperty(this, _unbindEvents, {
+	      value: _unbindEvents2
+	    });
+	    Object.defineProperty(this, _bindEvents, {
+	      value: _bindEvents2
+	    });
+	    Object.defineProperty(this, _initUI, {
+	      value: _initUI2
+	    });
+	    Object.defineProperty(this, _entityId$2, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$5(this, _container, {
+	    Object.defineProperty(this, _container, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$5(this, _menuButton, {
+	    Object.defineProperty(this, _menuButton, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$5(this, _label, {
+	    Object.defineProperty(this, _label, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$5(this, _converter, {
+	    Object.defineProperty(this, _converter$1, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$5(this, _menuId, {
+	    Object.defineProperty(this, _menuId, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$5(this, _isAutoConversionEnabled, {
+	    Object.defineProperty(this, _isAutoConversionEnabled, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _converter, converter);
-	    babelHelpers.classPrivateFieldSet(this, _entityId$1, Number(params.entityId));
-	    babelHelpers.classPrivateFieldSet(this, _container, document.getElementById(params.containerId));
-	    babelHelpers.classPrivateFieldSet(this, _menuButton, document.getElementById(params.buttonId));
-	    babelHelpers.classPrivateFieldSet(this, _label, document.getElementById(params.labelId));
-	    babelHelpers.classPrivateFieldSet(this, _menuId, 'crm_conversion_scheme_selector_' + babelHelpers.classPrivateFieldGet(this, _entityId$1) + '_' + main_core.Text.getRandom());
-	    babelHelpers.classPrivateFieldSet(this, _isAutoConversionEnabled, false);
-	    if (!babelHelpers.classPrivateFieldGet(this, _entityId$1) || !babelHelpers.classPrivateFieldGet(this, _container) || !babelHelpers.classPrivateFieldGet(this, _menuButton) || !babelHelpers.classPrivateFieldGet(this, _label) || !babelHelpers.classPrivateFieldGet(this, _converter)) {
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: {}
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1] = converter;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2] = Number(params.entityId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = document.getElementById(params.containerId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuButton)[_menuButton] = document.getElementById(params.buttonId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _label)[_label] = document.getElementById(params.labelId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _menuId)[_menuId] = `crm_conversion_scheme_selector_${babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2]}_${main_core.Text.getRandom()}`;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAutoConversionEnabled)[_isAutoConversionEnabled] = false;
+	    if (main_core.Type.isStringFilled(params.analytics.c_element)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].c_element = params.analytics.c_element;
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2] || !babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] || !babelHelpers.classPrivateFieldLooseBase(this, _menuButton)[_menuButton] || !babelHelpers.classPrivateFieldLooseBase(this, _label)[_label] || !babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1]) {
 	      console.error('Error SchemeSelector initializing', this);
 	    } else {
-	      _classPrivateMethodGet$2(this, _initUI, _initUI2).call(this);
-	      _classPrivateMethodGet$2(this, _bindEvents, _bindEvents2).call(this);
+	      babelHelpers.classPrivateFieldLooseBase(this, _initUI)[_initUI]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
 	    }
-	    main_core_events.EventEmitter.makeObservable(this, 'BX.Crm.Conversion');
+	    main_core_events.EventEmitter.makeObservable(this, 'BX.Crm.Conversion.SchemeSelector');
 	  }
-	  babelHelpers.createClass(SchemeSelector, [{
-	    key: "enableAutoConversion",
-	    value: function enableAutoConversion() {
-	      babelHelpers.classPrivateFieldSet(this, _isAutoConversionEnabled, true);
-	    }
-	  }, {
-	    key: "disableAutoConversion",
-	    value: function disableAutoConversion() {
-	      babelHelpers.classPrivateFieldSet(this, _isAutoConversionEnabled, false);
-	    }
-	  }]);
-	  return SchemeSelector;
-	}();
+	  destroy() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _closeMenu)[_closeMenu]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _unbindEvents)[_unbindEvents]();
+	    this.unsubscribeAll();
+	  }
+
+	  /**
+	   * Alias for 'destroy'
+	   */
+	  release() {
+	    this.destroy();
+	  }
+	  enableAutoConversion() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAutoConversionEnabled)[_isAutoConversionEnabled] = true;
+	  }
+	  disableAutoConversion() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAutoConversionEnabled)[_isAutoConversionEnabled] = false;
+	  }
+	}
 	function _initUI2() {
-	  var currentSchemeItem = babelHelpers.classPrivateFieldGet(this, _converter).getConfig().getScheme().getCurrentItem();
+	  const currentSchemeItem = babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getConfig().getScheme().getCurrentItem();
 	  if (currentSchemeItem) {
-	    babelHelpers.classPrivateFieldGet(this, _label).innerText = currentSchemeItem.getPhrase();
+	    babelHelpers.classPrivateFieldLooseBase(this, _label)[_label].innerText = currentSchemeItem.getPhrase();
 	  }
 	}
 	function _bindEvents2() {
-	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _container), "click", _classPrivateMethodGet$2(this, _handleContainerClick, _handleContainerClick2).bind(this));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _menuButton), "click", _classPrivateMethodGet$2(this, _handleMenuButtonClick, _handleMenuButtonClick2).bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleContainerClick)[_handleContainerClick].bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _menuButton)[_menuButton], 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleMenuButtonClick)[_handleMenuButtonClick].bind(this));
+	}
+	function _unbindEvents2() {
+	  main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleContainerClick)[_handleContainerClick].bind(this));
+	  main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _menuButton)[_menuButton], 'click', babelHelpers.classPrivateFieldLooseBase(this, _handleMenuButtonClick)[_handleMenuButtonClick].bind(this));
 	}
 	function _handleContainerClick2() {
-	  var event = new main_core_events.BaseEvent({
+	  const event = new main_core_events.BaseEvent({
 	    data: {
 	      isCanceled: false
 	    }
 	  });
-	  this.emit('SchemeSelector:onContainerClick', event);
-	  babelHelpers.classPrivateFieldGet(this, _converter).getConfig().updateFromSchemeItem();
-	  if (babelHelpers.classPrivateFieldGet(this, _isAutoConversionEnabled) && !event.getData().isCanceled) {
-	    babelHelpers.classPrivateFieldGet(this, _converter).convert(babelHelpers.classPrivateFieldGet(this, _entityId$1));
+	  this.emit('onContainerClick', event);
+	  babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getConfig().updateFromSchemeItem();
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isAutoConversionEnabled)[_isAutoConversionEnabled] && !event.getData().isCanceled) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].setAnalyticsElement(babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].c_element);
+	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].convert(babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2]);
 	  }
 	}
 	function _handleMenuButtonClick2() {
-	  _classPrivateMethodGet$2(this, _showMenu, _showMenu2).call(this);
+	  babelHelpers.classPrivateFieldLooseBase(this, _showMenu)[_showMenu]();
 	}
 	function _showMenu2() {
-	  var anchorPos = BX.pos(babelHelpers.classPrivateFieldGet(this, _container));
+	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+	  const anchorPos = BX.pos(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	  main_popup.MenuManager.show({
-	    id: babelHelpers.classPrivateFieldGet(this, _menuId),
-	    bindElement: babelHelpers.classPrivateFieldGet(this, _menuButton),
-	    items: _classPrivateMethodGet$2(this, _getMenuItems, _getMenuItems2).call(this),
+	    id: babelHelpers.classPrivateFieldLooseBase(this, _menuId)[_menuId],
+	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _menuButton)[_menuButton],
+	    items: babelHelpers.classPrivateFieldLooseBase(this, _getMenuItems)[_getMenuItems](),
 	    closeByEsc: true,
 	    cacheable: false,
-	    offsetLeft: -anchorPos['width']
+	    offsetLeft: -anchorPos.width
 	  });
 	}
 	function _closeMenu2() {
-	  main_popup.MenuManager.destroy(babelHelpers.classPrivateFieldGet(this, _menuId));
+	  main_popup.MenuManager.destroy(babelHelpers.classPrivateFieldLooseBase(this, _menuId)[_menuId]);
 	}
 	function _getMenuItems2() {
-	  var _this = this;
-	  var items = [];
-	  babelHelpers.classPrivateFieldGet(this, _converter).getConfig().getScheme().getItems().forEach(function (item) {
+	  const scheme = babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getConfig().getScheme();
+	  const items = [];
+	  for (const item of scheme.getItems()) {
 	    items.push({
 	      text: main_core.Text.encode(item.getPhrase()),
-	      onclick: function onclick() {
-	        _classPrivateMethodGet$2(_this, _handleItemClick, _handleItemClick2).call(_this, item);
+	      onclick: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _handleItemClick)[_handleItemClick](item);
 	      }
 	    });
-	  });
+	  }
+	  const entitySelector = babelHelpers.classPrivateFieldLooseBase(this, _prepareEntitySelector)[_prepareEntitySelector](scheme);
+	  if (entitySelector) {
+	    items.push({
+	      text: babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getMessagePublic('openEntitySelector'),
+	      onclick: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _closeMenu)[_closeMenu]();
+	        void entitySelector.show();
+	      }
+	    });
+	  }
 	  return items;
 	}
+	function _prepareEntitySelector2(scheme) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getEntityTypeId() !== BX.CrmEntityType.enumeration.lead) {
+	    return null;
+	  }
+	  const allEntityTypeIdsInScheme = scheme.getAllEntityTypeIds();
+	  const dstEntityTypeIds = [];
+	  if (allEntityTypeIdsInScheme.includes(BX.CrmEntityType.enumeration.contact)) {
+	    dstEntityTypeIds.push(BX.CrmEntityType.enumeration.contact);
+	  }
+	  if (allEntityTypeIdsInScheme.includes(BX.CrmEntityType.enumeration.company)) {
+	    dstEntityTypeIds.push(BX.CrmEntityType.enumeration.company);
+	  }
+	  if (!main_core.Type.isArrayFilled(dstEntityTypeIds)) {
+	    return null;
+	  }
+	  return new EntitySelector(babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1], babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2], dstEntityTypeIds);
+	}
 	function _handleItemClick2(item) {
-	  _classPrivateMethodGet$2(this, _closeMenu, _closeMenu2).call(this);
-	  babelHelpers.classPrivateFieldGet(this, _label).innerText = item.getPhrase();
-	  babelHelpers.classPrivateFieldGet(this, _converter).getConfig().updateFromSchemeItem(item);
-	  var event = new main_core_events.BaseEvent({
+	  babelHelpers.classPrivateFieldLooseBase(this, _closeMenu)[_closeMenu]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _label)[_label].innerText = item.getPhrase();
+	  babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].getConfig().updateFromSchemeItem(item);
+	  const event = new main_core_events.BaseEvent({
 	    data: {
 	      isCanceled: false
 	    }
 	  });
-	  this.emit('SchemeSelector:onSchemeSelected', event);
-	  if (babelHelpers.classPrivateFieldGet(this, _isAutoConversionEnabled) && !event.getData().isCanceled) {
-	    babelHelpers.classPrivateFieldGet(this, _converter).convert(babelHelpers.classPrivateFieldGet(this, _entityId$1));
+	  this.emit('onSchemeSelected', event);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isAutoConversionEnabled)[_isAutoConversionEnabled] && !event.getData().isCanceled) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].setAnalyticsElement(babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].c_element);
+	    babelHelpers.classPrivateFieldLooseBase(this, _converter$1)[_converter$1].convert(babelHelpers.classPrivateFieldLooseBase(this, _entityId$2)[_entityId$2]);
 	  }
 	}
-
-	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var instance = null;
-
-	/**
-	 * @memberOf BX.Crm.Conversion
-	 */
-	var _converters = /*#__PURE__*/new WeakMap();
-	var Manager = /*#__PURE__*/function () {
-	  function Manager() {
-	    babelHelpers.classCallCheck(this, Manager);
-	    _classPrivateFieldInitSpec$6(this, _converters, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _converters, {});
-	  }
-	  babelHelpers.createClass(Manager, [{
-	    key: "initializeConverter",
-	    value: function initializeConverter(entityTypeId, params) {
-	      var config = Config.create(entityTypeId, params.configItems, Scheme.create(params.scheme));
-	      babelHelpers.classPrivateFieldGet(this, _converters)[entityTypeId] = new Converter(entityTypeId, config, params.params);
-	      return babelHelpers.classPrivateFieldGet(this, _converters)[entityTypeId];
-	    }
-	  }, {
-	    key: "getConverter",
-	    value: function getConverter(entityTypeId) {
-	      return babelHelpers.classPrivateFieldGet(this, _converters)[entityTypeId] || null;
-	    }
-	  }], [{
-	    key: "Instance",
-	    get: function get() {
-	      if (window.top !== window && main_core.Reflection.getClass('top.BX.Crm.Conversion.Manager')) {
-	        return window.top.BX.Crm.Conversion.Manager.Instance;
-	      }
-	      if (instance === null) {
-	        instance = new Manager();
-	      }
-	      return instance;
-	    }
-	  }]);
-	  return Manager;
-	}();
 
 	/**
 	 * @memberOf BX.Crm
 	 */
-	var Conversion = {
-	  Scheme: Scheme,
-	  Config: Config,
-	  Converter: Converter,
-	  Manager: Manager,
-	  SchemeSelector: SchemeSelector
+	const Conversion = {
+	  Scheme,
+	  Config,
+	  Converter,
+	  Manager,
+	  SchemeSelector,
+	  EntitySelector
 	};
 
 	exports.Conversion = Conversion;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Crm,BX.Crm.Models,BX.Event,BX.Main,BX.UI,BX.UI.Dialogs,BX,BX));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.Dialogs,BX,BX.Crm.Models,BX.UI,BX.UI.EntitySelector,BX,BX.Event,BX.Main));
 //# sourceMappingURL=conversion.bundle.js.map

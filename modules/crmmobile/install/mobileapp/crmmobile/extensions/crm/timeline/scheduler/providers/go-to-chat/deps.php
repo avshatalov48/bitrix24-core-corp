@@ -5,6 +5,7 @@ return [
 		'crm:loc',
 		'crm:type',
 		'crm:communication/communication-selector',
+		'crm:message-senders-connector',
 		'crm:multi-field-drawer',
 
 		'imconnector:connectors/telegram',

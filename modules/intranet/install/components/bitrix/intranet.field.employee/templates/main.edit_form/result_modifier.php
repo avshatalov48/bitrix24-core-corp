@@ -1,13 +1,15 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Localization\Loc;
 
 global $USER, $APPLICATION;
 
-if(trim($arResult['additionalParameters']['FORM_NAME']) === '')
+if (trim($arResult['additionalParameters']['FORM_NAME'] ?? '') === '')
 {
 	$arResult['additionalParameters']['FORM_NAME'] = 'form_element';
 }

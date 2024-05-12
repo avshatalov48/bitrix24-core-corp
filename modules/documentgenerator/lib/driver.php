@@ -8,12 +8,13 @@ use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\RegionTable;
 use Bitrix\DocumentGenerator\Model\Role;
-use Bitrix\DocumentGenerator\Model\RoleTable;
 use Bitrix\DocumentGenerator\Model\RoleAccessTable;
+use Bitrix\DocumentGenerator\Model\RoleTable;
 use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\DocumentGenerator\Storage\BFile;
 use Bitrix\DocumentGenerator\Storage\Disk;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Event;
@@ -35,6 +36,7 @@ final class Driver
 	protected $usersPermissions = [];
 	protected $dataProviderManager;
 	protected $documentClassName;
+	protected $virtualDocumentClassName;
 	protected $templateClassName;
 	protected $userPermissionsClassName;
 
@@ -78,6 +80,14 @@ final class Driver
 	public function getDocumentClassName(): string
 	{
 		return $this->documentClassName;
+	}
+
+	/**
+	 * @return Document
+	 */
+	public function getVirtualDocumentClassName(): string
+	{
+		return $this->virtualDocumentClassName;
 	}
 
 	/**
@@ -405,6 +415,7 @@ final class Driver
 	{
 		return [
 			'documentClassName' => Document::class,
+			'virtualDocumentClassName' => VirtualDocument::class,
 			'templateClassName' => Template::class,
 			'userPermissionsClassName' => UserPermissions::class,
 			'dataProviderManager' => DataProviderManager::class,
@@ -440,29 +451,70 @@ final class Driver
 	 */
 	public static function installDefaultTemplatesForCurrentRegion()
 	{
-		global $DB;
-		if(!$DB->TableExists(TemplateTable::getTableName()) || !$DB->TableExists(FileTable::getTableName()))
+		$connection = Application::getConnection();
+		if (
+			!$connection->isTableExists(TemplateTable::getTableName())
+			|| !$connection->isTableExists(FileTable::getTableName())
+		)
+		{
+			return '\\Bitrix\\DocumentGenerator\\Driver::installDefaultTemplatesForCurrentRegion();';
+		}
+
+		$regionCode = self::getInstance()->getCurrentRegion()['CODE'];
+		$lockName = self::MODULE_ID . '_install_default_templates_agent_region_' . $regionCode;
+		if (!$connection->lock($lockName))
 		{
 			return '\\Bitrix\\DocumentGenerator\\Driver::installDefaultTemplatesForCurrentRegion();';
 		}
 
 		$controller = new Controller\Template();
-
-		$result = $controller::getDefaultTemplateList(['REGION' => Driver::getInstance()->getCurrentRegion()['CODE']]);
-		if($result->isSuccess())
+		$result = $controller::getDefaultTemplateList(['REGION' => $regionCode]);
+		if ($result->isSuccess())
 		{
-			foreach($result->getData() as $template)
+			foreach ($result->getData() as $template)
 			{
-				if (
-					!isset($template['ID'])
-					|| $template['ID'] <= 0
-					|| (
-						isset($template['IS_DELETED'])
-						&& $template['IS_DELETED'] === 'Y'
-					)
-				)
+				$isExists = isset($template['ID']) && $template['ID'] > 0;
+				$isWasDeleted = isset($template['IS_DELETED']) && $template['IS_DELETED'] === 'Y';
+
+				if (!$isExists || $isWasDeleted)
 				{
-					$controller->installDefaultTemplateIfNotExists($template);
+					// if template already exists, it will be overwritten completely
+					$controller->installDefaultTemplate($template);
+				}
+			}
+		}
+
+		$connection->unlock($lockName);
+
+		return '';
+	}
+
+	final public static function updateBodyOfInstalledDefaultTemplates(): string
+	{
+		$connection = Application::getConnection();
+
+		if (
+			!$connection->isTableExists(TemplateTable::getTableName())
+			|| !$connection->isTableExists(FileTable::getTableName())
+		)
+		{
+			return '\\Bitrix\\DocumentGenerator\\Driver::updateBodyOfInstalledDefaultTemplates();';
+		}
+
+		$controller = new Controller\Template();
+		$result = $controller::getDefaultTemplateList(); // check for templates of all regions
+		if ($result->isSuccess())
+		{
+			foreach ($result->getData() as $template)
+			{
+				$isExists = isset($template['ID']) && $template['ID'] > 0;
+				$isWasDeleted = isset($template['IS_DELETED']) && $template['IS_DELETED'] === 'Y';
+				// we don't want to override user-uploaded template body. update body only if it wasn't modified by user
+				$isBodyWasNotChangedSinceInstall = isset($template['IS_DEFAULT']) && $template['IS_DEFAULT'] === 'Y';
+
+				if ($isExists && !$isWasDeleted && $isBodyWasNotChangedSinceInstall)
+				{
+					$controller->updateBodyOfDefaultTemplate($template);
 				}
 			}
 		}

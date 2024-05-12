@@ -67,7 +67,7 @@ class TextField extends BaseLinkedEntitiesField
 		$contentTypeId = $this->getContentTypeId($itemId);
 		$result['config']['contentTypeId'] = $contentTypeId;
 
-		if ($contentTypeId === \CCrmContentType::Html)
+		if ($contentTypeId === \CCrmContentType::Html && $this->getId() === 'COMMENTS')
 		{
 			$contentTypeId = \CCrmContentType::BBCode;
 			if (is_array($result['value']))

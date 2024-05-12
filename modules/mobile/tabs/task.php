@@ -13,7 +13,6 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Socialnetwork\Component\WorkgroupList;
-use Bitrix\TasksMobile\Settings;
 
 class Task implements Tabable
 {
@@ -111,6 +110,7 @@ class Task implements Tabable
 	{
 		$taskListTab = [
 			'id' => $this->getTaskListComponentCode(),
+			'testId' => 'tasks_list',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_TASKS'),
 			'component' => [
 				'name' => 'JSStackComponent',
@@ -139,6 +139,7 @@ class Task implements Tabable
 		];
 		$projectListTab = [
 			'id' => 'tasks.project.list',
+			'testId' => 'tasks_project',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_PROJECTS'),
 			'component' => [
 				'name' => 'JSStackComponent',
@@ -172,6 +173,7 @@ class Task implements Tabable
 		];
 		$scrumTab = [
 			'id' => 'tasks.scrum.list',
+			'testId' => 'tasks_scrum',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_SCRUM'),
 			'component' => [
 				'name' => 'JSStackComponent',
@@ -211,6 +213,7 @@ class Task implements Tabable
 		}
 		$efficiencyTab = [
 			'id' => 'tasks.efficiency',
+			'testId' => 'tasks_efficiency',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_EFFICIENCY'),
 			'selectable' => false,
 		];
@@ -265,44 +268,24 @@ class Task implements Tabable
 
 	private function getTaskListComponentCode(): string
 	{
-		return ($this->isNewDashboardActive() ? 'tasks.dashboard' : 'tasks.list');
+		return 'tasks.dashboard';
 	}
 
 	private function getTaskListScriptPath(): string
 	{
-		return Manager::getComponentPath(
-			$this->isNewDashboardActive() ? 'tasks:tasks.dashboard' : 'tasks:tasks.list.legacy'
-		);
+		return Manager::getComponentPath('tasks:tasks.dashboard');
 	}
 
 	private function getTaskListRootWidget(): array
 	{
-		if ($this->isNewDashboardActive())
-		{
-			return [
-				'name' => 'layout',
-				'settings' => [
-					'objectName' => 'layout',
-					'useSearch' => true,
-					'useLargeTitleMode' => true,
-				],
-			];
-		}
-
 		return [
-			'name' => 'tasks.list',
+			'name' => 'layout',
 			'settings' => [
-				'objectName' => 'list',
+				'objectName' => 'layout',
 				'useSearch' => true,
 				'useLargeTitleMode' => true,
-				'emptyListMode' => true,
 			],
 		];
-	}
-
-	private function isNewDashboardActive(): bool
-	{
-		return Loader::includeModule('tasksmobile') && Settings::getInstance()->isNewDashboardActive();
 	}
 
 	public function getId(): string

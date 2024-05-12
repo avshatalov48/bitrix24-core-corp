@@ -89,25 +89,25 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 
 		if($isUtf)
 		{
-			//\u00AB ´ left-pointing double angle quotation mark
-			//\u00BB ª right-pointing double angle quotation mark
-			//\u201E Ñ double low-9 quotation mark
+			//\u00AB ¬´ left-pointing double angle quotation mark
+			//\u00BB ¬ª right-pointing double angle quotation mark
+			//\u201E ‚Äû double low-9 quotation mark
 			//\u201F ? double high-reversed-9 quotation mark
-			//\u2018 ë left single quotation mark
-			//\u2019 í right single quotation mark
-			//\u201C ì left double quotation mark
-			//\u201D î right double quotation mark
+			//\u2018 ‚Äò left single quotation mark
+			//\u2019 ‚Äô right single quotation mark
+			//\u201C ‚Äú left double quotation mark
+			//\u201D ‚Äù right double quotation mark
 			self::$typeRx[] = '/[\x{00AB}\x{00BB}\x{2018}\x{2019}\x{201C}\x{201D}\x{201E}\x{201F}]/u';
 		}
 		else
 		{
-			//AB ´ left-pointing double angle quotation mark
-			//BB ª right-pointing double angle quotation mark
-			//84 Ñ double low-9 quotation mark
-			//91 ë left single quotation mark
-			//92 í right single quotation mark
-			//93 ì left double quotation mark
-			//94 î right double quotation mark
+			//AB ¬´ left-pointing double angle quotation mark
+			//BB ¬ª right-pointing double angle quotation mark
+			//84 ‚Äû double low-9 quotation mark
+			//91 ‚Äò left single quotation mark
+			//92 ‚Äô right single quotation mark
+			//93 ‚Äú left double quotation mark
+			//94 ‚Äù right double quotation mark
 			self::$typeRx[] = '/[\xAB\xBB\x84\x91\x92\x93\x94]/';
 		}
 

@@ -9,9 +9,8 @@ use Bitrix\Bizproc\BaseType\Value;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
-use Bitrix\Main\Loader;
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator;
+use Bitrix\Main\Loader;
 
 /**
  * Class CBPCrmGenerateEntityDocumentActivity
@@ -586,7 +585,7 @@ class CBPCrmGenerateEntityDocumentActivity
 	 */
 	public static function getDataProviderByEntityTypeId($entityTypeId)
 	{
-		return DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
+		return DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($entityTypeId);
 	}
 
 	public static function getAjaxResponse($request)

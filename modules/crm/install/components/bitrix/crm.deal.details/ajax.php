@@ -1892,7 +1892,8 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context,
-			'MODULE_ID' => $moduleId
+			'MODULE_ID' => $moduleId,
+			'ANALYTICS_CONFIG' => isset($_POST['ANALYTICS_CONFIG']) && is_array($_POST['ANALYTICS_CONFIG']) ? $_POST['ANALYTICS_CONFIG'] : null,
 		)
 	);
 

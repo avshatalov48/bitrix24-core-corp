@@ -10,7 +10,6 @@ return [
 		'layout/ui/product-grid/model',
 		'layout/ui/product-grid/services/barcode-scanner',
 		'alert',
-		'alert/confirm',
 		'notify',
 		'rest',
 		'selector/widget/factory',

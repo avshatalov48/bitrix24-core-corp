@@ -46,7 +46,7 @@ class TypeRelations
 		}
 
 		/**
-		 * Ñonstructor throws exception if parent type is the same as child type, but
+		 * Constructor throws exception if parent type is the same as child type, but
 		 * this is checked above
 		 * @noinspection PhpUnhandledExceptionInspection
 		 */

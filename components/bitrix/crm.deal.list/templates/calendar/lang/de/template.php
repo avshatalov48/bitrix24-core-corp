@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_DEAL_CALENDAR_TITLE"] = "Ein neues Element zum Kalender hinzufügen";
+$MESS["CRM_DEAL_CALENDAR"] = "Anruf oder Termin hinzufügen";
+$MESS["CRM_DEAL_LIST_FILTER_NAV_BUTTON_CALENDAR"] = "Kalender";
+$MESS["CRM_DEAL_LIST_FILTER_NAV_BUTTON_LIST"] = "Liste";
+$MESS["CRM_DEAL_LIST_FILTER_NAV_BUTTON_WIDGET"] = "Berichte";
+$MESS["CRM_DEAL_LIST_FILTER_NAV_BUTTON_KANBAN"] = "Kanban";
+?>

@@ -6,6 +6,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
+use Bitrix\Main\Web\Uri;
 
 class EntityConversionWizard
 {
@@ -126,7 +127,7 @@ class EntityConversionWizard
 		return true;
 	}
 
-	private function getRedirectUrlByConversionException(EntityConversionException $conversionException): ?Main\Web\Uri
+	final protected function getRedirectUrlByConversionException(EntityConversionException $conversionException): ?Main\Web\Uri
 	{
 		if ($conversionException->getTargetType() !== EntityConversionException::TARG_DST)
 		{
@@ -140,18 +141,30 @@ class EntityConversionWizard
 		}
 		else
 		{
-			$url = $router->getItemDetailUrl($conversionException->getDestinationEntityTypeID());
+			$categoryId = null;
+			$initData = $this->converter->getConfig()->getEntityInitData($conversionException->getDestinationEntityTypeID());
+			if (isset($initData['categoryId']) && (int)$initData['categoryId'] >= 0)
+			{
+				$categoryId = (int)$initData['categoryId'];
+			}
+
+			$url = $router->getItemDetailUrl($conversionException->getDestinationEntityTypeID(), 0, $categoryId);
 		}
 
-		if ($url)
+		if (!$url)
 		{
-			$url->addParams([
-				self::QUERY_PARAM_SOURCE_TYPE_ID => $this->getEntityTypeID(),
-				self::QUERY_PARAM_SOURCE_ID => $this->getEntityID(),
-			]);
+			return null;
 		}
 
-		return $url;
+		$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\ConvertOpenEvent::createDefault(
+			$conversionException->getDestinationEntityTypeID(),
+		);
+		$analyticsEventBuilder->setSrcEntityTypeId($this->getEntityTypeID());
+
+		return $analyticsEventBuilder->buildUri($url)->addParams([
+			self::QUERY_PARAM_SOURCE_TYPE_ID => $this->getEntityTypeID(),
+			self::QUERY_PARAM_SOURCE_ID => $this->getEntityID(),
+		]);
 	}
 
 	public static function getQueryParamSource(): array{
@@ -164,24 +177,30 @@ class EntityConversionWizard
 	/**
 	 * @param Array<string, int> $resultData
 	 *
-	 * @return Main\Web\Uri
+	 * @return Uri|null
 	 */
-	private function getRedirectUrlByResultData(array $resultData): ?Main\Web\Uri
+	final protected function getRedirectUrlByResultData(array $resultData): ?Main\Web\Uri
 	{
-		$destinationEntityTypeName = array_key_first($resultData);
-		$destinationId = (int)$resultData[$destinationEntityTypeName];
-
-		$destinationEntityTypeId = \CCrmOwnerType::ResolveID($destinationEntityTypeName);
-
-		if ($this->isMobileContext)
+		// array_reverse because we prioritize last added results
+		foreach (array_reverse($resultData, true) as $destinationEntityTypeName => $destinationId)
 		{
-			return Container::getInstance()->getRouter()->getMobileItemDetailUrl(
-				$destinationEntityTypeId,
-				$destinationId,
-			);
+			$destinationEntityTypeId = \CCrmOwnerType::ResolveID($destinationEntityTypeName);
+
+			if (\CCrmOwnerType::IsDefined($destinationEntityTypeId) && (int)$destinationId > 0)
+			{
+				if ($this->isMobileContext)
+				{
+					return Container::getInstance()->getRouter()->getMobileItemDetailUrl(
+						$destinationEntityTypeId,
+						$destinationId,
+					);
+				}
+
+				return Container::getInstance()->getRouter()->getItemDetailUrl($destinationEntityTypeId, $destinationId);
+			}
 		}
 
-		return Container::getInstance()->getRouter()->getItemDetailUrl($destinationEntityTypeId, $destinationId);
+		return null;
 	}
 
 	public function save()

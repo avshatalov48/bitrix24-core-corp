@@ -7,7 +7,6 @@ use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\DocumentGenerator\Nameable;
 
 class Company extends CrmEntityDataProvider
 {
@@ -90,13 +89,6 @@ class Company extends CrmEntityDataProvider
 			$this->fields['EMAIL']['VALUE'] = [$this, 'getClientEmail'];
 			$this->fields['IMOL'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_IMOL_TITLE'),
-			];
-			$this->fields['WEB'] = [
-				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANY_WEB_TITLE'),
-				'VALUE' => [$this, 'getClientWeb'],
-				'FORMAT' => [
-					'mfirst' => true,
-				],
 			];
 			$this->fields['REVENUE']['TYPE'] = Money::class;
 			$this->fields['REVENUE']['VALUE'] = [$this, 'getRevenue'];

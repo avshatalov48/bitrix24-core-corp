@@ -11,6 +11,7 @@ use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Grid\DashboardGrid;
 use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
+use Bitrix\BIConnector\Superset\Logger\Logger;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\Application;
@@ -20,7 +21,9 @@ use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Web\Uri;
 
 class Dashboard extends Controller
 {
@@ -353,14 +356,41 @@ class Dashboard extends Controller
 		if ($dashboard)
 		{
 			$gridRow = $this->prepareGridRow($dashboard);
+
 			$data['id'] = $addDashboardResult->getId();
+			$data['title'] = $dashboard->getTitle();
+
 			$data['columns'] = $gridRow['columns'];
 			$data['actions'] = $gridRow['actions'];
+
 
 			return ['dashboard' => $data];
 		}
 
 		return null;
+	}
+
+	/**
+	 * @example BX.ajax.runAction('biconnector.dashboard.getEditUrl', {data: {'editUrl': ''}});
+	 *
+	 * @param string $editUrl
+	 * @return string
+	 */
+	public function getEditUrlAction(string $editUrl): string
+	{
+		$loginUrl = (new SupersetController(ProxyIntegrator::getInstance()))->getLoginUrl();
+
+		if ($loginUrl)
+		{
+			$url = new Uri($loginUrl);
+			$url->addParams([
+				'next' => $editUrl,
+			]);
+
+			return $url->getLocator();
+		}
+
+		return $editUrl;
 	}
 
 	private function prepareGridRow(Model\Dashboard $dashboard): array
@@ -385,5 +415,78 @@ class Dashboard extends Controller
 		}
 
 		return [];
+	}
+
+	public function renameAction(Model\Dashboard $dashboard, string $title): void
+	{
+		$supersetController = new SupersetController(ProxyIntegrator::getInstance());
+		if (!$supersetController->isSupersetEnabled() || !$supersetController->isExternalServiceAvailable())
+		{
+			$this->addError(new Error(Loc::getMessage('BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_UNAVAILABLE')));
+
+			return;
+		}
+
+		$editTitleResult = $this->editDashboardTitle($dashboard, $title);
+		if (!$editTitleResult->isSuccess())
+		{
+			$this->addErrors($editTitleResult->getErrors());
+		}
+	}
+
+
+	private function editDashboardTitle(Model\Dashboard $dashboard, string $newTitle): Result
+	{
+		$result = new Result();
+		$newTitle = trim($newTitle);
+
+		$currentTitle = htmlspecialcharsbx($dashboard->getTitle());
+
+		if (empty($dashboard->getEditUrl()))
+		{
+			$errorMsg = Loc::getMessage('BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_FOUND');
+
+			return $result->addError(new Error($errorMsg));
+		}
+
+		if (empty($newTitle))
+		{
+			$errorMsg = Loc::getMessage('BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_EMPTY');
+
+			return $result->addError(new Error($errorMsg));
+		}
+
+		if ($dashboard->getStatus() !== SupersetDashboardTable::DASHBOARD_STATUS_READY)
+		{
+			$errorMsg = Loc::getMessage('BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_READY');
+
+			return $result->addError(new Error($errorMsg));
+		}
+
+		if ($dashboard->getType() !== SupersetDashboardTable::DASHBOARD_TYPE_CUSTOM)
+		{
+			$errorMsg = Loc::getMessage('BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM');
+
+			return $result->addError(new Error($errorMsg));
+		}
+
+		$changeResult = $dashboard->changeTitle($newTitle);
+		if (!$changeResult->isSuccess())
+		{
+			$errorsMsg = [];
+			foreach ($changeResult->getErrors() as $error)
+			{
+				$errorsMsg[] = $error->getMessage();
+			}
+
+			$errorMsgDesc = htmlspecialcharsbx(implode(', ', $errorsMsg));
+			Logger::logErrors([new Error("Unhandled error while change dashboard (ID: {$dashboard->getId()}) title: {$errorMsgDesc}")]);
+
+			$errorMsg = Loc::getMessage('BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_UNHANDLED');
+
+			return $result->addError(new Error($errorMsg));
+		}
+
+		return $result;
 	}
 }

@@ -11,8 +11,6 @@ abstract class Controller
 
 	abstract public function isEntityTypeSupported(int $entityTypeId): bool;
 
-	abstract public static function isEnabled(): bool;
-
 	abstract public function getQueryBuilder(): QueryBuilder;
 
 	/**

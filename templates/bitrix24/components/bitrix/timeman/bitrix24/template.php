@@ -79,7 +79,7 @@ $isCompositeMode = defined("USE_HTML_STATIC_CACHE");
 							"TM_STATUS_CLOSED" : "<?=GetMessageJS("TM_STATUS_START")?>",
 							"TM_STATUS_PAUSED" : "<?=GetMessageJS("TM_STATUS_PAUSED")?>",
 							"TM_STATUS_COMPLETED" : "<?=GetMessageJS("TM_STATUS_COMPLETED")?>",
-							"TM_STATUS_EXPIRED" : "<?=GetMessageJS("TM_STATUS_EXPIRED")?>"
+							"TM_STATUS_EXPIRED" : "<?=GetMessageJS("TM_STATUS_EXPIRED_MSGVER_1")?>"
 						});
 
 						B24.Timemanager.init(<?=CUtil::PhpToJsObject($arResult["WORK_REPORT"]);?>);
@@ -95,7 +95,7 @@ $isCompositeMode = defined("USE_HTML_STATIC_CACHE");
 			</span><?
 			?><span class="timeman-not-closed-block"><?
 				?><span class="timeman-not-cl-icon"></span><?
-				?><span class="timeman-not-cl-text"><?=GetMessage("TM_STATUS_EXPIRED")?></span><?
+				?><span class="timeman-not-cl-text"><?=GetMessage("TM_STATUS_EXPIRED_MSGVER_1")?></span><?
 			?></span><?
 			?><span class="timeman-background" id="timeman-background"></span>
 		</span>

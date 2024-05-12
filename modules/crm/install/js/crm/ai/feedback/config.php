@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/feedback.bundle.css',
 	'js' => 'dist/feedback.bundle.js',
 	'rel' => [
+		'crm.integration.analytics',
 		'main.core',
 		'ui.analytics',
 		'ui.dialogs.messagebox',

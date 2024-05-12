@@ -2,8 +2,11 @@
 
 namespace Bitrix\Intranet\Settings;
 
+use Bitrix\Intranet\Settings\Controls\Section;
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Json;
 
@@ -36,8 +39,6 @@ class ToolsSettings extends AbstractSettings
 				{
 					$tool->disable();
 					$isChanged = true;
-
-					continue;
 				}
 			}
 
@@ -105,6 +106,14 @@ class ToolsSettings extends AbstractSettings
 		global $USER;
 		$data = [];
 
+		$data['sectionTools'] = new Section(
+			'settings-tools-section-tools',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_TOOLS_SHOW'),
+			'ui-icon-set --service',
+			true,
+			canCollapse: false,
+		);
+
 		foreach ($this->baseTools as $tool)
 		{
 			$data['tools'][$tool->getId()] = [
@@ -121,5 +130,14 @@ class ToolsSettings extends AbstractSettings
 		}
 
 		return new static($data);
+	}
+
+	public function find(string $query): array
+	{
+		$searchEngine = SearchEngine::initWithDefaultFormatter([
+			'settings-tools-section-tools' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_TOOLS_SHOW')
+		]);
+
+		return $searchEngine->find($query);
 	}
 }

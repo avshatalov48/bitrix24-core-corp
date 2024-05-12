@@ -2,14 +2,16 @@
  * @module tasks/layout/checklist/list/src/actions/attachments
  */
 jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { RequestExecutor } = require('rest');
 	const { withCurrentDomain } = require('utils/url');
 	const { FileField } = require('layout/ui/fields/file');
 	const { useCallback } = require('utils/function');
-	const { IconView } = require('ui-system/blocks/icon');
+	const { IconView, iconTypes } = require('ui-system/blocks/icon');
+	const { isEqual } = require('utils/object');
 
 	const ICON_SIZE = 24;
+
 	/**
 	 * @class ItemAttachments
 	 */
@@ -22,14 +24,14 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			/** @type {FileField} */
 			this.ref = null;
 			this.initialAttachedInfo(props);
-			this.handleOnChange = this.handleOnChange.bind(this);
+			this.handleAddAttachedFiles = this.handleAddAttachedFiles.bind(this);
 			this.handleOnOpenAttachmentList = this.handleOnOpenAttachmentList.bind(this);
 		}
 
 		componentDidMount()
 		{
 			this.getAttachmentsInfo().then((files) => {
-				this.addAttachedFiles(files);
+				this.handleAddAttachedFiles(files);
 			}).catch((e) => {
 				if (e)
 				{
@@ -105,7 +107,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			});
 		}
 
-		addAttachedFiles(files)
+		handleAddAttachedFiles(files)
 		{
 			const { fileInfo } = this.state;
 
@@ -128,12 +130,30 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			this.updateAttachments(attachedFilesInfo);
 		}
 
+		isChangedFiles(fileInfo)
+		{
+			const { fileInfo: stateFileInfo } = this.state;
+
+			return !isEqual(Object.keys(fileInfo), Object.keys(stateFileInfo));
+		}
+
 		updateAttachments(fileInfo)
 		{
-			const { item } = this.props;
+			const { fileInfo: stateFileInfo } = this.state;
+			const { item, onChange } = this.props;
+
+			if (!this.isChangedFiles(fileInfo, stateFileInfo))
+			{
+				return;
+			}
 
 			item.setAttachments(fileInfo);
-			this.setState({ fileInfo });
+			this.setState({ fileInfo }, () => {
+				if (onChange)
+				{
+					onChange(item);
+				}
+			});
 		}
 
 		addFile()
@@ -144,14 +164,6 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 		handleOnOpenAttachmentList()
 		{
 			this.ref.onOpenAttachmentList();
-		}
-
-		handleOnChange(files)
-		{
-			const { onChange } = this.props;
-
-			this.addAttachedFiles(files);
-			onChange();
 		}
 
 		getFilesCount()
@@ -175,13 +187,19 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 
 		render()
 		{
-			const { parentWidget, diskConfig } = this.props;
+			const { parentWidget, diskConfig, testId } = this.props;
 			const { fileInfo } = this.state;
 			const value = Object.values(fileInfo);
 			const showFileCounter = this.getFilesCount() > 0;
 
+			if (!diskConfig?.folderId)
+			{
+				console.error('FolderId not found');
+			}
+
 			return View(
 				{
+					testId,
 					style: {
 						flexDirection: 'row',
 					},
@@ -196,12 +214,12 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 					},
 					IconView({
 						iconSize: ICON_SIZE,
-						iconColor: AppTheme.colors.base3,
-						icon: 'attach1',
+						iconColor: Color.base3,
+						icon: iconTypes.outline.attach1,
 					}),
 					Text({
 						style: {
-							color: AppTheme.colors.base3,
+							color: Color.base3,
 							fontSize: 14,
 						},
 						text: this.getAttachmentsCount(),
@@ -212,7 +230,6 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 						this.ref = ref;
 					}),
 					value,
-					testId: 'checkList-file-field',
 					showTitle: false,
 					showAddButton: false,
 					multiple: true,
@@ -236,7 +253,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 						},
 					},
 					readOnly: false,
-					onChange: this.handleOnChange,
+					onChange: this.handleAddAttachedFiles,
 				}),
 			);
 		}

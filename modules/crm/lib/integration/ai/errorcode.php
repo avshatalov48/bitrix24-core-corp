@@ -10,7 +10,7 @@ final class ErrorCode
 	public const AI_NOT_AVAILABLE = 'AI_NOT_AVAILABLE';
 	public const AI_DISABLED = 'AI_IS_DISABLED';
 	public const NOT_FOUND = \Bitrix\Crm\Controller\ErrorCode::NOT_FOUND;
-	public const FILE_NOT_FOUND = 'FILE_NOT_FOUND';
+	public const FILE_NOT_FOUND = \Bitrix\Crm\Controller\ErrorCode::FILE_NOT_FOUND;
 	public const FILE_NOT_SUPPORTED = 'FILE_NOT_SUPPORTED';
 	public const AI_ENGINE_NOT_FOUND = 'AI_ENGINE_NOT_FOUND';
 	public const AI_ENGINE_LIMIT_EXCEEDED = 'AI_ENGINE_LIMIT_EXCEEDED';

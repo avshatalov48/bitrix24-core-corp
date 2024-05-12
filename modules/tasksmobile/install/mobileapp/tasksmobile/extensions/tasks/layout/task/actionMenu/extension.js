@@ -6,8 +6,9 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { TaskCreate } = require('tasks/layout/task/create');
-	const { Alert } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const { ActionMenuButton } = require('tasks/layout/task/actionMenu/src/button');
+	const { Notify } = require('notify');
 
 	class ActionMenu
 	{
@@ -370,36 +371,27 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 					},
 					isDestructive: true,
 					onClickCallback: () => {
-						Alert.confirm(
-							'',
-							Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_REMOVE_CONFIRM_TITLE_MSGVER_1'),
-							[
-								{
-									type: 'cancel',
-								},
-								{
-									text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_REMOVE_CONFIRM_YES_MSGVER_1'),
-									type: 'destructive',
-									onPress: () => new Promise((resolve) => {
-										setTimeout(() => Notify.showIndicatorLoading(), 500);
-										resolve({ closeMenu: false });
+						confirmDestructiveAction({
+							title: '',
+							description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_REMOVE_CONFIRM_TITLE_MSGVER_1'),
+							onDestruct: () => new Promise((resolve) => {
+								setTimeout(() => Notify.showIndicatorLoading(), 500);
+								resolve({ closeMenu: false });
 
-										this.task.remove()
-											.then(
-												(response) => {
-													if (response.result.task === true)
-													{
-														this.eventEmitter.emit('tasks.task.actionMenu:remove');
-													}
-												},
-												() => Notify.hideCurrentIndicator(),
-											)
-											.catch(() => Notify.hideCurrentIndicator())
-										;
-									}),
-								},
-							],
-						);
+								this.task.remove()
+									.then(
+										(response) => {
+											if (response.result.task === true)
+											{
+												this.eventEmitter.emit('tasks.task.actionMenu:remove');
+											}
+										},
+										() => Notify.hideCurrentIndicator(),
+									)
+									.catch(() => Notify.hideCurrentIndicator())
+								;
+							}),
+						});
 					},
 				},
 			];

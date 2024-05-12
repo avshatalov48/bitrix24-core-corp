@@ -605,7 +605,7 @@ final class Manager
 	}
 
 	/**
-	 * Ñhecks if client synchronization is needed
+	 * Checks if client synchronization is needed
 	 * If order contains only new shipment - true
 	 * Otherwise - false
 	 *

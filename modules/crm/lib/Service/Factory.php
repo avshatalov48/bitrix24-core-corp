@@ -30,6 +30,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\UserField;
 
 abstract class Factory
@@ -406,12 +407,12 @@ abstract class Factory
 
 		$items = [];
 
-		$list = $this->getDataClass()::getList(
-			[
+		$params = [
 				'filter' => ['@' . Item::FIELD_NAME_ID => $itemIds],
 				'limit' => null,
-			] + $parameters
-		);
+			] + $parameters;
+
+		$list = $this->getDataClass()::getList($params);
 		while($item = $list->fetchObject())
 		{
 			$items[] = $this->getItemByEntityObject($item);
@@ -464,7 +465,11 @@ abstract class Factory
 			}
 		}
 
-		$parameters['filter'] = $userPermissions->applyAvailableItemsFilter($filter, $entityTypes, $operation);
+		$parameters = $userPermissions->applyAvailableItemsGetListParameters(
+			$parameters,
+			$entityTypes,
+			$operation,
+		);
 
 		return $this->getItems($parameters);
 	}

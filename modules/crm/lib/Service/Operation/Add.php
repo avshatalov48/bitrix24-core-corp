@@ -133,20 +133,20 @@ class Add extends Operation
 		}
 
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
-
-		if (!$factory->isStagesEnabled())
+		if (!$factory?->isStagesEnabled())
 		{
 			return;
 		}
 
-		$newStage = $factory->getStage((string)$this->item->getStageId());
+		$stageId = (string)$this->item->getStageId();
+		$newStage = $factory?->getStage($stageId);
 		if (!$newStage)
 		{
 			return;
 		}
 
 		$wasItemMovedToFinalStage = (
-			$factory->isStagesEnabled()
+			$factory?->isStagesEnabled()
 			&& PhaseSemantics::isFinal($newStage->getSemantics())
 		);
 
@@ -154,7 +154,7 @@ class Add extends Operation
 		{
 			MarkController::getInstance()->onItemMoveToFinalStage(
 				$this->getItemIdentifier(),
-				$newStage->getSemantics(),
+				$stageId,
 				$this->getContext()->getUserId(),
 			);
 		}

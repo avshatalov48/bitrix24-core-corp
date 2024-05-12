@@ -4,6 +4,10 @@ namespace Bitrix\Intranet\Settings;
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Bitrix24\OptionTable;
+use Bitrix\Intranet\Settings\Controls\Section;
+use Bitrix\Intranet\Settings\Controls\Selector;
+use Bitrix\Intranet\Settings\Controls\Switcher;
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
@@ -123,7 +127,7 @@ class SecuritySettings extends AbstractSettings
 			$data['SECURITY_OTP_ENABLED'] = $otpData['SECURITY_OTP_ENABLED'];
 			$data['SECURITY_IS_USER_OTP_ACTIVE'] = $otpData['SECURITY_IS_USER_OTP_ACTIVE'];
 			$data['SECURITY_OTP_DAYS'] = [];
-			$data['SEND_OTP_PUSH'] = Option::get('intranet', 'send_otp_push', 'N');
+			$data['SEND_OTP_PUSH'] = Option::get('intranet', 'send_otp_push', 'N') === 'Y';
 			$data['SECURITY_OTP_PATH'] = $otpData['SECURITY_OTP_PATH'];
 
 			for ($i = 5; $i <= 10; $i++)
@@ -144,6 +148,7 @@ class SecuritySettings extends AbstractSettings
 		}
 
 		$data['IS_BITRIX_24'] = $this->isCloud;
+		$data['IP_ACCESS_RIGHTS_LABEL'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS');
 		$data['IP_ACCESS_RIGHTS_ENABLED'] = ($data['IS_BITRIX_24'] && Feature::isFeatureEnabled('ip_access_rights'));
 
 		if ($data['IP_ACCESS_RIGHTS_ENABLED'])
@@ -165,10 +170,65 @@ class SecuritySettings extends AbstractSettings
 			$data['EVENT_LOG'] = '/settings/configs/event_log.php';
 		}
 
+		if ($otpData['SECURITY_OTP_ENABLED'] ?? false)
+		{
+			$data['sectionOtp'] = new Section(
+				'settings-security-section-otp',
+				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_OTP'),
+				'ui-icon-set --calendar-1'
+			);
+
+			$data['fieldSecurityOtp'] = new Switcher(
+				'settigns-security-field-otp',
+				'SECURITY_OTP',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP'),
+				$otpData['SECURITY_OTP'] ? 'Y' : 'N'
+			);
+		}
+
+
+		$data['sectionHistory'] = new Section(
+			'settings-security-section-history',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY'),
+			'ui-icon-set --clock-with-arrow',
+			!(isset($otpData['SECURITY_OTP_ENABLED']) && $otpData['SECURITY_OTP_ENABLED']),
+			$data['DEVICE_HISTORY_SETTINGS']->isEnable(),
+			bannerCode: 'limit_office_login_history'
+		);
+
+		$data['sectionEventLog'] = new Section(
+			'settings-security-section-event_log',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG'),
+			'ui-icon-set --list',
+			false,
+			isset($data['EVENT_LOG']),
+			bannerCode: 'limit_office_login_log',
+		);
+
+		if ($this->isCloud)
+		{
+			$data['sectionAccessIp'] = new Section(
+				'settings-security-section-access_ip',
+				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP'),
+				'ui-icon-set --attention-i-circle',
+				false,
+				isset($data['IP_ACCESS_RIGHTS_ENABLED']),
+				bannerCode: 'limit_admin_ip',
+			);
+			$data['sectionBlackList'] = new Section(
+				'settings-security-section-black_list',
+				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST'),
+				'ui-icon-set --cross-50',
+				false,
+				canCollapse: false
+			);
+		}
+
+
 		return new static($data);
 	}
 
-	private function getDeviceHistorySettings(): array
+	private function getDeviceHistorySettings(): Selector
 	{
 		$deviseHistoryDaysEnabled = (
 			!$this->isCloud
@@ -188,12 +248,14 @@ class SecuritySettings extends AbstractSettings
 			];
 		}
 
-		return [
-			'name' => 'DEVICE_HISTORY_CLEANUP_DAYS',
-			'values' => $deviseHistoryDaysValues,
-			'current' => $deviseHistoryDaysCurrent,
-			'is_enable' => $deviseHistoryDaysEnabled,
-		];
+		return new Selector(
+			'settings-security-field-history_cleanup_days',
+			'DEVICE_HISTORY_CLEANUP_DAYS',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS'),
+			$deviseHistoryDaysValues,
+			$deviseHistoryDaysCurrent,
+			isEnable: $deviseHistoryDaysEnabled
+		);
 	}
 
 	private function saveDeviceHistorySettings(): void
@@ -283,7 +345,7 @@ class SecuritySettings extends AbstractSettings
 		}
 		else
 		{
-			Security\Mfa\Otp::setMandatoryUsing(isset($this->data['SECURITY_OTP']));
+			Security\Mfa\Otp::setMandatoryUsing(isset($this->data['SECURITY_OTP']) && $this->data['SECURITY_OTP'] === 'Y');
 		}
 
 		if (isset($this->data['SECURITY_OTP_DAYS']))
@@ -413,5 +475,29 @@ class SecuritySettings extends AbstractSettings
 				}
 			}
 		}
+	}
+
+	public function find(string $query): array
+	{
+		$searchIndex = [
+			'DEVICE_HISTORY_CLEANUP_DAYS' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS'),
+			'SECURITY_IP_ACCESS_1_IP' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP'),
+			'settings-security-section-history' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY'),
+			'settings-security-section-event_log' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG'),
+		];
+		$otpData = $this->getOtpSettings();
+		if ($otpData['SECURITY_OTP_ENABLED'] ?? false)
+		{
+			$searchIndex['settings-security-section-otp'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_OTP');
+		}
+		if ($this->isCloud)
+		{
+			$searchIndex['settings-security-section-access_ip'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP');
+			$searchIndex['settings-security-section-black_list'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST');
+		}
+
+		$searchEngine = SearchEngine::initWithDefaultFormatter($searchIndex);
+
+		return $searchEngine->find($query);
 	}
 }

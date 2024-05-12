@@ -4,17 +4,32 @@
 
 jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { check, cross, documents, union, clock, flag } = require('bizproc/workflow/timeline/icons');
-	const { ContentStub, UserStub, Counter, StepWrapper, StepContent, StepsListCollapsed } = require('bizproc/workflow/timeline/components');
+	const { cross, documents, union, clock, flag } = require('bizproc/workflow/timeline/icons');
+	const { Skeleton } = require('bizproc/workflow/timeline/skeleton');
+	const {
+		ContentStub,
+		UserStub,
+		Counter,
+		StepWrapper,
+		StepContent,
+		StepsListCollapsed,
+		StepTitle,
+		StepSubtitle,
+		StepUserList,
+	} = require('bizproc/workflow/timeline/components');
 	const { PureComponent } = require('layout/pure-component');
 	const { SafeImage } = require('layout/ui/safe-image');
-	const { ReduxAvatar } = require('layout/ui/user/avatar');
 	const { Loc } = require('loc');
 	const { dispatch } = require('statemanager/redux/store');
 	const { usersAdded } = require('statemanager/redux/slices/users');
-	const { ProfileView } = require('user/profile');
 	const { Duration } = require('utils/date/duration');
+	const { shortTime, dayMonth } = require('utils/date/formats');
+	const { mergeImmutable } = require('utils/object');
 	const { Type } = require('type');
+	const { inAppUrl } = require('in-app-url');
+	const { openNativeViewer } = require('utils/file');
+	const { NotifyManager } = require('notify-manager');
+	const { roundSeconds } = require('bizproc/helper/duration');
 
 	const approveTypeLocId = {
 		all: 'BPMOBILE_WORKFLOW_TIMELINE_TASK_WAITING_FOR_ALL',
@@ -64,12 +79,11 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 
 			this.testId = 'BpTimeline';
 
+			this.stepsUserList = [];
 			this.state.timelineData = null;
 			this.loadTimelineData()
 				.then((timelineData) => {
 					this.setState({ timelineData });
-					console.log('Timeline data:');
-					console.log(timelineData);
 				})
 				.catch((err) => console.warn(err));
 		}
@@ -105,11 +119,19 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		 *
 		 * @return {{
 		 *	   documentType: ?[string, string, string],
+		 *	   documentUrl: string,
 		 *     documentName: string,
+		 *     documentDiskFile: {
+		 * 			error?: string,
+		 * 			type?: ?string,
+		 * 			name?: ?string,
+		 * 			url?: ?string,
+		 * 		},
 		 *     entityName: string,
 		 *     isWorkflowRunning: boolean,
 		 *     timeToStart: ?number,
 		 *     executionTime: number,
+		 *     workflowModifiedDate: number,
 		 *     moduleName: string,
 		 *     started: number,
 		 *     startedBy: number,
@@ -132,6 +154,14 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {boolean}
+		 */
+		isLoaded()
+		{
+			return !Type.isNil(this.timelineData);
+		}
+
+		/**
 		 *
 		 * @param {int} userId
 		 * @return {undefined | object}
@@ -150,7 +180,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 
 			for (const error of response.errors)
 			{
-				console.log(error);
+				console.error(error);
 			}
 
 			if (response.errors.length === 0)
@@ -195,18 +225,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 						// flex: 1,
 					},
 				},
-				this.renderContent(),
-			);
-		}
-
-		/**
-		 * @return {View}
-		 */
-		renderContent()
-		{
-			if (this.timelineData)
-			{
-				return View(
+				View(
 					{
 						style: {
 							flexDirection: 'column',
@@ -215,16 +234,29 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 							paddingVertical: 12,
 						},
 					},
+					...this.renderContent(),
+					View({ style: { height: 12 } }),
+				),
+			);
+		}
+
+		/**
+		 * @return {View[]}
+		 */
+		renderContent()
+		{
+			if (this.isLoaded())
+			{
+				return [
 					this.renderFirstStep(),
 					...this.renderTasks(),
 					this.renderLastStep(),
-				);
+				];
 			}
 
-			return Loader({
-				style: { width: 75, height: 75 },
-				animating: true,
-			});
+			return [
+				new Skeleton(),
+			];
 		}
 
 		/**
@@ -251,19 +283,17 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				},
 				header: {
 					title: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_STARTED_BY'),
-					value: this.formatDate(this.timelineData.started),
+					timestamp: this.timelineData.started,
 				},
 				users: [{ id: this.timelineData.startedBy }],
 				additionalContent: [this.renderDocument()],
-				footer: Loc.getMessage(
-					'BPMOBILE_WORKFLOW_TIMELINE_EXECUTION_TIME',
-					{
-						'#DURATION#': (
-							Type.isNumber(this.timelineData.timeToStart)
-								? this.formatDuration(this.timelineData.timeToStart)
-								: ''
-						),
-					},
+				footer: (
+					Type.isNumber(this.timelineData.timeToStart)
+						? Loc.getMessage(
+							'BPMOBILE_WORKFLOW_TIMELINE_EXECUTION_TIME',
+							{ '#DURATION#': this.formatDuration(this.timelineData.timeToStart) },
+						)
+						: ''
 				),
 			});
 		}
@@ -275,7 +305,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		 */
 		formatDate(timestamp)
 		{
-			return DateFormatter.getDateString(timestamp, 'd MMMM kk:mm');
+			return DateFormatter.getDateString(timestamp, `${dayMonth()} ${shortTime()}`);
 		}
 
 		/**
@@ -290,55 +320,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				return null;
 			}
 
-			const duration = Duration.createFromSeconds(time);
-
-			const years = duration.years;
-			const months = duration.months;
-
-			if (years !== 0)
-			{
-				return (
-					(new Duration((months >= 6 ? years + 1 : years) * Duration.getLengthFormat().YEAR))
-						.format('Y')
-				);
-			}
-
-			const day = duration.days;
-
-			if (months !== 0)
-			{
-				return (
-					(new Duration((day >= 15 ? months + 1 : months) * Duration.getLengthFormat().MONTH))
-						.format('m')
-				);
-			}
-
-			const hour = duration.getUnitPropertyModByFormat('H');
-
-			if (day !== 0)
-			{
-				return (
-					(new Duration((hour >= 12 ? day + 1 : day) * Duration.getLengthFormat().DAY))
-						.format('d')
-				);
-			}
-
-			const minutes = duration.minutes;
-
-			if (hour !== 0)
-			{
-				return (
-					(new Duration((minutes >= 30 ? hour + 1 : hour) * Duration.getLengthFormat().HOUR))
-						.format('H')
-				);
-			}
-
-			if (minutes !== 0)
-			{
-				return duration.format('i');
-			}
-
-			return duration.format('s');
+			return Duration.createFromSeconds(time >= 60 ? roundSeconds(time) : time).format();
 		}
 
 		/**
@@ -383,15 +365,65 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 					}),
 				),
 				// document name
-				Text({
-					testId: `${this.testId}DocumentName`,
-					text: this.timelineData.documentName,
-					style: {
-						color: AppTheme.colors.accentMainLinks,
-						fontSize: 15,
-						fontWeight: '400',
+				Type.isStringFilled(this.timelineData.documentName) && View(
+					{
+						onClick: this.openDocument.bind(this),
 					},
-				}),
+					Text({
+						testId: `${this.testId}DocumentName`,
+						text: this.timelineData.documentName,
+						style: {
+							color: AppTheme.colors.accentMainLinks,
+							fontSize: 15,
+							fontWeight: '400',
+						},
+					}),
+				),
+			);
+		}
+
+		openDocument()
+		{
+			const moduleId = (
+				Type.isString(this.timelineData.documentType[0])
+					? this.timelineData.documentType[0].toLowerCase()
+					: ''
+			);
+
+			if (
+				!Type.isStringFilled(this.timelineData.documentUrl)
+				|| (moduleId === 'disk' && Type.isNil(this.timelineData.documentDiskFile))
+			)
+			{
+				NotifyManager.showError(Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_DOCUMENT_NOT_FOUND'));
+
+				return;
+			}
+
+			if (moduleId === 'disk')
+			{
+				const file = this.timelineData.documentDiskFile;
+				if (Type.isNil(file.error))
+				{
+					openNativeViewer({
+						fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
+						url: file.url,
+						name: file.name,
+					});
+				}
+				else
+				{
+					NotifyManager.showError(file.error);
+				}
+
+				return;
+			}
+
+			inAppUrl.open(
+				this.timelineData.documentUrl,
+				{
+					parentWidget: this.layout,
+				},
 			);
 		}
 
@@ -484,14 +516,14 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 						value: taskIndex + 2,
 					};
 					let titleButton = null;
-					if (this.taskId !== task.id && this.canCurrentUserDoTask(task) && taskCount > 1)
+					if (this.taskId !== task.id && this.canCurrentUserDoTask(task))
 					{
 						titleButton = {
 							id: task.id,
 							testId: `${this.testId}TaskButton_${task.id}`,
 							text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TASK_START'),
 							onclick: () => {
-								this.openTaskDetails(task.id).catch((err) => console.log(err));
+								this.openTaskDetails(task.id).catch((err) => console.error(err));
 							},
 						};
 					}
@@ -574,15 +606,10 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 							button: titleButton,
 						},
 						header: {
-							title: {
-								text: headerTitle,
-								testId: `${this.testId}Task_${task.id}_Status`,
-							},
-							value: (
-								this.isTaskCompleted(task)
-									? this.formatDate(task.modified)
-									: { iconContent: clock() }
-							),
+							title: headerTitle,
+							testId: `${this.testId}Task_${task.id}_Status`,
+							timestamp: this.isTaskCompleted(task) ? task.modified : null,
+							icon: this.isTaskCompleted(task) ? null : clock(),
 						},
 						users,
 						usersTestId: `${this.testId}Task_${task.id}_Users`,
@@ -646,6 +673,10 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		{
 			return StepsListCollapsed({
 				text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_MORE_TASKS'),
+				onStepsExpanding: () => {
+					this.stepsUserList.forEach((userList) => userList.showUsers());
+				},
+
 				steps: taskViews,
 				collapsedButtonTestId: `${this.testId}CollapsedButton`,
 				counterOptions,
@@ -672,9 +703,15 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 			}
 
 			const lastTask = this.timelineData.tasks.at(-1);
-			const executionTime = Type.isObjectLike(lastTask) ? this.formatDate(lastTask.modified) : null;
-
 			const isAccepted = !Type.isObjectLike(lastTask) || this.isTaskAccepted(lastTask);
+
+			let totalTime = (
+				Type.isNumber(this.timelineData.executionTime) ? this.timelineData.executionTime : null
+			);
+			if (Type.isNumber(this.timelineData.timeToStart))
+			{
+				totalTime = totalTime === null ? this.timelineData.timeToStart : totalTime + this.timelineData.timeToStart;
+			}
 
 			return this.renderStep({
 				wrapperOptions: {
@@ -694,17 +731,19 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 					testId: `${this.testId}LastStepTitle`,
 				},
 				header: {
-					title: {
-						text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_COMPLETED'),
-						testId: `${this.testId}LastStepStatus`,
-					},
-					value: executionTime,
+					title: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_COMPLETED'),
+					testId: `${this.testId}LastStepStatus`,
+					timestamp: this.timelineData.workflowModifiedDate,
 				},
 				content: Type.isObjectLike(lastTask) ? [this.renderExtendedTaskStatus(lastTask)] : [],
 				users: [{ id: this.timelineData.startedBy }],
-				footer: Loc.getMessage(
-					'BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_EXECUTION_TIME',
-					{ '#DURATION#': this.formatDuration(this.timelineData.executionTime) },
+				footer: (
+					Type.isNumber(totalTime)
+						? Loc.getMessage(
+							'BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_EXECUTION_TIME',
+							{ '#DURATION#': this.formatDuration(totalTime) },
+						)
+						: ''
 				),
 			});
 		}
@@ -841,11 +880,14 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		 * 		    },
 		 * 		},
 		 * 		header: ?{
-		 * 			title: string | { text: string, testId: string },
-		 * 			value: string | { text: ?string, iconContent: ?string } | null | undefined,
+		 * 			title: ?string,
+		 * 			testId: ?string,
+		 * 			timestamp: ?number,
+		 * 			icon: ?string,
 		 * 		},
 		 * 		content: ?Array<View>,
 		 * 		users: Array<{id: number, status: number, testId: ?string}>,
+		 * 		shouldHideUsers: ?boolean,
 		 * 		usersTestId: ?string,
 		 *     	additionalContent: ?Array<View>,
 		 *     	footer: ?string | { text: string, onLinkClick: ?(() => {}) },
@@ -864,6 +906,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 			header = {},
 			content = [],
 			users = [],
+			shouldHideUsers = false,
 			usersTestId,
 			additionalContent,
 			footer,
@@ -879,24 +922,12 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				content = [];
 			}
 
-			if (Type.isString(header.title))
-			{
-				header.title = {
-					text: header.title,
-					testId: undefined,
-				};
-			}
-
-			if (Type.isString(header.value))
-			{
-				header.value = {
-					text: header.value,
-				};
-			}
-			else if (!Type.isObjectLike(header.value))
-			{
-				header.value = {};
-			}
+			const subtitleProps = {
+				title: Type.isString(header.title) ? header.title : null,
+				testId: Type.isString(header.testId) ? header.testId : null,
+				timestamp: Type.isNumber(header.timestamp) ? header.timestamp : null,
+				icon: Type.isStringFilled(header.icon) ? header.icon : null,
+			};
 
 			if (Type.isString(footer))
 			{
@@ -905,7 +936,6 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 				};
 			}
 
-			const showUserStatus = users.length > 1;
 			const hasTitleButton = Type.isObjectLike(titleButton);
 
 			return StepWrapper(
@@ -920,138 +950,26 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 						},
 					},
 					// title and button
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-								alignItems: 'center',
-								marginBottom: 4,
-								justifyContent: 'space-between',
-							},
-						},
-						title && Text({
-							testId: titleTestId,
-							text: title,
-							numberOfLines: 2,
-							ellipsize: 'end',
-							style: {
-								paddingTop: hasTitleButton ? 5 : null,
-								alignSelf: 'flex-start',
-								flexShrink: 2,
-								fontSize: 15,
-								fontWeight: '600',
-								color: AppTheme.colors.base1,
-							},
-						}),
-						// title button + counter
-						hasTitleButton && View(
-							{
-								style: {
-									height: 36,
-									justifyContent: 'center',
-									marginLeft: 15,
-								},
-							},
-							// button
-							View(
-								{
-									testId: titleButton.testId,
-									style: {
-										width: 110,
-										height: 22,
-										justifyContent: 'center',
-										alignItems: 'center',
-										borderStyle: 'solid',
-										borderWidth: 1.2,
-										borderColor: AppTheme.colors.accentMainPrimary,
-										borderRadius: 24,
-									},
-									onClick()
-									{
-										titleButton.onclick(titleButton.id);
-									},
-								},
-								Text({
-									text: titleButton.text,
-									style: {
-										fontSize: 12,
-										fontWeight: '500',
-										color: AppTheme.colors.accentMainPrimary,
-									},
-								}),
-							),
-							// counter
-							Text(
-								{
-									style: {
-										position: 'absolute',
-										top: 0,
-										right: 0,
-										width: 18,
-										height: 18,
-										borderRadius: 9,
-										backgroundColor: AppTheme.colors.accentMainAlert,
-										textAlign: 'center',
-										color: AppTheme.colors.baseWhiteFixed,
-										fontSize: 12,
-										fontWeight: '500',
-									},
-									text: '1',
-								},
-							),
-						),
-					),
+					StepTitle({
+						testId: titleTestId,
+						text: title,
+						button: titleButton,
+					}),
 					// header container
-					header && View(
-						{
-							style: {
-								flexDirection: 'row',
-								justifyContent: 'space-between',
-								alignContent: 'center',
-								marginTop: 4,
-								marginBottom: 2,
-								paddingBottom: 8,
-							},
-						},
-						Text({
-							text: header.title.text,
-							testId: header.title.testId,
-							style: {
-								color: AppTheme.colors.base4,
-								fontSize: 11,
-								fontWeight: '500',
-							},
-						}),
-						header.value.text && Text({
-							text: header.value.text,
-							style: {
-								color: AppTheme.colors.base4,
-								fontSize: 12,
-								fontWeight: '500',
-							},
-						}),
-						!header.value.text && header.value.iconContent && SafeImage({
-							style: {
-								width: 18,
-								height: 18,
-							},
-							resizeMode: 'contain',
-							placeholder: {
-								content: header.value.iconContent,
-							},
-						}),
-					),
+					StepSubtitle(subtitleProps),
 					...content,
 					// user(s)
-					View(
-						{
-							testId: usersTestId,
-							style: {
-								paddingBottom: 2,
-							},
+					StepUserList({
+						ref: (ref) => {
+							this.stepsUserList.push(ref);
 						},
-						...users.map((user) => this.renderUser(user, showUserStatus)),
-					),
+						layout: this.props.layout,
+						shouldHideUsers: shouldHideUsers === true,
+						testId: usersTestId,
+						users: users
+							.filter((user) => Type.isObjectLike(user) && user.id && this.getUserDataById(user.id))
+							.map((user) => mergeImmutable(user, this.getUserDataById(user.id))),
+					}),
 					...additionalContent,
 					// footer
 					footer && View(
@@ -1119,124 +1037,6 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 			);
 		}
 
-		/**
-		 *
-		 * @param {{id: number, status: number, testId: ?string}} user
-		 * @param {boolean} showStatus
-		 * @return {View}
-		 */
-		renderUser(user, showStatus = true)
-		{
-			if (Type.isObjectLike(user) && user.id && this.getUserDataById(user.id))
-			{
-				const userData = this.getUserDataById(user.id);
-
-				return View(
-					{
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center',
-							paddingBottom: 6,
-						},
-						onClick: () => this.openUserProfile(user.id),
-					},
-					ReduxAvatar({
-						id: user.id,
-					}),
-					View(
-						{
-							style: {
-								flex: 1,
-								flexDirection: 'column',
-								marginHorizontal: 6,
-							},
-						},
-						View(
-							{
-								style: {
-									flexDirection: 'row',
-									alignItems: 'center',
-								},
-							},
-							Text({
-								testId: user.testId,
-								style: {
-									textAlign: 'center',
-									fontSize: 15,
-									fontWeight: '400',
-									color: AppTheme.colors.accentMainLinks,
-								},
-								numberOfLines: 1,
-								text: userData.fullName,
-							}),
-							showStatus && user.status && this.renderUserStatus(user),
-						),
-						userData.workPosition && Text({
-							style: {
-								fontSize: 13,
-								fontWeight: '400',
-								color: AppTheme.colors.base4,
-							},
-							numberOfLines: 1,
-							ellipsize: 'end',
-							text: userData.workPosition,
-						}),
-					),
-				);
-			}
-
-			return View();
-		}
-
-		/**
-		 *
-		 * @param {{id: number, status: number}} user
-		 * @return {?View}
-		 */
-		renderUserStatus(user)
-		{
-			if (Type.isObjectLike(user))
-			{
-				const isAccepted = user.status === 1 || user.status === 3;
-				const isDeclined = user.status === 2 || user.status === 4;
-
-				if (!isAccepted && !isDeclined)
-				{
-					return null;
-				}
-
-				const icon = (
-					isAccepted
-						? check({ color: AppTheme.colors.accentMainSuccess })
-						: cross({ color: AppTheme.colors.base4 })
-				);
-
-				return View(
-					{
-						style: {
-							marginLeft: 8,
-							borderRadius: 4,
-							borderStyle: 'solid',
-							borderWidth: 1,
-							borderColor: isAccepted ? AppTheme.colors.accentMainSuccess : AppTheme.colors.base4,
-						},
-					},
-					SafeImage({
-						style: {
-							width: 16,
-							height: 16,
-						},
-						resizeMode: 'contain',
-						placeholder: {
-							content: icon,
-						},
-					}),
-				);
-			}
-
-			return null;
-		}
-
 		isTaskCompleted(task)
 		{
 			return this.isTaskAccepted(task) || this.isTaskDeclined(task);
@@ -1250,30 +1050,6 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 		isTaskDeclined(task)
 		{
 			return task.status === 2 || task.status === 4 || task.status === 5;
-		}
-
-		/**
-		 *
-		 * @param {number} userId
-		 */
-		openUserProfile(userId)
-		{
-			this
-				.props
-				.layout
-				.openWidget('list', {
-					groupStyle: true,
-					backdrop: {
-						bounceEnable: false,
-						swipeAllowed: true,
-						showOnTop: true,
-						hideNavigationBar: false,
-						horizontalSwipeAllowed: false,
-					},
-				})
-				.then((list) => ProfileView.open({ userId, isBackdrop: true }, list))
-				.catch((err) => console.log(err))
-			;
 		}
 	}
 

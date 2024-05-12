@@ -1,0 +1,2 @@
+<?php
+$MESS['IMMOBILE_MESSENGER_UI_NOTIFY_COMING_SOON'] = 'Скоро появится';

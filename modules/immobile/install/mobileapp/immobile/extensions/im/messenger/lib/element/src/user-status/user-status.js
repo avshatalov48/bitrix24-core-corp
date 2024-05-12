@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/user-status
  */
 jn.define('im/messenger/lib/element/user-status', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { userStatuses } = require('im/messenger/assets/common');
 	const { Type } = require('type');
 
@@ -29,7 +29,7 @@ jn.define('im/messenger/lib/element/user-status', (require, exports, module) => 
 		 */
 		static getStatusByUserId(userId, isAllStatus = true)
 		{
-			UserStatus.store = core.getStore();
+			UserStatus.store = serviceLocator.get('core').getStore();
 			const userData = UserStatus.store.getters['usersModel/getById'](userId);
 
 			if (userData.birthday && Type.isStringFilled(userData.birthday))

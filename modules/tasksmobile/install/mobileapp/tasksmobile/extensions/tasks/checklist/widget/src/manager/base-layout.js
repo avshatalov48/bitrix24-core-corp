@@ -3,7 +3,8 @@
  */
 jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { moreWithDot } = require('assets/common');
+	const { Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
 
 	/**
@@ -21,6 +22,13 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 			this.handleOnSave = this.handleOnSave.bind(this);
 			this.handleOnClose = this.handleOnClose.bind(this);
 			this.handleOnComplete = this.handleOnComplete.bind(this);
+		}
+
+		update(params)
+		{
+			const { highlightMoreButton } = params;
+
+			this.showMoreButton({ highlightMoreButton });
 		}
 
 		/**
@@ -99,7 +107,7 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 		/**
 		 * @protected
 		 */
-		showMoreButton()
+		showMoreButton({ highlightMoreButton } = {})
 		{
 			const { onShowMoreMenu } = this.props;
 
@@ -107,6 +115,12 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 				{
 					type: 'more',
 					callback: onShowMoreMenu,
+					svg: {
+						content: moreWithDot(
+							Color.base4,
+							highlightMoreButton ? Color.accentMainPrimary : null,
+						),
+					},
 				},
 			]);
 		}
@@ -126,7 +140,7 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 				button.push({
 					type: 'text',
 					name: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_DONE'),
-					color: AppTheme.colors.accentExtraDarkblue,
+					color: Color.accentExtraDarkblue,
 					callback: this.handleOnComplete,
 				});
 			}
@@ -137,7 +151,7 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 		/**
 		 * @protected
 		 */
-		onChange({ alert })
+		onChange({ alert } = {})
 		{
 			this.alert = alert;
 			this.showSaveButton(true);
@@ -157,6 +171,7 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 		handleOnClose()
 		{
 			const { onClose } = this.props;
+
 			if (onClose)
 			{
 				onClose();

@@ -51,6 +51,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 	const { dispatch } = require('statemanager/redux/store');
 	const { taskUpdatedFromOldTaskModel } = require('tasks/statemanager/redux/slices/tasks');
 	const { setTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages');
+	const { confirmClosing } = require('alert');
 
 	const fieldHeight = 66;
 
@@ -1035,26 +1036,11 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 		showConfirmOnFormClosing()
 		{
 			Haptics.impactLight();
-			Alert.confirm(
-				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_TITLE'),
-				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_DESCRIPTION'),
-				[
-					{
-						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_SAVE'),
-						type: 'default',
-						onPress: () => this.save().then(() => this.close()),
-					},
-					{
-						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_DISCARD'),
-						type: 'destructive',
-						onPress: () => this.close(),
-					},
-					{
-						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_CONTINUE'),
-						type: 'cancel',
-					},
-				],
-			);
+
+			confirmClosing({
+				onSave: () => this.save().then(() => this.close()),
+				onClose: () => this.close(),
+			});
 		}
 
 		updateRightButtons()

@@ -86,6 +86,7 @@ namespace PHPSTORM_META
 		'crm.service.webform.scenario',
 		'crm.model.fieldRepository',
 		'crm.integration.sign',
+		'crm.summary.summaryFactory',
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -174,5 +175,6 @@ namespace PHPSTORM_META
 		'crm.model.fieldRepository' => \Bitrix\Crm\Model\FieldRepository::class,
 		'crm.integration.sign' => \Bitrix\Crm\Service\Integration\Sign::class,
 		'crm.activity.actcounterlighttimerepo' => \Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo::class,
+		'crm.summary.summaryFactory' => \Bitrix\Crm\Summary\SummaryFactory::class,
 	]));
 }

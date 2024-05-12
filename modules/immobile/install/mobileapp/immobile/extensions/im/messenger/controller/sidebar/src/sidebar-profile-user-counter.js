@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/sidebar/sidebar-profile-user-counter', (require, exports, module) => {
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Loc } = require('loc');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class SidebarProfileUserCounter
@@ -20,8 +20,8 @@ jn.define('im/messenger/controller/sidebar/sidebar-profile-user-counter', (requi
 		{
 			super(props);
 
-			this.store = core.getStore();
-			this.storeManager = core.getStoreManager();
+			this.store = serviceLocator.get('core').getStore();
+			this.storeManager = serviceLocator.get('core').getStoreManager();
 			this.state = { userCounterLocal: '', userCounter: 0 };
 		}
 

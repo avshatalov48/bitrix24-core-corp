@@ -10,7 +10,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		DialogType,
 		BotType,
 	} = require('im/messenger/const');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
@@ -22,6 +22,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 	const DialogSpecialType = Object.freeze({
 		group: 'chat',
 		channel: 'open',
+		copilot: 'copilot',
 	});
 
 	/**
@@ -49,13 +50,16 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		constructor(dialogId, options = {})
 		{
-			this.store = core.getStore();
+			this.core = serviceLocator.get('core');
+			this.messengerStore = this.core.getMessengerStore();
+			this.store = this.core.getStore();
 			this.dialogId = dialogId;
 			this.name = null;
 			this.nameColor = AppTheme.colors.base1;
 			this.description = null;
 			this.userCounter = 0;
 			this.writingList = [];
+			this.dialogSpecialType = DialogSpecialType.group;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -85,11 +89,16 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			this.name = dialog.name;
 			this.userCounter = dialog.userCounter;
+			this.dialogSpecialType = dialog.type;
 
 			// TODO: add special types like announcement, call etc.
 			if (dialog.type && dialog.type === DialogSpecialType.channel)
 			{
 				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_CHANNEL');
+			}
+			else if (dialog.type && dialog.type === DialogSpecialType.copilot)
+			{
+				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_ONLINE');
 			}
 			else
 			{
@@ -105,7 +114,12 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		createUserTitle(options = {})
 		{
-			const user = this.store.getters['usersModel/getById'](this.dialogId);
+			let user = this.messengerStore.getters['usersModel/getById'](this.dialogId);
+			if (!user)
+			{
+				user = this.store.getters['usersModel/getById'](this.dialogId);
+			}
+
 			if (!user)
 			{
 				return;
@@ -243,11 +257,18 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				);
 			}
 
+			if (this.userCounter <= 2 && this.dialogSpecialType === DialogSpecialType.copilot)
+			{
+				titleParams.detailText = this.description;
+			}
+
 			if (this.writingList.length > 0)
 			{
 				titleParams.detailText = this.buildWritingListText();
 				titleParams.isWriting = true;
-				titleParams.detailTextColor = AppTheme.colors.accentMainPrimaryalt;
+				titleParams.detailTextColor = this.dialogSpecialType === DialogSpecialType.copilot
+					? AppTheme.colors.accentMainCopilot
+					: AppTheme.colors.accentMainPrimaryalt;
 			}
 
 			return titleParams;

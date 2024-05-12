@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'alert',
+		'loc',
 		'qrauth',
 		'notify',
 		'apptheme',

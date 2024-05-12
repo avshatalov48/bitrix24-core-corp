@@ -56,7 +56,7 @@ class Shipment extends \CCrmDocument
 
 	public static function GetDocument($documentId)
 	{
-		//TODO – make real document
+		//TODO make real document
 		return [
 			'STATUS_ID' => null,
 			'DELIVERY_ID' => null,

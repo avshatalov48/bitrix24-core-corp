@@ -20,4 +20,5 @@ export type SettingsWidgetOptions = {
 	requisite?: Object;
 	settingsPath?: string;
 	holding?: SettingsWidgetHoldingOptions;
+	isRenameable?: boolean;
 }

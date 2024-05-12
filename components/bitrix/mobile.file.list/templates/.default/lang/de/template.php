@@ -1,0 +1,7 @@
+<?
+$MESS["MOBILE_MFU_DELETE"] = "Löschen";
+$MESS["MOBILE_MFU_CONFIRM_TITLE"] = "Warnung";
+$MESS["MOBILE_MFU_CONFIRM_MESSAGE"] = "Hochgeladenes Bild löschen?";
+$MESS["MOBILE_MFU_CONFIRM_YES"] = "Ja";
+$MESS["MOBILE_MFU_CONFIRM_NO"] = "Nein";
+?>

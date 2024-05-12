@@ -56,6 +56,11 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return minApiVersion(52, 'isToastSupported') && Boolean(require('native/notify'));
 		}
+
+		static isToastPositionSupported()
+		{
+			return minApiVersion(53, 'isToastPositionSupported');
+		}
 	}
 
 	/**

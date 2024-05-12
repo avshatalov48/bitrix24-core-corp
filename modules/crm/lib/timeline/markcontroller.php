@@ -6,6 +6,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Type\DateTime;
 use CCrmOwnerType;
 
 class MarkController extends Controller
@@ -21,16 +22,26 @@ class MarkController extends Controller
 	/**
 	 * Register in timeline that an item was moved to a final stage
 	 *
-	 * @see PhaseSemantics
-	 *
-	 * @param string $finalStageSemantics - semantics of a final stage (constant of \Bitrix\Crm\PhaseSemantics)
-	 * @param ItemIdentifier $item - item that was moved to a final stage
-	 * @param int|null $authorId
+	 * @param ItemIdentifier	$item		Item that was moved to a final stage
+	 * @param string			$stageId	Final stage ID
+	 * @param int|null			$authorId	Author ID
 	 *
 	 * @throws ArgumentException
+	 * @see PhaseSemantics
+	 *
 	 */
-	public function onItemMoveToFinalStage(ItemIdentifier $item, string $finalStageSemantics, ?int $authorId = null): void
+	final public function onItemMoveToFinalStage(ItemIdentifier $item, string $stageId, ?int $authorId = null): void
 	{
+		if (empty($stageId))
+		{
+			throw new ArgumentException('Such stage ID does not exist', 'stageId');
+		}
+
+		$finalStageSemantics = Container::getInstance()
+			->getFactory($item->getEntityTypeId())
+			?->getStageSemantics($stageId)
+		;
+
 		if (!PhaseSemantics::isDefined($finalStageSemantics))
 		{
 			throw new ArgumentException('Such stage semantics does not exist', 'finalStageSemantics');
@@ -59,6 +70,9 @@ class MarkController extends Controller
 				'ENTITY_ID' => $item->getEntityId(),
 				'AUTHOR_ID' => ($authorId > 0) ? $authorId : static::getCurrentOrDefaultAuthorId(),
 				'BINDINGS' => $bindings,
+				'SETTINGS' => [
+					'FINAL_STAGE_ID' => $stageId,
+				],
 			]
 		);
 
@@ -67,26 +81,23 @@ class MarkController extends Controller
 			return;
 		}
 
-		$historyDataModel = null;
-
-		$timelineEntry = $this->getTimelineEntryFacade()->getById($timelineEntryId);
-		if (is_array($timelineEntry))
-		{
-			$historyDataModel = Container::getInstance()->getTimelineHistoryDataModelMaker()->prepareHistoryDataModel(
-				$timelineEntry,
-				['ENABLE_USER_INFO' => true]
-			);
-		}
-
 		foreach ($bindings as $binding)
 		{
-			Container::getInstance()->getTimelinePusher()->sendPullEvent(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID'],
-				Pusher::ADD_ACTIVITY_PULL_COMMAND,
-				$historyDataModel
+			$this->sendPullEventOnAdd(
+				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$timelineEntryId
 			);
 		}
+	}
+
+	public function prepareHistoryDataModel(array $data, array $options = null): array
+	{
+		if(isset($data['CREATED']) && $data['CREATED'] instanceof DateTime)
+		{
+			$data['CREATED_SERVER'] = $data['CREATED']->format('Y-m-d H:i:s');
+		}
+
+		return $data;
 	}
 
 	protected function getBindingsForItem(ItemIdentifier $item): array

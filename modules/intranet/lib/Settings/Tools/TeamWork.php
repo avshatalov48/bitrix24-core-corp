@@ -11,6 +11,17 @@ class TeamWork extends Tool
 {
 	private ?array $sortedSubgroupsId = null;
 
+	private function getSubgroupAvailability($subgroupId): bool
+	{
+		return match ($subgroupId) {
+			'instant_messenger' => ModuleManager::isModuleInstalled('im'),
+			'calendar' => ModuleManager::isModuleInstalled('calendar'),
+			'docs' => \Bitrix\Main\Config\Option::get('disk', 'documents_enabled', 'N') === 'Y',
+			'mail' => ModuleManager::isModuleInstalled('mail'),
+			default => true,
+		};
+	}
+
 	protected const TEAMWORK_SUBGROUP_ID = [
 		'news' => 'menu_live_feed',
 		'instant_messenger' => 'menu_im_messenger',
@@ -36,8 +47,7 @@ class TeamWork extends Tool
 
 	protected function getSubgroupSettingsTitle(): array
 	{
-		return [
-		];
+		return [];
 	}
 
 	public function getId(): string
@@ -100,6 +110,11 @@ class TeamWork extends Tool
 				continue;
 			}
 
+			if (!$this->getSubgroupAvailability($id))
+			{
+				continue;
+			}
+
 			$result[$id] = [
 				'name' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_' . strtoupper($id)),
 				'id' => $id,
@@ -109,16 +124,6 @@ class TeamWork extends Tool
 				'settings_path' => !empty($settingsPath[$id]) ? str_replace("#USER_ID#", $USER->GetID(), $settingsPath[$id]) : null,
 				'settings_title' => $settingsTitle[$id] ?? null,
 			];
-		}
-
-		if (\Bitrix\Main\Config\Option::get('disk', 'documents_enabled', 'N') !== 'Y')
-		{
-			unset($result['docs']);
-		}
-
-		if (!ModuleManager::isModuleInstalled('im'))
-		{
-			unset($result['instant_messenger']);
 		}
 
 		return $result;

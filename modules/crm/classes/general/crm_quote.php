@@ -13,6 +13,7 @@ use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UtmTable;
 
@@ -2495,10 +2496,10 @@ class CAllCrmQuote
 			/** @var \CCrmPerms $arOptions['PERMS'] */
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
-		$builderOptions =
-			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
-				->setOperations((array)$mPermType)
-				->setAliasPrefix((string)$sAliasPrefix)
+		$builderOptions = OptionsBuilder::makeFromArray((array)$arOptions)
+			->setOperations((array)$mPermType)
+			->setAliasPrefix((string)$sAliasPrefix)
+			->build()
 		;
 
 		$queryBuilder = Crm\Service\Container::getInstance()

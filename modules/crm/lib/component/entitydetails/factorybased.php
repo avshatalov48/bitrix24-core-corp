@@ -418,7 +418,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		if($this->isDocumentButtonAvailable())
 		{
 			$params['documentButtonParameters'] = DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(
-				DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap()[$this->getEntityTypeID()] ?? null,
+				DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvider($this->getEntityTypeID()),
 				$this->getEntityID()
 			);
 			$params['documentButtonParameters']['buttonId'] = $this->getDocumentButtonId();
@@ -562,6 +562,8 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 
 	protected function getDefaultTabInfoByCode(string $tabCode): ?array
 	{
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+
 		if($tabCode === static::TAB_NAME_EVENT)
 		{
 			$entityName = $this->factory->getEntityName();
@@ -636,6 +638,18 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		}
 		if ($tabCode === static::TAB_NAME_BIZPROC)
 		{
+			if (!$toolsManager->checkBizprocAvailability())
+			{
+				return [
+					'id' => static::TAB_NAME_BIZPROC,
+					'name' => Loc::getMessage('CRM_TYPE_ITEM_DETAILS_TAB_BIZPROC'),
+					'enabled' => !$this->item->isNew(),
+					'availabilityLock' => \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+						->getBizprocAvailabilityLock()
+					,
+				];
+			}
+
 			return [
 				'id' => static::TAB_NAME_BIZPROC,
 				'name' => Loc::getMessage('CRM_TYPE_ITEM_DETAILS_TAB_BIZPROC'),
@@ -656,13 +670,27 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		}
 		if ($tabCode === static::TAB_NAME_AUTOMATION)
 		{
+			$availabilityLock = null;
+			$robotsUrl = null;
+			if (!$toolsManager->checkRobotsAvailability())
+			{
+				$availabilityLock = \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+					->getRobotsAvailabilityLock()
+				;
+			}
+			else
+			{
+				$robotsUrl = Container::getInstance()->getRouter()
+					->getAutomationUrl($this->factory->getEntityTypeId(), $this->item->getCategoryId())
+					->addParams(['id' => $this->item->getId()]);
+			}
+
 			return [
 				'id' => static::TAB_NAME_AUTOMATION,
 				'name' => Loc::getMessage('CRM_TYPE_ITEM_DETAILS_TAB_AUTOMATION'),
-				'url' => Container::getInstance()->getRouter()
-					->getAutomationUrl($this->factory->getEntityTypeId(), $this->item->getCategoryId())
-					->addParams(['id' => $this->item->getId()]),
+				'url' => $robotsUrl,
 				'enabled' => !$this->item->isNew(),
+				'availabilityLock' => $availabilityLock,
 			];
 		}
 		if ($tabCode === static::TAB_NAME_ORDERS)
@@ -684,6 +712,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 							'TAB_ID' => static::TAB_NAME_ORDERS,
 							'PRESERVE_HISTORY' => true,
 							'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID,
+							'ANALYTICS' => [
+								// we dont know where from this component was opened from - it could be anywhere on portal
+								// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::getType($this->factory->getEntityTypeId()) . '_section',
+								'c_sub_section' => Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+							],
 						], 'crm.order.list')
 					]
 				],
@@ -909,6 +942,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 	protected function getSettingsToolbarButton(): Buttons\SettingsButton
 	{
 		$items = [];
+
 		$itemCopyUrl = Container::getInstance()->getRouter()->getItemCopyUrl(
 			$this->getEntityTypeID(),
 			$this->item->getId(),
@@ -916,15 +950,20 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		$userPermissions = Container::getInstance()->getUserPermissions();
 		if ($itemCopyUrl && $userPermissions->canAddItem($this->item))
 		{
+			$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault($this->getEntityTypeID())
+				->setSubSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_SETTINGS_BUTTON)
+			;
+
 			$items[] = [
 				'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
-				'href' => $itemCopyUrl,
+				'href' => $analyticsEventBuilder->buildUri($itemCopyUrl),
 			];
 		}
 		if ($userPermissions->canDeleteItem($this->item))
 		{
 			$items[] = [
-				'text' => Loc::getMessage('CRM_TYPE_ITEM_DELETE'),
+				'text' => $this->getDeleteMessage(),
 				'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
 			];
 		}
@@ -936,8 +975,22 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		]);
 	}
 
+	protected function getDeleteMessage(): string
+	{
+		return (string)Loc::getMessage('CRM_COMMON_ACTION_DELETE');
+	}
+
 	protected function getBizprocStarterConfig(): array
 	{
+		$toolsManager = \Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager();
+		if (!$toolsManager->checkBizprocAvailability())
+		{
+			return [
+				'availabilityLock' => \Bitrix\Crm\Restriction\AvailabilityManager::getInstance()
+					->getBizprocAvailabilityLock()
+				,
+			];
+		}
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType($this->item->getEntityTypeId());
 		$documentId = \CCrmBizProcHelper::ResolveDocumentId($this->item->getEntityTypeId(), $this->item->getId());
 
@@ -1040,6 +1093,27 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 		$isUserFieldCreationEnabled = Container::getInstance()->getUserPermissions()->canWriteConfig();
 		$editorGuid = $this->getEditorGuid();
 
+		/** @var \Bitrix\Crm\Integration\Analytics\Builder\BuilderContract $analyticsBuilder */
+		if ($this->isCopyMode())
+		{
+			$analyticsBuilder = Integration\Analytics\Builder\Entity\CopyEvent::createDefault($this->entityTypeId);
+		}
+		elseif ($this->isEditMode())
+		{
+			$analyticsBuilder = Integration\Analytics\Builder\Entity\UpdateEvent::createDefault($this->entityTypeId);
+		}
+		elseif ($this->isConversionMode())
+		{
+			$analyticsBuilder =
+				Integration\Analytics\Builder\Entity\ConvertEvent::createDefault($this->entityTypeId)
+					->setSrcEntityTypeId($this->getConversionWizard()->getEntityTypeID())
+			;
+		}
+		else
+		{
+			$analyticsBuilder = Integration\Analytics\Builder\Entity\AddEvent::createDefault($this->entityTypeId);
+		}
+
 		return [
 			'ENTITY_TYPE_ID' => $this->getEntityTypeID(),
 			'ENTITY_ID' => $this->isCopyMode() ? 0 : $this->getEntityID(),
@@ -1081,6 +1155,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 			'ATTRIBUTE_CONFIG' => $this->getEditorAttributeConfig(),
 			'ENABLE_STAGEFLOW' => $this->factory->isStagesEnabled(),
 			'USER_FIELD_PREFIX' => $this->factory->getUserFieldEntityId(),
+			// this data is used to send analytics when user clicks 'save' button
+			'ANALYTICS_CONFIG' => [
+				'data' => $analyticsBuilder->buildData(),
+				'appendParamsFromCurrentUrl' => true,
+			],
 		];
 	}
 

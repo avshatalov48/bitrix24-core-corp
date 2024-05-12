@@ -3,7 +3,7 @@ $MESS["CT_BSP_ALL"] = "(all)";
 $MESS["CT_BSP_GO"] = "Search";
 $MESS["CT_BSP_ITEM_TAGS"] = "Tags";
 $MESS["CT_BSP_DATE_CHANGE"] = "Modified";
-$MESS["CT_BSP_FOUND"] = "Found";
+$MESS["CT_BSP_FOUND_MSGVER_1"] = "Found: #AMOUNT#";
 $MESS["CT_BSP_ORDER"] = "Sorted by";
 $MESS["CT_BSP_ORDER_BY_RANK"] = "relevance";
 $MESS["CT_BSP_ORDER_BY_DATE"] = "date";
@@ -31,6 +31,6 @@ $MESS["CT_BSP_OR_ALT"] = "Operator <i>logical or</i> allows searching for entiti
 $MESS["CT_BSP_NOT"] = "not";
 $MESS["CT_BSP_NOT_ALT"] = "Operator <i>logical not</i> restricts searches to pages not containing the operand.";
 $MESS["CT_BSP_BRACKETS_ALT"] = "<i>Round brackets</i> define the logical operator precedence.";
-$MESS["CT_BSP_NOTHING_TO_FOUND"] = "Unfortunately, your search did not match any documents.";
+$MESS["CT_BSP_NOTHING_TO_FOUND_MSGVER_1"] = "Unfortunately, your search didn't return any results.";
 $MESS["CT_BSP_KEYBOARD_WARNING"] = "Query input language changed for \"#query#\".";
 ?>

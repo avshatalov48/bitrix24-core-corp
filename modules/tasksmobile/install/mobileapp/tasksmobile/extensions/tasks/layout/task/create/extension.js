@@ -30,7 +30,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { chevronDown, chevronUp } = require('assets/common');
-	const { Alert } = require('alert');
+	const { confirmClosing } = require('alert');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
@@ -910,21 +910,13 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 		showConfirmOnFormClosing()
 		{
 			Haptics.impactLight();
-			Alert.confirm(
-				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_TITLE'),
-				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_DESCRIPTION'),
-				[
-					{
-						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_YES'),
-						type: 'destructive',
-						onPress: () => this.layoutWidget.close(),
-					},
-					{
-						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_NO'),
-						type: 'cancel',
-					},
-				],
-			);
+
+			confirmClosing({
+				title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_TITLE'),
+				description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_DESCRIPTION'),
+				onClose: () => this.layoutWidget.close(),
+				onSave: () => this.save(),
+			});
 		}
 
 		save()
@@ -990,6 +982,13 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					animated: true,
 				});
 				Notify.showMessage(Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_SAVE_ERROR_LOADING_FILES'));
+
+				return false;
+			}
+
+			if (!this.task.title)
+			{
+				Notify.showMessage(Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_SAVE_ERROR_NO_TITLE'));
 
 				return false;
 			}

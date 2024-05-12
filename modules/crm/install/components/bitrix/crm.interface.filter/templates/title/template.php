@@ -217,6 +217,8 @@ if (empty($arParams['~RENDER_INTO_VIEW']))
 		'ENABLE_ADDITIONAL_FILTERS' => true,
 		'CONFIG' => $arParams['~CONFIG'] ?? null,
 		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)($arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? false),
+		'RESTRICTED_FIELDS' => ($arParams['RESTRICTED_FIELDS'] ?? []),
 	]);
 }
 else
@@ -245,6 +247,8 @@ else
 			'ENABLE_ADDITIONAL_FILTERS' => true,
 			'CONFIG' => $arParams['~CONFIG'] ?? null,
 			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)($arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? false),
+			'RESTRICTED_FIELDS' => ($arParams['RESTRICTED_FIELDS'] ?? []),
 		],
 		$component
 	);

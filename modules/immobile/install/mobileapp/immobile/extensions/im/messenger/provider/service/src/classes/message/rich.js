@@ -2,7 +2,7 @@
  * @module im/messenger/provider/service/classes/message/rich
  */
 jn.define('im/messenger/provider/service/classes/message/rich', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { RestMethod } = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -16,7 +16,7 @@ jn.define('im/messenger/provider/service/classes/message/rich', (require, export
 			 * @private
 			 * @type {MessengerCoreStore}
 			 */
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		async deleteRichLink(messageId, attachId)

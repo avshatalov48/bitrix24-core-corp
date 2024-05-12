@@ -27,7 +27,8 @@ export type SiteThemePickerOptions = {
 	baseThemes: Object,
 	ajaxHandlerPath: string,
 	allowSetDefaultTheme: boolean,
-	isVideo: boolean
+	isVideo: boolean,
+	label: ?string
 };
 
 class ThemePickerElement extends BaseField
@@ -137,7 +138,7 @@ class ThemePickerElement extends BaseField
 		document.querySelector('.ui-side-panel-content').style.overflow = 'hidden';
 
 		const container = Tag.render`
-		<div class="intranet-theme-settings">
+		<div class="intranet-theme-settings ui-section__row">
 			<div class="ui-section__row theme-dialog-preview">
 				<section data-role="preview" style="background-color: #0a51ae;" class="intranet-settings__main-widget_section --preview">
 					<div class="intranet-settings__main-widget__bang"></div>

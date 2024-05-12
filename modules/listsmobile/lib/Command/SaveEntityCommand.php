@@ -5,26 +5,29 @@ namespace Bitrix\ListsMobile\Command;
 use Bitrix\BizprocMobile\EntityEditor\Converter;
 use Bitrix\Disk\Uf\Integration\DiskUploaderController;
 use Bitrix\Lists\Api\Request\ServiceFactory\AddElementRequest;
+use Bitrix\Lists\Api\Request\ServiceFactory\GetElementDetailInfoRequest;
 use Bitrix\Lists\Api\Request\ServiceFactory\GetIBlockFieldsRequest;
 use Bitrix\Lists\Api\Request\ServiceFactory\GetIBlockInfoRequest;
+use Bitrix\Lists\Api\Request\ServiceFactory\UpdateElementRequest;
 use Bitrix\Lists\Api\Service\ServiceFactory\ServiceFactory;
 use Bitrix\Lists\Api\Service\WorkflowService;
 use Bitrix\Listsmobile\UI\FileUploader\EntityFieldUploaderController;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Mobile\Command;
 use Bitrix\UI\FileUploader\PendingFileCollection;
 use Bitrix\UI\FileUploader\Uploader;
 
-Loader::requireModule('ui');
-Loader::requireModule('mobile');
 Loader::requireModule('lists');
+Loader::requireModule('ui');
 
 final class SaveEntityCommand extends Command
 {
 	private ServiceFactory $service;
 	private array $data;
+	private ?array $entityData = null;
 	private int $modifiedBy;
 	private int $entityId;
 	private int $iBlockId;
@@ -55,32 +58,33 @@ final class SaveEntityCommand extends Command
 		{
 			$data = $preparedDataResult->getData()['data'];
 			$wfParameters = $preparedDataResult->getData()['wfParameters'];
+
+			$isSuccess = false;
 			if ($this->entityId === 0)
 			{
-				$request = new AddElementRequest(
-					$this->iBlockId,
-					$this->sectionId,
-					$data,
-					$this->modifiedBy,
-					true,
-					true,
-					$wfParameters,
-					$this->timeToStart
-				);
-
-				$addElementResult = $this->service->addElement($request);
-				$newId = $addElementResult->getId();
+				$response = $this->create($data, $wfParameters);
+				$newId = $response->getId();
 				$this->entityId = (int)$newId;
 				if ($newId !== null)
 				{
-					$this->commitAddedFiles();
+					$isSuccess = true;
 				}
+			}
+			else
+			{
+				$response = $this->update($data, $wfParameters);
+				$isSuccess = $response->getIsSuccessElementUpdate();
+			}
 
-				$result->addErrors($addElementResult->getErrors());
-				if ($result->isSuccess())
-				{
-					$this->commitAddedParametersFiles();
-				}
+			if ($isSuccess)
+			{
+				$this->commitAddedFiles();
+			}
+
+			$result->addErrors($response->getErrors());
+			if ($result->isSuccess())
+			{
+				$this->commitAddedParametersFiles();
 			}
 		}
 
@@ -145,7 +149,13 @@ final class SaveEntityCommand extends Command
 			if (in_array($type, ['PREVIEW_PICTURE', 'DETAIL_PICTURE'], true))
 			{
 				$value = $originalData[$fieldId];
-				$fileId = $this->toWebFile($value, $fieldId);
+
+				if (is_numeric($value))
+				{
+					continue; // do not update the value
+				}
+
+				$fileId = is_array($value) ? $this->toWebFile($value, $fieldId) : null;
 				$file = $fileId ? $this->pendingFileCollection->getByFileId($fileId) : null;
 
 				if ($file && $file->isValid())
@@ -195,7 +205,7 @@ final class SaveEntityCommand extends Command
 				{
 					case 'S:Date':
 					case 'S:DateTime':
-						$value = $this->toWebDate($value);
+						$value = $this->toWebDate($value, $type === 'S:DateTime');
 						break;
 					case 'L':
 					case 'S:employee':
@@ -208,12 +218,36 @@ final class SaveEntityCommand extends Command
 						$isUseModifiedKey = false;
 						break;
 					case 'S:ECrm':
-						$value = $this->toWebECrm($value);
+						$userTypeSettings = (
+							isset($propProperty['USER_TYPE_SETTINGS']) && is_array($propProperty['USER_TYPE_SETTINGS'])
+								? $propProperty['USER_TYPE_SETTINGS']
+								: []
+						);
+						unset($userTypeSettings['VISIBLE']);
+						$allowedEntityTypes = array_keys($userTypeSettings, 'Y');
+
+						$value = $this->toWebECrm($value, count($allowedEntityTypes) === 1);
 						break;
 					case 'F':
 						if (is_array($value) && isset($value['token']))
 						{
 							$value = $this->toWebFile($value, $propId);
+						}
+						else
+						{
+							$value = $this->toWebFile($value, $propId);
+							if (is_int($value))
+							{
+								$entityData = $this->getEntityData();
+								if (isset($entityData[$propId]) && is_array($entityData[$propId]))
+								{
+									$foundKey = array_search($value, $entityData[$propId], false);
+									if ($foundKey !== false)
+									{
+										$modifiedKey = $foundKey;
+									}
+								}
+							}
 						}
 						break;
 					case 'S:DiskFile':
@@ -273,11 +307,11 @@ final class SaveEntityCommand extends Command
 	private function getParametersConverter($templateId, array $properties): Converter
 	{
 		$complexDocumentType = \BizprocDocument::generateDocumentComplexType(
-			$this->service::getIBlockTypeId(), $this->iBlockId
+			$this->service->getInnerIBlockTypeId(), $this->iBlockId
 		);
 		$complexDocumentId =
 			$this->entityId !== 0
-				? \BizprocDocument::getDocumentComplexId($this->service::getIBlockTypeId(), $this->entityId)
+				? \BizprocDocument::getDocumentComplexId($this->service->getInnerIBlockTypeId(), $this->entityId)
 				: null
 		;
 
@@ -326,9 +360,18 @@ final class SaveEntityCommand extends Command
 		return $unChangedValues;
 	}
 
-	private function toWebDate($value): ?string
+	private function toWebDate($value, $useTime = true): ?string
 	{
-		return is_numeric($value) ? (string)DateTime::createFromTimestamp((int)$value) : null;
+		if (!is_numeric($value))
+		{
+			return null;
+		}
+
+		return (
+			$useTime
+				? (string)DateTime::createFromTimestamp((int)$value)
+				: (string)Date::createFromTimestamp((int)$value)
+		);
 	}
 
 	private function toWebMoney($value): string
@@ -343,25 +386,40 @@ final class SaveEntityCommand extends Command
 
 	private function toWebFile($value, string $fieldId): ?int
 	{
-		$controller = new EntityFieldUploaderController([
-			'elementId' => $this->entityId,
-			'iBlockId' => $this->iBlockId,
-			'fieldName' => $fieldId,
-		]);
-		$uploader = new Uploader($controller);
-		$pendingFiles = $uploader->getPendingFiles([$value['token']]);
-		$file = $pendingFiles->get($value['token']);
-
-		if ($file && $file->isValid())
+		if (is_array($value) && isset($value['token']))
 		{
-			if (!$this->pendingFileCollection)
+			$controller = new EntityFieldUploaderController([
+				'elementId' => $this->entityId,
+				'iBlockId' => $this->iBlockId,
+				'fieldName' => $fieldId,
+			]);
+			$uploader = new Uploader($controller);
+			$pendingFiles = $uploader->getPendingFiles([$value['token']]);
+			$file = $pendingFiles->get($value['token']);
+
+			if ($file && $file->isValid())
 			{
-				$this->pendingFileCollection = new PendingFileCollection();
+				if (!$this->pendingFileCollection)
+				{
+					$this->pendingFileCollection = new PendingFileCollection();
+				}
+
+				$this->pendingFileCollection->add($file);
+
+				return $file->getFileId();
 			}
 
-			$this->pendingFileCollection->add($file);
+			return null;
+		}
 
-			return $file->getFileId();
+		if (is_array($value))
+		{
+			$value = current($value);
+		}
+
+		if (is_numeric($value) && $value > 0 && $this->entityId > 0)
+		{
+			return (int)$value;
 		}
 
 		return null;
@@ -388,12 +446,37 @@ final class SaveEntityCommand extends Command
 		return null;
 	}
 
-	private function toWebECrm($value): ?string
+	private function toWebECrm($value, bool $hasOneType): ?string
 	{
-		if (is_array($value) && count($value) === 2 && Loader::includeModule('crm'))
+		if (
+			is_array($value)
+			&& count($value) === 2
+			&& isset($value[0], $value[1])
+			&& Loader::includeModule('crm')
+		)
 		{
-			$typeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeName($value[0]);
-			return $typeAbbr . '_' . $value[1];
+			$typeAbbr = null;
+			$id = 0;
+
+			if ($value[0] === 'dynamic_multiple')
+			{
+				$parts = explode(':', $value[1]);
+				if (count($parts) === 2)
+				{
+					$typeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeID($parts[0]);
+					$id = $parts[1];
+				}
+			}
+			else
+			{
+				$typeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeName((string)$value[0]);
+				$id = $value[1];
+			}
+
+			if (!empty($typeAbbr) && !empty($id))
+			{
+				return $hasOneType ? (string)$id : $typeAbbr . '_' . $id;
+			}
 		}
 
 		return null;
@@ -413,5 +496,57 @@ final class SaveEntityCommand extends Command
 				$collection->makePersistent();
 			}
 		}
+	}
+
+	private function create(array $data, array $wfParameters): \Bitrix\Lists\Api\Response\ServiceFactory\AddElementResponse
+	{
+		$request = new AddElementRequest(
+			$this->iBlockId,
+			$this->sectionId,
+			$data,
+			$this->modifiedBy,
+			true,
+			true,
+			$wfParameters,
+			$this->timeToStart
+		);
+
+		return $this->service->addElement($request);
+	}
+
+	private function update(array $data, array $wfParameters)
+	{
+		$request = new UpdateElementRequest(
+			$this->entityId,
+			$this->iBlockId,
+			$this->sectionId,
+			$data,
+			$this->modifiedBy,
+			true,
+			true,
+			$wfParameters,
+			$this->timeToStart,
+		);
+
+		return $this->service->updateElement($request);
+	}
+
+	private function getEntityData(): array
+	{
+		if ($this->entityData === null)
+		{
+			$elementInfoResponse = $this->service->getElementDetailInfo(
+				new GetElementDetailInfoRequest(
+					$this->iBlockId,
+					$this->entityId,
+					$this->sectionId,
+					['PROPS'],
+					false,
+				)
+			);
+			$this->entityData = $elementInfoResponse->hasInfo() ? $elementInfoResponse->getInfo() : [];
+		}
+
+		return $this->entityData;
 	}
 }

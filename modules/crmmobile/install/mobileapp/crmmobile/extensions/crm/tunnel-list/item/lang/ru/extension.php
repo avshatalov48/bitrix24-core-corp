@@ -7,7 +7,6 @@ $MESS['TUNNEL_MENU_TUNNEL_DESTINATION2'] = 'Воронка и стадия';
 $MESS['TUNNEL_MENU_USER'] = 'Ответственный';
 $MESS['TUNNEL_MENU_DELETE'] = 'Удалить';
 $MESS['TUNNEL_MENU_DELETE_CONFIRM'] = 'Вы уверены, что хотите удалить туннель?';
-$MESS['TUNNEL_MENU_DELETE_CONFIRM_OK'] = 'Удалить';
 
 $MESS['TUNNEL_MENU_DELAY_TITLE2'] = 'Выполнить';
 $MESS['TUNNEL_MENU_DELAY_AT_ONCE'] = 'сразу';

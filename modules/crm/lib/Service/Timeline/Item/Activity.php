@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Item;
 
 use Bitrix\Crm\Integration\StorageManager;
+use Bitrix\Crm\Service\Timeline\Config;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
@@ -371,6 +372,22 @@ abstract class Activity extends Configurable
 		}
 
 		return $result;
+	}
+
+	protected function fetchAudioRecordList(): array
+	{
+		$files = $this->fetchStorageFiles();
+		if (empty($files))
+		{
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				$files,
+				static fn($row) => in_array(GetFileExtension(mb_strtolower($row['NAME'])), Config::ALLOWED_AUDIO_EXTENSIONS)
+			)
+		);
 	}
 
 	public function getNoteItemType(): int

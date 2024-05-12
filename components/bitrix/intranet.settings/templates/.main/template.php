@@ -1,4 +1,7 @@
 <?php
+/**
+ * @var CBitrixComponentTemplate $this
+ */
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -34,37 +37,43 @@ Extension::load([
 	'main.qrcode',
 	'intranet_theme_picker',
 	'bitrix24.license',
-	'ui.analytics'
+	'ui.analytics',
+	'main.loader'
 ]);
 $APPLICATION->SetPageProperty('BodyClass', 'intranet-settings-iframe-popup');
 // TODO delete after release train 30.08.2023
 UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
-$toolbar = UI\Toolbar\Manager::getInstance()->getToolbarById(UI\Toolbar\Facade\Toolbar::DEFAULT_ID);
 
-if (class_exists('\Bitrix\Intranet\Settings\Search')) // if search functionality is ready
-{
-	$searchPlaceholder = Loc::getMessage('INTRANET_SETTINGS_SEARCH');
-	$reflection = (new \ReflectionProperty($toolbar, 'filter'));
-	$reflection->setAccessible(true);
-	$reflection->setValue($toolbar, <<<HTML
-<div class="main-ui-filter-search main-ui-filter-theme-default main-ui-filter-set-inside" id="intranet-settings-search-container">
-	<input type="text" tabindex="1" value="qwqw" name="FIND" placeholder="{$searchPlaceholder}" class="main-ui-filter-search-filter" id="intranet-settings-search" autocomplete="off">
-	<div class="main-ui-item-icon-block">
-		<span class="main-ui-item-icon main-ui-search"></span>
-		<span class="main-ui-item-icon main-ui-delete"></span>
+$this->SetViewTarget('left-panel');
+?>
+<div class="ui-sidepanel-sidebar">
+	<div class="ui-sidepanel-head">
+		<h2 class="ui-sidepanel-title">
+			<span class="intranet-settings-main-title"><?=Loc::getMessage('INTRANET_SETTINGS_TITLE_MENU')?></span>
+		</h2>
+	</div>
+
+	<div class="main-ui-filter-search main-ui-filter-theme-default main-ui-filter-set-inside" id="intranet-settings-search-container">
+		<input <?= $arResult['PERMISSION'] < 2 ? 'disabled' : '' ?> type="text" tabindex="1" value="" name="FIND" placeholder="<?=Loc::getMessage('INTRANET_SETTINGS_SEARCH_PLACEHOLDER')?>" class="main-ui-filter-search-filter" id="intranet-settings-search" autocomplete="off">
+		<div class="main-ui-item-icon-block" id="intranet-settings-search-icon-container">
+			<span class="main-ui-item-icon main-ui-search <?= $arResult['PERMISSION'] < 2 ? '--disabled' : '' ?>"></span>
+			<span class="main-ui-item-icon main-ui-delete" id="intranet-settings-icon-delete"></span>
+		</div>
 	</div>
 </div>
-HTML
-	);
-}
+<?php
+$this->EndViewTarget();
 ?>
 
 <div id="intranet-settings-page" class="intranet-settings-page-wrapper">
+
+
+
 	<?php
 		$APPLICATION->IncludeComponent('bitrix:ui.sidepanel.wrappermenu', '', [
 			'ID' => 'intranet-settings-left-menu',
 			'ITEMS' => $arResult['MENU_ITEMS'] ?? [],
-			'TITLE_HTML' => '<span class="intranet-settings-main-title">' . Loc::getMessage('INTRANET_SETTINGS_TITLE_MENU') . '</span>',
+//			'TITLE_HTML' => '<span class="intranet-settings-main-title">' . Loc::getMessage('INTRANET_SETTINGS_TITLE_MENU') . '</span>',
 		]);
 	$this->SetViewTarget('left-panel');
 	?>
@@ -101,7 +110,9 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 	{
 		?>
 		<li class="intranet-settings__menu-item">
-			<a onclick="<?=$callback->getCode()?>; return false;" class="intranet-settings__menu-link"><?=Loc::getMessage('BITRIX24_PARTNER_ORDER')?></a>
+			<a onclick="<?= $callback->getCode() ?>; return false;" class="intranet-settings__menu-link">
+				<?= Loc::getMessage('BITRIX24_PARTNER_ORDER_MSGVER_1') ?>
+			</a>
 		</li>
 		<?php
 	}
@@ -130,6 +141,19 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 <script>
 	BX.ready(() => {
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+		const permission = new BX.Intranet.Permission(<?=$arResult['PERMISSION']?>);
+
+		if (permission.canEdit())
+		{
+			const searcher = new BX.Intranet.Searcher(new BX.Intranet.ServerDataSource());
+			new BX.Intranet.Renderer({
+				searcher: searcher,
+				inputNode: BX('intranet-settings-search'),
+				timeout: 500,
+			iconContainer: BX('intranet-settings-search-icon-container'),});
+		}
+
+		const pagesPermission = <?=CUtil::PhpToJSObject($arResult['PAGES_PERMISSION'])?>;
 		const analyticContext = '<?= CUtil::JSEscape($arResult['ANALYTIC_CONTEXT'] ?? '') ?>';
 		const startPage = '<?= CUtil::JSEscape($arResult['START_PAGE'] ?? '') ?>';
 		const isBitrix24 = <?= \Bitrix\Main\Loader::includeModule('bitrix24') ? 'true' : 'false'?>;
@@ -141,7 +165,6 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 			menuNode: BX('intranet-settings-left-menu'),
 			settingsNode: BX('intranet-settings-page'),
 			contentNode: BX('intranet-settings-page').querySelector('.intranet-settings-content'),
-			searchNode: BX('intranet-settings-search'),
 			pages: Array.from(<?=CUtil::PhpToJSObject(
 				array_values(array_map(
 					fn($item) => ucfirst($item['ATTRIBUTES']['DATA']['type']),
@@ -150,7 +173,9 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 						fn($item) => ($item['EXTERNAL'] ?? 'N') === 'N'
 					)
 				))
-			)?>).map((pageId) => new BX.Intranet[pageId + 'Page']),
+			)?>).map((pageId) => {
+				return  new BX.Intranet[pageId + 'Page'];
+			}),
 			externalPages: <?=CUtil::PhpToJSObject(
 				array_map(
 					fn($item) => [
@@ -163,8 +188,10 @@ if (Bitrix\Main\Loader::includeModule('bitrix24'))
 					)
 				)
 			)?>,
-			subPages: <?=CUtil::PhpToJSObject($arResult['SUBPAGES'])?>
+			subPages: <?=CUtil::PhpToJSObject($arResult['SUBPAGES'])?>,
+			permission: permission,
+			pagesPermission: pagesPermission,
 		});
-		settings.show(startPage);
+		settings.show(startPage, '<?= CUtil::JSEscape($arResult['OPTION_TO_MOVE']) ?? '' ?>');
 	});
 </script>

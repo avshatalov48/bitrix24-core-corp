@@ -51,7 +51,7 @@ $className =
 		"SEARCH_CRM_QUOTE" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH_CRM_QUOTE_MSGVER_1")?>",
 		"SEARCH_CRM_DYNAMIC" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH_CRM_DYNAMIC")?>",
 		"SEARCH_TASKS" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH_TASKS")?>",
-		"SEARCH_DISK" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH_DISK")?>"
+		"SEARCH_DISK" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH_DISK_MSGVER_1")?>"
 	});
 
 	new BX.Intranet.SearchTitle ({

@@ -23,8 +23,11 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 			this.rangeHeight = 0;
 			this.customEventEmitter = this.props.customEventEmitter;
 
+			this.onHeaderClickHandler = this.onHeaderClickHandler.bind(this);
 			this.onAddRangeButtonClickHandler = this.onAddRangeButtonClickHandler.bind(this);
 			this.onRangeRemoveHandler = this.onRangeRemoveHandler.bind(this);
+
+			this.state = this.getState();
 		}
 
 		get model()
@@ -40,17 +43,23 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		setLayoutWidget(widget)
 		{
 			this.layoutWidget = widget;
-			this.layoutWidget.on('onViewRemoved', () => {
-				this.emitRuleSave();
-			});
-			this.layoutWidget.on('onViewHidden', () => {
-				this.emitRuleSave();
-			});
+			this.layoutWidget.on('onViewRemoved', () => this.emitRuleSave());
+			this.layoutWidget.on('onViewHidden', () => this.emitRuleSave());
 		}
 
 		redraw()
 		{
-			this.setState({ time: Date.now() });
+			this.setState(this.getState());
+		}
+
+		getState()
+		{
+			return {
+				ranges: this.rule.getRanges(),
+				canAddRange: this.rule.canAddRange(),
+				slotSize: this.rule.getSlotSize(),
+				formattedSlotSize: this.rule.getFormattedSlotSize(),
+			};
 		}
 
 		render()
@@ -67,65 +76,48 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		{
 			return View(
 				{
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						paddingVertical: 12,
-						paddingHorizontal: 14,
-					},
+					style: styles.header,
 					clickable: true,
-					onClick: () => {
-						this.emitRuleSave();
-						this.layoutWidget.close();
-					},
+					onClick: this.onHeaderClickHandler,
 				},
 				this.renderLeftArrow(),
 				this.renderTitle(),
 			);
 		}
 
+		onHeaderClickHandler()
+		{
+			this.emitRuleSave();
+			this.layoutWidget.close();
+		}
+
 		renderLeftArrow()
 		{
-			return Image(
-				{
-					tintColor: AppTheme.colors.base3,
-					svg: {
-						content: chevronLeft(),
-					},
-					style: {
-						width: 23,
-						height: 23,
-					},
+			return Image({
+				tintColor: AppTheme.colors.base3,
+				svg: {
+					content: chevronLeft(),
 				},
-			);
+				style: styles.leftArrowIcon,
+			});
 		}
 
 		renderTitle()
 		{
-			return Text(
-				{
-					style: {
-						marginLeft: 10,
-						fontSize: 17,
-						color: AppTheme.colors.base1,
-						flex: 1,
-					},
-					text: Loc.getMessage('M_CALENDAR_SETTINGS_DESCRIPTION'),
-				},
-			);
+			return Text({
+				text: Loc.getMessage('M_CALENDAR_SETTINGS_DESCRIPTION'),
+				style: styles.title,
+			});
 		}
 
 		renderEditRanges()
 		{
 			return View(
 				{
-					style: {
-						...styles.container,
-						paddingHorizontal: 0,
-					},
+					style: styles.editRangesContainer,
 				},
-				...this.rule.getRanges().map((range) => this.renderEditRange(range)),
-				this.rule.canAddRange() && this.renderAddRangeButton(),
+				...this.state.ranges.map((range) => this.renderEditRange(range)),
+				this.state.canAddRange && this.renderAddRangeButton(),
 			);
 		}
 
@@ -151,56 +143,29 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		{
 			return View(
 				{
-					style: {
-						marginTop: 10,
-						alignItems: 'center',
-						justifyContent: 'center',
-					},
+					style: styles.addRangeButtonContainer,
 				},
 				View(
 					{
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center',
-							justifyContent: 'center',
-						},
+						style: styles.addRangeButton,
 						clickable: true,
 						onClick: this.onAddRangeButtonClickHandler,
 					},
-					Image(
-						{
-							tintColor: AppTheme.colors.accentMainLinks,
-							svg: {
-								content: plus(),
-							},
-							style: {
-								width: 20,
-								height: 20,
-							},
+					Image({
+						tintColor: AppTheme.colors.accentMainLinks,
+						svg: {
+							content: plus(),
 						},
-					),
+						style: styles.plusIcon,
+					}),
 					View(
 						{
-							style: {
-								borderBottomColor: AppTheme.colors.accentSoftBlue1,
-								borderBottomWidth: 2,
-								borderStyle: 'dash',
-								borderDashSegmentLength: 5,
-								borderDashGapLength: 5,
-								// marginVertical: 5,
-								marginLeft: 4,
-							},
+							style: styles.addRangeButtonTextContainer,
 						},
-						Text(
-							{
-								style: {
-									color: AppTheme.colors.accentMainLinks,
-									fontSize: 14,
-									fontWeight: '400',
-								},
-								text: Loc.getMessage('M_CALENDAR_SETTINGS_SELECT_ADD'),
-							},
-						),
+						Text({
+							text: Loc.getMessage('M_CALENDAR_SETTINGS_SELECT_ADD'),
+							style: styles.addRangeButtonText,
+						}),
 					),
 				),
 			);
@@ -210,11 +175,7 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		{
 			return View(
 				{
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						...styles.container,
-					},
+					style: styles.editSlotSizeContainer,
 				},
 				this.renderSlotSizeTitle(),
 				this.renderSlotSize(),
@@ -225,19 +186,12 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		{
 			return View(
 				{
-					style: {
-						flex: 1,
-					},
+					style: styles.slotSizeTitle,
 				},
-				Text(
-					{
-						style: {
-							fontSize: 16,
-							color: AppTheme.colors.base1,
-						},
-						text: Loc.getMessage('M_CALENDAR_SETTINGS_MEETINGS_DURATION'),
-					},
-				),
+				Text({
+					text: Loc.getMessage('M_CALENDAR_SETTINGS_MEETINGS_DURATION'),
+					style: styles.slotSizeTitleText,
+				}),
 			);
 		}
 
@@ -254,8 +208,8 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 				title: Loc.getMessage('M_CALENDAR_SETTINGS_MEETINGS_DURATION'),
 				items,
 				currentItem: {
-					value: this.rule.getSlotSize(),
-					name: this.rule.getFormattedSlotSize(),
+					value: this.state.slotSize,
+					name: this.state.formattedSlotSize,
 				},
 				onChange: (value) => this.onSlotSizeSelectedHandler(value),
 			});
@@ -277,7 +231,7 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 			this.rule.addRange({
 				from: parseInt(workTimeStart * 60, 10),
 				to: parseInt(workTimeEnd * 60, 10),
-				weekDays: workDays,
+				weekdays: workDays,
 			});
 			this.redraw();
 			this.hasChanges = true;
@@ -307,13 +261,73 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		}
 	}
 
+	const containerStyle = {
+		backgroundColor: AppTheme.colors.bgContentPrimary,
+		borderRadius: 12,
+		marginBottom: 10,
+		paddingHorizontal: 18,
+		paddingVertical: 22,
+	};
+
 	const styles = {
-		container: {
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-			borderRadius: 12,
-			marginBottom: 10,
-			paddingHorizontal: 18,
-			paddingVertical: 22,
+		header: {
+			flexDirection: 'row',
+			alignItems: 'center',
+			paddingVertical: 12,
+			paddingHorizontal: 14,
+		},
+		leftArrowIcon: {
+			width: 23,
+			height: 23,
+		},
+		title: {
+			marginLeft: 10,
+			fontSize: 17,
+			color: AppTheme.colors.base1,
+			flex: 1,
+		},
+		editRangesContainer: {
+			...containerStyle,
+			paddingHorizontal: 0,
+		},
+		addRangeButtonContainer: {
+			marginTop: 10,
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		addRangeButton: {
+			flexDirection: 'row',
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		plusIcon: {
+			width: 20,
+			height: 20,
+		},
+		addRangeButtonTextContainer: {
+			borderBottomColor: AppTheme.colors.accentSoftBlue1,
+			borderBottomWidth: 2,
+			borderStyle: 'dash',
+			borderDashSegmentLength: 5,
+			borderDashGapLength: 5,
+			marginLeft: 4,
+		},
+		addRangeButtonText: {
+			color: AppTheme.colors.accentMainLinks,
+			fontSize: 14,
+			fontWeight: '400',
+		},
+		editSlotSizeContainer: {
+			...containerStyle,
+			flexDirection: 'row',
+			alignItems: 'center',
+		},
+		slotSizeTitle: {
+			flex: 1,
+		},
+		slotSizeTitleText: {
+			fontSize: 16,
+			color: AppTheme.colors.base1,
 		},
 	};
 

@@ -8,7 +8,7 @@
 jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module) => {
 
 	const { Type } = require('type');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const parserMention = {
 		decode(text)
@@ -22,7 +22,7 @@ jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module
 
 				if (replace || !userName)
 				{
-					const user = core.getStore().getters['usersModel/getById'](userId);
+					const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](userId);
 					if (user)
 					{
 						userName = user.name;
@@ -52,7 +52,7 @@ jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module
 
 				if (replace || !userName)
 				{
-					const user = core.getStore().getters['usersModel/getById'](userId);
+					const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](userId);
 					if (user)
 					{
 						userName = user.name;
@@ -74,7 +74,7 @@ jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module
 
 					if (!chatName)
 					{
-						const dialog = core.getStore().getters['dialoguesModel/getById']('chat' + chatId);
+						const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById']('chat' + chatId);
 						chatName = dialog? dialog.name: 'Chat ' + chatId;
 					}
 
@@ -87,7 +87,7 @@ jn.define('im/messenger/lib/parser/functions/mention', (require, exports, module
 				(whole, dialogId, messageId, text) => {
 					if (!text)
 					{
-						const dialog = core.getStore().getters['dialoguesModel/getById'](dialogId);
+						const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
 						text = dialog? dialog.name: 'Dialog ' + dialogId;
 					}
 

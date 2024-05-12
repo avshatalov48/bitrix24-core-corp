@@ -2,10 +2,12 @@
 
 namespace Bitrix\BIConnector\Integration\Superset\Model;
 
-use Bitrix\BIConnector\Controller\Superset;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Dto;
-use Bitrix\BIConnector\Integration\Superset\SupersetController;
+use Bitrix\BIConnector\Integration\Superset\Integrator\IntegratorResponse;
+use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
+use Bitrix\Main\Error;
+use Bitrix\Main\Result;
 
 final class Dashboard
 {
@@ -132,6 +134,7 @@ final class Dashboard
 			'TYPE' => $this->getType(),
 			'CREATED_BY_ID' => $this->ormObject->get('CREATED_BY_ID'),
 			'DATE_CREATE' => $this->ormObject->get('DATE_CREATE'),
+			'DATE_MODIFY' => $this->ormObject->get('DATE_MODIFY'),
 			'FILTER_PERIOD' => $embeddedFilterFields['FILTER_PERIOD'],
 			'DATE_FILTER_START' => $embeddedFilterFields['DATE_FILTER_START'],
 			'DATE_FILTER_END' => $embeddedFilterFields['DATE_FILTER_END'],
@@ -167,5 +170,49 @@ final class Dashboard
 			'DATE_FILTER_START' => $dateFilter->getDateStart(),
 			'DATE_FILTER_END' => $dateFilter->getDateEnd(),
 		];
+	}
+
+	/**
+	 * Update title for dashboard in superset and bitrix
+	 *
+	 * @param string $title
+	 * @return Result
+	 */
+	public function changeTitle(string $title): Result
+	{
+		$result = new Result();
+
+		if ($this->ormObject->getType() !== SupersetDashboardTable::DASHBOARD_TYPE_CUSTOM)
+		{
+			return $result->addError(new Error("Title can be changed only for custom dashboard"));
+		}
+
+		$externalId = $this->getOrmObject()->getExternalId();
+		if ($externalId <= 0)
+		{
+			return $result->addError(new Error("Cannot change title without external id"));
+		}
+
+		$response = ProxyIntegrator::getInstance()->updateDashboard($externalId, ['dashboard_title' => $title]);
+		if ($response->getStatus() !== IntegratorResponse::STATUS_OK || $response->hasErrors())
+		{
+			return $result->addError(new Error("Error while changing title in superset"));
+		}
+
+		$changedFields = $response->getData();
+		if (!isset($changedFields['dashboard_title']))
+		{
+			return $result->addError(new Error("Dashboard title not change while update fields"));
+		}
+
+		if (isset($this->dashboardData))
+		{
+			$this->dashboardData->title = $changedFields['dashboard_title'];
+		}
+
+		$this->ormObject->setTitle($changedFields['dashboard_title']);
+		$this->ormObject->save();
+
+		return $result;
 	}
 }

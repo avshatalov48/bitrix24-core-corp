@@ -1,0 +1,36 @@
+<?
+$MESS["CRM_ADD_ZIP"] = "PLZ hinzufügen";
+$MESS["CRM_DEL_ZIP"] = "Löschen";
+$MESS["CRM_ERROR_CITY_NAME"] = "Stadt: Der vollständige Name der Stadt ist nicht angegeben.";
+$MESS["CRM_ERROR_CITY_NAME_LANG"] = "Stadt: Der vollständige Name der Stadt ist nicht angegeben auf ";
+$MESS["CRM_ERROR_COUNTRY_NAME"] = "Land: Der vollständige Name des Landes ist nicht angegeben.";
+$MESS["CRM_ERROR_COUNTRY_NAME_LANG"] = "Land: Der vollständige Name des Landes ist nicht angegeben auf ";
+$MESS["CRM_ERROR_REGION_NAME_LANG"] = "Der vollständige Name der Region ist nicht angegeben auf ";
+$MESS["CRM_ERROR_SELECT_COUNTRY"] = "Wählen Sie ein Land aus, um es zu bearbeiten, oder fügen Sie ein neues hinzu, ohne die Option \"Aktuelles Land bearbeiten\" zu aktivieren.";
+$MESS["CRM_LOC_ADD_UNKNOWN_ERROR"] = "Fehler bei Erstellung eines Standortes.";
+$MESS["CRM_LOC_DELETE_UNKNOWN_ERROR"] = "Fehler beim Löschen des Standortes.";
+$MESS["CRM_LOC_FIELD_CHANGE_COUNTRY"] = "Aktuelles Land bearbeiten";
+$MESS["CRM_LOC_FIELD_COUNTRY_ID"] = "Land auswählen";
+$MESS["CRM_LOC_FIELD_ID"] = "ID";
+$MESS["CRM_LOC_FIELD_LOC_DEFAULT"] = "Standardmäßig";
+$MESS["CRM_LOC_FIELD_LOC_ZIP"] = "Postleitzahlen";
+$MESS["CRM_LOC_FIELD_NAME"] = "Vollständiger Name";
+$MESS["CRM_LOC_FIELD_REGION_ID"] = "Eine Region auswählen";
+$MESS["CRM_LOC_FIELD_SHORT_NAME"] = "Namenkurzform";
+$MESS["CRM_LOC_FIELD_SORT"] = "Sortierung";
+$MESS["CRM_LOC_FIELD_WITHOUT_CITY"] = "Keine Stadt";
+$MESS["CRM_LOC_NEW_COUNTRY"] = "Neues Land";
+$MESS["CRM_LOC_NEW_REGION"] = "Neue Region";
+$MESS["CRM_LOC_NOT_FOUND"] = "Standort wurde nicht gefunden.";
+$MESS["CRM_LOC_SECTION_CITY"] = "Stadt";
+$MESS["CRM_LOC_SECTION_COUNTRY"] = "Land";
+$MESS["CRM_LOC_SECTION_MAIN"] = "Standort";
+$MESS["CRM_LOC_SECTION_REGION"] = "Region (Bundesland/Kanton)";
+$MESS["CRM_LOC_SECTION_ZIP"] = "Postleitzahlen";
+$MESS["CRM_LOC_UPDATE_UNKNOWN_ERROR"] = "Fehler bei Aktualisierung des Standortes.";
+$MESS["CRM_LOC_WITHOUT_COUNTRY"] = "Kein Land";
+$MESS["CRM_LOC_WITHOUT_REGION"] = "Keine Region";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Das Modul CRM ist nicht installiert.";
+$MESS["CRM_PERMISSION_DENIED"] = "Zugriff verweigert";
+$MESS["CRM_SALE_MODULE_NOT_INSTALLED"] = "Das Modul Onlineshop ist nicht installiert.";
+?>

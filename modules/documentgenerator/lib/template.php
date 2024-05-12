@@ -23,6 +23,7 @@ use Bitrix\Main\Web\Uri;
  * @property-read string CODE
  * @property-read string FILE_ID
  * @property-read string BODY_TYPE
+ * @property-read string BODY_CONTENT
  * @property-read string ACTIVE
  * @property-read string MODULE_ID
  * @property-read int NUMERATOR_ID
@@ -115,13 +116,26 @@ class Template
 	 */
 	public function getBody(): ?Body
 	{
-		if($this->body === null && $this->FILE_ID)
+		if ($this->body === null)
 		{
 			$bodyClassName = $this->getBodyClassName();
-			$this->body = new $bodyClassName(FileTable::getContent($this->FILE_ID));
+
+			if ($this->FILE_ID)
+			{
+				$this->body = new $bodyClassName(FileTable::getContent($this->FILE_ID));
+			}
+			elseif ($this->isValidBodyContent($this->BODY_CONTENT))
+			{
+				$this->body = new $bodyClassName($this->BODY_CONTENT);
+			}
 		}
 
 		return $this->body;
+	}
+
+	public function isValidBodyContent($input): bool
+	{
+		return is_string($input) && !empty($input);
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
-(function (exports,biconnector_apacheSupersetAnalytics,ui_iconSet_main,ui_designTokens,main_core_events,main_core,ui_notification) {
+(function (exports,biconnector_apacheSupersetAnalytics,ui_iconSet_main,ui_designTokens,main_core_events,ui_notification,main_core,ui_entitySelector) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -276,7 +276,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  }, {
 	    key: "getHintText",
 	    value: function getHintText() {
-	      var hintLink = "\n\t\t\t<a \n\t\t\t\tclass=\"biconnector-superset-settings-panel-range__hint-link\"\n\t\t\t\tonclick=\"top.BX.Helper.show('redirect=detail&code=19123608')\"\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK'), "\n\t\t\t</a>\n\t\t");
+	      var hintLink = "\n\t\t\t<a \n\t\t\t\tclass=\"biconnector-superset-settings-panel-range__hint-link\"\n\t\t\t\tonclick=\"top.BX.Helper.show('redirect=detail&code=20337242&anchor=Defaultreportingperiod')\"\n\t\t\t>\n\t\t\t\t".concat(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK'), "\n\t\t\t</a>\n\t\t");
 	      return main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT').replace('#HINT_LINK#', hintLink);
 	    }
 	  }, {
@@ -379,7 +379,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      var hint = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), message);
 	      var link = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"biconnector-superset-settings-panel-range__hint-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'));
 	      main_core.Event.bind(link, 'click', function () {
-	        top.BX.Helper.show('redirect=detail&code=19123608');
+	        top.BX.Helper.show('redirect=detail&code=20337242&anchor=Encryptionkey');
 	      });
 	      main_core.Dom.replace(hint.querySelector('link'), link);
 	      main_core.Dom.insertBefore(hint, this._container);
@@ -468,6 +468,152 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return KeyInfoField;
 	}(BX.UI.EntityEditorCustom);
 
+	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$2, _templateObject7$2;
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _values = /*#__PURE__*/new WeakMap();
+	var _currentValues = /*#__PURE__*/new WeakMap();
+	var UserNotificationField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
+	  babelHelpers.inherits(UserNotificationField, _BX$UI$EntityEditorCu);
+	  function UserNotificationField() {
+	    var _babelHelpers$getProt;
+	    var _this;
+	    babelHelpers.classCallCheck(this, UserNotificationField);
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(UserNotificationField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "refreshKeyLock", false);
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _values, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _currentValues, {
+	      writable: true,
+	      value: void 0
+	    });
+	    return _this;
+	  }
+	  babelHelpers.createClass(UserNotificationField, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      var _this2 = this;
+	      babelHelpers.get(babelHelpers.getPrototypeOf(UserNotificationField.prototype), "initialize", this).call(this, id, settings);
+	      babelHelpers.classPrivateFieldSet(this, _values, new Set());
+	      babelHelpers.classPrivateFieldSet(this, _currentValues, new Set());
+	      this._model.getField(this.getName(), []).forEach(function (id) {
+	        id = main_core.Text.toNumber(id);
+	        babelHelpers.classPrivateFieldGet(_this2, _values).add(id);
+	        babelHelpers.classPrivateFieldGet(_this2, _currentValues).add(id);
+	      });
+	    }
+	  }, {
+	    key: "createTitleNode",
+	    value: function createTitleNode() {
+	      return main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
+	    }
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      var _this3 = this;
+	      this.ensureWrapperCreated({
+	        classNames: ['ui-entity-editor-field-text']
+	      });
+	      this.adjustWrapper();
+	      var message = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK', {
+	        '#HINT_LINK#': '<link></link>'
+	      });
+	      var hint = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), message);
+	      var link = main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"biconnector-superset-settings-panel-range__hint-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'));
+	      main_core.Event.bind(link, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=20337242&anchor=UpdateNotification');
+	      });
+	      main_core.Dom.replace(hint.querySelector('link'), link);
+	      main_core.Dom.insertBefore(hint, this._container);
+	      this._innerWrapper = main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["<div class='ui-entity-editor-content-block ui-ctl-custom biconnector-superset-settings-panel-key-info-container'></div>"])));
+	      main_core.Dom.append(this._innerWrapper, this._wrapper);
+	      var content = main_core.Tag.render(_templateObject5$2 || (_templateObject5$2 = babelHelpers.taggedTemplateLiteral(["\t\n\t\t\t<div class=\"ui-ctl-w100\"></div>\n\t\t"])));
+	      main_core.Dom.append(content, this._innerWrapper);
+	      var preselectedItems = [];
+	      babelHelpers.classPrivateFieldGet(this, _values).forEach(function (id) {
+	        preselectedItems.push(['user', id]);
+	      });
+	      var tagSelector = new ui_entitySelector.TagSelector({
+	        dialogOptions: {
+	          context: 'biconnector--new-dashboard-notify',
+	          entities: [{
+	            id: 'user',
+	            options: {
+	              selectMode: 'usersOnly'
+	            }
+	          }],
+	          preselectedItems: preselectedItems
+	        },
+	        events: {
+	          onBeforeTagAdd: function onBeforeTagAdd(event) {
+	            var _event$getData = event.getData(),
+	              tag = _event$getData.tag;
+	            babelHelpers.classPrivateFieldGet(_this3, _values).add(tag.getId());
+	            _this3.onChange();
+	          },
+	          onBeforeTagRemove: function onBeforeTagRemove(event) {
+	            var _event$getData2 = event.getData(),
+	              tag = _event$getData2.tag;
+	            babelHelpers.classPrivateFieldGet(_this3, _values)["delete"](tag.getId());
+	            _this3.onChange();
+	          }
+	        }
+	      });
+	      tagSelector.renderTo(content);
+	      main_core.Dom.addClass(tagSelector.getOuterContainer(), 'ui-ctl-element');
+	      this.registerLayout(options);
+	      this._hasLayout = true;
+	    }
+	  }, {
+	    key: "onChange",
+	    value: function onChange() {
+	      var _this4 = this;
+	      if (babelHelpers.classPrivateFieldGet(this, _currentValues).size !== babelHelpers.classPrivateFieldGet(this, _values).size) {
+	        this.markAsChanged();
+	        return;
+	      }
+	      this._isChanged = false;
+	      babelHelpers.classPrivateFieldGet(this, _values).forEach(function (id) {
+	        if (!babelHelpers.classPrivateFieldGet(_this4, _currentValues).has(id)) {
+	          _this4.markAsChanged();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "save",
+	    value: function save() {
+	      var _this5 = this;
+	      var values = [];
+	      if (main_core.Type.isDomNode(this._innerWrapper)) {
+	        var oldSaveBlock = this._innerWrapper.querySelector('.save-block');
+	        if (main_core.Type.isDomNode(oldSaveBlock)) {
+	          main_core.Dom.remove(oldSaveBlock);
+	        }
+	        var saveBlock = main_core.Tag.render(_templateObject6$2 || (_templateObject6$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"save-block\"></div>"])));
+	        babelHelpers.classPrivateFieldGet(this, _values).forEach(function (id) {
+	          values.push(id);
+	          main_core.Dom.append(main_core.Tag.render(_templateObject7$2 || (_templateObject7$2 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[]\" value=\"", "\">"])), _this5.getName(), id), saveBlock);
+	        });
+	        main_core.Dom.append(saveBlock, this._innerWrapper);
+	      }
+	      this._model.setField(this.getName(), values);
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      var self = new this(id, settings);
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return UserNotificationField;
+	}(BX.UI.EntityEditorCustom);
+
 	var FieldFactory = /*#__PURE__*/function () {
 	  function FieldFactory() {
 	    var _this = this;
@@ -490,6 +636,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          return DashboardDateFilterField.create(controlId, settings);
 	        case 'keyInfo':
 	          return KeyInfoField.create(controlId, settings);
+	        case 'userNotificationSelector':
+	          return UserNotificationField.create(controlId, settings);
 	        default:
 	          return null;
 	      }
@@ -518,5 +666,5 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 
 	exports.SettingsPanel = SettingsPanel;
 
-}((this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {}),BX.BIConnector,BX,BX,BX.Event,BX,BX));
+}((this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {}),BX.BIConnector,BX,BX,BX.Event,BX,BX,BX.UI.EntitySelector));
 //# sourceMappingURL=script.js.map

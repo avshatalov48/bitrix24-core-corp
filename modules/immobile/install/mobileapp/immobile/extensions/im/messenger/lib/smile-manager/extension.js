@@ -3,12 +3,12 @@
  */
 jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 	const { Logger } = require('im/messenger/lib/logger');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { backgroundCache } = require('im/messenger/lib/background-cache');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const CACHE_VERSION = 1;
-	const LAST_UPDATE_OPTION_NAME = 'SMILES_LAST_UPDATE_DATE';
+	const LAST_UPDATE_OPTION_NAME = 'SMILE_LAST_UPDATE_DATE';
 
 	let instance = null;
 
@@ -65,10 +65,10 @@ jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 				this.initPromiseRejected = reject;
 			});
 
-			const lastUpdate = MessengerParams.get('SMILES_LAST_UPDATE_DATE', 0);
+			const lastUpdate = MessengerParams.get(LAST_UPDATE_OPTION_NAME, 0);
 			this.lastUpdateDate = Date.parse(lastUpdate) + CACHE_VERSION;
 
-			this.repository = core.getRepository();
+			this.repository = serviceLocator.get('core').getRepository();
 		}
 
 		getSmiles()

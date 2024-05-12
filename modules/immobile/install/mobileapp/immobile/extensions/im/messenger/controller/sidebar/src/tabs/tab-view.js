@@ -2,6 +2,7 @@
  * @module im/messenger/controller/sidebar/tabs/tab-view
  */
 jn.define('im/messenger/controller/sidebar/tabs/tab-view', (require, exports, module) => {
+	/* global View, TabView, Application */
 	const { SidebarParticipantsView } = require(
 		'im/messenger/controller/sidebar/tabs/participants/participants-view',
 	);
@@ -84,7 +85,9 @@ jn.define('im/messenger/controller/sidebar/tabs/tab-view', (require, exports, mo
 						params: {
 							styles: {
 								tabTitle: {
-									underlineColor: AppTheme.colors.accentMainPrimary,
+									underlineColor: this.props.isCopilot
+										? AppTheme.colors.accentMainCopilot
+										: AppTheme.colors.accentMainPrimary,
 								},
 							},
 							items: this.state.tabItems,
@@ -142,6 +145,7 @@ jn.define('im/messenger/controller/sidebar/tabs/tab-view', (require, exports, mo
 
 			return new SidebarParticipantsView({
 				isNotes: this.props.isNotes,
+				isCopilot: this.props.isCopilot,
 				dialogId: this.props.dialogId,
 			});
 		}

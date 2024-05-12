@@ -54,6 +54,7 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 				...fieldProps,
 				...formatConfig,
 				enable: !this.isReadOnly(),
+				shouldShowToolbar: this.shouldShowToolbar(),
 			};
 		}
 
@@ -68,6 +69,11 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 				type: isInteger ? Types.INTEGER : Types.DOUBLE,
 				keyboardType: isInteger ? 'number-pad' : 'decimal-pad',
 			};
+		}
+
+		shouldShowToolbar()
+		{
+			return BX.prop.getBoolean(this.props, 'shouldShowToolbar', true);
 		}
 
 		getFormatConfig()

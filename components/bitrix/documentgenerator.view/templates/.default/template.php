@@ -2,7 +2,11 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-if($arResult['ERRORS'])
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CMain $APPLICATION */
+
+if (!empty($arResult['ERRORS']))
 {
 	echo '<h3 class="document-view-header">'.implode('<br />', $arResult['ERRORS']).'</h3>';
 	return;
@@ -10,7 +14,7 @@ if($arResult['ERRORS'])
 
 \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 
-if($arResult['imageUrl'])
+if($arResult['isPdfReady'])
 {
 	$APPLICATION->IncludeComponent('bitrix:pdf.viewer', '', [
 		'PATH' => $arResult['pdfUrl'],

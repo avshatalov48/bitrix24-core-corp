@@ -11,6 +11,7 @@ use Bitrix\Disk\SpecificFolder;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Main\IO;
 use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\HttpClient;
@@ -133,12 +134,17 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 		return [];
 	}
 
-	protected function getScopes(): array
+	static public function getDefaultScopes(): array
 	{
 		return [
-			'https://www.googleapis.com/auth/drive',
+			//			'https://www.googleapis.com/auth/drive',
 			'https://www.googleapis.com/auth/drive.file',
 		];
+	}
+
+	protected function getScopes(): array
+	{
+		return self::getDefaultScopes();
 	}
 
 	protected function getOAuthServiceClass(): string
@@ -163,6 +169,76 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 		$this->accessToken = $this->getOAuthService()->getStorageToken();
 
 		return $this;
+	}
+
+	/**
+	 * Request application client id
+	 *
+	 * @return ?string
+	 * @throws LoaderException
+	 */
+	public function getClientId(): ?string
+	{
+		if (!Loader::includeModule('socialservices'))
+		{
+			$this->errorCollection[] = new Error(
+				Loc::getMessage('DISK_GOOGLE_HANDLER_ERROR_NOT_INSTALLED_SOCSERV'), self::ERROR_NOT_INSTALLED_SOCSERV
+			);
+
+			return null;
+		}
+
+		return \COption::GetOptionString('socialservices', 'google_appid') ?? '';
+	}
+
+	/**
+	 * Request application api id
+	 *
+	 * @return ?string
+	 * @throws LoaderException
+	 */
+	public function getApiKey(): ?string
+	{
+		if (!Loader::includeModule('socialservices'))
+		{
+			$this->errorCollection[] = new Error(
+				Loc::getMessage('DISK_GOOGLE_HANDLER_ERROR_NOT_INSTALLED_SOCSERV'), self::ERROR_NOT_INSTALLED_SOCSERV
+			);
+
+			return null;
+		}
+
+		return \COption::GetOptionString('socialservices', 'google_app_api_key');
+	}
+
+	/**
+	 * Request application app id
+	 *
+	 * @return ?string
+	 * @throws LoaderException
+	 */
+	public function getAppId(): ?string
+	{
+		//123456789-xxxxxx.apps.googleusercontent.com
+		$clientId = $this->getClientId();
+		if (!$clientId)
+		{
+			return null;
+		}
+
+		$parts = explode('-', $clientId);
+		if (empty($parts))
+		{
+			return null;
+		}
+
+		$clientId = $parts[0];
+		if (!is_numeric($clientId))
+		{
+			return null;
+		}
+
+		return $clientId;
 	}
 
 
@@ -720,7 +796,7 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 		if(
 			$http->get(
 				self::API_URL_V3 . "/files?q='{$folderId}'+in+parents+and+trashed=false+and+(mimeType+contains+'application/vnd.google-apps.folder'+or+not+mimeType+contains+'application/vnd.google-apps.')&" . http_build_query(array(
-					'fields' => 'files/id,files/mimeType,files/webViewLink,files/size,files/name,files/version,files/modifiedTime'
+					'fields' => 'files/id,files/mimeType,files/webViewLink,files/size,files/name,files/version,files/modifiedTime',
 				))
 			) === false
 		)

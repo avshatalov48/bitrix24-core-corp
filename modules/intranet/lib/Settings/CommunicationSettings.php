@@ -6,6 +6,12 @@ use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\ChatFactory;
+use Bitrix\Intranet\Settings\Controls\Field;
+use Bitrix\Intranet\Settings\Controls\Section;
+use Bitrix\Intranet\Settings\Controls\Selector;
+use Bitrix\Intranet\Settings\Controls\Switcher;
+use Bitrix\Main\Config\Option;
+use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -327,7 +333,16 @@ class CommunicationSettings extends AbstractSettings
 	public function get(): SettingsInterface
 	{
 		$data = [];
-		$data['allow_livefeed_toall'] = \COption::GetOptionString("socialnetwork", "allow_livefeed_toall", "Y");
+
+		$data['allow_livefeed_toall'] = new Switcher(
+			'settings-communication-field-allow_livefeed_toall',
+			'allow_livefeed_toall',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED'),
+			Option::get('socialnetwork', 'allow_livefeed_toall', 'Y'),
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_POST_FEED_ON')
+			]
+		);
 
 		$defaultRightsSerialized = 'a:1:{i:0;s:2:"AU";}';
 		$val = \COption::GetOptionString("socialnetwork", "livefeed_toall_rights", $defaultRightsSerialized);
@@ -337,6 +352,24 @@ class CommunicationSettings extends AbstractSettings
 			$toAllRights = unserialize($defaultRightsSerialized, ["allowed_classes" => false]);
 		}
 		$data['arToAllRights'] = static::processOldAccessCodes($toAllRights);
+
+		$data['sectionFeed'] = new Section(
+			'settings-communication-section-feed',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_NEWS_FEED'),
+			'ui-icon-set --feed-bold'
+		);
+		$data['sectionChats'] = new Section(
+			'settings-communication-section-chats',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHATS'),
+			'ui-icon-set --chats-1',
+			false
+		);
+		$data['sectionDisk'] = new Section(
+			'settings-communication-section-disk',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DISK'),
+			'ui-icon-set --disk',
+			false
+		);
 
 		if (Loader::includeModule("im"))
 		{
@@ -360,9 +393,18 @@ class CommunicationSettings extends AbstractSettings
 				}
 			}
 
-			$data['allow_post_general_chat'] = ($generalChatRights['generalChatCanPost'] ?? null) === 'NONE'
-				? 'N'
-				: 'Y';
+			$data['allow_post_general_chat'] = new Switcher(
+				'settings-communication-field-allow_post_general_chat',
+				'allow_post_general_chat',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT'),
+				($generalChatRights['generalChatCanPost'] ?? null) === 'NONE' ? 'N' : 'Y',
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_POST_GEN_CHAT_ON_MSGVER_1')
+				],
+				helpDesk: 'redirect=detail&code=18213254'
+			);
+
+
 			$values = [];
 			foreach ($generalChatRights['generalChatCanPostList'] ?? [] as $value => $name)
 			{
@@ -376,28 +418,84 @@ class CommunicationSettings extends AbstractSettings
 					'selected' => $value === ($generalChatRights['generalChatCanPost'] ?? null)
 				];
 			}
-			$data['general_chat_can_post'] = [
-				'name' => 'general_chat_can_post',
-				'values' => $values,
-				'current' => $generalChatRights['generalChatCanPost'] ?? null,
-			];
+
+			$data['general_chat_can_post'] = new Selector(
+				'settings-communication-field-general_chat_can_post',
+				'general_chat_can_post',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT_LIST'),
+				$values,
+				$generalChatRights['generalChatCanPost'] ?? null
+			);
+
 		}
 
-		$data['default_livefeed_toall'] = \COption::GetOptionString("socialnetwork", "default_livefeed_toall", "Y");
+		$data['default_livefeed_toall'] = new Switcher(
+			'settings-communication-field-default_livefeed_toall',
+			'default_livefeed_toall',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT'),
+			Option::get('socialnetwork', 'default_livefeed_toall', 'Y'),
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_PUBLISH_TO_ALL_DEFAULT_ON')
+			]
+		);
 
 		if (Loader::includeModule("im"))
 		{
-			$data['general_chat_message_leave'] = \COption::GetOptionString("im", "general_chat_message_leave") ? 'Y' : 'N';
+
+			$data['general_chat_message_leave'] = new Switcher(
+				'settings-communication-field-general_chat_message_leave',
+				'general_chat_message_leave',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE'),
+				Option::get("im", "general_chat_message_leave") ? 'Y' : 'N',
+			);
 		}
-		$data['url_preview_enable'] = \COption::GetOptionString("main", "url_preview_enable", "N");
+
+		$data['url_preview_enable'] = new Switcher(
+			'settings-communication-field-url_preview_enable',
+			'url_preview_enable',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_URL_PREVIEW'),
+			Option::get('main', 'url_preview_enable', 'N'),
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_URL_PREVIEW_ON')
+			]
+		);
+
 		if (Loader::includeModule("tasks") && Loader::includeModule("im"))
 		{
-			$data['create_overdue_chats'] = \COption::GetOptionString("tasks", "create_overdue_chats", "N");
+			$data['create_overdue_chats'] = new Switcher(
+				'settings-communication-field-create_overdue_chats',
+				'create_overdue_chats',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS'),
+				Option::get('tasks', 'create_overdue_chats', 'N'),
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_OVERDUE_CHATS_ON_MSGVER_1')
+				],
+				helpDesk: 'redirect=detail&code=18213270'
+			);
 		}
+
 		if ($this->isDiskConverted)
 		{
-			$data['disk_allow_edit_object_in_uf'] = \COption::GetOptionString("disk", "disk_allow_edit_object_in_uf", "Y");
-			$data['disk_allow_autoconnect_shared_objects'] = \COption::GetOptionString("disk", "disk_allow_autoconnect_shared_objects", "N");
+			$data['disk_allow_edit_object_in_uf'] = new Switcher(
+				'settings-communication-field-disk_allow_edit_object_in_uf',
+				'disk_allow_edit_object_in_uf',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC'),
+				Option::get('disk', 'disk_allow_edit_object_in_uf', 'Y'),
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_EDIT_DOC_ON')
+				]
+			);
+
+			$data['disk_allow_autoconnect_shared_objects'] = new Switcher(
+				'settings-communication-field-disk_allow_autoconnect_shared_objects',
+				'disk_allow_autoconnect_shared_objects',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK'),
+				Option::get('disk', 'disk_allow_autoconnect_shared_objects', 'N'),
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_CONNECT_DISK_ON_MSGVER_1')
+				],
+				helpDesk: 'redirect=detail&code=18213280'
+			);
 		}
 		else
 		{
@@ -406,29 +504,47 @@ class CommunicationSettings extends AbstractSettings
 			$data['webdav_allow_autoconnect_share_group_folder'] = \COption::GetOptionString("webdav", "webdav_allow_autoconnect_share_group_folder", "Y");
 		}
 
-		$data['disk_allow_use_external_link'] = [
-			'name' => 'disk_allow_use_external_link',
-			'value' => \COption::GetOptionString("disk", "disk_allow_use_external_link", "Y"),
-			'is_enable' => !$this->isBitrix24
+		$data['disk_allow_use_external_link'] = new Switcher(
+			'settings-communication-field-disk_allow_use_external_link',
+			'disk_allow_use_external_link',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK'),
+			Option::get('disk', 'disk_allow_use_external_link', 'Y'),
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_PUBLIC_LINK_ON_MSGVER_1')
+			],
+			isEnable: !$this->isBitrix24
 				|| $this->isBitrix24
 				&& Feature::isFeatureEnabled("disk_switch_external_link"),
-		];
+			helpDesk: 'redirect=detail&code=5390599',
+		);
 
-		$data['disk_allow_use_extended_fulltext'] = [
-			'name' => 'disk_allow_use_extended_fulltext',
-			'value' => \COption::GetOptionString("disk", "disk_allow_use_extended_fulltext", "N"),
-			'is_enable' => !$this->isBitrix24
-				|| $this->isBitrix24
-				&& Feature::isFeatureEnabled("disk_allow_use_extended_fulltext"),
-		];
+		$data['disk_allow_use_extended_fulltext'] = new Switcher(
+			'settings-communication-field-disk_allow_use_extended_fulltext',
+			'disk_allow_use_extended_fulltext',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC'),
+			Option::get('disk', 'disk_allow_use_extended_fulltext', 'N'),
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_SEARCH_DOC_ON_MSGVER_1')
+			],
+			isEnable: !$this->isBitrix24
+			|| $this->isBitrix24
+			&& Feature::isFeatureEnabled("disk_allow_use_extended_fulltext"),
+			helpDesk:'redirect=detail&code=18213348',
+		);
 
-		$data['disk_object_lock_enabled'] = [
-			'name' => 'disk_object_lock_enabled',
-			'value' => \COption::GetOptionString("disk", "disk_object_lock_enabled", "N"),
-			'is_enable' => !$this->isBitrix24
-				|| $this->isBitrix24
-				&& Feature::isFeatureEnabled("disk_object_lock_enabled"),
-		];
+		$data['disk_object_lock_enabled'] = new Switcher(
+			'settings-communication-field-disk_object_lock_enabled',
+			'disk_object_lock_enabled',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC'),
+			Option::get('disk', 'disk_object_lock_enabled', 'N'),
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_BLOCK_DOC_ON_MSGVER_1')
+			],
+			isEnable: !$this->isBitrix24
+			|| $this->isBitrix24
+			&& Feature::isFeatureEnabled("disk_object_lock_enabled"),
+			helpDesk:'redirect=detail&code=18213348',
+		);
 
 		if (Loader::includeModule("disk"))
 		{
@@ -455,17 +571,19 @@ class CommunicationSettings extends AbstractSettings
 					$hints[$value] = $hintMessage;
 				}
 			}
-			$data['DISK_LIMIT_PER_FILE'] = [
-				'name' => 'disk_version_limit_per_file',
-				'values' => $fileLimitedValues,
-				'current' => $diskLimitCurrent,
-				'diskFileHistoryTtl' => $diskFileHistoryTtl,
-				'hintTitle' => Loc::getMessage('SETTINGS_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY_TITLE'),
-				'hints' => $hints,
-				'is_enable' => !$this->isBitrix24
+
+			$hints['hintTitle'] = Loc::getMessage('SETTINGS_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY_TITLE');
+			$data['DISK_LIMIT_PER_FILE'] = new Selector(
+				'settings-communication-field-disk_limit_per_file',
+				'disk_version_limit_per_file',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT'),
+				$fileLimitedValues,
+				$diskLimitCurrent,
+				hints: $hints,
+				isEnable: !$this->isBitrix24
 					|| $this->isBitrix24
 					&& Feature::isFeatureEnabled("disk_version_limit_per_file"),
-			];
+			);
 
 
 			$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
@@ -480,22 +598,31 @@ class CommunicationSettings extends AbstractSettings
 				];
 			}
 			unset($handler);
-			$data["DISK_VIEWER_SERVICE"] = [
-				'name' => 'default_viewer_service',
-				'values' => $optionList,
-				'current' => $currentValue,
-				'hints' => [],
-			];
+			$data["DISK_VIEWER_SERVICE"] = new Selector(
+				'settings-communication-field-default_viewer_service',
+				'default_viewer_service',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER'),
+				$optionList,
+				$currentValue
+			);
 		}
 
-		$data['ratingTextLikeY'] = [
-			'name' => 'rating_text_like_y',
-			'value' => \COption::GetOptionString("main", "rating_text_like_y", "")
-		];
+		$data['ratingTextLikeY'] = new Field(
+			'settings-communication-field-ratingTextLikeY',
+			'rating_text_like_y',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
+			'text',
+			value: Option::get('main', 'rating_text_like_y', '')
+		);
 
 		if ($this->isBitrix24 && Loader::includeModule("im"))
 		{
-			$data['general_chat_message_admin_rights'] = \COption::GetOptionString("im", "general_chat_message_admin_rights", true) ? 'Y' : 'N';
+			$data['general_chat_message_admin_rights'] = new Switcher(
+				'settings-communication-field-general_chat_message_admin_rights',
+				'general_chat_message_admin_rights',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE'),
+				Option::get('im', 'general_chat_message_admin_rights', true) ? 'Y' : 'N',
+			);
 		}
 
 		return new static($data);
@@ -566,5 +693,38 @@ class CommunicationSettings extends AbstractSettings
 		}
 
 		return array_unique($rightsList);
+	}
+
+	public function find(string $query): array
+	{
+		$index = [];
+		if ($this->isBitrix24)
+		{
+			$index['general_chat_message_admin_rights'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE');
+		}
+
+		$searchEngine = SearchEngine::initWithDefaultFormatter($index + [
+			//sections
+			'settings-communication-section-feed' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_NEWS_FEED'),
+			'settings-communication-section-chats' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHATS'),
+			'settings-communication-section-disk' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DISK'),
+			//fields
+			'allow_livefeed_toall' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED'),
+			'default_livefeed_toall' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT'),
+			'rating_text_like_y' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
+			'allow_post_general_chat' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT'),
+			'general_chat_message_leave' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE'),
+			'url_preview_enable' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_URL_PREVIEW'),
+			'create_overdue_chats' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS'),
+			'default_viewer_service' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER'),
+			'disk_version_limit_per_file' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT'),
+			'disk_allow_edit_object_in_uf' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC'),
+			'disk_allow_autoconnect_shared_objects' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK'),
+			'disk_allow_use_external_link' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK'),
+			'disk_object_lock_enabled' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC'),
+			'disk_allow_use_extended_fulltext' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC'),
+		]);
+
+		return $searchEngine->find($query);
 	}
 }

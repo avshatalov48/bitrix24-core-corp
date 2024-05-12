@@ -1,6 +1,0 @@
-<?
-return [
-	'extensions' => [
-		'intranet/invite',
-	],
-];

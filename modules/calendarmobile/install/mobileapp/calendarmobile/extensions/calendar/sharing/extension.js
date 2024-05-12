@@ -31,7 +31,9 @@ jn.define('calendar/sharing', (require, exports, module) => {
 				shortUrl: BX.prop.getString(sharingInfo, 'shortUrl', null),
 				isRestriction: BX.prop.getBoolean(sharingInfo, 'isRestriction', true),
 				isEnabled: BX.prop.getBoolean(sharingInfo, 'isEnabled', false),
+				userInfo: BX.prop.getObject(sharingInfo, 'userInfo', {}),
 				settings: BX.prop.getObject(sharingInfo, 'settings', {}),
+				options: BX.prop.getObject(sharingInfo, 'options', {}),
 			};
 
 			this.model.setFields(data);
@@ -94,6 +96,7 @@ jn.define('calendar/sharing', (require, exports, module) => {
 					{
 						const fields = this.resolveAjaxResponse(response);
 						this.model.setFields(fields);
+						this.model.clearLinks();
 					}
 
 					resolve(response);

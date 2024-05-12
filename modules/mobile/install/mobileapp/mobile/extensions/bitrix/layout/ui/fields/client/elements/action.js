@@ -33,7 +33,6 @@ jn.define('layout/ui/fields/client/elements/action', (require, exports, module) 
 						height: 15,
 						width: 15,
 					},
-					tintColor: AppTheme.colors.base3,
 					svg: {
 						content: pen(),
 					},

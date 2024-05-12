@@ -655,6 +655,7 @@
 				{
 					// self hangup elsewhere
 					this.joinStatus = BX.Call.JoinStatus.None;
+					this.eventEmitter.emit(BX.Call.Event.onHangup);
 				}
 				return;
 			}

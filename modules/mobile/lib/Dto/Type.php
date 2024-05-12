@@ -3,10 +3,7 @@
 namespace Bitrix\Mobile\Dto;
 
 use Bitrix\Mobile\Dto\Caster\Caster;
-use Bitrix\Mobile\Dto\Caster\IntCaster;
-use Bitrix\Mobile\Dto\Caster\FloatCaster;
-use Bitrix\Mobile\Dto\Caster\StringCaster;
-use Bitrix\Mobile\Dto\Caster\BoolCaster;
+use Bitrix\Mobile\Dto\Caster\ScalarCaster;
 use Bitrix\Mobile\Dto\Caster\ObjectCaster;
 
 final class Type
@@ -20,22 +17,7 @@ final class Type
 
 		$typeName = $type->getName();
 
-		switch ($typeName)
-		{
-			case 'int':
-				$caster = new IntCaster(); break;
-			case 'float':
-				$caster = new FloatCaster(); break;
-			case 'string':
-				$caster = new StringCaster(); break;
-			case 'bool':
-				$caster = new BoolCaster(); break;
-			case 'array':
-				$caster = null; break;
-			default:
-				$caster = class_exists($typeName) ? new ObjectCaster($typeName) : null;
-				break;
-		}
+		$caster = self::resolveCasterByTypeName($typeName);
 
 		if ($caster && $type->allowsNull())
 		{
@@ -45,24 +27,68 @@ final class Type
 		return $caster;
 	}
 
-	public static function int(): IntCaster
+	public static function makeCollectionCasterFromAttributes(\ReflectionAttribute $attribute, $isNullable = false): ?Caster
 	{
-		return new IntCaster();
+		$elementsType = $attribute->getArguments()[0] ?? null;
+		if (!$elementsType)
+		{
+			throw new InvalidDtoException('Type of collection is not declared in attribute');
+		}
+
+		$caster = self::resolveCasterByTypeName($elementsType);
+
+		return Type::collection($caster)->nullable($isNullable);
 	}
 
-	public static function float(): FloatCaster
+	public static function validateCollectionByAttributes(?array $collection, \ReflectionAttribute $attribute): void
 	{
-		return new FloatCaster();
+		$elementsType = $attribute->newInstance()->getElementsType();
+
+		foreach ($collection as $item)
+		{
+			$type = gettype($item);
+			if ($type !== $elementsType)
+			{
+				throw new InvalidDtoException('Invalid type of element in collection: expected ' . $elementsType . ', got ' . $type);
+			}
+		}
 	}
 
-	public static function string(): StringCaster
+	private static function resolveCasterByTypeName($typeName)
 	{
-		return new StringCaster();
+		$scalarTypes = ['int', 'float', 'string', 'bool'];
+
+		if (in_array($typeName, $scalarTypes))
+		{
+			return new ScalarCaster($typeName);
+		}
+
+		if (class_exists($typeName))
+		{
+			return new ObjectCaster($typeName);
+		}
+
+		return null;
 	}
 
-	public static function bool(): BoolCaster
+	public static function int(): ScalarCaster
 	{
-		return new BoolCaster();
+		return new ScalarCaster('int');
+	}
+
+	public static function float(): ScalarCaster
+	{
+		return new ScalarCaster('float');
+	}
+
+	public static function string(): ScalarCaster
+	{
+		return new ScalarCaster('string');
+	}
+
+	public static function bool(): ScalarCaster
+	{
+		return new ScalarCaster('bool');
 	}
 
 	public static function object(string $type): ObjectCaster

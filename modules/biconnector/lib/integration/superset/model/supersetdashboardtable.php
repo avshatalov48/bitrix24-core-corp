@@ -123,7 +123,11 @@ final class SupersetDashboardTable extends DataManager
 				Join::on('this.SOURCE_ID', 'ref.ID')
 			))->configureJoinType(Join::TYPE_LEFT),
 
-			(new Fields\DateField('DATE_CREATE'))
+			(new Fields\DatetimeField('DATE_CREATE'))
+				->configureRequired()
+				->configureDefaultValue(fn() => new DateTime()),
+
+			(new Fields\DatetimeField('DATE_MODIFY'))
 				->configureRequired()
 				->configureDefaultValue(fn() => new DateTime()),
 

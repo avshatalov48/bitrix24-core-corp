@@ -9,11 +9,13 @@ return [
 	'css' => 'dist/editor.bundle.css',
 	'js' => 'dist/editor.bundle.js',
 	'rel' => [
-		'main.core',
-		'main.core.events',
 		'crm.entity-selector',
-		'ui.entity-selector',
+		'main.core.events',
 		'ui.design-tokens',
+		'ui.entity-selector',
+		'main.core',
+		'main.popup',
+		'ui.buttons',
 	],
 	'skip_core' => false,
 ];

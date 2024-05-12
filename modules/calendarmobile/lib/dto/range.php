@@ -15,26 +15,14 @@ final class Range extends Dto
 	public $to = 600;
 
 	/** @var array/null */
-	public $weekDays = [];
+	public $weekdays = [];
 
 	public function getCasts(): array
 	{
 		return [
 			'from' => Type::int(),
 			'to' => Type::int(),
-			'weekDays' => Type::collection(Type::int()),
-		];
-	}
-
-	protected function getDecoders(): array
-	{
-		return [
-			function (array $fields)
-			{
-				$fields['weekDays'] = $fields['weekdays'];
-				unset($fields['weekdays']);
-				return $fields;
-			},
+			'weekdays' => Type::collection(Type::int()),
 		];
 	}
 }

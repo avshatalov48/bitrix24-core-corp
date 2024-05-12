@@ -14,6 +14,8 @@ return [
 		'rest',
 		'utils/object',
 		'utils/function',
+		'alert',
+		'loc',
 
 		'crm:type',
 		'crm:loc',

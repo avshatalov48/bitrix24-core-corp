@@ -8,7 +8,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Mobile\Command;
 
-Loader::requireModule('mobile');
 Loader::requireModule('lists');
 
 final class LoadEntityCommand extends Command

@@ -7,7 +7,7 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
-	const { Alert, ButtonType } = require('alert');
+	const { confirmClosing } = require('alert');
 	const { PureComponent } = require('layout/pure-component');
 	const { Wizard } = require('layout/ui/wizard');
 	const { CatalogStep } = require('bizproc/workflow/starter/catalog-step');
@@ -166,59 +166,34 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 				return new Promise((resolve, reject) => {
 					Haptics.impactLight();
 
-					Alert.confirm(
-						Loc.getMessage('M_BP_WORKFLOW_STARTER_CONFIRM_TITLE'),
-						'',
-						[
-							{
-								text: Loc.getMessage('M_BP_WORKFLOW_STARTER_CONFIRM_BUTTON_EXIT_WITHOUT_SAVE'),
-								type: ButtonType.DESTRUCTIVE,
-								onPress: () => resolve(),
-							},
-							{
-								text: Loc.getMessage('M_BP_WORKFLOW_STARTER_CONFIRM_BUTTON_CONTINUE'),
-								type: ButtonType.CANCEL,
-								onPress: () => {
-									this.wizard.moveToNextStep();
-									reject();
-								},
-							},
-						],
-					);
+					confirmClosing({
+						hasSaveAndClose: false,
+						description: '',
+						onClose: () => resolve(),
+						onCancel: () => {
+							this.wizard.moveToNextStep();
+							reject();
+						},
+					});
 				});
 			}
 
 			return new Promise((resolve, reject) => {
 				Haptics.impactLight();
 
-				Alert.confirm(
-					Loc.getMessage('M_BP_WORKFLOW_STARTER_CONFIRM_TITLE'),
-					'',
-					[
-						{
-							text: Loc.getMessage('M_BP_WORKFLOW_STARTER_CONFIRM_BUTTON_SAVE_AND_EXIT'),
-							type: ButtonType.DESTRUCTIVE,
-							onPress: () => {
-								this.wizard.getCurrentStep().onMoveToNextStep()
-									.then((response) => {
-										return response.next ? resolve() : reject();
-									})
-									.catch(() => reject())
-								;
-							},
-						},
-						{
-							text: Loc.getMessage('M_BP_WORKFLOW_STARTER_CONFIRM_BUTTON_EXIT_WITHOUT_SAVE'),
-							type: ButtonType.DESTRUCTIVE,
-							onPress: () => resolve(),
-						},
-						{
-							text: Loc.getMessage('M_BP_WORKFLOW_STARTER_CONFIRM_BUTTON_CONTINUE'),
-							type: ButtonType.CANCEL,
-							onPress: () => reject(),
-						},
-					],
-				);
+				confirmClosing({
+					description: '',
+					onSave: () => {
+						this.wizard.getCurrentStep().onMoveToNextStep()
+							.then((response) => {
+								return response.next ? resolve() : reject();
+							})
+							.catch(() => reject())
+						;
+					},
+					onClose: () => resolve(),
+					onCancel: () => reject(),
+				});
 			});
 		}
 

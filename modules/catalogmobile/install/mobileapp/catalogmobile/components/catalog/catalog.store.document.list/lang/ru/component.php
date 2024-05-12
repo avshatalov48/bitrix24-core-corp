@@ -43,8 +43,6 @@ $MESS['M_CSDL_NO_RIGHTS_TO_ANY_DOCUMENT_TITLE'] = 'Нет доступа к до
 $MESS['M_CSDL_NO_RIGHTS_TO_ANY_DOCUMENT_DESCRIPTION'] = 'Обратитесь к вашему руководителю или администратору Битрикс24';
 
 $MESS['M_CSDL_DOCUMENT_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить документ?';
-$MESS['M_CSDL_DOCUMENT_DELETE_CONFIRMATION_OK'] = 'Удалить';
-$MESS['M_CSDL_DOCUMENT_DELETE_CONFIRMATION_CANCEL'] = 'Отмена';
 
 $MESS['M_CSDL_PULL_NOTIFICATION_UPDATE'] = 'Обновите список...';
 $MESS['M_CSDL_PULL_NOTIFICATION_ADD'] = 'Новых документов: %COUNT%';

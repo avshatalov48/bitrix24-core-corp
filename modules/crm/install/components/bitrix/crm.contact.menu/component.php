@@ -14,8 +14,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global CDatabase $DB
  */
 
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
@@ -95,6 +95,12 @@ if ($CrmPerms->HavePerm(
 )
 {
 	return;
+}
+
+$category = null;
+if ($arResult['CATEGORY_ID'])
+{
+	$category = Container::getInstance()->getFactory(\CCrmOwnerType::Contact)?->getCategory($arResult['CATEGORY_ID']);
 }
 
 if (!isset($arParams['TYPE']))
@@ -205,13 +211,35 @@ if($arParams['TYPE'] === 'details')
 
 	if($bAdd)
 	{
-		$copyUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_CONTACT_DETAILS'],
-				array('contact_id' => $arParams['ELEMENT_ID'])
-			),
-			array('copy' => 1)
-		);
+		$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Contact)
+			->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+			)
+			->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+			)
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_SETTINGS_BUTTON)
+		;
+
+		if ($category && $category->getCode())
+		{
+			$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+		}
+
+		$copyUrl = $analyticsEventBuilder
+			->buildUri(
+				CComponentEngine::makePathFromTemplate($arParams['PATH_TO_CONTACT_DETAILS'], ['contact_id' => $arParams['ELEMENT_ID']]),
+			)
+			->addParams([
+				'copy' => 1,
+			])
+			->getUri()
+		;
+
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_CONTACT_COPY'),
 			'TITLE' => GetMessage('CRM_CONTACT_COPY_TITLE'),
@@ -255,6 +283,27 @@ if($arParams['TYPE'] === 'list')
 	{
 		$addEntityUrl = CCrmUrlUtil::AddUrlParams($addEntityUrl, ['category_id' => $arResult['CATEGORY_ID']]);
 	}
+
+	$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Contact)
+		->setSection(
+			!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+				? $arParams['ANALYTICS']['c_section']
+				: null
+		)
+		->setSubSection(
+			!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+				? $arParams['ANALYTICS']['c_sub_section']
+				: null
+		)
+		->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_BUTTON)
+	;
+
+	if ($category && $category->getCode())
+	{
+		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+	}
+
+	$addEntityUrl = $analyticsEventBuilder->buildUri($addEntityUrl)->getUri();
 
 	$arResult['BUTTONS'][] = [
 		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
@@ -507,7 +556,7 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('CONTACT_DEDUPE_AUTOSEARCH'),
 				'TITLE' => GetMessage('CONTACT_DEDUPE_AUTOSEARCH'),
-				'ONCLICK' => 'BX.Crm.DedupeAutosearch.getDefault("CONTACT").showSettings();BX.PopupMenu.getCurrentMenu().close();'
+				'ONCLICK' => 'BX.Crm.DedupeAutosearch.getDefault("CONTACT").showSettings();'
 			);
 			$arResult['BUTTONS'][] = array(
 				'HTML' => GetMessage('CONTACT_DEDUPE_HELP').' <span class="ui-hint"><span class="ui-hint-icon"></span></span>',

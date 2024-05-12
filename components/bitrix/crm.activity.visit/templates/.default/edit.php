@@ -132,18 +132,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 						<div class="crm-activity-visit-popup-settings-inner" id="faceid-settings-container">
 							<div class="crm-activity-visit-popup-settings-inner-container">
 								<div class="crm-activity-visit-popup-settings-inner-title">
-									<span class="crm-activity-visit-popup-settings-inner-title-item">Действия:</span>
+									<span class="crm-activity-visit-popup-settings-inner-title-item">Р”РµР№СЃС‚РІРёСЏ:</span>
 								</div>
 								<div class="crm-activity-visit-popup-settings-inner-list" id="faceid-cameralist">
-									<div class="crm-activity-visit-popup-settings-inner-list-item crm-activity-visit-popup-settings-record">Запись</div>
+									<div class="crm-activity-visit-popup-settings-inner-list-item crm-activity-visit-popup-settings-record">Р—Р°РїРёСЃСЊ</div>
 								</div>
 								<div class="crm-activity-visit-popup-settings-inner-list" id="faceid-cameralist">
-									<div class="crm-activity-visit-popup-settings-inner-list-item crm-activity-visit-popup-settings-pause">Пауза</div>
+									<div class="crm-activity-visit-popup-settings-inner-list-item crm-activity-visit-popup-settings-pause">РџР°СѓР·Р°</div>
 								</div>
 							</div><!--crm-activity-visit-popup-settings-inner-container-->
 							<div class="crm-activity-visit-popup-settings-inner-container">
 								<div class="crm-activity-visit-popup-settings-inner-title">
-									<span class="crm-activity-visit-popup-settings-inner-title-item">Микрофон:</span>
+									<span class="crm-activity-visit-popup-settings-inner-title-item">РњРёРєСЂРѕС„РѕРЅ:</span>
 								</div>
 								<div class="crm-activity-visit-popup-settings-inner-list" id="faceid-cameralist">
 									<div class="crm-activity-visit-popup-settings-inner-list-item crm-activity-visit-popup-settings-checked">Lorem Ipsum</div>
@@ -161,7 +161,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		<div class="crm-activity-visit-hidden" data-role="entity-links">
 			<div class="crm-activity-visit-border"></div>
 			<div class="crm-activity-visit-badges">
-				<?//<div class="crm-activity-visit-badges-comment">Комментарий</div>?>
+				<?//<div class="crm-activity-visit-badges-comment">РљРѕРјРјРµРЅС‚Р°СЂРёР№</div>?>
 				<?/*
 			<div class="crm-activity-visit-badges-item"
 				 data-role="create-activity-button"
@@ -187,8 +187,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 						<?=GetMessage('CRM_ACTIVITY_VISIT_INVOICE')?>
 					</div>
 				<? endif ?>
-				<?//<div class="crm-activity-visit-badges-item">Связи</div>?>
-				<?//<div class="crm-activity-visit-badges-item">Еще...</div>?>
+				<?//<div class="crm-activity-visit-badges-item">РЎРІСЏР·Рё</div>?>
+				<?//<div class="crm-activity-visit-badges-item">Р•С‰Рµ...</div>?>
 			</div>
 
 		</div>

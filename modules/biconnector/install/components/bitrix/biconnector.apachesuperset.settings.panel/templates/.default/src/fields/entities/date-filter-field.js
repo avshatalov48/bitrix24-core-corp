@@ -144,7 +144,7 @@ export class DateFilterField extends BX.UI.EntityEditorList
 		const hintLink = `
 			<a 
 				class="biconnector-superset-settings-panel-range__hint-link"
-				onclick="top.BX.Helper.show('redirect=detail&code=19123608')"
+				onclick="top.BX.Helper.show('redirect=detail&code=20337242&anchor=Defaultreportingperiod')"
 			>
 				${Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK')}
 			</a>

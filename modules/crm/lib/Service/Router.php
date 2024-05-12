@@ -1409,6 +1409,24 @@ class Router
 		return $url;
 	}
 
+	public function getItemListSliderUrl(int $entityTypeId): ?Uri
+	{
+		$componentName = $this->getItemListComponentName($entityTypeId);
+		if (!$componentName)
+		{
+			return null;
+		}
+
+		$componentPath = \CComponentEngine::makeComponentPath($componentName);
+		$sliderPath = getLocalPath('components' . $componentPath . '/slider.php');
+		if (!$sliderPath)
+		{
+			return null;
+		}
+
+		return new Uri($sliderPath);
+	}
+
 	public function signChildrenItemsComponentParams(int $entityTypeId, array $componentParams): string
 	{
 		$factory = Container::getInstance()->getFactory($entityTypeId);
@@ -1425,6 +1443,24 @@ class Router
 		$componentName = str_replace('bitrix:', '', $componentName);
 
 		return \CCrmInstantEditorHelper::signComponentParams($componentParams, $componentName);
+	}
+
+	public function unsignChildrenItemsComponentParams(int $entityTypeId, string $signedComponentParams): ?array
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+
+		$componentName = $this->getItemListComponentName($entityTypeId);
+		if (!$componentName)
+		{
+			return null;
+		}
+		$componentName = str_replace('bitrix:', '', $componentName);
+
+		return \CCrmInstantEditorHelper::unsignComponentParams($signedComponentParams, $componentName);
 	}
 
 	/**

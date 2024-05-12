@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_ACTIVITY_TASK_LIST_NAME"] = "Aufgaben";
+$MESS["CRM_ACTIVITY_TASK_LIST_DESCRIPTION"] = "Aufgaben";
+$MESS["CRM_NAME"] = "CRM";
+$MESS["CRM_ACTIVITY_NAME"] = "Geplante Aktivitäten";
+?>

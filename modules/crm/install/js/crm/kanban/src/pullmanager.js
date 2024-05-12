@@ -1,174 +1,229 @@
-import {Event, Type, Loc, Text} from 'main.core';
-import PullQueue from "./pullqueue";
-import {EventEmitter} from "main.core.events";
-import {ViewMode} from "./viewmode";
+import { Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
+import type { ActionItem } from 'pull.queuemanager';
+import { QueueManager } from 'pull.queuemanager';
+import PullOperation from './pulloperation';
+import { ViewMode } from './viewmode';
+
+const EventName = {
+	itemUpdated: 'ITEMUPDATED',
+	itemAdded: 'ITEMADDED',
+	itemDeleted: 'ITEMDELETED',
+	stageAdded: 'STAGEADDED',
+	stageUpdated: 'STAGEUPDATED',
+	stageDeleted: 'STAGEDELETED',
+};
 
 export default class PullManager
 {
+	queueManager: QueueManager;
 	grid: BX.CRM.Kanban.Grid;
-	queue: PullQueue;
-	notifier: BX.UI.Notification.Balloon;
-	openedSlidersCount: Number;
 
-	static eventIds = new Set();
-
-	constructor(grid)
+	constructor(grid: BX.CRM.Kanban.Grid)
 	{
+		if (!BX.PULL)
+		{
+			console.info('BX.PULL is not initialized');
+
+			return;
+		}
+
 		this.grid = grid;
-		this.queue = new PullQueue(this.grid);
-		this.openedSlidersCount = 0;
-		if (Type.isString(grid.getData().moduleId) && grid.getData().userId > 0)
-		{
-			this.init();
-		}
 
-		this.bindEvents();
-	}
-
-	static registerRandomEventId(): string
-	{
-		const eventId = Text.getRandom(12);
-		this.registerEventId(eventId);
-		return eventId;
-	}
-
-	static registerEventId(eventId: string)
-	{
-		this.eventIds.add(eventId);
-	}
-
-	init()
-	{
-		Event.ready(() => {
-			const Pull = BX.PULL;
-			if (!Pull)
-			{
-				console.error('pull is not initialized');
-				return;
-			}
-
-			const gridData = this.grid.getData();
-			const { pullTag, eventKanbanUpdatedTag, viewMode } = gridData;
-
-			Pull.subscribe({
-				moduleId: this.grid.getData().moduleId,
-				//command: this.grid.getData().pullTag,
-				callback: (data) => {
-					if (
-						data.command !== pullTag
-						&& !(data.command.indexOf(eventKanbanUpdatedTag) === 0 && viewMode === ViewMode.MODE_ACTIVITIES)
-					)
-					{
-						return;
-					}
-
-					const { params } = data;
-
-					if (Type.isString(params.eventName))
-					{
-						if(PullManager.eventIds.has(params.eventId))
-						{
-							return;
-						}
-
-						if(this.queue.isOverflow())
-						{
-							return;
-						}
-
-						if (params.eventName === 'ITEMUPDATED')
-						{
-							this.onPullItemUpdated(params);
-						}
-						else if (params.eventName === 'ITEMADDED')
-						{
-							this.onPullItemAdded(params);
-						}
-						else if (params.eventName === 'ITEMDELETED')
-						{
-							this.onPullItemDeleted(params);
-						}
-						else if (params.eventName === 'STAGEADDED')
-						{
-							this.onPullStageAdded(params);
-						}
-						else if (params.eventName === 'STAGEDELETED')
-						{
-							this.onPullStageDeleted(params);
-						}
-						else if (params.eventName === 'STAGEUPDATED')
-						{
-							this.onPullStageUpdated(params);
-						}
-					}
+		const data = grid.getData();
+		const options = {
+			moduleId: data.moduleId,
+			pullTag: data.pullTag,
+			userId: data.userId,
+			additionalData: {
+				viewMode: data.viewMode,
+			},
+			events: {
+				onBeforePull: (event) => {
+					this.#onBeforePull(event);
 				},
-			});
-			Pull.extendWatch(this.grid.getData().pullTag);
+				onPull: (event) => {
+					this.#onPull(event);
+				},
+			},
+			callbacks: {
+				onBeforeQueueExecute: (items) => {
+					return this.#onBeforeQueueExecute(items);
+				},
+				onQueueExecute: (items) => {
+					return this.#onQueueExecute(items);
+				},
+				onReload: () => {
+					this.#onReload();
+				},
+			},
+		};
 
-			Event.bind(document, 'visibilitychange', () => {
-				if (!document.hidden)
-				{
-					this.onTabActivated();
-				}
-			});
-		});
+		this.queueManager = new QueueManager(options);
 	}
 
-	onPullItemUpdated(params)
+	#onBeforeQueueExecute(items: Object[]): Promise
 	{
-		if (this.updateItem(params))
+		items.forEach((item) => {
+			const { data } = item;
+
+			const operation = PullOperation.createInstance({
+				grid: this.grid,
+				itemId: data.id,
+				action: data.action,
+				actionParams: data.actionParams,
+			});
+
+			operation.execute(); // change to async and use Promise.all in return
+		});
+
+		return Promise.resolve();
+	}
+
+	#onQueueExecute(items: Object[]): Promise
+	{
+		const ids = [];
+		items.forEach(({ id, data: { action } }) => {
+			if (action === 'addItem' || action === 'updateItem')
+			{
+				ids.push(parseInt(id, 10));
+			}
+		});
+
+		if (ids.length === 0)
 		{
-			this.queue.loadItem(false, params.ignoreDelay || false);
+			return Promise.resolve();
+		}
+
+		return this.grid.loadNew(ids, false, true, true, true);
+	}
+
+	#onReload(): void
+	{
+		this.grid.reload();
+	}
+
+	#onBeforePull(event: BaseEvent): void
+	{
+		const { data: { options, pullData } } = event;
+		if (
+			!pullData.command.startsWith(options.pullTag)
+			&& options.additionalData.viewMode !== ViewMode.MODE_ACTIVITIES
+		)
+		{
+			event.preventDefault();
 		}
 	}
 
-	updateItem(params)
+	#onPull(event: BaseEvent): void
 	{
+		const { pullData: { params } } = event.data;
+
+		if (params.eventName === EventName.itemUpdated)
+		{
+			this.#onPullItemUpdated(event);
+
+			return;
+		}
+
+		if (params.eventName === EventName.itemAdded)
+		{
+			this.#onPullItemAdded(event);
+
+			return;
+		}
+
+		if (params.eventName === EventName.itemDeleted)
+		{
+			this.#onPullItemDeleted(event);
+
+			return;
+		}
+
+		if (params.eventName === EventName.stageAdded)
+		{
+			this.#onPullStageChanged(event);
+
+			return;
+		}
+
+		if (params.eventName === EventName.stageUpdated)
+		{
+			this.#onPullStageChanged(event);
+
+			return;
+		}
+
+		if (params.eventName === EventName.stageDeleted)
+		{
+			this.#onPullStageDeleted(event);
+		}
+	}
+
+	#onPullItemUpdated(event: BaseEvent): void
+	{
+		if (Type.isNil(event.data))
+		{
+			return;
+		}
+
+		const { pullData: { params }, promises } = event.data;
+
 		const item = this.grid.getItem(params.item.id);
 
 		if (item)
 		{
-			this.queue.push(item.id, {
-				id: item.id,
-				action: 'updateItem',
-				actionParams: params,
-			});
+			promises.push(Promise.resolve({
+				data: this.#getPullData('updateItem', params),
+			}));
 
-			return true;
+			return;
 		}
 
-		this.onPullItemAdded(params);
-		return false
+		this.#onPullItemAdded(params);
+
+		event.preventDefault();
 	}
 
-	onPullItemAdded(params)
+	#onPullItemAdded(event: BaseEvent): void
 	{
-		if (this.addItem(params))
+		if (Type.isNil(event.data))
 		{
-			this.queue.loadItem(false, params.ignoreDelay || false);
+			return;
 		}
-	}
 
-	addItem(params)
-	{
+		const { pullData: { params }, promises } = event.data;
+
 		const itemId = params.item.id;
 		const oldItem = this.grid.getItem(itemId);
+
 		if (oldItem)
 		{
-			return false;
+			event.preventDefault();
+
+			return;
 		}
 
-		this.queue.push(itemId, {
-			id: itemId,
-			action: 'addItem',
-			actionParams: params,
-		});
-
-		return true;
+		promises.push(Promise.resolve({
+			data: this.#getPullData('addItem', params),
+		}));
 	}
 
-	onPullItemDeleted(params)
+	#getPullData(action: string, actionParams: Object): ActionItem
 	{
+		const { id } = actionParams.item;
+
+		return {
+			id,
+			action,
+			actionParams,
+		};
+	}
+
+	#onPullItemDeleted(event: BaseEvent): void
+	{
+		const { pullData: { params } } = event.data;
+
 		if (!Type.isPlainObject(params.item))
 		{
 			return;
@@ -180,92 +235,47 @@ export default class PullManager
 		 * Delay so that the element has time to be rendered before deletion,
 		 * if an event for changing the element came before. Ticket #141983
 		 */
-		const delay = (this.queue.has(id) ? 5000 : 0);
+		const delay = (
+			this.queueManager.hasInQueue(id)
+				? this.queueManager.getLoadItemsDelay()
+				: 0
+		);
 
-		setTimeout(function() {
-			this.queue.delete(id);
+		setTimeout(() => {
+			this.queueManager.deleteFromQueue(id);
 
-			const item = this.grid.getItem(id);
+			const { grid } = this;
+			const item = grid.getItem(id);
 			if (!item)
 			{
 				return;
 			}
 
-			this.grid.removeItem(id);
+			grid.removeItem(id);
 
-			const column = this.grid.getColumn(columnId);
-			column.decPrice(item.price);
-			column.renderSubTitle();
-		}.bind(this), delay);
-	}
-
-	onPullStageAdded(params)
-	{
-		this.grid.onApplyFilter();
-	}
-
-	onPullStageDeleted(params)
-	{
-		this.grid.removeColumn(params.stage.id);
-	}
-
-	onPullStageUpdated(params)
-	{
-		this.grid.onApplyFilter();
-	}
-
-	onTabActivated()
-	{
-		if (this.queue.isOverflow())
-		{
-			this.showOutdatedDataDialog();
-		}
-		else if (this.queue.peek())
-		{
-			this.queue.loadItem();
-		}
-	}
-
-	showOutdatedDataDialog()
-	{
-		if (!this.notifier)
-		{
-			this.notifier = BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('CRM_KANBAN_NOTIFY_OUTDATED_DATA'),
-				closeButton: false,
-				autoHide: false,
-				actions: [{
-					title: Loc.getMessage('CRM_KANBAN_GRID_RELOAD'),
-					events: {
-						click: (event, balloon, action) => {
-							balloon.close();
-							this.grid.reload();
-							this.queue.clear();
-						}
-					}
-				}]
-			});
-		}
-		else
-		{
-			this.notifier.show();
-		}
-	}
-
-	bindEvents(): void
-	{
-		EventEmitter.subscribe('SidePanel.Slider:onOpen', (event) => {
-			this.openedSlidersCount++;
-			this.queue.freeze();
-		});
-		EventEmitter.subscribe('SidePanel.Slider:onClose', (event) => {
-			this.openedSlidersCount--;
-			if (this.openedSlidersCount <= 0)
+			if (grid.getTypeInfoParam('showTotalPrice'))
 			{
-				this.openedSlidersCount = 0;
-				this.queue.unfreeze();
-				this.onTabActivated();
+				const column = grid.getColumn(columnId);
+				column.decPrice(item.data.price);
+				column.renderSubTitle();
 			}
-		});
+		}, delay);
+
+		event.preventDefault();
+	}
+
+	#onPullStageChanged(event: BaseEvent): void
+	{
+		event.preventDefault();
+
+		this.grid.onApplyFilter();
+	}
+
+	#onPullStageDeleted(event: BaseEvent): void
+	{
+		event.preventDefault();
+
+		const { pullData: { params } } = event.data;
+		this.grid.removeColumn(params.stage.id);
 	}
 }
